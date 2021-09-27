@@ -397,4 +397,3 @@ jobs:
           # https://github.com/appfair/appfair.github.io/actions
           gh workflow --repo appfair/appfair.github.io run "catalog.yml"
 
-
