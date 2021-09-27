@@ -1,0 +1,400 @@
+##############################################################################
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+# This workflow runs in both the trusted base repository at
+# https://www.github.com/appfair/App/actions as well as in
+# and forks that have enabled actions. The latter workflow
+# will build the app and create a release in the fork's repository,
+# while the workflow in the base repository will
+# build the app a second time in a trusted environment and,
+# if the two binaries match, publish a `fairseal` hash of
+# the release artifacts for verification by the App Fair catalog
+# browser app. See https://www.appfair.net for more details.
+name: "App Fairground"
+
+on:
+  push:
+    branches: [ main ]
+    tags: "[0-9]+.[0-9]+.[0-9]+"
+  pull_request_target:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+
+jobs:
+  fork_apply:
+    name: "Fork Apply"
+      #if: github.event_name == 'push' && github.repository != 'appfair/App'
+
+    runs-on: macos-11
+    timeout-minutes: 45
+
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
+
+    steps:
+
+      - name: "Initialize fair-ground"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+          echo "$GITHUB_CONTEXT"
+          echo "ORGNAME=${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "COMMITHASH=${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: "Configure Fork: ${{ env.ORGNAME }}"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "FAIR_APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
+          echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
+          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
+          echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: "Check App Fair Catalog"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o -
+
+      - name: "Check releases"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list
+
+      - name: "Validate App Org: ${{ env.ORGNAME }}"
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
+
+      - name: "Generate Icon"
+        run: xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+
+      - name: Test Swift Package
+        if: github.event_name == 'push' # only run tests in forks
+        run: xcrun swift test
+
+      - name: "Build macOS App"
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "macosx" \
+            -destination 'platform=macOS' \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+
+          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string><key>uploadBitcode</key><false/><key>compileBitcode</key><false/><key>uploadSymbols</key><false/></dict></plist>' > "staging/exportOptions.plist"
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -exportPath "staging/" \
+            -exportOptionsPlist "staging/exportOptions.plist"
+
+          codesign --verify --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+          codesign -dv --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+          codesign -d --entitlements - "staging/${{ env.PRODUCT_NAME }}.app"
+
+          # create the zip file
+          ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+
+          # show the binary checksum
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+
+      # Notarization is not required for the App Fair, but a developer
+      # can opt to notarize their own build which will allow them to 
+      # distribute the app outside of the App Fair without having to
+      # make a separate notarized release.
+      #
+      # The App Fair's app validation does not take into account the
+      # notarization or signing status of the zip when it validates
+      # the release artifacts, nor does it have access to the signing
+      # secrets for the fork's repository, and so the app can be signed
+      # with any certificate the developer likes. 
+      #
+      # Custom signing would need to happen
+      # before the exporting of the binary (above), and is left
+      # as an exercise for the enterprising developer (who may use a
+      # tool like devbotsxyz/xcode-import-certificate for importing the
+      # certificate).
+      - name: "Notarize macOS App"
+        if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
+        run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
+
+      - name: "Build iOS App"
+        # there's no way to export iOS archives without re-signing with a teamID, 
+        # so just build the .ipa manually; it needs to be in staging/ first
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+          rm -rf "staging/Payload" # cleanup
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+
+      # Notarization is not yet supported for iOS apps.
+      - name: "Notarize iOS App"
+        if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
+        run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
+
+      - name: "Stage Release Metadata"
+        # Extract the Info.plist from the archives themselves, since they contain
+        # the same post-processed metadata that the app will use.
+        # And convert to XML for ease of integration.
+        run: |
+          cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
+          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
+          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
+          find "staging/" -type f
+
+      # create and upload the release artifacts, which will be
+      # vaidates in the base fair-ground by integrate_release
+      - name: "Release App"
+        if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating release: ${GITHUB_REF#refs/tags/}"
+          gh release create \
+            "${GITHUB_REF#refs/tags/}" \
+            -- \
+            Sandbox.entitlements \
+            Package.resolved \
+            staging/${{ env.FAIR_APP_ARTIFACT }}.png \
+            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip \
+            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist \
+            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
+            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
+
+
+  integrate_release:
+    name: "Integrate Release"
+    if: github.event_name == 'pull_request_target' && github.repository == 'appfair/App'
+
+    runs-on: macos-11
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
+
+    steps:
+      - name: "Initialize fair-ground"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+          echo "PRTITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "ORGNAME=${{ github.event.pull_request.head.user.login }}" >> $GITHUB_ENV
+          echo "COMMITHASH=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "PRID=${{ github.event.pull_request.id }}" >> $GITHUB_ENV
+
+      - name: "Configure App: ${{ env.ORGNAME }}"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "FAIR_APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
+          echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
+          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
+          echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
+      
+      - name: Checkout Base Fairground
+        uses: actions/checkout@v2
+
+      - name: Checkout Integrate PR
+        uses: actions/checkout@v2
+        with:
+          path: ReleasePR
+          ref: ${{ env.COMMITHASH }}
+          fetch-depth: 0
+          submodules: false
+
+      - name: Get PR commit message
+        id: get_commit_message
+        run: echo ::set-output name=commit_message::$(git -C ReleasePR log --format=%B -n 1 "${{ env.COMMITHASH }}")
+
+      - name: Get PR commit tag
+        id: get_commit_tag
+        if: false # doesn't work for some reason
+        run: echo ::set-output name=commit_message::$(git -C ReleasePR tag "${{ env.COMMITHASH }}") # doesn't work for some reason
+
+      - name: Get app version
+        id: get_app_version
+        run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
+
+      - name: "Validate App-Org: ${{ env.ORGNAME }}"
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
+
+      - name: Integrate PR
+        if: startsWith(steps.get_commit_message.outputs.commit_message, 'release')
+
+        run: |
+          rm -rf "staging/"
+          mkdir "staging/"
+
+          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --version-marker-dir "staging/" --project ReleasePR --output .
+
+          xcrun swift package resolve
+          xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
+
+          # next generate a default icon, if one doesn't yet exist
+          xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+          file Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+        
+          #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
+
+          cp -a .build/checkouts Dependencies
+          tar cvzf "staging/${{ env.FAIR_APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
+          rm -rf Dependencies
+
+      - name: "Build macOS App: ${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "macosx" \
+            -destination "platform=macOS" \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+
+          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -exportPath "staging/" \
+            -exportOptionsPlist "staging/exportOptions.plist"
+
+          codesign --verify --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+          codesign -dv --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+          codesign -d --entitlements - "staging/${{ env.PRODUCT_NAME }}.app"
+          ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+
+          # show the binary checksum
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+
+      - name: "Build iOS App: ${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+        # there's no way to export iOS archives without re-signing with a teamID, 
+        # so just build the .ipa manually; it needs to be in Staging/ first
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+          rm -rf "staging/Payload" # cleanup
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+
+
+      - name: Stage Release Metadata
+        # Extract the Info.plist from the archives themselves, since they contain
+        # the same post-processed metadata that the app will use.
+        # And convert to XML for ease of integration.
+        run: |
+          cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
+          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
+          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
+          find "staging/" -type f
+
+
+      - name: "Upload Build Artifacts"
+        # upload the trusted artifacts for each build for future scrutiny
+        uses: actions/upload-artifact@v2
+        with:
+          path: staging
+
+      # compare the contents of the PR's un-trusted artifacts with
+      # the contents of the base fair-ground's trusted artifacts
+      - name: "Generate macOS fairseal"
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
+        run: |
+          # build the URL for the GitHub download artifact
+          ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
+
+          echo "Generating fairseal for: $ZIPURL"
+
+          # if the seals match, we indicate success by publishing
+          # the SHA256 for the release's pull request;
+          # client apps will use this hash to verify that the untrusted
+          # release artifact that is downloaded matches the release
+          # artifact that was created in the trusted environment
+          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --fairseal-match 50000 --retry-duration 600 --artifact-url "$ZIPURL" --project . -o -
+
+      - name: "Generate iOS fairseal"
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
+        run: |
+
+          # build the URL for the GitHub download artifact
+          IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
+
+          echo "Generating fairseal for: $IPAURL"
+
+          # Reproducable builds on iOS not yet working
+          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --fairseal-match 1000000 --retry-duration 600 --artifact-url "$IPAURL" --project . -o -
+
+      - name: "Publish App Fair Catalog"
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
+        run: |
+          # https://github.com/appfair/appfair.github.io/actions
+          gh workflow --repo appfair/appfair.github.io run "catalog.yml"
+
+
