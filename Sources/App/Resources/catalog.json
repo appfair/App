@@ -1,0 +1,229 @@
+{
+    "sources": [
+        {
+            "category": "contemporary",
+            "name": "Radio Paradise",
+            "url": "http://stream-uk1.radioparadise.com/aac-128",
+            "logo": "https://www.radioparadise.com/graphics/fb_logo.png"
+        },
+        {
+            "category": "contemporary",
+            "name": "Linn Radio",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122119",
+            "logo": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "classical",
+            "name": "Linn Classical",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122116",
+            "logo": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "jazz",
+            "name": "Linn Jazz",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122120"
+        },
+        {
+            "category": "contemporary",
+            "name": "Paradise Eclectic (mp3 192)",
+            "url": "http://stream.radioparadise.com/eclectic-192",
+            "icon": "https://www.radioparadise.com/graphics/fb_logo.png"
+        },
+        {
+            "category": "contemporary",
+            "name": "Naim Radio",
+            "url": "http://37.130.228.60:8090/listen.pls",
+            "icon": "https://www.naimaudio.com/sites/all/themes/naim/images/naim_records_logo.png"
+        },
+        {
+            "category": "contemporary",
+            "name": "Linn Radio (Variety)",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122119",
+            "icon": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "classical",
+            "name": "Linn Classical (Classical)",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122116",
+            "icon": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "jazz",
+            "name": "Linn Jazz (Jazz)",
+            "url": "http://opml.radiotime.com/Tune.ashx?id=s122120",
+            "icon": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "talk",
+            "name": "BBC Radio 1",
+            "url": "http://stream.live.vc.bbcmedia.co.uk/bbc_radio_one"
+        },
+        {
+            "category": "contemporary",
+            "name": "BBC Radio 2",
+            "url": "http://stream.live.vc.bbcmedia.co.uk/bbc_radio_two"
+        },
+        {
+            "category": "classical",
+            "name": "BBC Radio 3",
+            "url": "http://stream.live.vc.bbcmedia.co.uk/bbc_radio_three"
+        },
+        {
+            "category": "contemporary",
+            "name": "Radio Paradise",
+            "url": "http://37.130.228.60:8014",
+            "icon": "http://static.radio.net/images/broadcasts/d5/23/1885/c175.png"
+        },
+        {
+            "category": "contemporary",
+            "name": "Linn Radio",
+            "url": "http://89.16.185.174:8003/stream",
+            "icon": "http://small.linncdn.com/website/responsive/images/logo-black-chunky.png"
+        },
+        {
+            "category": "contemporary",
+            "name": "France Inter",
+            "url": "https://stream.radiofrance.fr/franceinter/franceinter_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "talk",
+            "name": "France Info",
+            "url": "https://stream.radiofrance.fr/franceinfo/franceinfo_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "misc",
+            "name": "France Culture",
+            "url": "https://stream.radiofrance.fr/franceculture/franceculture_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "France Blue Paris",
+            "url": "https://stream.radiofrance.fr/fb1071/fb1071_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "France Blue Pays d'Auvergne",
+            "url": "https://stream.radiofrance.fr/fbpaysdauvergne/fbpaysdauvergne_midfi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "world",
+            "name": "Fip",
+            "url": "https://stream.radiofrance.fr/fip/fip_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "Fip Rock",
+            "url": "https://stream.radiofrance.fr/fiprock/fiprock_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "jazz",
+            "name": "Fip Jazz",
+            "url": "https://stream.radiofrance.fr/fipjazz/fipjazz_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "groove",
+            "name": "FIP Groove",
+            "url": "https://stream.radiofrance.fr/fipgroove/fipgroove_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "world",
+            "name": "Fip Monde",
+            "url": "https://stream.radiofrance.fr/fipworld/fipworld_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "Fip Tout Nouveau",
+            "url": "https://stream.radiofrance.fr/fipnouveautes/fipnouveautes_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "reggae",
+            "name": "Fip Reggae",
+            "url": "https://stream.radiofrance.fr/fipreggae/fipreggae_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "electro",
+            "name": "Fip Electro",
+            "url": "https://stream.radiofrance.fr/fipelectro/fipelectro_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "France Musique",
+            "url": "https://stream.radiofrance.fr/francemusique/francemusique_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "classical",
+            "name": "France Musique Classique Easy",
+            "url": "https://stream.radiofrance.fr/francemusiqueeasyclassique/francemusiqueeasyclassique_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "classical",
+            "name": "France Musique Classique Plus",
+            "url": "https://stream.radiofrance.fr/francemusiqueclassiqueplus/francemusiqueclassiqueplus_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "concert",
+            "name": "France Musique Concerts Radio France",
+            "url": "https://stream.radiofrance.fr/francemusiqueconcertsradiofrance/francemusiqueconcertsradiofrance_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "world",
+            "name": "France Musique Musiques du Monde Ocora",
+            "url": "https://stream.radiofrance.fr/francemusiqueocoramonde/francemusiqueocoramonde_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "jazz",
+            "name": "France Musique La Jazz",
+            "url": "https://stream.radiofrance.fr/francemusiquelajazz/francemusiquelajazz_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "contemporary",
+            "name": "France Musique La Contemporaine",
+            "url": "https://stream.radiofrance.fr/francemusiquelacontemporaine/francemusiquelacontemporaine_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "classical",
+            "name": "France Musique La B.O. Musiques de Films",
+            "url": "https://stream.radiofrance.fr/francemusiquelabo/francemusiquelabo_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv'",
+            "url": "https://stream.radiofrance.fr/mouv/mouv_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' Rap Français",
+            "url": "https://stream.radiofrance.fr/mouvrapfr/mouvrapfr_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' Rap US",
+            "url": "https://stream.radiofrance.fr/mouvrapus/mouvrapus_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' Classics",
+            "url": "https://stream.radiofrance.fr/mouvclassics/mouvclassics_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' RnB & Soul",
+            "url": "https://stream.radiofrance.fr/mouvrnb/mouvrnb_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' DanceHall",
+            "url": "https://stream.radiofrance.fr/mouvdancehall/mouvdancehall_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' 100% Mix",
+            "url": "https://stream.radiofrance.fr/mouv100p100mix/mouv100p100mix_hifi.m3u8?id=radiofrance"
+        },
+        {
+            "category": "mouv",
+            "name": "Mouv' Kids 'n Family",
+            "url": "https://stream.radiofrance.fr/mouvkidsnfamily/mouvkidsnfamily_hifi.m3u8?id=radiofrance"
+        }
+    ]
+}

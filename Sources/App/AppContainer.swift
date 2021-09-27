@@ -26,8 +26,19 @@ public extension AppContainer {
     /// The body of your scene is provided by `AppContainer.scene`
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
-            ContentView().environmentObject(store)
+            ContentView()
+                .environmentObject(store)
+                .task {
+                    //await store.createStatusItems()
+                    //await store.setDockMenu()
+                }
         }
+        .commands {
+            CommandGroup(replacing: CommandGroupPlacement.newItem) {
+                // only permit a single window
+            }
+        }
+        //.windowToolbarStyle(.automatic) // macOS only
     }
 
     /// The app-wide settings view
@@ -36,10 +47,104 @@ public extension AppContainer {
     }
 }
 
+@available(macOS 12.0, iOS 15.0, *)
+extension Store {
+    func setDockMenu() {
+        #if os(macOS)
+        let clockView = ClockView()
+        NSApp.dockTile.contentView = NSHostingView(rootView: clockView)
+        NSApp.dockTile.display()
+        NSApp.dockTile.badgeLabel = "ABC"
+        NSApp.dockTile.showsApplicationBadge = true
+        #endif
+    }
+
+    /// Creates the status and dock menus for this application on macOS
+    func createStatusItems() {
+        #if os(macOS)
+        if self.statusItem == nil {
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            if let button = statusItem.button {
+                button.appearsDisabled = false
+
+                if let img = NSImage(systemSymbolName: "infinity.circle.fill", accessibilityDescription: "Tune-Out icon") {
+                    if let tinted = img.withSymbolConfiguration(.init(paletteColors: [.controlAccentColor])) {
+                        tinted.isTemplate = true
+
+                        button.image = tinted
+                        // button.title = wip("Tune Out") // overlaps the icon!
+
+                        let menu = NSMenu(title: "Tune Out Menu")
+                        let menuItem = NSMenuItem(title: "Menu Item", action: #selector(Store.menuItemTapped), keyEquivalent: ";")
+                        menuItem.target = self
+                        menu.addItem(menuItem)
+
+                        statusItem.menu = menu
+                    }
+                }
+            }
+            self.statusItem = statusItem
+        }
+        #else // os(macOS)
+        dbg("skipping status item on iOS")
+        #endif
+    }
+}
+
+struct ClockView: View {
+    @State var currentTime: (hour: String, minute: String) = ("", "")
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    let backgroundColor = Color.accentColor
+    let clockColor = Color.red
+
+    var body: some View {
+        GeometryReader { parent in
+            let fontSize = parent.size.height * 0.4
+            let clockFont = Font.system(size: fontSize)
+            let hSpacing = fontSize * 0.25
+
+            VStack {
+                Text(currentTime.hour)
+                    .padding(.bottom, -hSpacing)
+                Text(currentTime.minute)
+                    .padding(.top, -hSpacing)
+            }
+            .font(clockFont)
+            .frame(width: parent.size.width, height: parent.size.height)
+            .foregroundColor(clockColor)
+            .background(backgroundColor)
+            .cornerRadius(parent.size.height * 0.2)
+            .shadow(radius: 3)
+        }
+        .onReceive(timer) { currentDate in
+            let components = Calendar.current.dateComponents([.hour, .minute], from: currentDate)
+            let hour = components.hour ?? 0
+            let minute = components.minute ?? 0
+
+            currentTime = (String(format: "%02d", hour), String(format: "%02d", minute))
+            dbg(currentTime)
+
+        }
+//        .padding(10)
+    }
+}
+
+
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: AppStoreObject {
-    @AppStorage("someToggle") public var someToggle = false
+@MainActor public final class Store: SceneManager {
+    /// The search string the user is entering
+    @Published var queryString: String = ""
+    @AppStorage("someToggle")
+    public var someToggle = false
+    #if os(macOS)
+    public var statusItem: NSStatusItem? = nil
+    #endif
+
+    @objc public func menuItemTapped(_ sender: Any?) {
+        dbg()
+    }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -47,10 +152,20 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        // A FairApp comes with built-in FairContentView behaviors.
-        // The `.placeholder` content will display some info about your app.
-        FairContentView(.placeholder)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        TuneOutView()
+            .searchable(text: $store.queryString, placement: .automatic, prompt: Text("Search", bundle: .module))
+            .toolbar {
+                Button {
+                    dbg(wip("shuffle"))
+                } label: {
+                    Label("Shuffle", systemImage: "shuffle")
+                }
+                .help(Text("Shuffle the current selection", bundle: .module))
+                .symbolRenderingMode(.multicolor)
+                //.symbolVariant(.circle)
+                //.symbolVariant(.fill)
+                //.symbolVariant(.slash)
+            }
     }
 }
 
@@ -63,3 +178,6 @@ public struct AppSettingsView : View {
     }
 }
 
+/// Work-in-Progress marker
+@available(*, deprecated, message: "work in progress")
+internal func wip<T>(_ value: T) -> T { value }

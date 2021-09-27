@@ -14,14 +14,50 @@
  */
 import Swift
 import XCTest
+import TabularData
+import FairApp
 @testable import App
 
+@available(macOS 12.0, iOS 15.0, *)
 open class AppTests: XCTestCase {
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testAppScene() throws {
         // awaiting Swift 5.5 final
         //let _ = AppContainer.rootScene
         //let _ = AppContainer.settingsView
     }
-}
 
+    // cannot run on CI until macOS12
+#if false // WTF
+#if swift(>=5.5)
+#if canImport(TabularData)
+    func testCatalogData() throws {
+        // caught error: "Wrong number of columns at row 1. Expected 25 but found 31."
+        let catalog = try StationCatalog.stations.get()
+        dbg("catalog size:", catalog.count.localizedNumber())
+        XCTAssertGreaterThanOrEqual(catalog.count, 25_000)
+        let countryCounts = catalog.frame.grouped(by: "Country").counts(order: .descending)
+
+        dbg("countryCounts", countryCounts)
+
+        let cc = try StationCatalog.countryCounts.get()
+        dbg(cc)
+//        catalog.frame.grouped(by: "Country").counts(order: .descending).map({
+//            $0["Country"] as? String
+//        })
+
+        let countries = countryCounts.rows
+            .compactMap({ $0["Country"] as? String })
+            .filter({ !$0.isEmpty })
+        XCTAssertEqual(countries[0...4], [
+            "The United States Of America",
+            "Germany",
+            "China",
+            "France",
+            "Greece",
+        ])
+        dbg(countries)
+    }
+#endif
+#endif
+#endif
+}
