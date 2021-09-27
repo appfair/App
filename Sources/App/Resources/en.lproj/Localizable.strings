@@ -5,3 +5,76 @@
 "Cancel" = "Cancel";
 "Welcome to %@!" = "Welcome to %@!";
 
+"No Selection" = "No Selection";
+
+"Install" = "Install";
+"Update" = "Update";
+"Reveal" = "Reveal";
+"Launch" = "Launch";
+"Delete" = "Delete";
+
+"version %@" = "version %@";
+"Version" = "Version";
+"Name" = "Name";
+"Description" = "Description";
+"Downloads" = "Downloads";
+"Date" = "Date";
+"Size" = "Size";
+"Source" = "Source";
+"File" = "File";
+"Stars" = "Stars";
+"Downloads" = "Downloads";
+"Issues" = "Issues";
+"Installed" = "Installed";
+
+
+"Arts & Crafts" = "Arts & Crafts";
+"Knowledge" = "Knowledge";
+"Communication" = "Communication";
+"Entertainment" = "Entertainment";
+"Health & Lifestyle" = "Health & Lifestyle";
+"Diversion" = "Diversion";
+"Work" = "Work";
+
+
+"appfair.business" = "Business";
+"appfair.developer-tools" = "Developer Tools";
+"appfair.education" = "Education";
+"appfair.entertainment" = "Entertainment";
+"appfair.finance" = "Finance";
+"appfair.graphics-design" = "Graphics Design";
+"appfair.healthcare-fitness" = "Healthcare & Fitness";
+"appfair.lifestyle" = "Lifestyle";
+"appfair.medical" = "Medical";
+"appfair.music" = "Music";
+"appfair.news" = "News";
+"appfair.photography" = "Photography";
+"appfair.productivity" = "Productivity";
+"appfair.reference" = "Reference";
+"appfair.social-networking" = "Social Networking";
+"appfair.sports" = "Sports";
+"appfair.travel" = "Travel";
+"appfair.utilities" = "Utilities";
+"appfair.video" = "Video";
+"appfair.weather" = "Weather";
+"appfair.games" = "Games";
+"appfair.action-games" = "Action Games";
+"appfair.adventure-games" = "Adventure Games";
+"appfair.arcade-games" = "Arcade Games";
+"appfair.board-games" = "Board Games";
+"appfair.card-games" = "Card Games";
+"appfair.casino-games" = "Casino Games";
+"appfair.dice-games" = "Dice Games";
+"appfair.educational-games" = "Educational Games";
+"appfair.family-games" = "Family Games";
+"appfair.kids-games" = "Kids Games";
+"appfair.music-games" = "Music Games";
+"appfair.puzzle-games" = "Puzzle Games";
+"appfair.racing-games" = "Racing Games";
+"appfair.role-playing-games" = "Role Games";
+"appfair.simulation-games" = "Simulation Games";
+"appfair.sports-games" = "Sports Games";
+"appfair.strategy-games" = "Strategy Games";
+"appfair.trivia-games" = "Trivia Games";
+"appfair.word-games" = "Word Games";
+

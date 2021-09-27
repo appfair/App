@@ -1,11 +1,13 @@
 .*.swp
 #*.xcworkspace
 #*.xcodeproj
+*.xcscheme
+xcshareddata/
 .DS_Store
 .build
+staging/
 xcuserdata/
 build/
-staging/
 DerivedData/
 *.moved-aside
 *.pbxuser
@@ -27,5 +29,4 @@ Package.pins
 Package.resolved
 .swiftpm
 .build/
-
 

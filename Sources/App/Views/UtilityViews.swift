@@ -13,26 +13,20 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
+import SwiftUI
 
+/// A label that describes an error condition
 @available(macOS 12.0, iOS 15.0, *)
-public extension AppContainer {
+public struct ErrorLabel<E: Error> : View {
+    public let error: E
 
-    /// The root scene for this application
-    static func rootScene(store appManager: AppManager) -> some Scene {
-        WindowGroup {
-            NavigationRootView()
-                .environmentObject(appManager)
-                .task({ await appManager.scanInstalledApps() })
-        }
-        .commands {
-            SidebarCommands()
-            AppFairCommands(appManager: appManager)
-            ToolbarCommands()
-        }
+    public init(_ error: E) {
+        self.error = error
     }
 
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store appManager: AppManager) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(appManager)
+    public var body: some View {
+        Label(error.localizedDescription, systemImage: "xmark.octagon.fill")
+            .symbolRenderingMode(.multicolor)
+            .textSelection(.enabled)
     }
 }

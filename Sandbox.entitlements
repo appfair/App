@@ -2,20 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- If your app needs to read or write user-selected files outside of the app's sandboxed container, set com.apple.security.files.user-selected.read-write to true and describe in plain language how it is used in your Info.plist FairAppFilesUserSelectedReadWriteUsageDescription property -->
-    <key>com.apple.security.files.user-selected.read-write</key>
+	<key>com.apple.security.app-sandbox</key>
     <false/>
-
-    <!-- If your app needs access to the network, set com.apple.security.network.client to true and describe in plain language how it is used in your Info.plist FairAppNetworkCientUsageDescription property -->
-    <key>com.apple.security.network.client</key>
-    <false/>
-
-    <!-- Sandboxing is always required on fair-ground apps -->
-    <key>com.apple.security.app-sandbox</key>
-    <true/>
-
-    <!-- Low-risk entitlements can be enabled without explanation -->
-    <key>com.apple.security.cs.allow-jit</key>
-    <true/>
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.executable</key>
+	<true/>
 </dict>
 </plist>
