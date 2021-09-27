@@ -242,7 +242,7 @@ extension AppManager {
         try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
 
         // if we are the catalog app ourselves, re-launch after updating
-        if Bundle.mainBundleID == "app.App-Fair" {
+        if item.bundleIdentifier == Bundle.mainBundleID {
             dbg("re-launching catalog app")
             #if os(macOS)
             //let proc = Process()
