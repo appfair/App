@@ -361,40 +361,46 @@ jobs:
 
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
-      - name: "Generate macOS fairseal"
+      - name: "Generate fairseal"
         env:
           GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
+          # where we place the untrusted artifact
+          mkdir -p UNTRUSTED/
+
           # build the URL for the GitHub download artifact
           ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
 
-          echo "Generating fairseal for: $ZIPURL"
+          echo "Downloading: $ZIPURL"
+
+          # retry a few times in case the head repository is still building
+          curl --retry 10 --retry-all-errors -fsSL -o "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" "$ZIPURL"
+
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
+          ditto -xk "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/macOS/trusted/
+
+          ls -la "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          ditto -xk "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/macOS/UNTRUSTED/
+
+          # peek at the different binaries
+          ls -la fairseal/extracts/macOS/trusted/*.app/Contents/MacOS/ fairseal/extracts/macOS/UNTRUSTED/*.app/Contents/MacOS/
+
+          # check that contents are identical, first excising
+          # signatures to permit custom signing & notarization
+          # the actual diffing will be done by the fairtool; this is just for diagnostics
+          diff -r fairseal/extracts/macOS/trusted fairseal/extracts/macOS/UNTRUSTED || echo "WARNING: contents differ"
+
 
           # if the seals match, we indicate success by publishing
           # the SHA256 for the release's pull request;
           # client apps will use this hash to verify that the untrusted
           # release artifact that is downloaded matches the release
           # artifact that was created in the trusted environment
-          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --fairseal-match 50000 --retry-duration 600 --artifact-url "$ZIPURL" --project . -o -
-
-      - name: "Generate iOS fairseal"
-        env:
-          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
-        run: |
-
-          # build the URL for the GitHub download artifact
-          IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
-
-          echo "Generating fairseal for: $IPAURL"
-
-          # Reproducable builds on iOS not yet working
-          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --fairseal-match 1000000 --retry-duration 600 --artifact-url "$IPAURL" --project . -o -
+          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --untrusted-artifact "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --artifact-url "$ZIPURL" --project . -o -
 
       - name: "Publish App Fair Catalog"
         env:
           GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
-          # https://github.com/appfair/appfair.github.io/actions
           gh workflow --repo appfair/appfair.github.io run "catalog.yml"
-
 

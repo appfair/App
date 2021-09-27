@@ -6,20 +6,22 @@ Creating or updating the PR will build a new release of
 your App fork.
 
 The title of your Pull Request must be of the form:
-`app.App-Org`,
+`app.App-Org v1.2.3`,
 where `app.App-Org` is the `CFBundleIdentifier` 
+and the version is the `CFBundleShortVersionString`
 in your `Info.plist` metadata file.
 
-Note that these integration Pull Requests will never be 
+Note that these integration Pull Requests will not be 
 merged into the base /App/ repository.
-They are simply triggers to initiate the app integration process
-at [/appfair/App/actions](https://github.com/appfair/App/actions).
-
 
 You can leave open a PR and just update it in order to
 initiate a new release.
 Subsequent releases must increment the version both in the
 `Info.plist` and in the PR title.
 
-For more information, see the documentation at
-[https://www.appfair.net](https://www.appfair.net).
+In the event you would like to propose changes to the underlying
+`/App/` scaffold, please instead make a pull request against the
+[Fair scaffold](https://github.com/appfair/Fair/tree/main/Sources/FairCore/Bundle/Scaffold/default),
+which is the canonical source of the contents of this repostory.
+
+
