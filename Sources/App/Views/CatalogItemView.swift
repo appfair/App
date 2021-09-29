@@ -18,6 +18,8 @@ import SwiftUI
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView: View {
     let info: AppInfo
+    var previewMode: Bool = false
+
     @EnvironmentObject var appManager: AppManager
     @Environment(\.openURL) var openURLAction
 
@@ -27,39 +29,322 @@ struct CatalogItemView: View {
     @State var confirmations: [Activity: Bool] = [:]
 
     var body: some View {
-        VStack {
-            catalogBody
-        }
+        catalogBody()
         .task {
             await fetchREADME()
         }
     }
 
-    private var catalogBody: some View {
-        HStack(alignment: .top) {
-            iconView()
+    func catalogBody() -> some View {
+        ScrollView(.vertical, showsIndicators: true) {
+            LazyVStack(pinnedViews: [.sectionHeaders]) {
+                Section {
+                    catalogSummaryCards()
+                    Divider()
+                    catalogOverview()
+                    appPreviewImages()
+                } header: {
+                    VStack {
+                        catalogHeader()
+                        Divider()
+                        catalogActionButtons()
+                        Divider()
+                    }
+                    .padding()
+                    .background(Material.thinMaterial)
+                }
+            }
+        }
+    }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text(item.name)
-                    .font(Font.system(size: 20, weight: .bold, design: .default))
-                    .foregroundColor(.primary)
+    func appPreviewImages() -> some View {
+        EmptyView()
+//        groupBox(title: Text("Previews", bundle: .module)) {
+//            catalogPreviewImages()
+//        }
+    }
+
+    func starsCard() -> some View {
+        summarySegment {
+            card(
+                Text("Stars", bundle: .module),
+                numberView(number: .decimal, \.starCount),
+                histogramView(\.starCount)
+            )
+        }
+    }
+
+    func downloadsCard() -> some View {
+        summarySegment {
+            card(
+                Text("Downloads", bundle: .module),
+                numberView(number: .decimal, \.downloadCount),
+                histogramView(\.downloadCount)
+            )
+        }
+    }
+
+    func sizeCard() -> some View {
+        summarySegment {
+            card(
+                Text("Size", bundle: .module),
+                numberView(size: .file, \.fileSize),
+                histogramView(\.fileSize)
+            )
+        }
+    }
+
+    func coreSizeCard() -> some View {
+        summarySegment {
+            card(
+                Text("Core Size", bundle: .module),
+                numberView(size: .file, \.coreSize),
+                histogramView(\.coreSize)
+            )
+        }
+    }
+
+    func watchersCard() -> some View {
+        summarySegment {
+            card(
+                Text("Watchers", bundle: .module),
+                numberView(number: .decimal, \.watcherCount),
+                histogramView(\.watcherCount)
+            )
+        }
+    }
+
+    func issuesCard() -> some View {
+        summarySegment {
+            card(
+                Text("Issues", bundle: .module),
+                numberView(number: .decimal, \.issueCount),
+                histogramView(\.issueCount)
+            )
+        }
+    }
+
+    func releaseDateCard() -> some View {
+        summarySegment {
+            card(
+                Text("Updated", bundle: .module),
+                Text(info.release.versionDate ?? Date(), format: .relative(presentation: .numeric, unitsStyle: .abbreviated)),
+                histogramView(\.issueCount)
+            )
+        }
+    }
+
+    func catalogSummaryCards() -> some View {
+        HStack(alignment: .center) {
+            starsCard()
+            Divider()
+            releaseDateCard()
+            Divider()
+            downloadsCard()
+            Divider()
+            sizeCard()
+            Divider()
+            issuesCard()
+            //watchersCard()
+        }
+    }
+
+    func detailsView() -> some View {
+        VStack {
+            Group {
+                SwiftUI.Text("Developer: \(item.developerName)")
+                SwiftUI.Text("Size: \(item.size)")
+                SwiftUI.Text("BundleIdentifier: \(item.bundleIdentifier)")
+                //SwiftUI.Text("Categories: \(item.categories ?? [])")
+                SwiftUI.Text("SHA256: \(item.sha256 ?? "")")
+            }
+            Group {
+                SwiftUI.Text("ForkCount: \(item.forkCount ?? 0)")
+                SwiftUI.Text("issueCount: \(item.issueCount ?? 0)")
+                SwiftUI.Text("starCount: \(item.starCount ?? 0)")
+                SwiftUI.Text("watcherCount: \(item.watcherCount ?? 0)")
+                SwiftUI.Text("downloadCount: \(item.downloadCount ?? 0)")
+            }
+        }
+        .textSelection(.enabled)
+    }
+
+    func groupBox<V: View>(title: Text, @ViewBuilder content: () -> V) -> some View {
+        GroupBox(content: {
+            ScrollView {
+                content()
+            }
+        }, label: {
+            title.font(.title2)
+        })
+            .groupBoxStyle(.automatic)
+            .padding()
+    }
+
+    func catalogPreviewImages() -> some View {
+        ScrollView(.horizontal, showsIndicators: true) {
+            Image(systemName: "a")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+
+    func catalogOverview() -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading) {
+                groupBox(title: Text("Description", bundle: .module)) {
+                    ScrollView {
+                        descriptionSummary()
+                    }
+                }
+            }
+
+            VStack(alignment: .leading) {
+                groupBox(title: Text("Permissions", bundle: .module)) {
+                    entitlementsList()
+                        .frame(height: 150)
+                }
+
+                groupBox(title: Text("Details", bundle: .module)) {
+                    detailsView()
+                        .frame(height: 200)
+                }
+            }
+            .frame(width: 300)
+        }
+    }
+
+    func descriptionSummary() -> some View {
+        // TODO: load the content from the README.md
+        Text(atx: """
+        This is an app that does *stuff*, a whole lot of stuff, and does it really well.
+
+        Installing this app will make you smarter and stronger, and generally better.
+        """)
+            .font(.body)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity)
+    }
+
+    func entitlementsList() -> some View {
+        List {
+            ForEach(item.orderedEntitlements) { entitlement in
+                entitlement.localizedInfo.title.label(symbol: entitlement.localizedInfo.symbol)
+                    .listItemTint(ListItemTint.monochrome)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                     .textSelection(.enabled)
-                Text(item.subtitle ?? item.localizedDescription)
-                    .font(Font.system(size: 15, weight: .regular, design: .default))
+                    .symbolRenderingMode(SymbolRenderingMode.monochrome)
+                    .help(entitlement.localizedInfo.info)
+            }
+        }
+        .listStyle(.bordered(alternatesRowBackgrounds: true))
+    }
+
+    func catalogVersionRow() -> some View {
+        Text(info.releasedVersion?.versionDescription ?? "")
+            .font(.title)
+            .foregroundColor(.secondary)
+    }
+
+    func catalogAuthorRow() -> some View {
+        Group {
+            if info.release.developerName.isEmpty {
+                Text("Unknown", bundle: .module)
+            } else {
+                Text(info.release.developerName)
+            }
+        }
+        .textSelection(.enabled)
+        .lineLimit(1)
+        .truncationMode(.middle)
+        .font(.callout.monospaced())
+        .foregroundColor(.secondary)
+    }
+
+    func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, _ path: KeyPath<AppCatalogItem, Int?>) -> some View {
+        let value = info.release[keyPath: path]
+        if let value = value {
+            if let sizeStyle = sizeStyle {
+                return Text(Int64(value), format: .byteCount(style: sizeStyle))
+            } else {
+                return Text(value, format: .number)
+            }
+        } else {
+            return SwiftUI.Text(Image(systemName: "questionmark.square"))
+        }
+    }
+
+
+    func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
+        wip(Image(systemName: "chart.bar.xaxis"))
+    }
+
+    func summarySegment<V: View>(@ViewBuilder content: () -> V) -> some View {
+        content()
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .textSelection(.enabled)
+            .hcenter()
+    }
+
+    func catalogHeader() -> some View {
+        HStack(alignment: .center) {
+            iconView()
+                .padding(.leading, 40)
+            Spacer()
+            VStack(alignment: .center) {
+                Text(item.name)
+                    .font(Font.largeTitle.bold())
                     .foregroundColor(.secondary)
                     .textSelection(.enabled)
 
-                actionButtonStack
+                catalogVersionRow()
 
-                Spacer()
+                Text(item.subtitle ?? item.localizedDescription)
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .truncationMode(.tail)
+
+                catalogAuthorRow()
             }
+            .textSelection(.enabled)
+            .lineLimit(1)
+            .allowsTightening(true)
+            .truncationMode(.middle)
+
+            Spacer()
+            categorySymbol()
+                .padding(.trailing, 40)
         }
-        .padding()
     }
 
-    private var installButton: some View {
+    func catalogActionButtons() -> some View {
+        let isCatalogApp = info.release.bundleIdentifier == "app.App-Fair"
+
+        return HStack {
+            installButton()
+                .disabled(isCatalogApp && !previewMode)
+                .hcenter()
+            updateButton()
+                .hcenter()
+            launchButton()
+                .disabled(isCatalogApp && !previewMode)
+                .hcenter()
+            revealButton()
+                .hcenter()
+            trashButton()
+                .disabled(isCatalogApp && !previewMode)
+                .hcenter()
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle)
+        .controlSize(.regular)
+    }
+
+    func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: true)
-            .disabled(appInstalled)
+            .disabled(appInstalled && !previewMode)
             .confirmationDialog(Text("Install \(info.release.name)", bundle: .module), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
                 Bundle.module.button("Download & Install \(info.release.name)") {
                     runTask(activity: .install, confirm: true)
@@ -72,60 +357,43 @@ struct CatalogItemView: View {
                 //    openURLAction(info.release.issuesURL)
                 // }
                 .help(Text("Opens your web browsers and visits the developer site at \(info.release.baseURL.absoluteString)", bundle: .module)) // sadly, tooltips on confirmationDialog buttons don't seem to work
-            }, message: deleteMessage)
+            }, message: installMessage)
             .tint(.green)
     }
 
-    var updateButton: some View {
+    func updateButton() -> some View {
         button(activity: .update)
-            .disabled(!appInstalled || appUpdated)
+            .disabled((!appInstalled || appUpdated) && !previewMode)
             .accentColor(.orange)
     }
 
-    var launchButton: some View {
+    func launchButton() -> some View {
         button(activity: .launch)
-            .disabled(!appInstalled)
+            .disabled(!appInstalled && !previewMode)
             .accentColor(.green)
     }
 
-    var revealButton: some View {
+    func revealButton() -> some View {
         button(activity: .reveal)
-            .disabled(!appInstalled)
+            .disabled(!appInstalled && !previewMode)
             .accentColor(.teal)
     }
 
-    var trashButton: some View {
+    func trashButton() -> some View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: true)
         //.keyboardShortcut(.delete)
-            .disabled(!appInstalled)
+            .disabled(!appInstalled && !previewMode)
             .accentColor(.red)
             .confirmationDialog(Text("Really delete this app?", bundle: .module), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
                 Bundle.module.button("Delete") {
                     runTask(activity: .trash, confirm: true)
                 }
             }, message: {
-                Text("This will remove the application “\(info.release.name)” from your applications folder and place it in the Trash.")
+                Text("This will remove the application “\(info.release.name)” from your applications folder and place it in the Trash.", bundle: .module)
             })
     }
 
-    private var actionButtonStack: some View {
-        let isCatalogApp = info.release.bundleIdentifier == "app.App-Fair"
-
-        return HStack {
-            installButton.disabled(isCatalogApp)
-            updateButton
-            Spacer()
-            launchButton.disabled(isCatalogApp)
-            Spacer()
-            revealButton
-            trashButton.disabled(isCatalogApp)
-        }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle)
-        .controlSize(.large)
-    }
-
-    func deleteMessage() -> some View {
+    func installMessage() -> some View {
         Text(atx: """
             This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
 
@@ -137,7 +405,7 @@ struct CatalogItemView: View {
             """)
     }
 
-    var item: FairAppCatalog.AppRelease {
+    var item: AppCatalogItem {
         info.release
     }
 
@@ -157,7 +425,7 @@ struct CatalogItemView: View {
             case .install:
                 return ("Install", "square.and.arrow.down.fill", Color.blue, "Download and install the app.")
             case .update:
-                return ("Update", "square.and.arrow.down.on.square.fill", Color.orange, "Update to the latest version of the app.")
+                return ("Update", "square.and.arrow.down.on.square", Color.orange, "Update to the latest version of the app.")
             case .trash:
                 return ("Delete", "trash", Color.red, "Delete the app from your computer.")
             case .reveal:
@@ -172,10 +440,10 @@ struct CatalogItemView: View {
     var appPropertyList: Result<Plist, Error>? {
         let installPath = AppManager.appInstallPath(for: item)
         let result = appManager.installedApps[installPath]
-        dbg("install for item:", item, "install path:", AppManager.appInstallPath(for: item).path, "plist:", result != nil, "installedApps:", appManager.installedApps.keys.map(\.path))
+        //dbg("install for item:", item, "install path:", AppManager.appInstallPath(for: item).path, "plist:", result != nil, "installedApps:", appManager.installedApps.keys.map(\.path))
 
         if result == nil {
-            dbg("install path not found:", installPath, "in keys:", appManager.installedApps.keys)
+            //dbg("install path not found:", installPath, "in keys:", appManager.installedApps.keys)
         }
         return result
     }
@@ -272,21 +540,35 @@ struct CatalogItemView: View {
 
     func fetchREADME() async {
         dbg("fetching")
-//        do {
-//            // let await
-//            let contents = ""
-//            // self.readme = try contents.atx()
-//            self.readme = wip(nil) // FIXME: no point in rendering markdown until headers and other formatting are supported
-//        } catch {
-//            self.readme = AttributedString("Error fetching README.md")
-//            appManager.reportError(error)
-//        }
+        //        do {
+        //            // let await
+        //            let contents = ""
+        //            // self.readme = try contents.atx()
+        //            self.readme = wip(nil) // FIXME: no point in rendering markdown until headers and other formatting are supported
+        //        } catch {
+        //            self.readme = AttributedString("Error fetching README.md")
+        //            appManager.reportError(error)
+        //        }
     }
 
     func iconView() -> some View {
         FairIconView(item.name)
             .frame(width: 100, height: 100)
         //AppIconView(iconName: item.name, baseColor: .yellow)
+    }
+
+    func categorySymbol() -> some View {
+        let symbol = (item.appCategories.first?.groupings.first ?? .create)
+            .symbolName
+
+        return Image(systemName: symbol.description)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .labelStyle(.iconOnly)
+            .symbolVariant(.fill)
+            .symbolRenderingMode(.hierarchical)
+            .foregroundColor(.secondary)
+            .frame(width: 100, height: 100)
     }
 
     func iconView2() -> some View {
@@ -310,15 +592,17 @@ struct CatalogItemView: View {
         .frame(width: 100, height: 100)
     }
 
-    func card(_ s1: LocalizedStringKey, _ s2: LocalizedStringKey, _ s3: LocalizedStringKey) -> some View {
+    func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3) -> some View {
         VStack {
-            Text(s1, bundle: .module)
+            s1
                 .textCase(.uppercase)
                 .font(.system(size: 10, weight: .bold, design: .default))
                 .foregroundColor(.secondary)
-            Text(s2, bundle: .module)
+            s2
                 .font(.system(size: 20, weight: .black, design: .rounded))
-            Text(s3, bundle: .module)
+                .foregroundColor(.secondary)
+            s3
+                .foregroundColor(.secondary)
         }
     }
 
@@ -358,13 +642,15 @@ struct CatalogItemView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
+    static let sampleCatalogEntry = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 23_456, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: nil, permissions: AppEntitlement.bitsetRepresentation(for: Set(AppEntitlement.allCases)))
+
     static var previews: some View {
-        CatalogItemView(info: AppInfo(release: catalog))
-            .frame(width: 700)
-            .environmentObject(AppManager())
+        CatalogItemView(info: AppInfo(release: Self.sampleCatalogEntry), previewMode: true)
+            .environmentObject(AppManager.default)
+        .frame(width: 800)
+        .frame(height: 1000)
         //.environment(\.locale, Locale(identifier: "fr"))
     }
 }
 
 
-private let catalog = FairAppCatalog.AppRelease(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceReferenceDate: 0), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [""], downloadCount: 123_456, starCount: 123, watcherCount: nil, issueCount: 12, sourceSize: 2_210_000, coreSize: nil, sha256: nil, permissions: nil)

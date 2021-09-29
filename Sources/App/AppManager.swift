@@ -21,6 +21,9 @@ import FairApp
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
+    /// The current catalog of apps
+    @Published var catalog: [AppCatalogItem] = []
+
     static let `default`: AppManager = AppManager()
 
     internal required init() {
@@ -40,7 +43,7 @@ extension AppManager {
     }
 
     /// Launch the local installed copy of this app
-    func launch(item: FairAppCatalog.AppRelease) async {
+    func launch(item: AppCatalogItem) async {
         do {
             dbg("launching:", item.name)
             guard let installPath = Self.installedPath(for: item) else {
@@ -67,7 +70,7 @@ extension AppManager {
     /// `/Applications/Fair Ground/App Name.app`, except for the
     /// `Fair Ground.app` catalog app itself, which will be at:
     /// `/Applications/Fair Ground.app`.
-    static func appInstallPath(for item: FairAppCatalog.AppRelease) -> URL {
+    static func appInstallPath(for item: AppCatalogItem) -> URL {
         // e.g., "App Fair.app" matches "/Applications/App Fair"
         URL(fileURLWithPath: item.name + FairCLI.appSuffix, isDirectory: true, relativeTo: installFolderURL.lastPathComponent == item.name ? installFolderURL.deletingLastPathComponent() : installFolderURL)
     }
@@ -119,12 +122,12 @@ extension AppManager {
 
 
     /// The `appInstallPath`, or nil if it does not exist
-    static func installedPath(for item: FairAppCatalog.AppRelease) -> URL? {
+    static func installedPath(for item: AppCatalogItem) -> URL? {
         appInstallPath(for: item).asDirectory
     }
 
     /// Trashes the local installed copy of this app
-    func trash(item: FairAppCatalog.AppRelease) async {
+    func trash(item: AppCatalogItem) async {
         do {
             dbg("trashing:", item.name)
             guard let installPath = Self.installedPath(for: item) else {
@@ -146,7 +149,7 @@ extension AppManager {
     }
 
     /// Reveals the local installed copy of this app using the finder
-    func reveal(item: FairAppCatalog.AppRelease) async {
+    func reveal(item: AppCatalogItem) async {
         do {
             dbg("revealing:", item.name)
             guard let installPath = Self.installedPath(for: item) else {
@@ -165,7 +168,7 @@ extension AppManager {
         }
     }
 
-    func install(item: FairAppCatalog.AppRelease, progress: Progress, update: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress: Progress, update: Bool = true) async throws {
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
         }
@@ -264,7 +267,7 @@ extension AppManager {
         await scanInstalledApps()
     }
 
-    func validate(appPath: URL, forItem release: FairAppCatalog.AppRelease) throws {
+    func validate(appPath: URL, forItem release: AppCatalogItem) throws {
         let appPathName = appPath.deletingPathExtension().lastPathComponent
         if appPathName != release.name {
             throw Errors.wrongAppName(appPathName, release.name)
@@ -279,7 +282,7 @@ extension AppManager {
         /// The expected install path was not the name of the app to be installed
         case wrongAppName(String, String)
         /// An operation assumed the app was installed, but it wasn't
-        case appNotInstalled(FairAppCatalog.AppRelease)
+        case appNotInstalled(AppCatalogItem)
         /// A problem occurred with unzipping the file
         case unableToLoadZip(URL)
         /// When there are more install files than expected

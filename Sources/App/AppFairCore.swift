@@ -6,10 +6,10 @@ import FairApp
 //}
 
 struct AppInfo : Identifiable {
-    var release: FairAppCatalog.AppRelease
+    var release: AppCatalogItem
     var installedPlist: Plist? = nil
 
-    var id: FairAppCatalog.AppRelease.ID {
+    var id: AppCatalogItem.ID {
         release.id
     }
 
@@ -47,7 +47,7 @@ extension Plist {
 }
 
 
-extension FairAppCatalog.AppRelease : Identifiable {
+extension AppCatalogItem : Identifiable {
     public var id: URL { downloadURL }
 
     /// The hyphenated form of this app's name
@@ -58,6 +58,11 @@ extension FairAppCatalog.AppRelease : Identifiable {
     /// Returns the URL to this app's home page
     var baseURL: URL! {
         URL(string: "https://github.com/\(appNameHyphenated)/App")
+    }
+
+    /// The e-mail address for contacting the developer
+    var developerEmail: String {
+        developerName // TODO: parse out
     }
 
     /// Returns the URL to this app's home page
@@ -71,6 +76,14 @@ extension FairAppCatalog.AppRelease : Identifiable {
 
     var discussionsURL: URL! {
         baseURL!.appendingPathComponent("discussions")
+    }
+
+    var fileSize: Int? {
+        size
+    }
+
+    var appCategories: [AppCategory] {
+        dump(self.categories)?.compactMap(AppCategory.init(metadataID:)) ?? []
     }
 }
 
@@ -195,7 +208,7 @@ extension AppManager {
 
     func appCount(_ grouping: AppCategory.Grouping) -> Text? {
         if grouping == .research {
-            return Text("10", bundle: .module)
+            return Text(wip("10"), bundle: .module)
         } else {
             return nil
         }
@@ -367,6 +380,15 @@ public struct AppSettingsView: View {
 
 
 public extension View {
+    /// Centers this view in an `HStack` with spacers.
+    func hcenter() -> some View {
+        HStack(alignment: .center) {
+            Spacer()
+            self
+            Spacer()
+        }
+    }
+
     /// Returns a `Bool` binding that indicates whether another binding is `null`
     func nullifyingBoolBinding<T>(_ binding: Binding<T?>) -> Binding<Bool> {
         Binding(get: {
@@ -483,23 +505,36 @@ public extension AppCategory {
         case game
         case work
 
+        /// All the categories that belong to this grouping
+        public var symbolName: StaticString {
+            switch self {
+            case .create: return "puzzlepiece"
+            case .research: return "book"
+            case .communicate: return "envelope"
+            case .entertain: return "sparkles.tv"
+            case .live: return "house"
+            case .game: return "circle.hexagongrid"
+            case .work: return "briefcase"
+            }
+        }
+
         @available(macOS 12.0, iOS 15.0, *)
         public var label: TintedLabel {
             switch self {
             case .create:
-                return TintedLabel(title: "Arts & Crafts", systemName: "puzzlepiece", tint: Color.cyan) // "paintpalette" is nicer, but the multi-color is currently messed up when used with gradient foregroundStyle so we nil the tint instead of using Color.cyan
+                return TintedLabel(title: "Arts & Crafts", systemName: symbolName, tint: Color.cyan) // "paintpalette" is nicer, but the multi-color is currently messed up when used with gradient foregroundStyle so we nil the tint instead of using Color.cyan
             case .research:
-                return TintedLabel(title: "Knowledge", systemName: "book", tint: Color.green)
+                return TintedLabel(title: "Knowledge", systemName: symbolName, tint: Color.green)
             case .communicate:
-                return TintedLabel(title: "Communication", systemName: "envelope", tint: Color.pink)
+                return TintedLabel(title: "Communication", systemName: symbolName, tint: Color.pink)
             case .entertain:
-                return TintedLabel(title: "Entertainment", systemName: "sparkles.tv", tint: Color.teal)
+                return TintedLabel(title: "Entertainment", systemName: symbolName, tint: Color.teal)
             case .live:
-                return TintedLabel(title: "Health & Lifestyle", systemName: "house", tint: Color.mint)
+                return TintedLabel(title: "Health & Lifestyle", systemName: symbolName, tint: Color.mint)
             case .game:
-                return TintedLabel(title: "Diversion", systemName: "circle.hexagongrid", tint: Color.yellow)
+                return TintedLabel(title: "Diversion", systemName: symbolName, tint: Color.yellow)
             case .work:
-                return TintedLabel(title: "Work", systemName: "briefcase", tint: Color.brown)
+                return TintedLabel(title: "Work", systemName: symbolName, tint: Color.brown)
             }
         }
 
@@ -654,7 +689,7 @@ struct SidebarView: View {
     }
 
     func selectItem(_ item: AppManager.SidebarItem) {
-        print(wip("SELECTED"), item)
+        dbg("selected:", item.label, item.id)
     }
 }
 
@@ -780,3 +815,8 @@ internal func wip<T>(_ value: T) -> T { value }
 /// If true, show simulated information
 let pretendMode = false // wip(true) // pretend mode is for pretend
 
+/// Warning when we use the un-bundled form of the `SwiftUI.Text` constructor.
+@available(*, deprecated, renamed: "Text(_:bundle:)")
+func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
+    SwiftUI.Text(string)
+}

@@ -203,20 +203,23 @@ struct ReleasesTableView : View, ItemTableView {
     @State var selection: AppInfo.ID? = nil
     @State var sortOrder = [KeyPathComparator(\TableRowValue.release.versionDate)]
     @State var searchText: String = ""
-    @State var releases: [FairAppCatalog.AppRelease] = []
     @State var displayExtensions: Set<String> = ["zip"] // , "ipa"]
 
     @AppStorage("catalogURL") var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 
     var items: [AppInfo] {
-        releases.map({ release in
-            // let plist = appManager.installedApps[appManager.appInstallPath(for: $0)]
+        appManager.catalog
+            .map(appInfo(for:))
+            .sorted(using: sortOrder)
+    }
 
-            let plist = appManager.installedApps.values.compactMap(\.successValue).first(where: {
-                $0.CFBundleIdentifier == release.bundleIdentifier
-            })
-            return AppInfo(release: release, installedPlist: plist)
+    func appInfo(for item: AppCatalogItem) -> AppInfo {
+        // let plist = appManager.installedApps[appManager.appInstallPath(for: $0)]
+
+        let plist = appManager.installedApps.values.compactMap(\.successValue).first(where: {
+            $0.CFBundleIdentifier == item.bundleIdentifier
         })
+        return AppInfo(release: item, installedPlist: plist)
     }
 
     struct Columnator : OptionSet {
@@ -246,14 +249,19 @@ struct ReleasesTableView : View, ItemTableView {
         do {
             let start = CFAbsoluteTimeGetCurrent()
             let catalog = try await appManager.hub().fetchCatalog(catalogURL: catalogURL, cache: cache)
-            self.releases = catalog.apps
+            appManager.catalog = catalog.apps
             let end = CFAbsoluteTimeGetCurrent()
             dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
         } catch {
             Task { // otherwise warnings about accessing off of the main thread
                 // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
                 dbg("received error:", error)
-                appManager.reportError(error)
+                // we tolerate a "cancelled" error because it can happen when a view that is causing a catalog load is changed and its request gets automaticallu cancelled
+                if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == -999 {
+
+                } else {
+                    appManager.reportError(error)
+                }
             }
         }
     }
@@ -347,10 +355,6 @@ struct ReleasesTableView : View, ItemTableView {
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: false))
             .font(Font.body.monospacedDigit())
-            .onChange(of: sortOrder) {
-                // unfortunately, we can't just sort the releases since they are a pass-through struct
-                self.releases = self.items.sorted(using: $0).map(\.release)
-            }
             .focusedSceneValue(\.selection, .constant(itemSelection))
             .focusedSceneValue(\.reloadCommand, .constant({ await fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData) }))
             .searchable(text: $searchText)
