@@ -238,7 +238,7 @@ struct CatalogItemView: View {
                     .help(entitlement.localizedInfo.info)
             }
         }
-        .listStyle(.bordered(alternatesRowBackgrounds: true))
+        //.listStyle(.bordered(alternatesRowBackgrounds: true)) // not in iOS
     }
 
     func catalogVersionRow() -> some View {
