@@ -12,8 +12,19 @@ let package = Package(
         // additional GitHub-hosted dependencies can be added below
     ],
     targets: [
-        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair") ], resources: [.process("Resources"), .copy("Bundle")]),
-        .testTarget(name: "AppTests", dependencies: ["App"]),
+        .target(name: "App", dependencies: [ 
+            .product(name: "FairApp", package: "Fair"),
+        ], 
+        resources: [
+            .process("Resources"), 
+            .copy("Bundle"),
+        ],
+        linkerSettings: [
+            .linkedFramework("UIKit"),
+        ]),
+        .testTarget(name: "AppTests", dependencies: [
+            "App"
+        ]),
     ]
 )
 
