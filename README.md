@@ -26,7 +26,7 @@ To get started building your own app using only your web browser:
    Issues & Discussions are required to remain active to facilitate
    communication channels between the developer and end-users of the app. 
 4. [Edit Info.plist](../../edit/main/Info.plist) and update 
-   the `CFBundleName` to be "App Org" (the app name with a space) 
+   the `CFBundleName` to be "App Name" (the app name with a space) 
    and `CFBundleIdentifier` to be "app.App-Name".
 5. [Edit Sources/App/AppContainer.swift](../../edit/main/Sources/App/AppContainer.swift) 
    and add some code to your app!

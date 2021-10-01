@@ -15,7 +15,7 @@
 
     <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
-    <string>App Org</string>
+    <string>App Name</string>
 
     <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
