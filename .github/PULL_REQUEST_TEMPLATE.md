@@ -6,9 +6,8 @@ Creating or updating the PR will build a new release of
 your App fork.
 
 The title of your Pull Request must be of the form:
-`app.App-Org v1.2.3`,
-where `app.App-Org` is the `CFBundleIdentifier` 
-and the version is the `CFBundleShortVersionString`
+`app.App-Name`,
+where `app.App-Name` is the `CFBundleIdentifier` 
 in your `Info.plist` metadata file.
 
 Note that these integration Pull Requests will not be 
