@@ -8,18 +8,18 @@
         The organizations name, in the form of 'Some-Word', will cause the app
         to be named "Some Word".
         You should manually edit the CFBundleName and CFBundleIdentifier to match
-        your app's identifier, but if it is left as the default 'app.App-Org',
+        your app's identifier, but if it is left as the default 'app.App-Name',
         then the integration phase will swap in the correct
         name for your organization, which will be included in the release build.
     -->
 
-    <!-- the name of your app; must match your App-Org with a space for the hyphen -->
+    <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
     <string>App Org</string>
 
-    <!-- the bundle ID, which must be: "app.App-Org" with your app org name -->
+    <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
-    <string>app.App-Org</string>
+    <string>app.App-Name</string>
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>

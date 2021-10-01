@@ -18,16 +18,16 @@ To get started building your own app using only your web browser:
    should consist of two short words (no numbers) separated by a single hyphen.
    For example: "Cookie-Time"
 2. [Fork the appfair/App repository](https://github.com/appfair/App/fork) 
-   into your new "App-Org" organization. 
+   into your new "App-Name" organization. 
    An app-org can only contain a single app that is named "App" (literally). 
-   It must be publicly accessible at `github.com/App-Org/App.git`
+   It must be publicly accessible at `github.com/App-Name/App.git`
 3. Update your App settings: enable Issues and Discussions for 
-   your `App-Org/App` fork. 
+   your `App-Name/App` fork. 
    Issues & Discussions are required to remain active to facilitate
    communication channels between the developer and end-users of the app. 
 4. [Edit Info.plist](../../edit/main/Info.plist) and update 
    the `CFBundleName` to be "App Org" (the app name with a space) 
-   and `CFBundleIdentifier` to be "app.App-Org".
+   and `CFBundleIdentifier` to be "app.App-Name".
 5. [Edit Sources/App/AppContainer.swift](../../edit/main/Sources/App/AppContainer.swift) 
    and add some code to your app!
 6. [Create a Pull Request](../../compare) with your changes, and submit 
