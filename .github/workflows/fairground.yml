@@ -84,7 +84,7 @@ jobs:
         run: |
           gh release list
 
-      - name: "Validate App Org: ${{ env.ORGNAME }}"
+      - name: "Validate App Name: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
       - name: "Generate Icon"
