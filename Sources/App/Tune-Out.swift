@@ -18,7 +18,7 @@ import AVFoundation
 import VideoToolbox
 import WebKit
 import TabularData
-import AudioKitUI
+import AudioKit
 
 @available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure, Identifiable {

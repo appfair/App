@@ -9,12 +9,12 @@ let package = Package(
     dependencies: [
         // the Fair main branch must be the first dependency to pass integration
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
-        .package(name: "AudioKitUI", url: "https://github.com/AudioKit/AudioKitUI.git", .branch("main")),
+        .package(name: "AudioKit", url: "https://github.com/AudioKit/AudioKit.git", from: "5.2.2"),
     ],
     targets: [
         .target(name: "App", dependencies: [ 
             .product(name: "FairApp", package: "Fair"),
-            .product(name: "AudioKitUI", package: "AudioKitUI"),
+            .product(name: "AudioKit", package: "AudioKit"),
         ], 
         resources: [
             .process("Resources"), 
