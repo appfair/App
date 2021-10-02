@@ -18,10 +18,10 @@ let package = Package(
         resources: [
             .process("Resources"), 
             .copy("Bundle"),
-        ]/*,
+        ],
         linkerSettings: [
-            .linkedFramework("UIKit"),
-        ]*/),
+            .linkedFramework("AVKit"),
+        ]),
         .testTarget(name: "AppTests", dependencies: [
             "App"
         ]),
