@@ -153,14 +153,14 @@ public struct ContentView: View {
 
     public var body: some View {
         TuneOutView()
-            .searchable(text: $store.queryString, placement: .automatic, prompt: Text("Search", bundle: .module))
+            .searchable(text: $store.queryString, placement: .automatic, prompt: Text("Search"))
             .toolbar {
                 Button {
                     dbg(wip("shuffle"))
                 } label: {
                     Label("Shuffle", systemImage: "shuffle")
                 }
-                .help(Text("Shuffle the current selection", bundle: .module))
+                .help(Text("Shuffle the current selection"))
                 .symbolRenderingMode(.multicolor)
                 //.symbolVariant(.circle)
                 //.symbolVariant(.fill)
@@ -181,3 +181,8 @@ public struct AppSettingsView : View {
 /// Work-in-Progress marker
 @available(*, deprecated, message: "work in progress")
 internal func wip<T>(_ value: T) -> T { value }
+
+/// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
+@usableFromInline internal func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
+    SwiftUI.Text(string, bundle: .module)
+}

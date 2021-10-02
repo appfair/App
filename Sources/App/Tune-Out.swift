@@ -18,7 +18,7 @@ import AVFoundation
 import VideoToolbox
 import WebKit
 import TabularData
-import SwiftUI
+import AudioKitUI
 
 @available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure, Identifiable {
@@ -93,20 +93,18 @@ struct Station : Pure, Identifiable {
         Url.flatMap(URL.init(string:))
     }
 
-    func imageView(size: CGFloat?) -> some View {
+    func imageView() -> some View {
         self.Favicon.flatMap {
             URL(string: $0).flatMap {
                 AsyncImage(url: $0, content: { image in
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: size, height: size)
+                        .aspectRatio(contentMode: .fit)
                         .clipped()
                 }, placeholder: {
                     RoundedRectangle(cornerRadius: 0)
                         .fill(Color.gray.opacity(0.4))
                 })
-                    .frame(width: size, height: size)
             }
         }
     }
@@ -216,7 +214,15 @@ struct StationCatalog {
     }()
 
     static var countryCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "Country") }
+        Result { try stations.get().frame.valueCounts(column: "CountryCode") }
+    }
+
+    static var languageCounts: Result<[ValueCount<String>], Error> {
+        Result { try stations.get().frame.valueCounts(column: "Language") }
+    }
+
+    static var tagsCounts: Result<[ValueCount<String>], Error> {
+        Result { try stations.get().frame.valueCounts(column: "Tags") }
     }
 }
 
@@ -226,6 +232,7 @@ extension DataFrame {
         self
             .grouped(by: column)
             .counts(order: .descending)
+            .sorted(on: column)
             .rows
             .compactMap { row in
                 (row[column] as? T).flatMap { value in
@@ -288,37 +295,49 @@ public struct TuneOutView: View {
 
 
 @available(macOS 12.0, iOS 15.0, *)
-struct CountryStationView : View {
-    let country: ValueCount<String>?
+struct StationList<T: Equatable> : View {
+    let column: ColumnID<T>
+    let valueCount: ValueCount<T>?
     @State var selection: Station?
 
     var body: some View {
-        let elements: [Station] = (StationCatalog.stations.successValue?.frame.rows.filter({ row in
-            row[ColumnID("Country", String.self)] == country?.value
-        }) ?? [])
-            .map({ Station(row: $0) })
-
-        return List {
-            ForEach(elements, content: stationElement)
+        List {
+            ForEach(filteredElements, content: stationElement)
         }
     }
 
-    func stationElement(station: Station) -> some View {
-//            Text(station.Name ?? "Unknown")
-                NavigationLink(tag: station, selection: $selection, destination: {
-                    StationView(source: station)
-                }) {
-                    Label(title: {
-                        Text(station.Name ?? "Unknown")
-                            .lineLimit(1)
-                            .allowsTightening(true)
-                            .truncationMode(.middle)
-                    }) {
-                        station.imageView(size: 25)
-                    }
-                    .badge(station.Votes?.localizedNumber())
+    var filteredElements: [Station] {
+        ((StationCatalog.stations.successValue?.frame.rows)?
+            .filter { row in
+                row[column] == valueCount?.value
+            } ?? [])
+            .map(Station.init(row:))
+    }
 
-                }
+    func stationElement(station: Station) -> some View {
+        // Text(station.Name ?? "Unknown")
+        NavigationLink(tag: station, selection: $selection, destination: {
+            StationView(source: station)
+        }) {
+            Label(title: {
+                (station.Name.map(Text.init) ?? Text("Unknown Name"))
+                    .lineLimit(1)
+                    .allowsTightening(true)
+                    .truncationMode(.middle)
+                //(station.Tags.map(Text.init) ?? Text("No Tags"))
+                //    .lineLimit(1)
+                //    .allowsTightening(true)
+                //    .truncationMode(.middle)
+            }) {
+                Rectangle()
+                    .fill(.clear)
+                    .background(station.imageView().clipped())
+                    .frame(width: 25, height: 25)
+            }
+            .badge(station.Bitrate)
+            //.badge(station.Votes?.localizedNumber())
+
+        }
     }
 }
 
@@ -327,25 +346,77 @@ struct Sidebar: View {
     var body: some View {
         List {
             countriesSection
+            tagsSection
+            languagesSection
         }
         .listStyle(SidebarListStyle())
+    }
+
+    var languagesSection: some View {
+        Section {
+            ForEach(StationCatalog.languageCounts.successValue ?? [], id: \.value) { lang in
+                NavigationLink(destination: StationList(column: ColumnID("Language", String.self), valueCount: lang)) {
+                    Label(title: {
+                        Text(lang.value)
+                    }, icon: {
+                        //Text(emojiFlag(countryCode: lang.value))
+                    })
+                        .badge(lang.count)
+                }
+            }
+        } header: {
+            Text("Tags")
+        }
+    }
+
+    var tagsSection: some View {
+        Section {
+            ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
+                NavigationLink(destination: StationList(column: ColumnID("Tags", String.self), valueCount: tag)) {
+                    Label(title: {
+//                        if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
+//                            Text(langName)
+//                        } else {
+                            Text(tag.value)
+//                        }
+                    }, icon: {
+                        //Text(emojiFlag(countryCode: lang.value))
+
+                    })
+                        .badge(tag.count)
+                }
+            }
+        } header: {
+            Text("Languages")
+        }
     }
 
     var countriesSection: some View {
         Section {
             ForEach(StationCatalog.countryCounts.successValue ?? [], id: \.value) { country in
-                NavigationLink(destination: CountryStationView(country: country)) {
+                NavigationLink(destination: StationList(column: ColumnID("CountryCode", String.self), valueCount: country)) {
                     Label(title: {
-                        Text(.init(country.value.isEmpty ? "Unknown" : country.value), bundle: .module)
+                        if let countryName = (Locale.current as NSLocale).displayName(forKey: .countryCode, value: country.value) {
+                            Text(countryName)
+                        } else {
+                            Text("Unknown")
+                        }
                     }, icon: {
-                        Image(systemName: "music.note")
+                        Text(emojiFlag(countryCode: country.value))
                     })
-                        .badge(country.count.localizedNumber())
+                        .badge(country.count)
                 }
             }
         } header: {
             Text("Countries")
         }
+    }
+
+    func emojiFlag(countryCode: String) -> String {
+        let codes = countryCode.unicodeScalars.compactMap {
+            UnicodeScalar(127397 + $0.value)
+        }
+        return String(codes.map(Character.init))
     }
 
     var categories: Set<String> {
@@ -376,7 +447,7 @@ struct StationView: View {
                     .font(.largeTitle)
                     .frame(maxWidth: .infinity)
 
-                Text("Now Playing: \(tuner.itemTitle)", bundle: .module)
+                Text("Now Playing: \(tuner.itemTitle)")
                     .font(.largeTitle)
                     .frame(maxWidth: .infinity)
 
@@ -384,7 +455,8 @@ struct StationView: View {
                 Spacer()
 
             }
-            .background(source.imageView(size: nil))
+            //.background(source.imageView().blur(radius: 20, opaque: true))
+            .background(Material.thick)
         }
         .textSelection(.enabled)
         .onAppear {
