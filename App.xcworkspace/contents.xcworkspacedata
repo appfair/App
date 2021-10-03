@@ -8,7 +8,7 @@
       location = "group:project.xcodeproj">
    </FileRef>
    <FileRef
-       location = "group:../Fair">
+      location = "group:../Fair">
    </FileRef>
    <FileRef
       location = "group:../../marcprux/CodeEditor">
