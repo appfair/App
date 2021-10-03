@@ -16,7 +16,13 @@ let package = Package(
         .target(name: "App", dependencies: [ 
             .product(name: "FairApp", package: "Fair"), 
             "CodeEditor",
-        ], resources: [.process("Resources"), .copy("Bundle")]),
+        ], resources: [
+            .process("Resources"),
+            .copy("Bundle")
+        ],
+        linkerSettings: [
+            .linkedFramework("SwiftUI"),
+        ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
