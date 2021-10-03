@@ -302,8 +302,8 @@ struct ReleasesTableView : View, ItemTableView {
                 }
                 sizeColumn
 
-                let coreSizeColumn = onumColumn(named: "Core Size", path: \TableRowValue.release.coreSize)
-                coreSizeColumn
+//                let coreSizeColumn = onumColumn(named: "Core Size", path: \TableRowValue.release.coreSize)
+//                coreSizeColumn
 
                 let riskColumn = TableColumn("Risk", value: \TableRowValue.release.riskLevel) { item in
                     item.release.riskLabel()
