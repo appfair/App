@@ -40,7 +40,7 @@ struct Station : Pure, Identifiable {
     let Codec: String?
     let LastCheckOK: String?
     let LastCheckTime: String?
-    let Bitrate: String?
+    let Bitrate: Int?
     let UrlCache: String?
     let LastCheckOkTime: String?
     let Hls: String?
@@ -73,7 +73,7 @@ struct Station : Pure, Identifiable {
         self.Codec = row["Codec"] as? String
         self.LastCheckOK = row["LastCheckOK"] as? String
         self.LastCheckTime = row["LastCheckTime"] as? String
-        self.Bitrate = row["Bitrate"] as? String
+        self.Bitrate = row["Bitrate"] as? Int
         self.UrlCache = row["UrlCache"] as? String
         self.LastCheckOkTime = row["LastCheckOkTime"] as? String
         self.Hls = row["Hls"] as? String
@@ -192,7 +192,7 @@ struct StationCatalog {
                 "Codec" : CSVType.string,
                 "LastCheckOK" : CSVType.string,
                 "LastCheckTime" : dateFieldParse,
-                "Bitrate" : CSVType.string,
+                "Bitrate" : CSVType.integer,
                 "UrlCache" : CSVType.string,
                 "LastCheckOkTime" : dateFieldParse,
                 "Hls" : CSVType.string,
@@ -232,7 +232,6 @@ extension DataFrame {
         self
             .grouped(by: column)
             .counts(order: .descending)
-            .sorted(on: column)
             .rows
             .compactMap { row in
                 (row[column] as? T).flatMap { value in
@@ -334,7 +333,7 @@ struct StationList<T: Equatable> : View {
                     .background(station.imageView().clipped())
                     .frame(width: 25, height: 25)
             }
-            .badge(station.Bitrate)
+            .badge(station.Bitrate ?? wip(0))
             //.badge(station.Votes?.localizedNumber())
 
         }
@@ -346,8 +345,8 @@ struct Sidebar: View {
     var body: some View {
         List {
             countriesSection
-            tagsSection
             languagesSection
+            tagsSection
         }
         .listStyle(SidebarListStyle())
     }
@@ -365,7 +364,7 @@ struct Sidebar: View {
                 }
             }
         } header: {
-            Text("Tags")
+            Text("Languages")
         }
     }
 
@@ -387,24 +386,41 @@ struct Sidebar: View {
                 }
             }
         } header: {
-            Text("Languages")
+            Text("Tags")
         }
+    }
+
+    func sortedCountries(count: Bool) -> [(localName: String?, valueCount: ValueCount<String>)] {
+        (StationCatalog.countryCounts.successValue ?? [])
+            .map {
+                (countryName(for: $0.value), $0)
+            }
+            .sorted { svc1, svc2 in
+//                count
+//                ? (svc1.valueCount?.count ?? Int.min) < (svc2.valueCount?.count ?? Int.max)
+//                :
+                (svc1.localName ?? String(UnicodeScalar(.min))) < (svc2.localName ?? String(UnicodeScalar(.max)))
+            }
+    }
+
+    func countryName(for code: String) -> String? {
+        (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
     var countriesSection: some View {
         Section {
-            ForEach(StationCatalog.countryCounts.successValue ?? [], id: \.value) { country in
-                NavigationLink(destination: StationList(column: ColumnID("CountryCode", String.self), valueCount: country)) {
+            ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
+                NavigationLink(destination: StationList(column: ColumnID("CountryCode", String.self), valueCount: country.valueCount)) {
                     Label(title: {
-                        if let countryName = (Locale.current as NSLocale).displayName(forKey: .countryCode, value: country.value) {
+                        if let countryName = country.localName {
                             Text(countryName)
                         } else {
                             Text("Unknown")
                         }
                     }, icon: {
-                        Text(emojiFlag(countryCode: country.value))
+                        Text(emojiFlag(countryCode: country.valueCount.value))
                     })
-                        .badge(country.count)
+                        .badge(country.valueCount.count)
                 }
             }
         } header: {
