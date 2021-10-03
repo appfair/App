@@ -13,6 +13,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
+import UniformTypeIdentifiers
 
 // The entry point to creating your app is the `AppContainer` type,
 // which is a stateless enum declared in `AppMain.swift` and may not be changed.
@@ -21,13 +22,54 @@ import FairApp
 // which enables customization of the root scene, app settings, and
 // other features of the app.
 
+
+//extension UTType {
+//    static var exampleText: UTType {
+//        UTType(importedAs: "com.example.plain-text")
+//    }
+//}
+
+struct TextFile: FileDocument {
+    var text: String
+
+    init(text: String = "Hello, world!") {
+        self.text = text
+    }
+
+    static var readableContentTypes: [UTType] { [
+        UTType.text,
+        UTType.plainText,
+        UTType.utf8PlainText,
+        UTType(importedAs: "org.iso.sql"),
+        UTType(importedAs: "org.kotlinlang.source"),
+        UTType(importedAs: "net.daringfireball.markdown"),
+    ] }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents,
+              let string = String(data: data, encoding: .utf8)
+        else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        text = string
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        let data = text.data(using: .utf8)!
+        return .init(regularFileWithContents: data)
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
     /// The body of your scene is provided by `AppContainer.scene`
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        WindowGroup {
-            ContentView().environmentObject(store)
+        DocumentGroup(newDocument: TextFile()) { file in
+            ContentView(document: file.$document)
         }
+//        WindowGroup {
+//            ContentView().environmentObject(store)
+//        }
         .commands {
             TextEditingCommands()
             TextFormattingCommands()
@@ -49,9 +91,10 @@ public extension AppContainer {
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    @Binding var document: TextFile
 
     public var body: some View {
-        CodeEditorView()
+        CodeEditorView(text: $document.text)
     }
 }
 

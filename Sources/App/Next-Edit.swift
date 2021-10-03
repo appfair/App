@@ -3,7 +3,7 @@ import CodeEditor
 
 @available(macOS 12.0, iOS 15.0, *)
 struct CodeEditorView : View {
-    @State var text = wip("Welcome to Next Edit!")
+    @Binding var text: String
 
     var body: some View {
         CodeEditor(text: $text)
