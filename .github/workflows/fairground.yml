@@ -190,7 +190,7 @@ jobs:
         run: |
           echo "Creating release: ${GITHUB_REF#refs/tags/}"
           # if the release already exists, clobber it
-          gh release delete "${GITHUB_REF#refs/tags/}" -y
+          gh release delete "${GITHUB_REF#refs/tags/}" -y || true
           # initiate a new release with the tag name
           gh release create \
             "${GITHUB_REF#refs/tags/}" \
