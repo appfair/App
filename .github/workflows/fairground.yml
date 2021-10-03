@@ -84,7 +84,7 @@ jobs:
         run: |
           gh release list
 
-      - name: "Validate App Org: ${{ env.ORGNAME }}"
+      - name: "Validate App Name: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
       - name: "Generate Icon"
@@ -260,7 +260,7 @@ jobs:
         id: get_app_version
         run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
 
-      - name: "Validate App-Org: ${{ env.ORGNAME }}"
+      - name: "Validate App-Name: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
 
       - name: Integrate PR

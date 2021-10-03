@@ -78,12 +78,25 @@ extension AppCatalogItem : Identifiable {
         baseURL!.appendingPathComponent("discussions")
     }
 
+    var developerURL: URL! {
+        queryURL(type: "users", term: developerEmail)
+    }
+
+    var fairsealURL: URL! {
+        queryURL(type: "issues", term: sha256 ?? "")
+    }
+
+    /// Builds a general query
+    private func queryURL(type: String, term: String) -> URL! {
+        URL(string: "https://github.com/search?type=" + type.escapedURLTerm + "&q=" + term.escapedURLTerm)
+    }
+
     var fileSize: Int? {
         size
     }
 
     var appCategories: [AppCategory] {
-        dump(self.categories)?.compactMap(AppCategory.init(metadataID:)) ?? []
+        self.categories?.compactMap(AppCategory.init(metadataID:)) ?? []
     }
 }
 
@@ -144,7 +157,7 @@ struct AppFairCommands: Commands {
 //            ShareAppButton()
 //        }
 
-        CommandMenu(Text("Fair", bundle: .module)) {
+        CommandMenu(Text("Fair")) {
             Bundle.module.button("Reload Apps") {
                 guard let cmd = reloadCommand else {
                     dbg("no reload command")
@@ -208,7 +221,7 @@ extension AppManager {
 
     func appCount(_ grouping: AppCategory.Grouping) -> Text? {
         if grouping == .research {
-            return Text(wip("10"), bundle: .module)
+            return Text(wip("10"))
         } else {
             return nil
         }
@@ -264,20 +277,37 @@ extension AppManager {
             }
         }
 
+        var text: Text {
+            switch self {
+            case .popular:
+                return Text("Popular", bundle:. module)
+            case .pinned:
+                return Text("Pinned", bundle:. module)
+            case .installed:
+                return Text("Installed", bundle:. module)
+            case .recent:
+                return Text("Recent", bundle:. module)
+            case .category(let grouping):
+                return grouping.text
+            case .search(let term):
+                return Text("Search: \(term)", bundle:. module)
+            }
+        }
+
         var label: TintedLabel {
             switch self {
             case .popular:
-                return TintedLabel(title: "Popular", systemName: "star", tint: Color.red)
+                return TintedLabel(title: self.text, systemName: "star", tint: Color.red)
             case .pinned:
-                return TintedLabel(title: "Pinned", systemName: "pin", tint: Color.red)
+                return TintedLabel(title: self.text, systemName: "pin", tint: Color.red)
             case .installed:
-                return TintedLabel(title: "Installed", systemName: "internaldrive", tint: Color.green)
+                return TintedLabel(title: self.text, systemName: "internaldrive", tint: Color.green)
             case .recent:
-                return TintedLabel(title: "Recent", systemName: "clock", tint: Color.blue)
+                return TintedLabel(title: self.text, systemName: "clock", tint: Color.blue)
             case .category(let grouping):
-                return grouping.label
+                return grouping.tintedLabel
             case .search(let term):
-                return TintedLabel(title: "Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
+                return TintedLabel(title: self.text, systemName: "magnifyingglass", tint: Color.gray)
             }
         }
     }
@@ -292,7 +322,7 @@ struct GeneralSettingsView: View {
         Form {
             Toggle("Show Previews", isOn: $showPreview)
             Slider(value: $fontSize, in: 9...96) {
-                Text("Font Size (\(fontSize, specifier: "%.0f") pts)", bundle: .module)
+                Text("Font Size (\(fontSize, specifier: "%.0f") pts)")
             }
         }
         .padding(20)
@@ -379,16 +409,48 @@ public struct AppSettingsView: View {
 }
 
 
-public extension View {
+extension View {
+    /// Applies a modifier to the view that matches a static directive.
+    /// This is used to invoke methods that may be conditionally available.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// List {
+    ///     ForEach(elements, content: elementView)
+    /// }
+    /// .conditionally {
+    ///     #if os(macOS)
+    ///     $0.listStyle(.bordered(alternatesRowBackgrounds: true))
+    ///     #endif
+    /// }
+    /// ```
+    public func conditionally<V: View>(content matchingStaticCondition: (Self) -> (V)) -> V {
+        matchingStaticCondition(self)
+    }
+
+    /// - See: ``View/conditionally(matchingStaticCondition:)``
+    public func conditionally(content notMatchingStaticCondition: (Self) -> (Void)) -> Self {
+        // this is the fall-through that simply returns the view itself.
+        self
+    }
+
     /// Centers this view in an `HStack` with spacers.
-    func hcenter() -> some View {
-        HStack(alignment: .center) {
-            Spacer()
+    /// - Parameters:
+    ///   - alignment: the alignment to apply to the stack
+    ///   - minLength: the minimum size of the spacers
+    /// - Returns: the view centered in an `HStack` surrounded by `Spacer` views
+    public func hcenter(alignment: VerticalAlignment = .center, minLength: CoreGraphics.CGFloat? = nil) -> some View {
+        HStack(alignment: alignment) {
+            Spacer(minLength: minLength)
             self
-            Spacer()
+            Spacer(minLength: minLength)
         }
     }
 
+}
+
+public extension View {
     /// Returns a `Bool` binding that indicates whether another binding is `null`
     func nullifyingBoolBinding<T>(_ binding: Binding<T?>) -> Binding<Bool> {
         Binding(get: {
@@ -439,7 +501,9 @@ public struct AppSplitView : View {
     public var body: some View {
         VSplit {
             AppsListView(item: item)
+                .frame(minHeight: 150)
             DetailView()
+                .layoutPriority(1.0)
         }
     }
 }
@@ -462,9 +526,9 @@ public struct DetailView : View {
             case .app(let app):
                 CatalogItemView(info: app)
             case .none:
-                Text("No Selection", bundle: .module).font(.title)
+                Text("No Selection").font(.title)
             case .some(.none):
-                Text("No Selection", bundle: .module).font(.title)
+                Text("No Selection").font(.title)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -474,23 +538,32 @@ public struct DetailView : View {
 /// A label that tints its image
 @available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View {
-    public let title: LocalizedStringKey
+    public let title: Text
     public let systemName: StaticString
     public let tint: Color?
 
     public var body: some View {
-        Label(title: { Text(title, bundle: .module) }) {
+        Label(title: { title }) {
             if let tint = tint {
                 Image(systemName: systemName.description)
-                    .foregroundStyle(
-                        .linearGradient(colors: [tint, .white], startPoint: .top, endPoint: .bottomTrailing),
-                        .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
-                        .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing)
-                    )
+                    .fairTint(color: tint)
             } else {
                 Image(systemName: systemName.description)
             }
         }
+    }
+}
+
+extension View {
+    /// The custom tinting style for the App Fair
+    @available(macOS 12.0, iOS 15.0, *)
+    func fairTint(color: Color) -> some View {
+        foregroundStyle(
+            .linearGradient(colors: [color, .white], startPoint: .top, endPoint: .bottomTrailing),
+            .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
+            .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing)
+        )
+
     }
 }
 
@@ -518,23 +591,49 @@ public extension AppCategory {
             }
         }
 
+        /// All the categories that belong to this grouping
         @available(macOS 12.0, iOS 15.0, *)
-        public var label: TintedLabel {
+        public var tintColor: Color {
+            switch self {
+            case .create: return .cyan
+            case .research: return .green
+            case .communicate: return .pink
+            case .entertain: return .teal
+            case .live: return .mint
+            case .game: return .yellow
+            case .work: return .brown
+            }
+        }
+
+
+        /// All the categories that belong to this grouping
+        @available(macOS 12.0, iOS 15.0, *)
+        public var tintedImage: some View {
+            Image(systemName: symbolName.description).fairTint(color: tintColor)
+        }
+
+        @available(macOS 12.0, iOS 15.0, *)
+        public var tintedLabel: TintedLabel {
+            TintedLabel(title: text, systemName: symbolName, tint: tintColor)
+        }
+
+        @available(macOS 12.0, iOS 15.0, *)
+        public var text: Text {
             switch self {
             case .create:
-                return TintedLabel(title: "Arts & Crafts", systemName: symbolName, tint: Color.cyan) // "paintpalette" is nicer, but the multi-color is currently messed up when used with gradient foregroundStyle so we nil the tint instead of using Color.cyan
+                return Text("Arts & Crafts")
             case .research:
-                return TintedLabel(title: "Knowledge", systemName: symbolName, tint: Color.green)
+                return Text("Knowledge")
             case .communicate:
-                return TintedLabel(title: "Communication", systemName: symbolName, tint: Color.pink)
+                return Text("Communication")
             case .entertain:
-                return TintedLabel(title: "Entertainment", systemName: symbolName, tint: Color.teal)
+                return Text("Entertainment")
             case .live:
-                return TintedLabel(title: "Health & Lifestyle", systemName: symbolName, tint: Color.mint)
+                return Text("Health & Lifestyle")
             case .game:
-                return TintedLabel(title: "Diversion", systemName: symbolName, tint: Color.yellow)
+                return Text("Diversion")
             case .work:
-                return TintedLabel(title: "Work", systemName: symbolName, tint: Color.brown)
+                return Text("Work")
             }
         }
 
@@ -792,7 +891,7 @@ struct AppsListView: View {
                 DisplayModePicker(mode: $mode)
             }
         }
-        .navigationTitle(item?.label.title ?? "Apps")
+        .navigationTitle(item?.label.title ?? Text("Apps"))
     }
 }
 
@@ -815,8 +914,8 @@ internal func wip<T>(_ value: T) -> T { value }
 /// If true, show simulated information
 let pretendMode = false // wip(true) // pretend mode is for pretend
 
-/// Warning when we use the un-bundled form of the `SwiftUI.Text` constructor.
-@available(*, deprecated, renamed: "Text(_:bundle:)")
-func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
-    SwiftUI.Text(string)
+/// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
+@usableFromInline internal func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
+    SwiftUI.Text(string, bundle: .module)
 }
+

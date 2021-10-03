@@ -30,12 +30,30 @@ struct CatalogItemView: View {
 
     var body: some View {
         catalogBody()
-        .task {
-            await fetchREADME()
-        }
+            .task {
+                await fetchREADME()
+            }
     }
 
     func catalogBody() -> some View {
+        catalogBodyFixed()
+        //catalogBodyScrolling()
+    }
+
+    func catalogBodyFixed() -> some View {
+        VStack {
+            pinnedHeaderView()
+                .padding(.top)
+                .background(Material.ultraThinMaterial)
+            catalogSummaryCards()
+            Divider()
+            catalogOverview()
+            appPreviewImages()
+        }
+        //        .background(Material.ultraThinMaterial)
+    }
+
+    func catalogBodyScrolling() -> some View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(pinnedViews: [.sectionHeaders]) {
                 Section {
@@ -44,30 +62,35 @@ struct CatalogItemView: View {
                     catalogOverview()
                     appPreviewImages()
                 } header: {
-                    VStack {
-                        catalogHeader()
-                        Divider()
-                        catalogActionButtons()
-                        Divider()
-                    }
-                    .padding()
-                    .background(Material.thinMaterial)
+                    pinnedHeaderView()
+                        .padding(.top)
+                        .background(Material.ultraThinMaterial)
                 }
             }
+        }
+        //        .background(Material.ultraThinMaterial)
+    }
+
+    func pinnedHeaderView() -> some View {
+        VStack {
+            catalogHeader()
+            Divider()
+            catalogActionButtons()
+            Divider()
         }
     }
 
     func appPreviewImages() -> some View {
         EmptyView()
-//        groupBox(title: Text("Previews", bundle: .module)) {
-//            catalogPreviewImages()
-//        }
+        //        groupBox(title: Text("Previews")) {
+        //            catalogPreviewImages()
+        //        }
     }
 
     func starsCard() -> some View {
         summarySegment {
             card(
-                Text("Stars", bundle: .module),
+                Text("Stars"),
                 numberView(number: .decimal, \.starCount),
                 histogramView(\.starCount)
             )
@@ -77,7 +100,7 @@ struct CatalogItemView: View {
     func downloadsCard() -> some View {
         summarySegment {
             card(
-                Text("Downloads", bundle: .module),
+                Text("Downloads"),
                 numberView(number: .decimal, \.downloadCount),
                 histogramView(\.downloadCount)
             )
@@ -87,7 +110,7 @@ struct CatalogItemView: View {
     func sizeCard() -> some View {
         summarySegment {
             card(
-                Text("Size", bundle: .module),
+                Text("Size"),
                 numberView(size: .file, \.fileSize),
                 histogramView(\.fileSize)
             )
@@ -97,7 +120,7 @@ struct CatalogItemView: View {
     func coreSizeCard() -> some View {
         summarySegment {
             card(
-                Text("Core Size", bundle: .module),
+                Text("Core Size"),
                 numberView(size: .file, \.coreSize),
                 histogramView(\.coreSize)
             )
@@ -107,7 +130,7 @@ struct CatalogItemView: View {
     func watchersCard() -> some View {
         summarySegment {
             card(
-                Text("Watchers", bundle: .module),
+                Text("Watchers"),
                 numberView(number: .decimal, \.watcherCount),
                 histogramView(\.watcherCount)
             )
@@ -117,7 +140,7 @@ struct CatalogItemView: View {
     func issuesCard() -> some View {
         summarySegment {
             card(
-                Text("Issues", bundle: .module),
+                Text("Issues"),
                 numberView(number: .decimal, \.issueCount),
                 histogramView(\.issueCount)
             )
@@ -127,7 +150,7 @@ struct CatalogItemView: View {
     func releaseDateCard() -> some View {
         summarySegment {
             card(
-                Text("Updated", bundle: .module),
+                Text("Updated"),
                 Text(info.release.versionDate ?? Date(), format: .relative(presentation: .numeric, unitsStyle: .abbreviated)),
                 histogramView(\.issueCount)
             )
@@ -147,38 +170,67 @@ struct CatalogItemView: View {
             issuesCard()
             //watchersCard()
         }
+        .frame(height: 54)
+    }
+
+    func linkTextField(_ title: Text, url: URL, linkText: String? = nil) -> some View {
+        TextField(text: .constant(linkText ?? url.absoluteString)) {
+            title.link(to: url)
+                .font(Font.body)
+        }
     }
 
     func detailsView() -> some View {
-        VStack {
-            Group {
-                SwiftUI.Text("Developer: \(item.developerName)")
-                SwiftUI.Text("Size: \(item.size)")
-                SwiftUI.Text("BundleIdentifier: \(item.bundleIdentifier)")
-                //SwiftUI.Text("Categories: \(item.categories ?? [])")
-                SwiftUI.Text("SHA256: \(item.sha256 ?? "")")
+        ScrollView(.vertical, showsIndicators: true) {
+            Form {
+                linkTextField(Text("Discussions"), url: info.release.discussionsURL)
+                    .help(Text("Opens link to the discussions page for this app at: \(info.release.discussionsURL.absoluteString)"))
+                linkTextField(Text("Issues"), url: info.release.issuesURL)
+                    .help(Text("Opens link to the issues page for this app at: \(info.release.issuesURL.absoluteString)"))
+                linkTextField(Text("Source Code"), url: info.release.sourceURL)
+                    .help(Text("Opens link to source code repository for this app at: \(info.release.sourceURL.absoluteString)"))
+                linkTextField(Text("Seal"), url: info.release.fairsealURL, linkText: String(info.release.sha256?.prefix(7) ?? ""))
+                    .help(Text("Searches for this fairseal at: \(info.release.fairsealURL)"))
+                linkTextField(Text("Developer"), url: info.release.developerURL, linkText: item.developerName)
+                    .help(Text("Searches for this developer at: \(info.release.developerURL)"))
             }
-            Group {
-                SwiftUI.Text("ForkCount: \(item.forkCount ?? 0)")
-                SwiftUI.Text("issueCount: \(item.issueCount ?? 0)")
-                SwiftUI.Text("starCount: \(item.starCount ?? 0)")
-                SwiftUI.Text("watcherCount: \(item.watcherCount ?? 0)")
-                SwiftUI.Text("downloadCount: \(item.downloadCount ?? 0)")
-            }
+            .font(Font.body.monospaced())
+            .textFieldStyle(.plain)
+            .truncationMode(.middle)
         }
-        .textSelection(.enabled)
+
+        //        VStack {
+        //            Group {
+        //                Text("Developer: \(item.developerName)")
+        //                Text("Size: \(item.size)")
+        //                Text("BundleIdentifier: \(item.bundleIdentifier)")
+        //                //Text("Categories: \(item.categories ?? [])")
+        //                //Text("SHA256: \(item.sha256 ?? "")")
+        //            }
+        //            Group {
+        //                Text("ForkCount: \(item.forkCount ?? 0)")
+        //                Text("issueCount: \(item.issueCount ?? 0)")
+        //                Text("starCount: \(item.starCount ?? 0)")
+        //                Text("watcherCount: \(item.watcherCount ?? 0)")
+        //                Text("downloadCount: \(item.downloadCount ?? 0)")
+        //            }
+        //        }
+        //        .textSelection(.enabled)
     }
 
-    func groupBox<V: View>(title: Text, @ViewBuilder content: () -> V) -> some View {
+    func groupBox<V: View, L: View>(title: Text, trailing: L, @ViewBuilder content: () -> V) -> some View {
         GroupBox(content: {
-            ScrollView {
-                content()
-            }
+            content()
         }, label: {
-            title.font(.title2)
+            HStack {
+                title
+                Spacer()
+                trailing
+            }
+                .font(Font.headline)
+                .lineLimit(1)
         })
             .groupBoxStyle(.automatic)
-            .padding()
     }
 
     func catalogPreviewImages() -> some View {
@@ -192,25 +244,30 @@ struct CatalogItemView: View {
     func catalogOverview() -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading) {
-                groupBox(title: Text("Description", bundle: .module)) {
+                groupBox(title: Text("Description"), trailing: EmptyView()) {
                     ScrollView {
                         descriptionSummary()
+                            .redacted(reason: wip(.placeholder))
                     }
                 }
+                .padding()
             }
 
             VStack(alignment: .leading) {
-                groupBox(title: Text("Permissions", bundle: .module)) {
+                groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
+                            .labelStyle(IconOnlyLabelStyle())
+                            .padding(.trailing)) {
                     entitlementsList()
-                        .frame(height: 150)
+                        .frame(minHeight: 20)
                 }
+                .padding()
 
-                groupBox(title: Text("Details", bundle: .module)) {
+                groupBox(title: Text("Details"), trailing: EmptyView()) {
                     detailsView()
-                        .frame(height: 200)
+                        .frame(minHeight: 20)
                 }
+                .padding()
             }
-            .frame(width: 300)
         }
     }
 
@@ -226,40 +283,45 @@ struct CatalogItemView: View {
             .frame(maxWidth: .infinity)
     }
 
+    func entitlementListItem(entitlement: AppEntitlement) -> some View {
+        return entitlement.localizedInfo.title.label(symbol: entitlement.localizedInfo.symbol)
+            .listItemTint(ListItemTint.monochrome)
+            .symbolRenderingMode(SymbolRenderingMode.monochrome)
+            .lineLimit(1)
+            .truncationMode(.middle)
+        //.textSelection(.enabled)
+            .help(entitlement.localizedInfo.info)
+    }
+
+    /// The entitlements that will appear in the list.
+    /// These filter out entitlements that are pre-requisites (e.g., sandboxing) as well as harmless entitlements (e.g., JIT).
+    var listedEntitlements: [AppEntitlement] {
+        item.orderedEntitlements(filterCategories: [.harmless, .prerequisite])
+    }
+
     func entitlementsList() -> some View {
         List {
-            ForEach(item.orderedEntitlements) { entitlement in
-                entitlement.localizedInfo.title.label(symbol: entitlement.localizedInfo.symbol)
-                    .listItemTint(ListItemTint.monochrome)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .textSelection(.enabled)
-                    .symbolRenderingMode(SymbolRenderingMode.monochrome)
-                    .help(entitlement.localizedInfo.info)
-            }
+            ForEach(listedEntitlements, content: entitlementListItem)
         }
-        //.listStyle(.bordered(alternatesRowBackgrounds: true)) // not in iOS
+        .conditionally {
+#if os(macOS)
+            $0.listStyle(.bordered(alternatesRowBackgrounds: true))
+#endif
+        }
     }
 
     func catalogVersionRow() -> some View {
         Text(info.releasedVersion?.versionDescription ?? "")
-            .font(.title)
-            .foregroundColor(.secondary)
     }
 
     func catalogAuthorRow() -> some View {
         Group {
             if info.release.developerName.isEmpty {
-                Text("Unknown", bundle: .module)
+                Text("Unknown")
             } else {
                 Text(info.release.developerName)
             }
         }
-        .textSelection(.enabled)
-        .lineLimit(1)
-        .truncationMode(.middle)
-        .font(.callout.monospaced())
-        .foregroundColor(.secondary)
     }
 
     func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, _ path: KeyPath<AppCatalogItem, Int?>) -> some View {
@@ -278,13 +340,14 @@ struct CatalogItemView: View {
 
     func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
         wip(Image(systemName: "chart.bar.xaxis"))
+            .resizable()
     }
 
     func summarySegment<V: View>(@ViewBuilder content: () -> V) -> some View {
         content()
             .lineLimit(1)
             .truncationMode(.middle)
-            .textSelection(.enabled)
+        //.textSelection(.enabled)
             .hcenter()
     }
 
@@ -292,28 +355,25 @@ struct CatalogItemView: View {
         HStack(alignment: .center) {
             iconView()
                 .padding(.leading, 40)
-            Spacer()
+
             VStack(alignment: .center) {
                 Text(item.name)
-                    .font(Font.largeTitle.bold())
-                    .foregroundColor(.secondary)
-                    .textSelection(.enabled)
-
+                    .font(Font.largeTitle)
                 catalogVersionRow()
-
+                    .font(Font.title)
                 Text(item.subtitle ?? item.localizedDescription)
-                    .font(.body)
-                    .textSelection(.enabled)
+                    .font(Font.title2)
                     .truncationMode(.tail)
-
                 catalogAuthorRow()
+                    .redacted(reason: .placeholder)
+                    .font(Font.title3)
             }
             .textSelection(.enabled)
             .lineLimit(1)
             .allowsTightening(true)
             .truncationMode(.middle)
+            .hcenter()
 
-            Spacer()
             categorySymbol()
                 .padding(.trailing, 40)
         }
@@ -345,18 +405,18 @@ struct CatalogItemView: View {
     func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: true)
             .disabled(appInstalled && !previewMode)
-            .confirmationDialog(Text("Install \(info.release.name)", bundle: .module), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
-                Bundle.module.button("Download & Install \(info.release.name)") {
+            .confirmationDialog(Text("Install \(info.release.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
+                Text("Download & Install \(info.release.name)").button {
                     runTask(activity: .install, confirm: true)
                 }
-                Bundle.module.button("Visit Community Forum") {
+                Text("Visit Community Forum").button {
                     openURLAction(info.release.discussionsURL)
                 }
                 // TODO: only show if there are any open issues
-                // Bundle.module.button("Visit App Issues Page") {
+                // Text("Visit App Issues Page").button {
                 //    openURLAction(info.release.issuesURL)
                 // }
-                .help(Text("Opens your web browsers and visits the developer site at \(info.release.baseURL.absoluteString)", bundle: .module)) // sadly, tooltips on confirmationDialog buttons don't seem to work
+                .help(Text("Opens your web browsers and visits the developer site at \(info.release.baseURL.absoluteString)")) // sadly, tooltips on confirmationDialog buttons don't seem to work
             }, message: installMessage)
             .tint(.green)
     }
@@ -384,12 +444,12 @@ struct CatalogItemView: View {
         //.keyboardShortcut(.delete)
             .disabled(!appInstalled && !previewMode)
             .accentColor(.red)
-            .confirmationDialog(Text("Really delete this app?", bundle: .module), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
-                Bundle.module.button("Delete") {
+            .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
+                Text("Delete").button {
                     runTask(activity: .trash, confirm: true)
                 }
             }, message: {
-                Text("This will remove the application “\(info.release.name)” from your applications folder and place it in the Trash.", bundle: .module)
+                Text("This will remove the application “\(info.release.name)” from your applications folder and place it in the Trash.")
             })
     }
 
@@ -502,7 +562,7 @@ struct CatalogItemView: View {
         }, label: {
             Label(title: {
                 HStack(spacing: 5) {
-                    Text(activity.info.title, bundle: .module)
+                    Text(activity.info.title)
                         .truncationMode(.middle)
                         .lineLimit(1)
                         .multilineTextAlignment(.center)
@@ -558,13 +618,12 @@ struct CatalogItemView: View {
     }
 
     func categorySymbol() -> some View {
-        let symbol = (item.appCategories.first?.groupings.first ?? .create)
-            .symbolName
+        let category = (item.appCategories.first?.groupings.first ?? .create)
 
-        return Image(systemName: symbol.description)
+        return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .labelStyle(.iconOnly)
+            .fairTint(color: category.tintColor)
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
@@ -593,17 +652,16 @@ struct CatalogItemView: View {
     }
 
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3) -> some View {
-        VStack {
+        VStack(alignment: .center) {
             s1
                 .textCase(.uppercase)
-                .font(.system(size: 10, weight: .bold, design: .default))
-                .foregroundColor(.secondary)
+                .font(.system(size: 11, weight: .bold, design: .default))
             s2
-                .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundColor(.secondary)
+                .font(.system(size: 20, weight: .heavy, design: .rounded))
             s3
-                .foregroundColor(.secondary)
+                .padding(.horizontal)
         }
+        .foregroundColor(.secondary)
     }
 
     func installButtonTapped() async {
@@ -647,8 +705,8 @@ struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(release: Self.sampleCatalogEntry), previewMode: true)
             .environmentObject(AppManager.default)
-        .frame(width: 800)
-        .frame(height: 1000)
+            .frame(width: 800)
+            .frame(height: 1000)
         //.environment(\.locale, Locale(identifier: "fr"))
     }
 }

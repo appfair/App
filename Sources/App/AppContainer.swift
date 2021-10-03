@@ -29,6 +29,11 @@ public extension AppContainer {
             AppFairCommands(appManager: appManager)
             ToolbarCommands()
         }
+        .commands {
+            CommandGroup(replacing: CommandGroupPlacement.newItem) {
+                // only permit a single window
+            }
+        }
     }
 
     /// The app-wide settings view

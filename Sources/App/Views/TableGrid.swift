@@ -296,6 +296,19 @@ struct ReleasesTableView : View, ItemTableView {
 
                 let installedColumn = oversionColumn(named: "Installed", path: \TableRowValue.installedVersion)
                 installedColumn
+                let sizeColumn = TableColumn("Size", value: \TableRowValue.release.size) { item in
+                    Text(item.release.size.localizedByteCount())
+                        .multilineTextAlignment(.trailing)
+                }
+                sizeColumn
+
+                let coreSizeColumn = onumColumn(named: "Core Size", path: \TableRowValue.release.coreSize)
+                coreSizeColumn
+
+                let riskColumn = TableColumn("Risk", value: \TableRowValue.release.riskLevel) { item in
+                    item.release.riskLabel()
+                }
+                riskColumn
 
                 let dateColumn = TableColumn("Date", value: \TableRowValue.release.versionDate, comparator: optionalDateComparator) { item in
                     Text(item.release.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
@@ -303,36 +316,6 @@ struct ReleasesTableView : View, ItemTableView {
                 }
                 dateColumn
 
-                let sizeColumn = TableColumn("Size", value: \TableRowValue.release.size) { item in
-                    Text(item.release.size.localizedByteCount())
-                        .multilineTextAlignment(.trailing)
-                }
-                sizeColumn
-            }
-
-            Group {
-
-//                let sourceSizeColumn = TableColumn("Source Size", value: \TableRowValue.release.sourceSize, comparator: NumComparator()) { item in
-//                    Text(item.sourceSize?.localizedByteCount() ?? "")
-//                }
-//                sourceSizeColumn
-
-//                let typeColumn = TableColumn("Type", value: \TableRowValue.release.downloadURL.pathExtension) { item in
-//                    Text(item.downloadURL.pathExtension)
-//                }
-//                typeColumn
-
-                let sourceColumn = TableColumn("Source", value: \TableRowValue.release.sourceURL.absoluteString) { item in
-                    Link(item.release.sourceURL.absoluteString, destination: item.release.sourceURL)
-                        .truncationMode(.head)
-                }
-                sourceColumn
-
-                let urlColumn = TableColumn("File", value: \TableRowValue.release.downloadURL.lastPathComponent) { item in
-                    Link(item.release.downloadURL.lastPathComponent, destination: item.release.downloadURL)
-                        .truncationMode(.middle)
-                }
-                urlColumn
             }
 
             Group {
