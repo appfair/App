@@ -269,16 +269,20 @@ jobs:
             --integrationTitle "${{ env.PRTITLE }}" \
             --allow-license "GNU Affero General Public License" \
             --allow-from '.*@appfair.net' \
+            --allow-from '.*@bc.edu' \
             --allow-from '.*@berkeley.edu' \
             --allow-from '.*@caltech.edu' \
             --allow-from '.*@cornell.edu' \
             --allow-from '.*@cmu.edu' \
+            --allow-from '.*@harvard.edu' \
             --allow-from '.*@illinois.edu' \
             --allow-from '.*@mit.edu' \
             --allow-from '.*@princeton.edu' \
+            --allow-from '.*@rit.edu' \
             --allow-from '.*@stanford.edu' \
             --allow-from '.*@ucla.edu' \
             --allow-from '.*@washington.edu' \
+            --allow-from '.*@yale.edu' \
             --verbose true \
             --output -
 
