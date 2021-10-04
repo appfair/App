@@ -258,7 +258,29 @@ jobs:
         run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
 
       - name: "Validate App-Name: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
+        run: |
+          xcrun swift run -- fairtool validate \
+            --project ReleasePR \
+            --hub github.com/appfair \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --org "${{ env.ORGNAME }}" \
+            --ref "${{ env.COMMITHASH }}" \
+            --maxsize $[100 * 1024 * 1024] \
+            --integrationTitle "${{ env.PRTITLE }}" \
+            --allow-license "GNU Affero General Public License" \
+            --allow-from '.*@appfair.net' \
+            --allow-from '.*@berkeley.edu' \
+            --allow-from '.*@caltech.edu' \
+            --allow-from '.*@cornell.edu' \
+            --allow-from '.*@cmu.edu' \
+            --allow-from '.*@illinois.edu' \
+            --allow-from '.*@mit.edu' \
+            --allow-from '.*@princeton.edu' \
+            --allow-from '.*@stanford.edu' \
+            --allow-from '.*@ucla.edu' \
+            --allow-from '.*@washington.edu' \
+            --verbose true \
+            --output -
 
       - name: Integrate PR
         if: startsWith(steps.get_commit_message.outputs.commit_message, 'release')
