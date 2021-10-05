@@ -298,7 +298,6 @@ struct ValueCount<T> {
     let count: Int
 }
 
-
 struct Catalog : Pure {
     var sources: [Source]
 }
@@ -333,9 +332,8 @@ public struct TuneOutView: View {
         NavigationView {
             Sidebar()
             if let frame = StationCatalog.stationsFrame {
-//                StationList(frame: frame)
-//                    .navigationTitle(Text("All Stations"))
-                EmptyView()
+                StationList(frame: frame, hideEmpty: true)
+                    .navigationTitle(Text("Stations"))
             } else {
                 EmptyView()
             }
@@ -358,25 +356,32 @@ struct StationList<Frame: DataFrameProtocol> : View {
     @AppStorage("pinned") var pinnedStations: Set<String> = []
     let frame: () -> Frame
     /// Whether to only display the table if there is a filter active
-    var onlyFiltered: Bool = false
+    let hideEmpty: Bool
 
     /// Initialize the the lazilly evaluated frame (which is critical for performance)
-    init(frame: @escaping @autoclosure () -> Frame) {
+    init(frame: @escaping @autoclosure () -> Frame, hideEmpty: Bool = false) {
         self.frame = frame
+        self.hideEmpty = hideEmpty
     }
 
     var selectedStations: [DataFrame.Row] {
-        frame().rows
-            .filter({ queryString.isEmpty || ($0[Station.nameColumn]?.localizedCaseInsensitiveContains(queryString) == true) })
+        frame()
+            .rows
+            .filter {
+                queryString.isEmpty
+                || $0[Station.nameColumn]?.localizedCaseInsensitiveContains(queryString) == true
+            }
+//            .filter(on: Station.nameColumn) { name in
+//                queryString.isEmpty
+//                    || name?.localizedCaseInsensitiveContains(queryString) == true
+//            }
     }
 
     var body: some View {
         Group {
-            if onlyFiltered == false || !queryString.isEmpty {
+            if hideEmpty == false || !queryString.isEmpty {
                 List {
-                    ForEach(selectedStations, id: \.stationID) {
-                        stationElement(stationRow: $0)
-                    }
+                    ForEach(selectedStations, id: \.stationID, content: stationElement(stationRow:))
                 }
             } else {
                 Text("Station List").font(.largeTitle).foregroundColor(.secondary)
@@ -531,7 +536,7 @@ struct Sidebar: View {
                 ForEach(languageCounts, id: \.value) { lang in
                     let title = Text(lang.value)
 
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.languageColumn] == lang.value })).navigationTitle(Text("Language: ") + title)) {
+                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.languageColumn, { $0 == lang.value })).navigationTitle(Text("Language: ") + title)) {
                         title
                     }
                     .badge(lang.count)
@@ -549,16 +554,15 @@ struct Sidebar: View {
                 ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
                     let title = Text(tag.value)
 
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.tagsColumn] == tag.value })).navigationTitle(Text("Tag: ") + title)) {
+                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.tagsColumn, { $0 == tag.value })).navigationTitle(Text("Tag: ") + title)) {
                         Label(title: {
-                            //                        if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
-                            //                            Text(langName)
-                            //                        } else {
+                            // if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
+                            // Text(langName)
+                            // } else {
                             Text(tag.value)
-                            //                        }
+                            // }
                         }, icon: {
-                            //Text(emojiFlag(countryCode: lang.value))
-
+                            // Text(emojiFlag(countryCode: lang.value))
                         })
                             .badge(tag.count)
                     }
@@ -575,9 +579,9 @@ struct Sidebar: View {
                 (countryName(for: $0.value), $0)
             }
             .sorted { svc1, svc2 in
-                //                count
-                //                ? (svc1.valueCount?.count ?? Int.min) < (svc2.valueCount?.count ?? Int.max)
-                //                :
+                // count
+                // ? (svc1.valueCount?.count ?? Int.min) < (svc2.valueCount?.count ?? Int.max)
+                // :
                 (svc1.localName ?? String(UnicodeScalar(.min))) < (svc2.localName ?? String(UnicodeScalar(.max)))
             }
     }
@@ -635,7 +639,7 @@ struct Sidebar: View {
                     let title: Text = country.localName.flatMap(Text.init) ?? Text("Unknown")
                     let navTitle = Text("Country: ") + title
 
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.countrycodeColumn] == country.valueCount.value })).navigationTitle(navTitle)) {
+                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.countrycodeColumn, { $0 == country.valueCount.value })).navigationTitle(navTitle)) {
                         title.label(image: Text(emojiFlag(countryCode: country.valueCount.value.isEmpty ? "UN" : country.valueCount.value)))
                             .badge(country.valueCount.count)
                     }
