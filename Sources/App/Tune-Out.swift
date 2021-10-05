@@ -127,17 +127,27 @@ struct Station : Pure, Identifiable {
         Url.flatMap(URL.init(string:))
     }
 
-    func imageView() -> some View {
+    func iconView(size: CGFloat) -> some View {
         let url = URL(string: self.Favicon ?? "about:blank") ?? URL(string: "about:blank")!
         return AsyncImage(url: url, content: { image in
             image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .clipped()
         }, placeholder: {
-            RoundedRectangle(cornerRadius: 0)
-                .fill(Color.gray.opacity(0.4))
+            ZStack {
+                Rectangle()
+                    .fill(Material.thin)
+
+                // use a blurred color flag backdrop
+                let countryCode = self.CountryCode?.isEmpty != false ? "UN" : (self.CountryCode ?? "")
+                Text(emojiFlag(countryCode: countryCode))
+                    .font(Font.system(size: size * 1.5))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .blur(radius: 5)
+                }
         })
+            .clipped()
+            .frame(width: size, height: size)
     }
 }
 
@@ -299,8 +309,6 @@ struct Source : Pure {
 extension Catalog {
     /// The default catalog bundled with the app
     static let defaultCatalog = Result {
-        // Bundle.module.loadResource(named: "catalog.json") // non-localized
-
         // the default catalog is localizable so different languages can have different default sources
         try Bundle.module.url(forResource: "catalog", withExtension: "json").flatMap {
             try Catalog(json: Data(contentsOf: $0))
@@ -321,7 +329,9 @@ public struct TuneOutView: View {
         NavigationView {
             Sidebar()
             if let frame = StationCatalog.stationsFrame {
-                StationList(frame: frame, onlyFiltered: true)
+//                StationList(frame: frame, onlyFiltered: true)
+//                    .navigationTitle(Text("All Stations"))
+                EmptyView()
             } else {
                 EmptyView()
             }
@@ -341,7 +351,7 @@ extension DataFrame.Row {
 struct StationList<Frame: DataFrameProtocol> : View {
     @State var selection: Station? = nil
     @State var queryString: String = ""
-    @AppStorage("pinned") var pinnedStations: Set<Int> = []
+    @AppStorage("pinned") var pinnedStations: Set<String> = []
     let frame: Frame
     /// Whether to only display the table if there is a filter active
     var onlyFiltered: Bool = false
@@ -368,12 +378,26 @@ struct StationList<Frame: DataFrameProtocol> : View {
 
     func stationElement(stationRow: DataFrame.Row) -> some View {
         let station = Station(row: stationRow)
+
+        @discardableResult func pinned(add: Bool? = nil) -> Bool {
+            guard let uuid = station.StationUuid else {
+                return false
+            }
+            if add == true {
+                pinnedStations.insert(uuid)
+            } else if add == false {
+                pinnedStations.remove(uuid)
+            }
+
+            return pinnedStations.contains(uuid)
+        }
+
         // Text(station.Name ?? "Unknown")
         return NavigationLink(tag: station, selection: $selection, destination: {
             StationView(source: station)
         }) {
             Label(title: { stationLabelTitle(station) }) {
-                station.imageView()
+                station.iconView(size: 50)
             }
             .labelStyle(StationLabelStyle())
             //.badge(station.Bitrate ?? wip(0))
@@ -381,14 +405,16 @@ struct StationList<Frame: DataFrameProtocol> : View {
 
         }
         .swipeActions {
-            Button {
-                if pinnedStations.contains(station.StationID) {
-                    pinnedStations.remove(station.StationID)
-                } else {
-                    pinnedStations.insert(station.StationID)
-                }
+            Button(role: ButtonRole.destructive) {
+                pinned(add: !pinned()) // toggle pinned
             } label: {
-                Label(title: { Text("Pin") }, icon: { Image(systemName: "pin") })
+                Label(title: {
+                    Text("Pin")
+                }, icon: {
+                    Image(systemName: "pin")
+                        .symbolVariant(pinned() ? SymbolVariants.slash : SymbolVariants.fill)
+                        .disabled(station.StationUuid == nil)
+                })
             }
             .tint(.yellow)
         }
@@ -397,35 +423,47 @@ struct StationList<Frame: DataFrameProtocol> : View {
 
     func stationLabelTitle(_ station: Station) -> some View {
         VStack(alignment: .leading) {
-            HStack {
-                (station.Name.map(Text.init) ?? Text("Unknown Name"))
-                if let bitrate = station.Bitrate, bitrate > 0 && bitrate <= 320 {
-                    Spacer()
-                    (Text(bitrate, format: .number) + Text("kbps"))
-                        .foregroundColor(bitrate >= 256 ? Color.green : bitrate < 128 ? Color.gray : Color.blue)
-                }
-            }
+            (station.Name.map(Text.init) ?? Text("Unknown Name"))
+                .font(.title3)
             .lineLimit(1)
             .allowsTightening(true)
             .truncationMode(.middle)
 
+
             HStack {
-                if let lang = station.Language, !lang.isEmpty {
-                    (Text("Language: ") + Text(lang))
+//                if let lang = station.Language, !lang.isEmpty {
+//                    (Text("Language: ") + Text(lang))
+//                }
+//                if let tags = station.Tags, !tags.isEmpty {
+//                    (Text("Tags: ") + Text(tags))
+//                }
+
+
+                let br = station.Bitrate ?? 0
+                (Text(station.Bitrate == nil ? Double.nan : Double(br), format: .number) + Text("k"))
+                    .foregroundColor(br >= 256 ? Color.green : br < 128 ? Color.gray : Color.blue)
+                    .font(.body.monospaced())
+
+                HStack(spacing: 2) {
+                    let tags = station.tagElements
+                        .compactMap(Station.tagInfo(tagString:))
+                    ForEach(enumerated: tags) { offset, titleImage in
+                        titleImage.image
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(Color(hue: titleImage.key.seededRandom, saturation: 0.7, brightness: 0.99), Color(hue: String(titleImage.key.reversed()).seededRandom, saturation: 0.7, brightness: 0.99))
+                            .help(titleImage.title)
+
+
+                    }
                 }
-                if let tags = station.Tags, !tags.isEmpty {
-                    (Text("Tags: ") + Text(tags))
-                }
-                Spacer()
-                if let countryCode = station.CountryCode, !countryCode.isEmpty {
-                    Text(countryCode)
-                }
+                .symbolRenderingMode(.monochrome)
+                .symbolVariant(.circle)
 
             }
             .lineLimit(1)
-            .allowsTightening(true)
-            .truncationMode(.middle)
-            .foregroundColor(Color.secondary)
+//            .allowsTightening(true)
+//            .truncationMode(.middle)
+//            .foregroundColor(Color.secondary)
         }
     }
 }
@@ -435,8 +473,8 @@ public struct StationLabelStyle : LabelStyle {
     public func makeBody(configuration: LabelStyleConfiguration) -> some View {
         HStack {
             configuration.icon
-                .frame(width: 40, height: 40)
-
+                .cornerRadius(6)
+                .padding(.trailing, 8)
             configuration.title
         }
     }
@@ -464,7 +502,7 @@ extension Set: RawRepresentable where Element: Codable {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct Sidebar: View {
-    @AppStorage("pinned") var pinnedStations: Set<Int> = []
+    @AppStorage("pinned") var pinnedStations: Set<String> = []
 
     var body: some View {
         List {
@@ -481,16 +519,15 @@ struct Sidebar: View {
             if let frame = StationCatalog.stationsFrame,
                let languageCounts = StationCatalog.languageCounts.successValue {
                 ForEach(languageCounts, id: \.value) { lang in
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.LanguageID] == lang.value }))) {
-                        Label(title: {
-                            Text(lang.value)
-                        }, icon: {
-                            //Text(emojiFlag(countryCode: lang.value))
-                        })
-                            .badge(lang.count)
+                    let title = Text(lang.value)
+
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.LanguageID] == lang.value })).navigationTitle(Text("Language: ") + title)) {
+                        title
                     }
+                    .badge(lang.count)
                 }
             }
+
         } header: {
             Text("Languages")
         }
@@ -500,7 +537,9 @@ struct Sidebar: View {
         Section {
             if let frame = StationCatalog.stationsFrame {
                 ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.TagsID] == tag.value }))) {
+                    let title = Text(tag.value)
+
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.TagsID] == tag.value })).navigationTitle(Text("Tag: ") + title)) {
                         Label(title: {
                             //                        if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
                             //                            Text(langName)
@@ -537,25 +576,17 @@ struct Sidebar: View {
         (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
-    func stationsSectionPopular(frame: DataFrame, count: Int = 500) -> some View {
-        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clickcountID, order: .descending).prefix(count))) {
-            Label(title: {
-                Text("Popular")
-            }, icon: {
-                Image(systemName: "star")
-            })
+    func stationsSectionPopular(frame: DataFrame, count: Int = 500, title: Text = Text("Popular")) -> some View {
+        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clickcountID, order: .descending).prefix(count)).navigationTitle(title)) {
+            title.label(symbol: "star")
         }
     }
 
-    func stationsSectionPinned(frame: DataFrame) -> some View {
+    func stationsSectionPinned(frame: DataFrame, title: Text = Text("Pinned")) -> some View {
         NavigationLink(destination: StationList(frame: frame.filter({ row in
-            pinnedStations.contains(row[Station.StationIDID] ?? -1)
-        }))) {
-            Label(title: {
-                Text("Pinned")
-            }, icon: {
-                Image(systemName: "pin")
-            })
+            pinnedStations.contains(row[Station.StationUuidID] ?? "")
+        })).navigationTitle(title)) {
+            title.label(symbol: "pin")
         }
         .badge(pinnedStations.count)
     }
@@ -565,8 +596,10 @@ struct Sidebar: View {
             if let frame = StationCatalog.stationsFrame {
                 Group {
                     stationsSectionPopular(frame: frame)
+                        .keyboardShortcut("1")
                     if !pinnedStations.isEmpty {
                         stationsSectionPinned(frame: frame)
+                            .keyboardShortcut("2")
                     }
                 }
                 .symbolVariant(.fill)
@@ -581,16 +614,11 @@ struct Sidebar: View {
         Section {
             if let frame = StationCatalog.stationsFrame {
                 ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
-                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.CountryCodeID] == country.valueCount.value }))) {
-                        Label(title: {
-                            if let countryName = country.localName {
-                                Text(countryName)
-                            } else {
-                                Text("Unknown")
-                            }
-                        }, icon: {
-                            Text(emojiFlag(countryCode: country.valueCount.value))
-                        })
+                    let title: Text = country.localName.flatMap(Text.init) ?? Text("Unknown")
+                    let navTitle = Text("Country: ") + title
+
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.CountryCodeID] == country.valueCount.value })).navigationTitle(navTitle)) {
+                        title.label(image: Text(emojiFlag(countryCode: country.valueCount.value.isEmpty ? "UN" : country.valueCount.value)))
                             .badge(country.valueCount.count)
                     }
                 }
@@ -598,13 +626,6 @@ struct Sidebar: View {
         } header: {
             Text("Countries")
         }
-    }
-
-    func emojiFlag(countryCode: String) -> String {
-        let codes = countryCode.unicodeScalars.compactMap {
-            UnicodeScalar(127397 + $0.value)
-        }
-        return String(codes.map(Character.init))
     }
 
     var categories: Set<String> {
@@ -720,3 +741,133 @@ final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPu
         }
     }
 }
+
+/// Converts a country code like "US" into the Emoji symbol for the country
+func emojiFlag(countryCode: String) -> String {
+    let codes = countryCode.unicodeScalars.compactMap {
+        UnicodeScalar(127397 + $0.value)
+    }
+    return String(codes.map(Character.init))
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+extension Station {
+    /// The parsed `Tags` field
+    var tagElements: [String] {
+        (Tags ?? "").split(separator: ",")
+            .map {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            }
+    }
+
+    /// Returns the text and image for known tags
+    static func tagInfo(tagString: String) -> (key: String, title: Text, image: Image)? {
+        // check the top 100 tag list with:
+        // cat Sources/App/Resources/stations.csv | tr '"' '\n' | grep ',' | tr ',' '\n' | tr '[A-Z]' '[a-z]' | grep '[a-z]' | sort | uniq -c | sort -nr | head -n 100
+
+        switch tagString {
+        case "pop": return (tagString, Text("pop"), Image(systemName: "sparkles"))
+        case "news": return (tagString, Text("news"), Image(systemName: "newspaper"))
+        case "rock": return (tagString, Text("rock"), Image(systemName: "guitars"))
+        case "music": return (tagString, Text("music"), Image(systemName: "music.note"))
+        case "talk": return (tagString, Text("talk"), Image(systemName: "mic.square"))
+        case "public radio": return (tagString, Text("public radio"), Image(systemName: "building.columns"))
+        //case "english": return (tagString, Text("english"), Image(systemName: "e.circle"))
+        //case "dance": return (tagString, Text("dance"), Image(systemName: "d.circle"))
+        //case "spanish": return (tagString, Text("spanish"), Image(systemName: "s.circle"))
+        //case "top 40": return (tagString, Text("top 40"), Image(systemName: "t.circle"))
+        case "80s": return (tagString, Text("80s"), Image(systemName: "8.circle"))
+        //case "español": return (tagString, Text("español"), Image(systemName: "e.circle"))
+        //case "greek": return (tagString, Text("greek"), Image(systemName: "g.circle"))
+        case "radio": return (tagString, Text("radio"), Image(systemName: "radio"))
+        case "oldies": return (tagString, Text("oldies"), Image(systemName: "tortoise"))
+        //case "estación": return (tagString, Text("estación"), Image(systemName: "e.circle"))
+        //case "community radio": return (tagString, Text("community radio"), Image(systemName: "c.circle"))
+        //case "mex": return (tagString, Text("mex"), Image(systemName: "m.circle"))
+        //case "fm": return (tagString, Text("fm"), Image(systemName: "f.circle"))
+        case "méxico": return (tagString, Text("méxico"), Image(systemName: "globe.americas"))
+        case "christian": return (tagString, Text("christian"), Image(systemName: "cross"))
+        //case "mx": return (tagString, Text("mx"), Image(systemName: "m.circle"))
+        //case "jazz": return (tagString, Text("jazz"), Image(systemName: "j.circle"))
+        case "hits": return (tagString, Text("hits"), Image(systemName: "sparkle"))
+        //case "classical": return (tagString, Text("classical"), Image(systemName: "c.circle"))
+        case "90s": return (tagString, Text("90s"), Image(systemName: "9.circle"))
+        //case "electronic": return (tagString, Text("electronic"), Image(systemName: "e.circle"))
+        //case "folk": return (tagString, Text("folk"), Image(systemName: "f.circle"))
+        //case "classic rock": return (tagString, Text("classic rock"), Image(systemName: "c.circle"))
+        //case "adult contemporary": return (tagString, Text("adult contemporary"), Image(systemName: "a.circle"))
+        case "mexico": return (tagString, Text("mexico"), Image(systemName: "globe.americas"))
+        //case "local news": return (tagString, Text("local news"), Image(systemName: "l.circle"))
+        //case "house": return (tagString, Text("house"), Image(systemName: "h.circle"))
+        //case "alternative": return (tagString, Text("alternative"), Image(systemName: "a.circle"))
+        case "german": return (tagString, Text("german"), Image(systemName: "globe.europe.africa"))
+        case "70s": return (tagString, Text("70s"), Image(systemName: "7.circle"))
+        //case "música": return (tagString, Text("música"), Image(systemName: "m.circle"))
+        //case "classic hits": return (tagString, Text("classic hits"), Image(systemName: "c.circle"))
+        //case "commercial": return (tagString, Text("commercial"), Image(systemName: "c.circle"))
+        //case "npr": return (tagString, Text("npr"), Image(systemName: "n.circle"))
+        //case "hiphop": return (tagString, Text("hiphop"), Image(systemName: "h.circle"))
+        //case "country": return (tagString, Text("country"), Image(systemName: "c.circle"))
+        //case "pop music": return (tagString, Text("pop music"), Image(systemName: "p.circle"))
+        //case "soul": return (tagString, Text("soul"), Image(systemName: "s.circle"))
+        //case "musica": return (tagString, Text("musica"), Image(systemName: "m.circle"))
+        //case "s": return (tagString, Text("s"), Image(systemName: "s.circle"))
+        //case "indie": return (tagString, Text("indie"), Image(systemName: "i.circle"))
+        //case "deutsch": return (tagString, Text("deutsch"), Image(systemName: "d.circle"))
+        //case "information": return (tagString, Text("information"), Image(systemName: "i.circle"))
+        case "university radio": return (tagString, Text("university radio"), Image(systemName: "graduationcap"))
+        case "chillout": return (tagString, Text("chillout"), Image(systemName: "snowflake"))
+        case "ambient": return (tagString, Text("ambient"), Image(systemName: "headphones"))
+        //case "xp_5": return (tagString, Text("xp_5"), Image(systemName: "u.circle"))
+        //case "g_7": return (tagString, Text("g_7"), Image(systemName: "g.circle"))
+        //case "techno": return (tagString, Text("techno"), Image(systemName: "t.circle"))
+        //case "sport": return (tagString, Text("sport"), Image(systemName: "s.circle"))
+        case "world music": return (tagString, Text("world music"), Image(systemName: "globe"))
+        //case "noticias": return (tagString, Text("noticias"), Image(systemName: "n.circle"))
+        //case "french": return (tagString, Text("french"), Image(systemName: "f.circle"))
+        //case "música pop": return (tagString, Text("música pop"), Image(systemName: "m.circle"))
+        //case "pop rock": return (tagString, Text("pop rock"), Image(systemName: "p.circle"))
+        case "local music": return (tagString, Text("local music"), Image(systemName: "flag"))
+        case "metal": return (tagString, Text("metal"), Image(systemName: "hammer"))
+        //case "lounge": return (tagString, Text("lounge"), Image(systemName: "l.circle"))
+        case "disco": return (tagString, Text("disco"), Image(systemName: "dot.arrowtriangles.up.right.down.left.circle"))
+        //case "mainstream": return (tagString, Text("mainstream"), Image(systemName: "m.circle"))
+        //case "alternative rock": return (tagString, Text("alternative rock"), Image(systemName: "a.circle"))
+        //case "religion": return (tagString, Text("religion"), Image(systemName: "r.circle"))
+        case "regional mexican": return (tagString, Text("regional mexican"), Image(systemName: "globe.americas"))
+        case "60s": return (tagString, Text("60s"), Image(systemName: "6.circle"))
+        //case "on": return (tagString, Text("on"), Image(systemName: "o.circle"))
+        case "electro": return (tagString, Text("electro"), Image(systemName: "cable.connector.horizontal"))
+        case "talk & speech": return (tagString, Text("talk & speech"), Image(systemName: "mic"))
+        //case "funk": return (tagString, Text("funk"), Image(systemName: "f.circle"))
+        case "college radio": return (tagString, Text("college radio"), Image(systemName: "graduationcap"))
+        case "catholic": return (tagString, Text("catholic"), Image(systemName: "cross"))
+        //case "regional radio": return (tagString, Text("regional radio"), Image(systemName: "r.circle"))
+        //case "aac": return (tagString, Text("aac"), Image(systemName: "a.circle"))
+        //case "musica regional mexicana": return (tagString, Text("musica regional mexicana"), Image(systemName: "m.circle"))
+        //case "rnb": return (tagString, Text("rnb"), Image(systemName: "r.circle"))
+        //case "hard rock": return (tagString, Text("hard rock"), Image(systemName: "h.circle"))
+        //case "juvenil": return (tagString, Text("juvenil"), Image(systemName: "j.circle"))
+        //case "charts": return (tagString, Text("charts"), Image(systemName: "c.circle"))
+        //case "regional": return (tagString, Text("regional"), Image(systemName: "r.circle"))
+        //case "grupera": return (tagString, Text("grupera"), Image(systemName: "g.circle"))
+        //case "blues": return (tagString, Text("blues"), Image(systemName: "b.circle"))
+        //case "reggae": return (tagString, Text("reggae"), Image(systemName: "r.circle"))
+        //case "russian": return (tagString, Text("russian"), Image(systemName: "r.circle"))
+        //case "news talk": return (tagString, Text("news talk"), Image(systemName: "n.circle"))
+        //case "trance": return (tagString, Text("trance"), Image(systemName: "t.circle"))
+        //case "rap": return (tagString, Text("rap"), Image(systemName: "r.circle"))
+        //case "musica regional": return (tagString, Text("musica regional"), Image(systemName: "m.circle"))
+        //case "latin music": return (tagString, Text("latin music"), Image(systemName: "l.circle"))
+        //case "edm": return (tagString, Text("edm"), Image(systemName: "e.circle"))
+        //case "easy listening": return (tagString, Text("easy listening"), Image(systemName: "e.circle"))
+        //case "culture": return (tagString, Text("culture"), Image(systemName: "c.circle"))
+        //case "entertainment": return (tagString, Text("entertainment"), Image(systemName: "e.circle"))
+        //case "variety": return (tagString, Text("variety"), Image(systemName: "v.circle"))
+        //case "entretenimiento": return (tagString, Text("entretenimiento"), Image(systemName: "a.circle"))
+        default: return nil
+        }
+    }
+
+}
+
