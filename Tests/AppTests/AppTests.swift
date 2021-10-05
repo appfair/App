@@ -27,9 +27,9 @@ open class AppTests: XCTestCase {
     }
 
     // cannot run on CI until macOS12
-#if false
-#if swift(>=5.5)
-#if canImport(TabularData)
+    #if swift(>=5.5)
+    #if canImport(TabularData)
+    #if false // need to block it out because of link errors on macOS11
     func testNewCatalog() throws {
         // headers: changeuuid,stationuuid,name,url,url_resolved,homepage,favicon,tags,country,countrycode,iso_3166_2,state,language,languagecodes,votes,lastchangetime,lastchangetime_iso8601,codec,bitrate,hls,lastcheckok,lastchecktime,lastchecktime_iso8601,lastcheckoktime,lastcheckoktime_iso8601,lastlocalchecktime,lastlocalchecktime_iso8601,clicktimestamp,clicktimestamp_iso8601,clickcount,clicktrend,ssl_error,geo_lat,geo_long,has_extended_info
 
@@ -38,12 +38,16 @@ open class AppTests: XCTestCase {
         //let url = try XCTUnwrap(URL(string: "https://fr1.api.radio-browser.info/csv/stations/search?limit=10&hidebroken=true"))
 
 
-        let csvURL = try XCTUnwrap(URL(string: "https://nl1.api.radio-browser.info/csv/stations/search?limit=10&hidebroken=true"))
-        let jsonURL = try XCTUnwrap(URL(string: "https://fr1.api.radio-browser.info/json/stations/search?limit=10&hidebroken=true"))
+        func fetchURL(location: String = "nl1", format: String = "csv") -> URL! {
+            URL(string: "https://\(location).api.radio-browser.info/\(format)/stations/search?limit=10&hidebroken=true")
+        }
 
-
+        let csvURL = try XCTUnwrap(fetchURL())
         let csvFrame = try DataFrame(contentsOfCSVFile: csvURL)
+
+        let jsonURL = try XCTUnwrap(fetchURL(location: "fr1", format: "json"))
         let jsonFrame = try DataFrame(contentsOfJSONFile: jsonURL)
+
         XCTAssertEqual(csvFrame.rows.count, jsonFrame.rows.count)
     }
 
@@ -52,29 +56,26 @@ open class AppTests: XCTestCase {
         let catalog = try StationCatalog.stations.get()
         dbg("catalog size:", catalog.count.localizedNumber())
         XCTAssertGreaterThanOrEqual(catalog.count, 25_000)
-        let countryCounts = catalog.frame.grouped(by: "Country").counts(order: .descending)
+        let countryCounts = catalog.frame.grouped(by: Station.countrycodeColumn).counts(order: .descending)
 
         dbg("countryCounts", countryCounts)
 
         let cc = try StationCatalog.countryCounts.get()
         dbg(cc)
-//        catalog.frame.grouped(by: "Country").counts(order: .descending).map({
-//            $0["Country"] as? String
-//        })
 
         let countries = countryCounts.rows
-            .compactMap({ $0["Country"] as? String })
+            .compactMap({ $0[Station.countrycodeColumn] })
             .filter({ !$0.isEmpty })
         XCTAssertEqual(countries[0...4], [
-            "The United States Of America",
-            "Germany",
-            "China",
-            "France",
-            "Greece",
+            "US",
+            "DE",
+            "CN",
+            "FR",
+            "GR",
         ])
         dbg(countries)
     }
-#endif
-#endif
-#endif
+    #endif
+    #endif
+    #endif
 }

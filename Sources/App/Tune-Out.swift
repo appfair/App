@@ -25,9 +25,17 @@ import SwiftUI
 /// curl https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
 @available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure {
-    // possible, but slow to parse
-    //typealias DateString = Date
+    // parsing as takes takes it from 500ms -> 12724ms
+    // typealias DateString = Date
+    // static let dateStringType = CSVType.date
     typealias DateString = String
+    static let dateStringType = CSVType.string
+
+    @available(*, deprecated, message: "prefer ISO8691 fields")
+    typealias OldDateString = String
+    @available(*, deprecated, message: "prefer ISO8691 fields")
+    static let oldDateStringType = CSVType.string
+
     typealias URLString = String
     typealias UUIDString = String
 
@@ -51,14 +59,14 @@ struct Station : Pure {
     var codec: String? // e.g., "MP3" or "AAC,H.264"
     var bitrate: Double?
     var hls: DateString?
-    var lastcheckok: DateString?
-    var lastchecktime: DateString?
+    var lastcheckok: Int?
+    //var lastchecktime: OldDateString?
     var lastchecktime_iso8601: DateString?
-    var lastcheckoktime: DateString?
+    //var lastcheckoktime: OldDateString?
     var lastcheckoktime_iso8601: DateString?
-    var lastlocalchecktime: DateString?
+    //var lastlocalchecktime: OldDateString?
     var lastlocalchecktime_iso8601: DateString?
-    var clicktimestamp: DateString?
+    //var clicktimestamp: OldDateString?
     var clicktimestamp_iso8601: DateString?
     var clickcount: Int?
     var clicktrend: Int?
@@ -87,14 +95,14 @@ struct Station : Pure {
     static let codecColumn = ColumnID("codec", String.self) // e.g., "MP3" or "AAC,H.264.self)
     static let bitrateColumn = ColumnID("bitrate", Double.self)
     static let hlsColumn = ColumnID("hls", DateString.self)
-    static let lastcheckokColumn = ColumnID("lastcheckok", DateString.self)
-    static let lastchecktimeColumn = ColumnID("lastchecktime", DateString.self)
+    static let lastcheckokColumn = ColumnID("lastcheckok", Int.self)
+    //static let lastchecktimeColumn = ColumnID("lastchecktime", OldDateString.self)
     static let lastchecktime_iso8601Column = ColumnID("lastchecktime_iso8601", DateString.self)
-    static let lastcheckoktimeColumn = ColumnID("lastcheckoktime", DateString.self)
+    //static let lastcheckoktimeColumn = ColumnID("lastcheckoktime", OldDateString.self)
     static let lastcheckoktime_iso8601Column = ColumnID("lastcheckoktime_iso8601", DateString.self)
-    static let lastlocalchecktimeColumn = ColumnID("lastlocalchecktime", DateString.self)
+    //static let lastlocalchecktimeColumn = ColumnID("lastlocalchecktime", OldDateString.self)
     static let lastlocalchecktime_iso8601Column = ColumnID("lastlocalchecktime_iso8601", DateString.self)
-    static let clicktimestampColumn = ColumnID("clicktimestamp", DateString.self)
+    //static let clicktimestampColumn = ColumnID("clicktimestamp", OldDateString.self)
     static let clicktimestamp_iso8601Column = ColumnID("clicktimestamp_iso8601", DateString.self)
     static let clickcountColumn = ColumnID("clickcount", Int.self)
     static let clicktrendColumn = ColumnID("clicktrend", Int.self)
@@ -119,20 +127,20 @@ struct Station : Pure {
         Self.languageColumn.name : CSVType.string,
         Self.languagecodesColumn.name : CSVType.string,
         Self.votesColumn.name : CSVType.integer,
-        Self.lastchangetimeColumn.name : CSVType.string,
-        Self.lastchangetime_iso8601Column.name : CSVType.string,
+        //Self.lastchangetimeColumn.name : Self.oldDateStringType,
+        Self.lastchangetime_iso8601Column.name : Self.dateStringType,
         Self.codecColumn.name : CSVType.string,
         Self.bitrateColumn.name : CSVType.double,
         Self.hlsColumn.name : CSVType.string,
-        Self.lastcheckokColumn.name : CSVType.string,
-        Self.lastchecktimeColumn.name : CSVType.string,
-        Self.lastchecktime_iso8601Column.name : CSVType.string,
-        Self.lastcheckoktimeColumn.name : CSVType.string,
-        Self.lastcheckoktime_iso8601Column.name : CSVType.string,
-        Self.lastlocalchecktimeColumn.name : CSVType.string,
-        Self.lastlocalchecktime_iso8601Column.name : CSVType.string,
-        Self.clicktimestampColumn.name : CSVType.string,
-        Self.clicktimestamp_iso8601Column.name : CSVType.string,
+        Self.lastcheckokColumn.name : CSVType.integer,
+        //Self.lastchecktimeColumn.name : Self.oldDateStringType,
+        Self.lastchecktime_iso8601Column.name : Self.dateStringType,
+        //Self.lastcheckoktimeColumn.name : Self.oldDateStringType,
+        Self.lastcheckoktime_iso8601Column.name : Self.dateStringType,
+        //Self.lastlocalchecktimeColumn.name : Self.oldDateStringType,
+        Self.lastlocalchecktime_iso8601Column.name : Self.dateStringType,
+        //Self.clicktimestampColumn.name : Self.oldDateStringType,
+        Self.clicktimestamp_iso8601Column.name : Self.dateStringType,
         Self.clickcountColumn.name : CSVType.integer,
         Self.clicktrendColumn.name : CSVType.integer,
         Self.ssl_errorColumn.name : CSVType.string,
@@ -171,13 +179,13 @@ extension Station : Identifiable {
         self.bitrate = row[Self.bitrateColumn]
         self.hls = row[Self.hlsColumn]
         self.lastcheckok = row[Self.lastcheckokColumn]
-        self.lastchecktime = row[Self.lastchecktimeColumn]
+        //self.lastchecktime = row[Self.lastchecktimeColumn]
         self.lastchecktime_iso8601 = row[Self.lastchecktime_iso8601Column]
-        self.lastcheckoktime = row[Self.lastcheckoktimeColumn]
+        //self.lastcheckoktime = row[Self.lastcheckoktimeColumn]
         self.lastcheckoktime_iso8601 = row[Self.lastcheckoktime_iso8601Column]
-        self.lastlocalchecktime = row[Self.lastlocalchecktimeColumn]
+        //self.lastlocalchecktime = row[Self.lastlocalchecktimeColumn]
         self.lastlocalchecktime_iso8601 = row[Self.lastlocalchecktime_iso8601Column]
-        self.clicktimestamp = row[Self.clicktimestampColumn]
+        //self.clicktimestamp = row[Self.clicktimestampColumn]
         self.clicktimestamp_iso8601 = row[Self.clicktimestamp_iso8601Column]
         self.clickcount = row[Self.clickcountColumn]
         self.clicktrend = row[Self.clicktrendColumn]
@@ -238,52 +246,51 @@ struct StationCatalog {
     }
 
     static var stations: Result<StationCatalog, Error> = {
-        Result {
-            guard let url = Bundle.module.url(forResource: "stations", withExtension: "csv") else {
-                throw CocoaError(.fileReadNoSuchFile)
-            }
+        prf { // 479ms
+            Result {
+                guard let url = Bundle.module.url(forResource: "stations", withExtension: "csv") else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
 
-            // the old ways are better
-            let options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL", ""], trueEncodings: ["true"], falseEncodings: ["false"], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: false, delimiter: ",", escapeCharacter: "\\")
+                // the old ways are better
+                var options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL", ""], trueEncodings: ["true"], falseEncodings: ["false"], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: false, delimiter: ",", escapeCharacter: "\\")
 
-            // Parsing the dates as dates slows parsing 28,576 by 30x (from 0.434 seconds to 13.296); since we don't need the dates up front (e.g., for sorting), simply parse them as strings and parse them later
-            //let dateFieldParse = CSVType.string
-            //let dateFieldParse = CSVType.date
+                options.addDateParseStrategy(Date.ISO8601FormatStyle())
 
-
-            dbg("loading from URL:", url)
-            do {
-                let df = try DataFrame(contentsOfCSVFile: url, columns: nil, rows: nil, types: Station.allColumns, options: options)
-                return StationCatalog(frame: df)
-            } catch {
-                dbg("error loading from URL:", url, "error:", error)
-                throw error
+                dbg("loading from URL:", url)
+                do {
+                    let df = try DataFrame(contentsOfCSVFile: url, columns: nil, rows: nil, types: Station.allColumns, options: options)
+                    return StationCatalog(frame: df)
+                } catch {
+                    dbg("error loading from URL:", url, "error:", error)
+                    throw error
+                }
             }
         }
     }()
 
     static var countryCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "countrycode") }
+        Result { try stations.get().frame.valueCounts(column: Station.countrycodeColumn) }
     }
 
     static var languageCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "language") }
+        Result { try stations.get().frame.valueCounts(column: Station.languageColumn) }
     }
 
     static var tagsCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "tags") }
+        Result { try stations.get().frame.valueCounts(column: Station.tagsColumn) }
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
 extension DataFrame {
-    func valueCounts<T>(column: String) -> [ValueCount<T>] {
+    func valueCounts<T: Hashable>(column: ColumnID<T>) -> [ValueCount<T>] {
         self
             .grouped(by: column)
             .counts(order: .descending)
             .rows
             .compactMap { row in
-                (row[column] as? T).flatMap { value in
+                row[column].flatMap { value in
                     (row["count"] as? Int).flatMap { count in
                         ValueCount(value: value, count: count)
                     }
