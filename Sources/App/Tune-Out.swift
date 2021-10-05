@@ -333,7 +333,7 @@ public struct TuneOutView: View {
         NavigationView {
             Sidebar()
             if let frame = StationCatalog.stationsFrame {
-//                StationList(frame: frame, onlyFiltered: true)
+//                StationList(frame: frame)
 //                    .navigationTitle(Text("All Stations"))
                 EmptyView()
             } else {
@@ -356,12 +356,17 @@ struct StationList<Frame: DataFrameProtocol> : View {
     @State var selection: Station? = nil
     @State var queryString: String = ""
     @AppStorage("pinned") var pinnedStations: Set<String> = []
-    let frame: Frame
+    let frame: () -> Frame
     /// Whether to only display the table if there is a filter active
     var onlyFiltered: Bool = false
 
+    /// Initialize the the lazilly evaluated frame (which is critical for performance)
+    init(frame: @escaping @autoclosure () -> Frame) {
+        self.frame = frame
+    }
+
     var selectedStations: [DataFrame.Row] {
-        frame.rows
+        frame().rows
             .filter({ queryString.isEmpty || ($0[Station.nameColumn]?.localizedCaseInsensitiveContains(queryString) == true) })
     }
 
