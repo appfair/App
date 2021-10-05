@@ -27,9 +27,26 @@ open class AppTests: XCTestCase {
     }
 
     // cannot run on CI until macOS12
-#if false // WTF
+//#if false 
 #if swift(>=5.5)
 #if canImport(TabularData)
+    func testNewCatalog() throws {
+        // headers: changeuuid,stationuuid,name,url,url_resolved,homepage,favicon,tags,country,countrycode,iso_3166_2,state,language,languagecodes,votes,lastchangetime,lastchangetime_iso8601,codec,bitrate,hls,lastcheckok,lastchecktime,lastchecktime_iso8601,lastcheckoktime,lastcheckoktime_iso8601,lastlocalchecktime,lastlocalchecktime_iso8601,clicktimestamp,clicktimestamp_iso8601,clickcount,clicktrend,ssl_error,geo_lat,geo_long,has_extended_info
+
+        // sample row: 9ab6e93e-0e30-468e-9da4-17ccce79ed14,bf91ff05-3fd0-4b9f-a31a-8e881bbee7bd, FM 94.3 Radio Municipal de Toay,http://servidor.ilive.com.ar:9678/;,http://servidor.ilive.com.ar:9678/;,https://toay.gob.ar/,https://toay.gob.ar/images/logo.png,"municipal,toay,la pampa,argentina",Argentina,AR,,La Pampa - Toay,,,17,2021-07-14 08:51:10,2021-07-14T08:51:10Z,MP3,40,0,1,2021-10-05 15:21:24,2021-10-05T15:21:24Z,2021-10-05 15:21:24,2021-10-05T15:21:24Z,2021-10-04 19:20:11,2021-10-04T19:20:11Z,2021-10-05 14:51:32,2021-10-05T14:51:32Z,10,0,0,-36.67310369339906,-64.37880992889406,false
+
+        //let url = try XCTUnwrap(URL(string: "https://fr1.api.radio-browser.info/csv/stations/search?limit=10&hidebroken=true"))
+
+
+        let csvURL = try XCTUnwrap(URL(string: "https://nl1.api.radio-browser.info/csv/stations/search?limit=10&hidebroken=true"))
+        let jsonURL = try XCTUnwrap(URL(string: "https://fr1.api.radio-browser.info/json/stations/search?limit=10&hidebroken=true"))
+
+
+        let csvFrame = try DataFrame(contentsOfCSVFile: csvURL)
+        let jsonFrame = try DataFrame(contentsOfJSONFile: jsonURL)
+        XCTAssertEqual(csvFrame.rows.count, jsonFrame.rows.count)
+    }
+
     func testCatalogData() throws {
         // caught error: "Wrong number of columns at row 1. Expected 25 but found 31."
         let catalog = try StationCatalog.stations.get()
@@ -59,5 +76,5 @@ open class AppTests: XCTestCase {
     }
 #endif
 #endif
-#endif
+//#endif
 }
