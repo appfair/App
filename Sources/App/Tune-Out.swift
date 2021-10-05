@@ -244,7 +244,7 @@ struct StationCatalog {
             }
 
             // the old ways are better
-            let options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL"], trueEncodings: [], falseEncodings: [], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: true, delimiter: ",", escapeCharacter: "\\")
+            let options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL", ""], trueEncodings: ["true"], falseEncodings: ["false"], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: false, delimiter: ",", escapeCharacter: "\\")
 
             // Parsing the dates as dates slows parsing 28,576 by 30x (from 0.434 seconds to 13.296); since we don't need the dates up front (e.g., for sorting), simply parse them as strings and parse them later
             //let dateFieldParse = CSVType.string
@@ -263,15 +263,15 @@ struct StationCatalog {
     }()
 
     static var countryCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "CountryCode") }
+        Result { try stations.get().frame.valueCounts(column: "countrycode") }
     }
 
     static var languageCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "Language") }
+        Result { try stations.get().frame.valueCounts(column: "language") }
     }
 
     static var tagsCounts: Result<[ValueCount<String>], Error> {
-        Result { try stations.get().frame.valueCounts(column: "Tags") }
+        Result { try stations.get().frame.valueCounts(column: "tags") }
     }
 }
 
@@ -581,7 +581,13 @@ struct Sidebar: View {
         (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
-    func stationsSectionPopular(frame: DataFrame, count: Int = 500, title: Text = Text("Popular")) -> some View {
+    func stationsSectionTrending(frame: DataFrame, count: Int = 100, title: Text = Text("Trending")) -> some View {
+        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clicktrendColumn, order: .descending).prefix(count)).navigationTitle(title)) {
+            title.label(symbol: "sparkle")
+        }
+    }
+
+    func stationsSectionPopular(frame: DataFrame, count: Int = 100, title: Text = Text("Popular")) -> some View {
         NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count)).navigationTitle(title)) {
             title.label(symbol: "star")
         }
@@ -600,11 +606,13 @@ struct Sidebar: View {
         Section {
             if let frame = StationCatalog.stationsFrame {
                 Group {
-                    stationsSectionPopular(frame: frame)
+                    stationsSectionTrending(frame: frame)
                         .keyboardShortcut("1")
+                    stationsSectionPopular(frame: frame)
+                        .keyboardShortcut("2")
                     if !pinnedStations.isEmpty {
                         stationsSectionPinned(frame: frame)
-                            .keyboardShortcut("2")
+                            .keyboardShortcut("3")
                     }
                 }
                 .symbolVariant(.fill)
