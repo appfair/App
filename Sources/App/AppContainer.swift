@@ -134,8 +134,6 @@ struct ClockView: View {
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class Store: SceneManager {
-    /// The search string the user is entering
-    @Published var queryString: String = ""
     @AppStorage("someToggle")
     public var someToggle = false
     #if os(macOS)
@@ -153,7 +151,6 @@ public struct ContentView: View {
 
     public var body: some View {
         TuneOutView()
-            .searchable(text: $store.queryString, placement: .automatic, prompt: Text("Search"))
             .toolbar {
                 Button {
                     dbg(wip("shuffle"))

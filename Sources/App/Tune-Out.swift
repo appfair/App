@@ -19,9 +19,11 @@ import VideoToolbox
 import WebKit
 import TabularData
 import AudioKit
+import SwiftUI
 
 @available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure, Identifiable {
+
     var id: Int { StationID }
     let StationID: Int
     let Name: String?
@@ -55,38 +57,70 @@ struct Station : Pure, Identifiable {
     let LanguageCodes: String?
     let ExtendedInfo: String?
 
+    static let StationIDID = ColumnID("StationID", Int.self)
+    static let NameID = ColumnID("Name", String.self)
+    static let UrlID = ColumnID("Url", String.self)
+    static let HomepageID = ColumnID("Homepage", String.self)
+    static let FaviconID = ColumnID("Favicon", String.self)
+    static let CreationID = ColumnID("Creation", String.self)
+    static let CountryID = ColumnID("Country", String.self)
+    static let LanguageID = ColumnID("Language", String.self)
+    static let TagsID = ColumnID("Tags", String.self)
+    static let VotesID = ColumnID("Votes", Int.self)
+    static let SubcountryID = ColumnID("Subcountry", String.self)
+    static let clickcountID = ColumnID("clickcount", Int.self)
+    static let ClickTrendID = ColumnID("ClickTrend", String.self)
+    static let ClickTimestampID = ColumnID("ClickTimestamp", String.self)
+    static let CodecID = ColumnID("Codec", String.self)
+    static let LastCheckOKID = ColumnID("LastCheckOK", String.self)
+    static let LastCheckTimeID = ColumnID("LastCheckTime", String.self)
+    static let BitrateID = ColumnID("Bitrate", Int.self)
+    static let UrlCacheID = ColumnID("UrlCache", String.self)
+    static let LastCheckOkTimeID = ColumnID("LastCheckOkTime", String.self)
+    static let HlsID = ColumnID("Hls", String.self)
+    static let ChangeUuidID = ColumnID("ChangeUuid", String.self)
+    static let StationUuidID = ColumnID("StationUuid", String.self)
+    static let CountryCodeID = ColumnID("CountryCode", String.self)
+    static let LastLocalCheckTimeID = ColumnID("LastLocalCheckTime", String.self)
+    static let CountrySubdivisionCodeID = ColumnID("CountrySubdivisionCode", String.self)
+    static let GeoLatID = ColumnID("GeoLat", String.self)
+    static let GeoLongID = ColumnID("GeoLong", String.self)
+    static let SslErrorID = ColumnID("SslError", String.self)
+    static let LanguageCodesID = ColumnID("LanguageCodes", String.self)
+    static let ExtendedInfoID = ColumnID("ExtendedInfo", String.self)
+
     init(row: DataFrame.Row) {
-        self.StationID = row["StationID"] as? Int ?? 0
-        self.Name = row["Name"] as? String
-        self.Url = row["Url"] as? String
-        self.Homepage = row["Homepage"] as? String
-        self.Favicon = row["Favicon"] as? String
-        self.Creation = row["Creation"] as? String
-        self.Country = row["Country"] as? String
-        self.Language = row["Language"] as? String
-        self.Tags = row["Tags"] as? String
-        self.Votes = row["Votes"] as? Int
-        self.Subcountry = row["Subcountry"] as? String
-        self.clickcount = row["clickcount"] as? Int
-        self.ClickTrend = row["ClickTrend"] as? String
-        self.ClickTimestamp = row["ClickTimestamp"] as? String
-        self.Codec = row["Codec"] as? String
-        self.LastCheckOK = row["LastCheckOK"] as? String
-        self.LastCheckTime = row["LastCheckTime"] as? String
-        self.Bitrate = row["Bitrate"] as? Int
-        self.UrlCache = row["UrlCache"] as? String
-        self.LastCheckOkTime = row["LastCheckOkTime"] as? String
-        self.Hls = row["Hls"] as? String
-        self.ChangeUuid = row["ChangeUuid"] as? String
-        self.StationUuid = row["StationUuid"] as? String
-        self.CountryCode = row["CountryCode"] as? String
-        self.LastLocalCheckTime = row["LastLocalCheckTime"] as? String
-        self.CountrySubdivisionCode = row["CountrySubdivisionCode"] as? String
-        self.GeoLat = row["GeoLat"] as? String
-        self.GeoLong = row["GeoLong"] as? String
-        self.SslError = row["SslError"] as? String
-        self.LanguageCodes = row["LanguageCodes"] as? String
-        self.ExtendedInfo = row["ExtendedInfo"] as? String
+        self.StationID = row[Self.StationIDID] ?? 0
+        self.Name = row[Self.NameID]
+        self.Url = row[Self.UrlID]
+        self.Homepage = row[Self.HomepageID]
+        self.Favicon = row[Self.FaviconID]
+        self.Creation = row[Self.CreationID]
+        self.Country = row[Self.CountryID]
+        self.Language = row[Self.LanguageID]
+        self.Tags = row[Self.TagsID]
+        self.Votes = row[Self.VotesID]
+        self.Subcountry = row[Self.SubcountryID]
+        self.clickcount = row[Self.clickcountID]
+        self.ClickTrend = row[Self.ClickTrendID]
+        self.ClickTimestamp = row[Self.ClickTimestampID]
+        self.Codec = row[Self.CodecID]
+        self.LastCheckOK = row[Self.LastCheckOKID]
+        self.LastCheckTime = row[Self.LastCheckTimeID]
+        self.Bitrate = row[Self.BitrateID]
+        self.UrlCache = row[Self.UrlCacheID]
+        self.LastCheckOkTime = row[Self.LastCheckOkTimeID]
+        self.Hls = row[Self.HlsID]
+        self.ChangeUuid = row[Self.ChangeUuidID]
+        self.StationUuid = row[Self.StationUuidID]
+        self.CountryCode = row[Self.CountryCodeID]
+        self.LastLocalCheckTime = row[Self.LastLocalCheckTimeID]
+        self.CountrySubdivisionCode = row[Self.CountrySubdivisionCodeID]
+        self.GeoLat = row[Self.GeoLatID]
+        self.GeoLong = row[Self.GeoLongID]
+        self.SslError = row[Self.SslErrorID]
+        self.LanguageCodes = row[Self.LanguageCodesID]
+        self.ExtendedInfo = row[Self.ExtendedInfoID]
     }
 
     var url: URL? {
@@ -94,19 +128,16 @@ struct Station : Pure, Identifiable {
     }
 
     func imageView() -> some View {
-        self.Favicon.flatMap {
-            URL(string: $0).flatMap {
-                AsyncImage(url: $0, content: { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .clipped()
-                }, placeholder: {
-                    RoundedRectangle(cornerRadius: 0)
-                        .fill(Color.gray.opacity(0.4))
-                })
-            }
-        }
+        let url = URL(string: self.Favicon ?? "about:blank") ?? URL(string: "about:blank")!
+        return AsyncImage(url: url, content: { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .clipped()
+        }, placeholder: {
+            RoundedRectangle(cornerRadius: 0)
+                .fill(Color.gray.opacity(0.4))
+        })
     }
 }
 
@@ -118,15 +149,19 @@ struct StationCatalog {
     /// The number of stations in the catalog
     var count: Int { frame.rows.count }
 
-//    subscript(element index: Int) -> Station? {
-//        get {
-//            let row = frame.rows[index]
-//            let StationID = row["StationID"]
-//            return wip(nil)
-//        }
-//    }
+    //    subscript(element index: Int) -> Station? {
+    //        get {
+    //            let row = frame.rows[index]
+    //            let StationID = row["StationID"]
+    //            return wip(nil)
+    //        }
+    //    }
 
 
+    /// The stations frame, if the
+    static var stationsFrame: DataFrame? {
+        stations.successValue?.frame
+    }
 
     static var stations: Result<StationCatalog, Error> = {
         Result {
@@ -175,37 +210,37 @@ struct StationCatalog {
              ExtendedInfo: 0
              */
             let columns = [
-                "StationID" : CSVType.integer,
-                "Name" : CSVType.string,
-                "Url" : CSVType.string,
-                "Homepage" : CSVType.string,
-                "Favicon" : CSVType.string,
-                "Creation" : dateFieldParse,
-                "Country" : CSVType.string,
-                "Language" : CSVType.string,
-                "Tags" : CSVType.string,
-                "Votes" : CSVType.integer,
-                "Subcountry" : CSVType.string,
-                "clickcount" : CSVType.integer,
-                "ClickTrend" : CSVType.string,
-                "ClickTimestamp" : CSVType.string,
-                "Codec" : CSVType.string,
-                "LastCheckOK" : CSVType.string,
-                "LastCheckTime" : dateFieldParse,
-                "Bitrate" : CSVType.integer,
-                "UrlCache" : CSVType.string,
-                "LastCheckOkTime" : dateFieldParse,
-                "Hls" : CSVType.string,
-                "ChangeUuid" : CSVType.string,
-                "StationUuid" : CSVType.string,
-                "CountryCode" : CSVType.string,
-                "LastLocalCheckTime" : dateFieldParse,
-                "CountrySubdivisionCode" : CSVType.string,
-                "GeoLat" : CSVType.string,
-                "GeoLong" : CSVType.string,
-                "SslError" : CSVType.string,
-                "LanguageCodes" : CSVType.string,
-                "ExtendedInfo" : CSVType.string,
+                Station.StationIDID.name : CSVType.integer,
+                Station.NameID.name : CSVType.string,
+                Station.UrlID.name : CSVType.string,
+                Station.HomepageID.name : CSVType.string,
+                Station.FaviconID.name : CSVType.string,
+                Station.CreationID.name : dateFieldParse,
+                Station.CountryID.name : CSVType.string,
+                Station.LanguageID.name : CSVType.string,
+                Station.TagsID.name : CSVType.string,
+                Station.VotesID.name : CSVType.integer,
+                Station.SubcountryID.name : CSVType.string,
+                Station.clickcountID.name : CSVType.integer,
+                Station.ClickTrendID.name : CSVType.string,
+                Station.ClickTimestampID.name : CSVType.string,
+                Station.CodecID.name : CSVType.string,
+                Station.LastCheckOKID.name : CSVType.string,
+                Station.LastCheckTimeID.name : dateFieldParse,
+                Station.BitrateID.name : CSVType.integer,
+                Station.UrlCacheID.name : CSVType.string,
+                Station.LastCheckOkTimeID.name : dateFieldParse,
+                Station.HlsID.name : CSVType.string,
+                Station.ChangeUuidID.name : CSVType.string,
+                Station.StationUuidID.name : CSVType.string,
+                Station.CountryCodeID.name : CSVType.string,
+                Station.LastLocalCheckTimeID.name : dateFieldParse,
+                Station.CountrySubdivisionCodeID.name : CSVType.string,
+                Station.GeoLatID.name : CSVType.string,
+                Station.GeoLongID.name : CSVType.string,
+                Station.SslErrorID.name : CSVType.string,
+                Station.LanguageCodesID.name : CSVType.string,
+                Station.ExtendedInfoID.name : CSVType.string,
             ]
             
             let df = try DataFrame(contentsOfCSVFile: url, columns: nil, rows: nil, types: columns, options: options)
@@ -285,82 +320,175 @@ public struct TuneOutView: View {
     public var body: some View {
         NavigationView {
             Sidebar()
-            Text("No Sidebar Selection")
-            Text("Select Station").font(.headline)
+            if let frame = StationCatalog.stationsFrame {
+                StationList(frame: frame, onlyFiltered: true)
+            } else {
+                EmptyView()
+            }
+            Text("Select Station").font(.largeTitle).foregroundColor(.secondary)
         }
+    }
+}
 
+@available(macOS 12.0, iOS 15.0, *)
+extension DataFrame.Row {
+    var stationID: Int? {
+        self[Station.StationIDID]
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct StationList<Frame: DataFrameProtocol> : View {
+    @State var selection: Station? = nil
+    @State var queryString: String = ""
+    @AppStorage("pinned") var pinnedStations: Set<Int> = []
+    let frame: Frame
+    /// Whether to only display the table if there is a filter active
+    var onlyFiltered: Bool = false
+
+    var selectedStations: [DataFrame.Row] {
+        frame.rows
+            .filter({ queryString.isEmpty || ($0[Station.NameID]?.localizedCaseInsensitiveContains(queryString) == true) })
+    }
+
+    var body: some View {
+        Group {
+            if onlyFiltered == false || !queryString.isEmpty {
+                List {
+                    ForEach(selectedStations, id: \.stationID) {
+                        stationElement(stationRow: $0)
+                    }
+                }
+            } else {
+                Text("Station List").font(.largeTitle).foregroundColor(.secondary)
+            }
+        }
+        .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
+    }
+
+    func stationElement(stationRow: DataFrame.Row) -> some View {
+        let station = Station(row: stationRow)
+        // Text(station.Name ?? "Unknown")
+        return NavigationLink(tag: station, selection: $selection, destination: {
+            StationView(source: station)
+        }) {
+            Label(title: { stationLabelTitle(station) }) {
+                station.imageView()
+            }
+            .labelStyle(StationLabelStyle())
+            //.badge(station.Bitrate ?? wip(0))
+            //.badge(station.Votes?.localizedNumber())
+
+        }
+        .swipeActions {
+            Button {
+                if pinnedStations.contains(station.StationID) {
+                    pinnedStations.remove(station.StationID)
+                } else {
+                    pinnedStations.insert(station.StationID)
+                }
+            } label: {
+                Label(title: { Text("Pin") }, icon: { Image(systemName: "pin") })
+            }
+            .tint(.yellow)
+        }
+    }
+
+
+    func stationLabelTitle(_ station: Station) -> some View {
+        VStack(alignment: .leading) {
+            HStack {
+                (station.Name.map(Text.init) ?? Text("Unknown Name"))
+                if let bitrate = station.Bitrate, bitrate > 0 && bitrate <= 320 {
+                    Spacer()
+                    (Text(bitrate, format: .number) + Text("kbps"))
+                        .foregroundColor(bitrate >= 256 ? Color.green : bitrate < 128 ? Color.gray : Color.blue)
+                }
+            }
+            .lineLimit(1)
+            .allowsTightening(true)
+            .truncationMode(.middle)
+
+            HStack {
+                if let lang = station.Language, !lang.isEmpty {
+                    (Text("Language: ") + Text(lang))
+                }
+                if let tags = station.Tags, !tags.isEmpty {
+                    (Text("Tags: ") + Text(tags))
+                }
+                Spacer()
+                if let countryCode = station.CountryCode, !countryCode.isEmpty {
+                    Text(countryCode)
+                }
+
+            }
+            .lineLimit(1)
+            .allowsTightening(true)
+            .truncationMode(.middle)
+            .foregroundColor(Color.secondary)
+        }
     }
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
-struct StationList<T: Equatable> : View {
-    let column: ColumnID<T>
-    let valueCount: ValueCount<T>?
-    @State var selection: Station?
+public struct StationLabelStyle : LabelStyle {
+    public func makeBody(configuration: LabelStyleConfiguration) -> some View {
+        HStack {
+            configuration.icon
+                .frame(width: 40, height: 40)
 
-    var body: some View {
-        List {
-            ForEach(filteredElements, content: stationElement)
+            configuration.title
         }
     }
+}
 
-    var filteredElements: [Station] {
-        ((StationCatalog.stations.successValue?.frame.rows)?
-            .filter { row in
-                row[column] == valueCount?.value
-            } ?? [])
-            .map(Station.init(row:))
+extension Set: RawRepresentable where Element: Codable {
+    public init?(rawValue: String) {
+        guard let data = rawValue.data(using: .utf8),
+              let result = try? JSONDecoder().decode(Set<Element>.self, from: data)
+        else {
+            return nil
+        }
+        self = result
     }
 
-    func stationElement(station: Station) -> some View {
-        // Text(station.Name ?? "Unknown")
-        NavigationLink(tag: station, selection: $selection, destination: {
-            StationView(source: station)
-        }) {
-            Label(title: {
-                (station.Name.map(Text.init) ?? Text("Unknown Name"))
-                    .lineLimit(1)
-                    .allowsTightening(true)
-                    .truncationMode(.middle)
-                //(station.Tags.map(Text.init) ?? Text("No Tags"))
-                //    .lineLimit(1)
-                //    .allowsTightening(true)
-                //    .truncationMode(.middle)
-            }) {
-                Rectangle()
-                    .fill(.clear)
-                    .background(station.imageView().clipped())
-                    .frame(width: 25, height: 25)
-            }
-            .badge(station.Bitrate ?? wip(0))
-            //.badge(station.Votes?.localizedNumber())
-
+    public var rawValue: String {
+        guard let data = try? JSONEncoder().encode(self),
+              let result = String(data: data, encoding: .utf8)
+        else {
+            return "[]"
         }
+        return result
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
 struct Sidebar: View {
+    @AppStorage("pinned") var pinnedStations: Set<Int> = []
+
     var body: some View {
         List {
+            stationsSection
             countriesSection
-            languagesSection
-            tagsSection
+            //languagesSection
+            //tagsSection
         }
         .listStyle(SidebarListStyle())
     }
 
     var languagesSection: some View {
         Section {
-            ForEach(StationCatalog.languageCounts.successValue ?? [], id: \.value) { lang in
-                NavigationLink(destination: StationList(column: ColumnID("Language", String.self), valueCount: lang)) {
-                    Label(title: {
-                        Text(lang.value)
-                    }, icon: {
-                        //Text(emojiFlag(countryCode: lang.value))
-                    })
-                        .badge(lang.count)
+            if let frame = StationCatalog.stationsFrame,
+               let languageCounts = StationCatalog.languageCounts.successValue {
+                ForEach(languageCounts, id: \.value) { lang in
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.LanguageID] == lang.value }))) {
+                        Label(title: {
+                            Text(lang.value)
+                        }, icon: {
+                            //Text(emojiFlag(countryCode: lang.value))
+                        })
+                            .badge(lang.count)
+                    }
                 }
             }
         } header: {
@@ -370,19 +498,21 @@ struct Sidebar: View {
 
     var tagsSection: some View {
         Section {
-            ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
-                NavigationLink(destination: StationList(column: ColumnID("Tags", String.self), valueCount: tag)) {
-                    Label(title: {
-//                        if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
-//                            Text(langName)
-//                        } else {
+            if let frame = StationCatalog.stationsFrame {
+                ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.TagsID] == tag.value }))) {
+                        Label(title: {
+                            //                        if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
+                            //                            Text(langName)
+                            //                        } else {
                             Text(tag.value)
-//                        }
-                    }, icon: {
-                        //Text(emojiFlag(countryCode: lang.value))
+                            //                        }
+                        }, icon: {
+                            //Text(emojiFlag(countryCode: lang.value))
 
-                    })
-                        .badge(tag.count)
+                        })
+                            .badge(tag.count)
+                    }
                 }
             }
         } header: {
@@ -396,9 +526,9 @@ struct Sidebar: View {
                 (countryName(for: $0.value), $0)
             }
             .sorted { svc1, svc2 in
-//                count
-//                ? (svc1.valueCount?.count ?? Int.min) < (svc2.valueCount?.count ?? Int.max)
-//                :
+                //                count
+                //                ? (svc1.valueCount?.count ?? Int.min) < (svc2.valueCount?.count ?? Int.max)
+                //                :
                 (svc1.localName ?? String(UnicodeScalar(.min))) < (svc2.localName ?? String(UnicodeScalar(.max)))
             }
     }
@@ -407,20 +537,62 @@ struct Sidebar: View {
         (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
+    func stationsSectionPopular(frame: DataFrame, count: Int = 500) -> some View {
+        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clickcountID, order: .descending).prefix(count))) {
+            Label(title: {
+                Text("Popular")
+            }, icon: {
+                Image(systemName: "star")
+            })
+        }
+    }
+
+    func stationsSectionPinned(frame: DataFrame) -> some View {
+        NavigationLink(destination: StationList(frame: frame.filter({ row in
+            pinnedStations.contains(row[Station.StationIDID] ?? -1)
+        }))) {
+            Label(title: {
+                Text("Pinned")
+            }, icon: {
+                Image(systemName: "pin")
+            })
+        }
+        .badge(pinnedStations.count)
+    }
+
+    var stationsSection: some View {
+        Section {
+            if let frame = StationCatalog.stationsFrame {
+                Group {
+                    stationsSectionPopular(frame: frame)
+                    if !pinnedStations.isEmpty {
+                        stationsSectionPinned(frame: frame)
+                    }
+                }
+                .symbolVariant(.fill)
+                .symbolRenderingMode(.multicolor)
+            }
+        } header: {
+            Text("Stations")
+        }
+    }
+
     var countriesSection: some View {
         Section {
-            ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
-                NavigationLink(destination: StationList(column: ColumnID("CountryCode", String.self), valueCount: country.valueCount)) {
-                    Label(title: {
-                        if let countryName = country.localName {
-                            Text(countryName)
-                        } else {
-                            Text("Unknown")
-                        }
-                    }, icon: {
-                        Text(emojiFlag(countryCode: country.valueCount.value))
-                    })
-                        .badge(country.valueCount.count)
+            if let frame = StationCatalog.stationsFrame {
+                ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
+                    NavigationLink(destination: StationList(frame: frame.filter({ $0[Station.CountryCodeID] == country.valueCount.value }))) {
+                        Label(title: {
+                            if let countryName = country.localName {
+                                Text(countryName)
+                            } else {
+                                Text("Unknown")
+                            }
+                        }, icon: {
+                            Text(emojiFlag(countryCode: country.valueCount.value))
+                        })
+                            .badge(country.valueCount.count)
+                    }
                 }
             }
         } header: {
