@@ -27,7 +27,7 @@ open class AppTests: XCTestCase {
     }
 
     // cannot run on CI until macOS12
-//#if false 
+#if false
 #if swift(>=5.5)
 #if canImport(TabularData)
     func testNewCatalog() throws {
@@ -76,5 +76,5 @@ open class AppTests: XCTestCase {
     }
 #endif
 #endif
-//#endif
+#endif
 }
