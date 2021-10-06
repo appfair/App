@@ -98,6 +98,7 @@ struct FrameColumn<Value, RowValue : Identifiable, Sort : SortComparator, Conten
 }
 
 
+#if os(macOS)
 @available(macOS 12.0, *)
 @available(iOS, unavailable)
 extension FrameColumn {
@@ -123,6 +124,7 @@ extension TableColumnContent {
 
 }
 
+
 @available(macOS 12.0, *)
 extension XOr.Or : TableColumnContent where P : TableColumnContent, Q : TableColumnContent {
     public var tableColumnBody: P {
@@ -135,6 +137,10 @@ extension XOr.Or : TableColumnContent where P : TableColumnContent, Q : TableCol
 
 
 }
+
+#endif
+
+
 @available(macOS 12.0, iOS 15.0, *)
 struct FrameNavigator_Previews: PreviewProvider {
     static var previews: some View {
