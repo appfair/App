@@ -12,7 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		49555415268931C1003F1B5B /* AppFair App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AppFair App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* Tune Out.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tune Out.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -47,7 +47,7 @@
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* AppFair App.app */,
+				49555415268931C1003F1B5B /* Tune Out.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -72,7 +72,7 @@
 				498DD183268CDB4600B79D43 /* App */,
 			);
 			productName = App;
-			productReference = 49555415268931C1003F1B5B /* AppFair App.app */;
+			productReference = 49555415268931C1003F1B5B /* Tune Out.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -265,8 +265,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Name";
-				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.Tune-Out";
+				PRODUCT_NAME = "Tune Out";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
@@ -293,8 +293,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Name";
-				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.Tune-Out";
+				PRODUCT_NAME = "Tune Out";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
