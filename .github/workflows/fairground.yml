@@ -392,7 +392,16 @@ jobs:
           # client apps will use this hash to verify that the untrusted
           # release artifact that is downloaded matches the release
           # artifact that was created in the trusted environment
-          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --fairseal-match 50000 --retry-duration 600 --artifact-url "$ZIPURL" --project . -o -
+          xcrun swift run -- fairtool fairseal \
+            --verbose true \
+            --hub github.com/appfair \
+            --org "${{ env.ORGNAME }}" \
+            --ref "${{ env.COMMITHASH }}" \
+            --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" \
+            --fairseal-match 0 \
+            --retry-duration 600 \
+            --artifact-url "$ZIPURL" \
+            --project . -o -
 
           # also run diffoscope to see what it says about the differences
           brew install diffoscope || true # in case it is already installed
@@ -410,7 +419,16 @@ jobs:
           echo "Generating fairseal for: $IPAURL"
 
           # Reproducable builds on iOS not yet working
-          xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --fairseal-match 1000000 --retry-duration 600 --artifact-url "$IPAURL" --project . -o -
+          xcrun swift run -- fairtool fairseal \
+            --verbose true \
+            --hub github.com/appfair \
+            --org "${{ env.ORGNAME }}" \
+            --ref "${{ env.COMMITHASH }}" \
+            --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" \
+            --fairseal-match 1000000 \
+            --retry-duration 600 \
+            --artifact-url "$IPAURL" \
+            --project . -o -
 
           # also run diffoscope to see what it says about the differences
           brew install diffoscope || true # in case it is already installed
