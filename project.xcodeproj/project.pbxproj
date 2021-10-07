@@ -279,6 +279,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp=none";
 				OTHER_LDFLAGS = "-Wl,-no_adhoc_codesign";
 				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Name";
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
