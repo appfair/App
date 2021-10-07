@@ -376,12 +376,6 @@ jobs:
           find "staging/" -type f
 
 
-      - name: "Upload Build Artifacts"
-        # upload the trusted artifacts for each build for future scrutiny
-        uses: actions/upload-artifact@v2
-        with:
-          path: staging
-
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
       - name: "Generate macOS fairseal"
@@ -403,7 +397,7 @@ jobs:
           # also run diffoscope to see what it says about the differences
           brew install diffoscope
           curl -o /tmp/checkartifact.zip "$ZIPURL"
-          diffoscope /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          diffoscope --html staging/diffoscope-macOS.html /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" || true # tolerate changes while developing reproducible builds
 
       - name: "Generate iOS fairseal"
         env:
@@ -417,6 +411,17 @@ jobs:
 
           # Reproducable builds on iOS not yet working
           xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --fairseal-match 1000000 --retry-duration 600 --artifact-url "$IPAURL" --project . -o -
+
+          # also run diffoscope to see what it says about the differences
+          brew install diffoscope
+          curl -o /tmp/checkartifact.zip "$ZIPURL"
+          diffoscope --html staging/diffoscope-iOS.html /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.zip" || true # tolerate changes while developing reproducible builds
+
+      - name: "Upload Build Artifacts"
+        # upload the trusted artifacts for each build for future scrutiny
+        uses: actions/upload-artifact@v2
+        with:
+          path: staging
 
       - name: "Publish App Fair Catalog"
         env:
