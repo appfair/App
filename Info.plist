@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.196</string>
+	<string>0.8.197</string>
 	<key>CFBundleVersion</key>
-	<string>53</string>
+	<string>54</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-write</key>
