@@ -400,6 +400,11 @@ jobs:
           # artifact that was created in the trusted environment
           xcrun swift run -- fairtool fairseal --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --fairseal-match 50000 --retry-duration 600 --artifact-url "$ZIPURL" --project . -o -
 
+          # also run diffoscope to see what it says about the differences
+          brew install diffoscope
+          curl -o /tmp/checkartifact.zip "$ZIPURL"
+          diffoscope /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+
       - name: "Generate iOS fairseal"
         env:
           GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
