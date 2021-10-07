@@ -436,8 +436,9 @@ jobs:
           diffoscope --html staging/diffoscope-iOS.html /tmp/checkartifact.ipa "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" || true # tolerate changes while developing reproducible builds
 
       - name: "Upload Build Artifacts"
-        # upload the trusted artifacts for each build for future scrutiny
+        # upload the trusted artifacts for each build for reproducible-builds
         uses: actions/upload-artifact@v2
+        if: always()
         with:
           path: staging
 
