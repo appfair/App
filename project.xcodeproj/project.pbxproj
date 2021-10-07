@@ -9,14 +9,12 @@
 /* Begin PBXBuildFile section */
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
-		49EF8E29270F6CF100B320F6 /* Stub.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49EF8E28270F6CF100B320F6 /* Stub.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		4951B002270F547E00E3EC89 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		49555415268931C1003F1B5B /* Tune Out.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tune Out.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		49EF8E28270F6CF100B320F6 /* Stub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stub.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,7 +40,6 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
-				49EF8E28270F6CF100B320F6 /* Stub.swift */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
 				49372E752689388E00100F18 /* Frameworks */,
@@ -129,7 +126,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				49EF8E29270F6CF100B320F6 /* Stub.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,8 +187,8 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				"SDKROOT[sdk=macosx*]" = macosx;
 				"SDKROOT[sdk=iphoneos*]" = iphoneos;
+				"SDKROOT[sdk=macosx*]" = macosx;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -251,8 +247,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				"SDKROOT[sdk=macosx*]" = macosx;
 				"SDKROOT[sdk=iphoneos*]" = iphoneos;
+				"SDKROOT[sdk=macosx*]" = macosx;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
