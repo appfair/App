@@ -414,8 +414,8 @@ jobs:
 
           # also run diffoscope to see what it says about the differences
           brew install diffoscope || true # in case it is already installed
-          curl -o /tmp/checkartifact.zip "$ZIPURL"
-          diffoscope --html staging/diffoscope-iOS.html /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.zip" || true # tolerate changes while developing reproducible builds
+          curl -o /tmp/checkartifact.ipa "$IPAURL"
+          diffoscope --html staging/diffoscope-iOS.html /tmp/checkartifact.ipa "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" || true # tolerate changes while developing reproducible builds
 
       - name: "Upload Build Artifacts"
         # upload the trusted artifacts for each build for future scrutiny
