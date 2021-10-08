@@ -89,6 +89,33 @@ jobs:
         if: github.event_name == 'push' # only run tests in forks
         run: xcrun swift test
 
+      - name: "Build iOS App"
+        # there's no way to export iOS archives without re-signing with a teamID, 
+        # so just build the .ipa manually; it needs to be in staging/ first
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+          rm -rf "staging/Payload" # cleanup
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+
+      # Notarization is not yet supported for iOS apps.
+      - name: "Notarize iOS App"
+        if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
+        run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
+
+
       - name: "Pre-build macOS App"
         # this should be unnecessary, but for some reason we need to build twice
         # in order to guarantee that a reproducible artifact is produced
@@ -182,32 +209,6 @@ jobs:
             CODE_SIGN_IDENTITY="-" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-
-      - name: "Build iOS App"
-        # there's no way to export iOS archives without re-signing with a teamID, 
-        # so just build the .ipa manually; it needs to be in staging/ first
-        run: |
-          xcodebuild archive \
-            -workspace "App.xcworkspace" \
-            -configuration Release \
-            -scheme "AppFairApp" \
-            -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="-" \
-            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
-            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
-          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-          rm -rf "staging/Payload" # cleanup
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-
-      # Notarization is not yet supported for iOS apps.
-      - name: "Notarize iOS App"
-        if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
-        run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
 
       - name: "Stage Release Metadata"
         # Extract the Info.plist from the archives themselves, since they contain
