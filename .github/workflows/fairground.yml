@@ -45,6 +45,7 @@ jobs:
 
     env:
       DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
+      ZERO_AR_DATE: 1
 
     steps:
 
