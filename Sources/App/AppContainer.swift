@@ -32,17 +32,14 @@ import UniformTypeIdentifiers
 struct TextFile: FileDocument {
     var text: String
 
-    init(text: String = "Hello, world!") {
+    init(text: String = "") {
         self.text = text
     }
 
     static var readableContentTypes: [UTType] { [
         UTType.text,
-        UTType.plainText,
-        UTType.utf8PlainText,
+        UTType.data,
         UTType(importedAs: "org.iso.sql"),
-        UTType(importedAs: "org.kotlinlang.source"),
-        UTType(importedAs: "net.daringfireball.markdown"),
     ] }
 
     init(configuration: ReadConfiguration) throws {
@@ -51,11 +48,11 @@ struct TextFile: FileDocument {
         else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        text = string
+        self.text = string
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        let data = text.data(using: .utf8)!
+        let data = text.data(using: .utf8) ?? Data()
         return .init(regularFileWithContents: data)
     }
 }
@@ -72,7 +69,7 @@ public extension AppContainer {
 //        }
         .commands {
             TextEditingCommands()
-            TextFormattingCommands()
+            // TextFormattingCommands() // Next Edit is a plain text editor
         }
     }
 
