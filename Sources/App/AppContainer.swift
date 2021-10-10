@@ -38,8 +38,19 @@ struct TextFile: FileDocument {
 
     static var readableContentTypes: [UTType] { [
         UTType.text,
+        UTType.plainText,
+        UTType.tabSeparatedText,
+        UTType.delimitedText,
+        UTType.commaSeparatedText,
         UTType.data,
-        UTType(importedAs: "org.iso.sql"),
+        //UTType(importedAs: "org.iso.sql"),
+    ] }
+
+    static var writableContentTypes: [UTType] { [
+        UTType.plainText, // needed to default to .txt extension
+        //UTType.text,
+        //UTType.data,
+        //UTType(importedAs: "org.iso.sql"),
     ] }
 
     init(configuration: ReadConfiguration) throws {
@@ -69,7 +80,7 @@ public extension AppContainer {
 //        }
         .commands {
             TextEditingCommands()
-            // TextFormattingCommands() // Next Edit is a plain text editor
+            TextFormattingCommands() // Next Edit is a plain text editor, but we need this for font sizxe increase & decrease
         }
     }
 
@@ -92,6 +103,7 @@ public struct ContentView: View {
 
     public var body: some View {
         CodeEditorView(text: $document.text)
+            .font(wip(Font.largeTitle.monospacedDigit()))
     }
 }
 
