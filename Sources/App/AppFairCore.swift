@@ -483,6 +483,7 @@ public struct NavigationRootView : View {
 
     public var body: some View {
         Group {
+            #if os(macOS)
             switch appManager.displayMode {
             case .table:
                 NavigationView {
@@ -496,6 +497,13 @@ public struct NavigationRootView : View {
                     AppDetailView()
                 }
             }
+            #else
+            NavigationView {
+                SidebarView()
+                AppsListView(item: nil)
+                AppDetailView()
+            }
+            #endif
         }
         .displayingFirstAlert($appManager.errors)
         .toolbar {
@@ -795,7 +803,11 @@ struct SidebarView: View {
         case .list:
             AppsListView(item: item)
         case .table:
+            #if os(macOS)
             AppTableDetailSplitView(item: item)
+            #else
+            AppsListView(item: item)
+            #endif
         }
     }
 
