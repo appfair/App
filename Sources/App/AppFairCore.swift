@@ -1,10 +1,5 @@
 import FairApp
 
-//extension FairHub {
-//    /// The App Fair's fair-ground hub
-//    static let appfair: Self = try! FairHub(hostOrg: "github.com/appfair")
-//}
-
 struct AppInfo : Identifiable {
     var release: AppCatalogItem
     var installedPlist: Plist? = nil
@@ -158,20 +153,21 @@ struct AppFairCommands: Commands {
 //        }
 
         CommandMenu(Text("Fair")) {
-            Bundle.module.button("Reload Apps") {
-                guard let cmd = reloadCommand else {
-                    dbg("no reload command")
-                    return
+            Text("Reload Apps")
+                .button {
+                    guard let cmd = reloadCommand else {
+                        dbg("no reload command")
+                        return
+                    }
+                    let start = CFAbsoluteTimeGetCurrent()
+                    Task {
+                        await cmd()
+                        let end = CFAbsoluteTimeGetCurrent()
+                        dbg("reloaded:", end - start)
+                    }
                 }
-                let start = CFAbsoluteTimeGetCurrent()
-                Task {
-                    await cmd()
-                    let end = CFAbsoluteTimeGetCurrent()
-                    dbg("reloaded:", end - start)
-                }
-            }
-            .keyboardShortcut("R")
-            .disabled(reloadCommand == nil)
+                .keyboardShortcut("R")
+                .disabled(reloadCommand == nil)
         }
     }
 }
@@ -486,29 +482,48 @@ public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
 
     public var body: some View {
-        NavigationView {
-            SidebarView().frame(minWidth: 160) // .controlSize(.large)
-            AppSplitView(item: nil)
+        Group {
+            switch appManager.displayMode {
+            case .table:
+                NavigationView {
+                    SidebarView()
+                    AppTableDetailSplitView(item: nil)
+                }
+            case .list:
+                NavigationView {
+                    SidebarView()
+                    AppsListView(item: nil)
+                    AppDetailView()
+                }
+            }
         }
         .displayingFirstAlert($appManager.errors)
+        .toolbar {
+            ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                DisplayModePicker(mode: $appManager.displayMode)
+            }
+        }
+        .task {
+            dbg("fetching app catalog")
+            await appManager.fetchApps()
+        }
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-public struct AppSplitView : View {
+public struct AppTableDetailSplitView : View {
     var item: AppManager.SidebarItem? = nil
 
-    public var body: some View {
+    @ViewBuilder public var body: some View {
         VSplit {
-            AppsListView(item: item)
+            AppsTableView(sidebarItem: item)
+                .navigationTitle(item?.label.title ?? Text("Apps"))
                 .frame(minHeight: 150)
-            DetailView()
+            AppDetailView()
                 .layoutPriority(1.0)
         }
     }
 }
-
-
 
 #if os(iOS)
 typealias VSplit = Group
@@ -517,7 +532,7 @@ typealias VSplit = VSplitView
 #endif
 
 @available(macOS 12.0, iOS 15.0, *)
-public struct DetailView : View {
+public struct AppDetailView : View {
     @FocusedBinding(\.selection) private var selection: Selection??
 
     public var body: some View {
@@ -769,9 +784,18 @@ struct SidebarView: View {
     }
 
     func item(_ item: AppManager.SidebarItem) -> some View {
-        NavigationLink(destination: AppSplitView(item: item)) {
+        NavigationLink(destination: navigationDestinationView(item: item)) {
             item.label
                 .badge(appManager.badgeCount(for: item))
+        }
+    }
+
+    @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
+        switch appManager.displayMode {
+        case .list:
+            AppsListView(item: item)
+        case .table:
+            AppTableDetailSplitView(item: item)
         }
     }
 
@@ -828,26 +852,28 @@ extension FocusedValues {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct DisplayModePicker: View {
-    @Binding var mode: AppsListView.ViewMode
+    @Binding var mode: AppManager.ViewMode
 
     var body: some View {
-        Picker("Display Mode", selection: $mode) {
-            ForEach(AppsListView.ViewMode.allCases) { viewMode in
+        Picker(selection: $mode) {
+            ForEach(AppManager.ViewMode.allCases) { viewMode in
                 viewMode.label
             }
+        } label: {
+            Text("Display Mode")
         }
         .pickerStyle(SegmentedPickerStyle())
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-extension AppsListView.ViewMode {
+extension AppManager.ViewMode {
     var labelContent: (name: LocalizedStringKey, systemImage: String) {
         switch self {
         case .table:
             return ("Table", "tablecells")
-        case .gallery:
-            return ("Gallery", "square.grid.3x2.fill")
+        case .list:
+            return ("List", "square.grid.3x2.fill")
         }
     }
 
@@ -855,46 +881,6 @@ extension AppsListView.ViewMode {
         Label(labelContent.name, systemImage: labelContent.systemImage)
     }
 }
-
-@available(macOS 12.0, iOS 15.0, *)
-struct AppsListView: View {
-    @EnvironmentObject var appManager: AppManager
-    @SceneStorage("viewMode") private var mode: ViewMode = .table
-
-    /// Whether to display the items as a table or gallery
-    enum ViewMode: String, CaseIterable, Identifiable {
-        var id: Self { self }
-        case table
-        case gallery
-    }
-
-    var item: AppManager.SidebarItem? = nil
-
-    var body: some View {
-        Group {
-            #if os(macOS)
-            switch (mode, item) {
-            //case (.table, .pinned): SimpleTableView()
-            //case (.table, .recent): ActionsTableView()
-            //case (.table, .installed): ActionsTableView()
-            case (.table, _): ReleasesTableView()
-            case (_, _): ReleasesTableView()
-            }
-            #else
-            wip(EmptyView())
-            #endif
-        }
-        // .padding()
-        // .focusedSceneValue(\.selection, $selection)
-        .toolbar {
-            ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
-                DisplayModePicker(mode: $mode)
-            }
-        }
-        .navigationTitle(item?.label.title ?? Text("Apps"))
-    }
-}
-
 
 // MARK: Parochial (package-local) Utilities
 

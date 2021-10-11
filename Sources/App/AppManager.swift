@@ -3,7 +3,7 @@ import FairApp
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class AppManager: SceneManager {
-    /// The location where apps will be installed; the last component must match the catalog browser app itself, so a fair-ground named the "Games Place" would install into "/Applications/Games Place/" and the name of the catalog browser app itself would be "/Applications/Games Place.app"
+    /// The location where apps will be installed; the last component must match the catalog browser app itself, so a fair-ground named the "Games Arcade" would install into "/Applications/Games Arcade/" and the name of the catalog browser app itself would be "/Applications/Games Arcade.app"
     static let installPath = "/Applications/" + Bundle.mainBundleName + "/"
 
     /// The base domain of the provider for the hub
@@ -15,6 +15,17 @@ import FairApp
 
     /// An optional authorization token for direct API usage
     @AppStorage("hubToken") public var hubToken = ""
+
+    @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
+
+    @AppStorage("displayMode") var displayMode: ViewMode = .table
+
+    /// Whether to display the items as a table or gallery
+    enum ViewMode: String, CaseIterable, Identifiable {
+        var id: Self { self }
+        case list
+        case table
+    }
 
     @Published public var errors: [AppError] = []
 
@@ -33,6 +44,27 @@ import FairApp
 
 @available(macOS 12.0, iOS 15.0, *)
 extension AppManager {
+    func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
+        do {
+            let start = CFAbsoluteTimeGetCurrent()
+            let catalog = try await self.hub().fetchCatalog(catalogURL: catalogURL, cache: cache)
+            self.catalog = catalog.apps
+            let end = CFAbsoluteTimeGetCurrent()
+            dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
+        } catch {
+            Task { // otherwise warnings about accessing off of the main thread
+                // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
+                dbg("received error:", error)
+                // we tolerate a "cancelled" error because it can happen when a view that is causing a catalog load is changed and its request gets automaticallu cancelled
+                if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == -999 {
+
+                } else {
+                    self.reportError(error)
+                }
+            }
+        }
+    }
+
     static var installFolderURL: URL {
         URL(fileURLWithPath: installPath)
     }
