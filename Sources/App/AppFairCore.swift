@@ -518,12 +518,13 @@ public struct NavigationRootView : View {
     }
 }
 
+#if os(macOS)
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
     var item: AppManager.SidebarItem? = nil
 
     @ViewBuilder public var body: some View {
-        VSplit {
+        VSplitView {
             AppsTableView(sidebarItem: item)
                 .navigationTitle(item?.label.title ?? Text("Apps"))
                 .frame(minHeight: 150)
@@ -532,12 +533,8 @@ public struct AppTableDetailSplitView : View {
         }
     }
 }
-
-#if os(iOS)
-typealias VSplit = Group
-#else
-typealias VSplit = VSplitView
 #endif
+
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
