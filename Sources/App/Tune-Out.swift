@@ -344,7 +344,9 @@ public struct TuneOutView: View {
             } else {
                 EmptyView()
             }
+            #if os(macOS)
             Text("Select Station").font(.largeTitle).foregroundColor(.secondary)
+            #endif
         }
     }
 }
