@@ -14,6 +14,8 @@
  */
 import FairApp
 
+import AVKit
+
 // The entry point to creating your app is the `AppContainer` type,
 // which is a stateless enum declared in `AppMain.swift` and may not be changed.
 // 
@@ -27,18 +29,30 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView()
+                .windowToolbarUnified(compact: false, showsTitle: true)
                 .environmentObject(store)
                 .task {
                     //await store.createStatusItems()
                     //await store.setDockMenu()
+                    do {
+                        #if os(iOS)
+                        try AVAudioSession.sharedInstance().setCategory(.playback)
+                        try AVAudioSession.sharedInstance().setActive(true)
+                        #endif
+                    } catch {
+                        dbg("error setting up session:", error)
+                    }
                 }
+            // iOS only
+            // .onReceive(NotificationCenter.default.publisher(for: UXApplication.didEnterBackgroundNotification)) { _ in
+            //      dbg("didEnterBackgroundNotification")
+            //            AVAudioSession.sharedInstance
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
                 // only permit a single window
             }
         }
-        //.windowToolbarStyle(.automatic) // macOS only
     }
 
     /// The app-wide settings view
@@ -151,18 +165,6 @@ public struct ContentView: View {
 
     public var body: some View {
         TuneOutView()
-            .toolbar {
-                Button {
-                    dbg(wip("shuffle"))
-                } label: {
-                    Label("Shuffle", systemImage: "shuffle")
-                }
-                .help(Text("Shuffle the current selection"))
-                .symbolRenderingMode(.multicolor)
-                //.symbolVariant(.circle)
-                //.symbolVariant(.fill)
-                //.symbolVariant(.slash)
-            }
     }
 }
 

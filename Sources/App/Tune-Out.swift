@@ -20,6 +20,9 @@ import WebKit
 import TabularData
 import AudioKit
 import SwiftUI
+#if os(iOS)
+import MediaPlayer
+#endif
 
 /// To fetch the latest catalog, run:
 /// curl https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
@@ -31,9 +34,9 @@ struct Station : Pure {
     typealias DateString = String
     static let dateStringType = CSVType.string
 
-    @available(*, deprecated, message: "prefer ISO8691 fields")
+    @available(*, deprecated, message: "prefer ISO8601 fields")
     typealias OldDateString = String
-    @available(*, deprecated, message: "prefer ISO8691 fields")
+    @available(*, deprecated, message: "prefer ISO8601 fields")
     static let oldDateStringType = CSVType.string
 
     typealias URLString = String
@@ -74,6 +77,14 @@ struct Station : Pure {
     var geo_lat: Double?
     var geo_long: Double?
     var has_extended_info: Bool?
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+extension Station : Identifiable {
+    /// The identifier of the station
+    var id: UUID? {
+        stationuuid.flatMap(UUID.init(uuidString:))
+    }
 
     static let changeuuidColumn = ColumnID("changeuuid", UUIDString.self)
     static let stationuuidColumn = ColumnID("stationuuid", UUIDString.self)
@@ -148,14 +159,6 @@ struct Station : Pure {
         Self.geo_longColumn.name : CSVType.double,
         Self.has_extended_infoColumn.name : CSVType.boolean,
     ]
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-extension Station : Identifiable {
-    /// The identifier of the station
-    var id: UUID? {
-        stationuuid.flatMap(UUID.init(uuidString:))
-    }
 
     init(row: DataFrame.Row) {
         self.changeuuid = row[Self.changeuuidColumn]
@@ -194,7 +197,10 @@ extension Station : Identifiable {
         self.geo_long = row[Self.geo_longColumn]
         self.has_extended_info = row[Self.has_extended_infoColumn]
     }
+}
 
+@available(macOS 12.0, iOS 15.0, *)
+extension Station {
     var streamingURL: URL? {
         self.url.flatMap(URL.init(string:))
     }
@@ -339,17 +345,89 @@ public struct TuneOutView: View {
         NavigationView {
             Sidebar()
             if let frame = StationCatalog.stationsFrame {
-                StationList(frame: frame, hideEmpty: true)
-                    .navigationTitle(Text("Stations"))
+                StationList(title: Text("Stations"), frame: { frame }, hideEmpty: true)
             } else {
                 EmptyView()
             }
             #if os(macOS)
-            Text("Select Station").font(.largeTitle).foregroundColor(.secondary)
+            // needs a third placeholder view to get the three-column NavigationView behavior
+            Text("Select Station")
+                .font(.largeTitle)
+                .foregroundColor(.secondary)
             #endif
         }
     }
 }
+
+@available(macOS 12.0, iOS 15.0, *)
+struct StationCommands: Commands {
+    private struct MenuContent: View {
+        //@FocusedBinding(\.selectedStation) var selectedStation
+
+        var body: some View {
+            wip(EmptyView())
+        }
+    }
+
+    var body: some Commands {
+        SidebarCommands()
+    }
+}
+
+
+//@available(macOS 12.0, iOS 15.0, *)
+//extension FocusedValues {
+//    var selectedStation: Binding<Station>? {
+//        get { self[SelectedStationKey.self] }
+//        set { self[SelectedStationKey.self] = newValue }
+//    }
+//
+//    private struct SelectedStationKey: FocusedValueKey {
+//        typealias Value = Binding<Station>
+//    }
+//}
+
+//@available(macOS 12.0, iOS 15.0, *)
+//private struct TrackTitleKey: PreferenceKey {
+//    static var defaultValue: String? { nil }
+//    static func reduce(value: inout String?, nextValue: () -> String?) {
+//        nextValue() ?? value
+//    }
+//}
+
+//extension FocusedValues {
+//    var trackTitle: String? {
+//        get { self[TrackTitleKey.self] }
+//        set { self[TrackTitleKey.self] = newValue }
+//    }
+//
+//    private struct TrackTitleKey: FocusedValueKey {
+//        typealias Value = String
+//    }
+//}
+
+
+/// A `DataFrameProtocol` that can filter itself efficiently.
+@available(macOS 12.0, iOS 15.0, *)
+public protocol FilterableFrame : DataFrameProtocol {
+    /// Filter on a specific column value. Since this is already implemented in both
+    /// `DataFrame` and `DataFrame.Slice`, its absence from `DataFrameProtocol` is assumed to be an
+    /// oversight.
+    func filter<T>(on: ColumnID<T>, _ isIncluded: (T?) throws -> Bool) throws -> DataFrame.Slice
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+extension DataFrame : FilterableFrame { }
+
+@available(macOS 12.0, iOS 15.0, *)
+extension DataFrame.Slice : FilterableFrame { }
+
+
+/// Making `DataFrame.Rows` implement `RandomAccessCollection` would allow
+/// us to use it directly in a `ForEach`, but the performance with
+/// large row sets is abyssmal
+//@available(macOS 12.0, iOS 15.0, *)
+//extension DataFrame.Rows : RandomAccessCollection { }
 
 @available(macOS 12.0, iOS 15.0, *)
 extension DataFrame.Row {
@@ -359,44 +437,173 @@ extension DataFrame.Row {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-struct StationList<Frame: DataFrameProtocol> : View {
-    @State var selection: Station? = nil
+struct StationList<Frame: FilterableFrame> : View {
+    /// The navigation title for this view
+    let navTitle: Text
+
+    /// The title of the currently-playing track
+    @State var nowPlayingTitle: String? = ""
+
+    //@FocusedBinding(\.selection) var selectionFocus: Station?? // not working
+    @State var selectedStation: Station? = nil
+
     @State var queryString: String = ""
+
+    /// The shuffled identifiers for sorting
+    @State var shuffledIDs: [String : Int]? = nil
+
+    //@FocusedValue(\.trackTitle) var trackTitle
+
     @AppStorage("pinned") var pinnedStations: Set<String> = []
     let frame: () -> Frame
     /// Whether to only display the table if there is a filter active
     let hideEmpty: Bool
 
+    let sortByName = false
+
     /// Initialize the the lazilly evaluated frame (which is critical for performance)
-    init(frame: @escaping @autoclosure () -> Frame, hideEmpty: Bool = false) {
+    init(title navTitle: Text, frame: @escaping () -> Frame, hideEmpty: Bool = false) {
+        self.navTitle = navTitle
         self.frame = frame
         self.hideEmpty = hideEmpty
     }
 
-    var selectedStations: [DataFrame.Row] {
-        frame()
-            .rows
-            .filter {
-                queryString.isEmpty
-                || $0[Station.nameColumn]?.localizedCaseInsensitiveContains(queryString) == true
+//    var sortComparators: [SortComparator] {
+//        wip([])
+//    }
+
+    var selectedStations: DataFrame.Slice {
+        // queryString.isEmpty ? frame()
+        try! frame()
+            .filter(on: Station.nameColumn, matchesQueryString)
+    }
+
+    var sortedStations: DataFrame {
+        let stations = self.selectedStations
+
+        if sortByName {
+            return stations.sorted(on: Station.nameColumn) { a, b in
+                a.localizedCompare(b) == .orderedAscending
             }
-//            .filter(on: Station.nameColumn) { name in
-//                queryString.isEmpty
-//                    || name?.localizedCaseInsensitiveContains(queryString) == true
-//            }
+        } else {
+            return stations.sorted(on: Station.clicktrendColumn, Station.bitrateColumn, order: .descending)
+        }
+    }
+
+    var arrangedFrame: DataFrame {
+        if let shuffledIDs = shuffledIDs {
+            return sortedStations.sorted(on: Station.stationuuidColumn, by: { a, b in
+                (shuffledIDs[a] ?? .min) < (shuffledIDs[b] ?? .max)
+            })
+        } else {
+            return sortedStations
+        }
+    }
+
+    var arrangedRows: DataFrame.Rows {
+        arrangedFrame.rows
+    }
+
+    var arrangedStations: [DataFrame.Row] {
+        arrangedRows.filter({ _ in true })
+    }
+
+    func matchesQueryString(name: String?) -> Bool {
+        queryString.isEmpty || name?.localizedCaseInsensitiveContains(queryString) == true
     }
 
     var body: some View {
         Group {
             if hideEmpty == false || !queryString.isEmpty {
                 List {
-                    ForEach(selectedStations, id: \.stationID, content: stationElement(stationRow:))
+                    ForEach(arrangedStations, id: \.stationID, content: stationElement(stationRow:))
                 }
             } else {
                 Text("Station List").font(.largeTitle).foregroundColor(.secondary)
             }
         }
         .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
+        .toolbar(id: "navtoolbar") {
+            ToolbarItem(id: "previous", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+                Button {
+                    dbg("previous")
+                    selectStation(next: false, query: false)
+                } label: {
+                    Text("Previous").label(symbol: "backward").symbolVariant(.fill)
+                }
+                .disabled(!selectStation(next: false, query: true))
+                .keyboardShortcut("[")
+                .help(Text("Select the previous station"))
+            }
+
+            ToolbarItem(id: "shuffle", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+                Button {
+                    dbg("shuffling")
+                    withAnimation {
+                        self.shuffledIDs = Dictionary(grouping: frame().rows.compactMap(\.stationID).shuffled().enumerated(), by: \.element).compactMapValues(\.first).mapValues(\.offset)
+                        if let randomStation = arrangedStations.first {
+                            // shuffling selected the first row in the list
+                            self.selectedStation = Station(row: randomStation)
+                        }
+                    }
+                } label: {
+                    Text("Shuffle").label(symbol: "shuffle", color: .teal)
+                }
+                .keyboardShortcut("\\")
+                .help(Text("Shuffle the current selection"))
+                .symbolRenderingMode(self.shuffledIDs == nil ? .monochrome : .multicolor)
+            }
+
+            ToolbarItem(id: "next", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+                Button {
+                    dbg("next")
+                    selectStation(next: true, query: false)
+                } label: {
+                    Text("Next").label(symbol: "forward").symbolVariant(.fill)
+                }
+                .disabled(!selectStation(next: true, query: true))
+                .keyboardShortcut("]")
+                .help(Text("Select the next station"))
+            }
+        }
+        .navigation(title: nowPlayingTitleText, subtitle: subtitle)
+    }
+
+    @discardableResult func selectStation(next: Bool, query: Bool) -> Bool {
+        if arrangedFrame.shape.rows <= 1 {
+            return false
+        }
+
+        if !query {
+            let stations = (next ? arrangedStations.reversed() : arrangedStations)
+            var index = stations.firstIndex(where: { row in
+                selectedStation?.stationuuid == row[Station.stationuuidColumn]
+            }) ?? 0
+
+            if index == 0 { index = stations.count } // wrap around
+            self.selectedStation = Station(row: stations[index-1])
+        }
+
+        return true
+    }
+
+    /// The title of tjhe currently playing track and station
+    var nowPlayingTitleText: Text {
+        var title = navTitle
+        if let station = self.selectedStation,
+           let stationName = station.name,
+           !stationName.isEmpty {
+            title = title + Text(": ") + Text(stationName)
+        }
+        if let nowPlayingTitle = nowPlayingTitle,
+           !nowPlayingTitle.isEmpty {
+            title = title + Text(": ") + Text(nowPlayingTitle)
+        }
+        return title
+    }
+
+    var subtitle: Text? {
+        wip(nil)
     }
 
     func stationElement(stationRow: DataFrame.Row) -> some View {
@@ -416,8 +623,9 @@ struct StationList<Frame: DataFrameProtocol> : View {
         }
 
         // Text(station.Name ?? "Unknown")
-        return NavigationLink(tag: station, selection: $selection, destination: {
-            StationView(source: station)
+        return NavigationLink(tag: station, selection: $selectedStation, destination: {
+            StationView(station: station, itemTitle: $nowPlayingTitle)
+                //.focusedValue(\.selectedStation, Binding.constant(station)) // causes a hang!
         }) {
             Label(title: { stationLabelTitle(station) }) {
                 station.iconView(size: 50)
@@ -425,8 +633,8 @@ struct StationList<Frame: DataFrameProtocol> : View {
             .labelStyle(StationLabelStyle())
             //.badge(station.Bitrate ?? wip(0))
             //.badge(station.Votes?.localizedNumber())
-
         }
+        .detailLink(true)
         .swipeActions {
             Button(role: ButtonRole.destructive) {
                 pinned(add: !pinned()) // toggle pinned
@@ -470,6 +678,7 @@ struct StationList<Frame: DataFrameProtocol> : View {
                 HStack(spacing: 2) {
                     let tags = station.tagElements
                         .compactMap(Station.tagInfo(tagString:))
+                        .prefix(10) // maximum of 10 tags we display
                     ForEach(enumerated: tags) { offset, titleImage in
                         titleImage.image
                             .symbolRenderingMode(.hierarchical)
@@ -544,10 +753,13 @@ struct Sidebar: View {
                let languageCounts = StationCatalog.languageCounts.successValue {
                 ForEach(languageCounts, id: \.value) { lang in
                     let title = Text(lang.value)
-
-                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.languageColumn, { $0 == lang.value })).navigationTitle(Text("Language: ") + title)) {
+                    let languageFrame = {
+                        frame.filter(on: Station.languageColumn, { $0 == lang.value })
+                    }
+                    NavigationLink(destination: StationList(title: Text("Language: ") + title, frame: languageFrame)) {
                         title
                     }
+                    .detailLink(false)
                     .badge(lang.count)
                 }
             }
@@ -562,8 +774,10 @@ struct Sidebar: View {
             if let frame = StationCatalog.stationsFrame {
                 ForEach(StationCatalog.tagsCounts.successValue ?? [], id: \.value) { tag in
                     let title = Text(tag.value)
-
-                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.tagsColumn, { $0 == tag.value })).navigationTitle(Text("Tag: ") + title)) {
+                    let tagsFrame = {
+                        frame.filter(on: Station.tagsColumn, { $0 == tag.value })
+                    }
+                    NavigationLink(destination: StationList(title: Text("Tag: ") + title, frame: tagsFrame)) {
                         Label(title: {
                             // if let langName = (Locale.current as NSLocale).displayName(forKey: .languageCode, value: lang.value) {
                             // Text(langName)
@@ -573,8 +787,9 @@ struct Sidebar: View {
                         }, icon: {
                             // Text(emojiFlag(countryCode: lang.value))
                         })
-                            .badge(tag.count)
+                        .badge(tag.count)
                     }
+                    .detailLink(false)
                 }
             }
         } header: {
@@ -599,24 +814,60 @@ struct Sidebar: View {
         (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
-    func stationsSectionTrending(frame: DataFrame, count: Int = 100, title: Text = Text("Trending")) -> some View {
-        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clicktrendColumn, order: .descending).prefix(count)).navigationTitle(title)) {
-            title.label(symbol: "sparkle")
+    func stationsSectionTrending(frame: DataFrame, count: Int = 256, title: Text = Text("Trending")) -> some View {
+        let trendingFrame = { frame.sorted(on: Station.clicktrendColumn, order: .descending).prefix(count) }
+        return NavigationLink(destination: StationList(title: title, frame: trendingFrame)) {
+            title.label(symbol: "flame", color: .orange)
         }
+        .detailLink(false)
     }
 
-    func stationsSectionPopular(frame: DataFrame, count: Int = 100, title: Text = Text("Popular")) -> some View {
-        NavigationLink(destination: StationList(frame: frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count)).navigationTitle(title)) {
-            title.label(symbol: "star")
+    func stationsSectionPopular(frame: DataFrame, count: Int = 256, title: Text = Text("Popular")) -> some View {
+        let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
+        return NavigationLink(destination: StationList(title: title, frame: popularFrame)) {
+            title.label(symbol: "star", color: .yellow)
         }
+        .detailLink(false)
+    }
+
+    func stationsSectionQuality(frame: DataFrame, targetBitrate: Double = 320, count: Int = 256, title: Text = Text("Hi–Fi")) -> some View {
+        // filted by high-quality audio feeds,
+        let selection = {
+            frame
+                .filter(on: Station.bitrateColumn, { ($0 ?? 0) == targetBitrate }) // things over tend to be video feeds
+                .sorted(on: Station.votesColumn, order: .descending)
+                .prefix(count)
+        }
+
+        return NavigationLink(destination: StationList(title: title, frame: selection)) {
+            title.label(symbol: "headphones", color: .yellow)
+        }
+        .detailLink(false)
+    }
+
+    func stationsSectionAll(frame: DataFrame, count: Int = .max, title: Text = Text("All Stations")) -> some View {
+        let selection = {
+            frame
+                .prefix(count)
+        }
+
+        return NavigationLink(destination: StationList(title: title, frame: selection)) {
+            title.label(symbol: "globe", color: .purple)
+        }
+        .detailLink(false)
     }
 
     func stationsSectionPinned(frame: DataFrame, title: Text = Text("Pinned")) -> some View {
-        NavigationLink(destination: StationList(frame: frame.filter({ row in
-            pinnedStations.contains(row[Station.stationuuidColumn] ?? "")
-        })).navigationTitle(title)) {
-            title.label(symbol: "pin")
+        let stationsFrame = {
+            frame.filter({ row in
+                pinnedStations.contains(row[Station.stationuuidColumn] ?? "")
+            })
         }
+
+        return NavigationLink(destination: StationList(title: title, frame: stationsFrame)) {
+            title.label(symbol: "pin", color: .green)
+        }
+        .detailLink(false)
         .badge(pinnedStations.count)
     }
 
@@ -624,14 +875,17 @@ struct Sidebar: View {
         Section {
             if let frame = StationCatalog.stationsFrame {
                 Group {
-                    stationsSectionTrending(frame: frame)
+                    stationsSectionPinned(frame: frame)
                         .keyboardShortcut("1")
-                    stationsSectionPopular(frame: frame)
+                    stationsSectionTrending(frame: frame)
                         .keyboardShortcut("2")
-                    if !pinnedStations.isEmpty {
-                        stationsSectionPinned(frame: frame)
-                            .keyboardShortcut("3")
-                    }
+                    stationsSectionPopular(frame: frame)
+                        .keyboardShortcut("3")
+                    stationsSectionQuality(frame: frame)
+                        .keyboardShortcut("4")
+                    // too slow, sadly
+                    // stationsSectionAll(frame: frame)
+                    //     .keyboardShortcut("5")
                 }
                 .symbolVariant(.fill)
                 .symbolRenderingMode(.multicolor)
@@ -647,11 +901,14 @@ struct Sidebar: View {
                 ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
                     let title: Text = country.localName.flatMap(Text.init) ?? Text("Unknown")
                     let navTitle = Text("Country: ") + title
-
-                    NavigationLink(destination: StationList(frame: frame.filter(on: Station.countrycodeColumn, { $0 == country.valueCount.value })).navigationTitle(navTitle)) {
+                    let countriesFrame = {
+                        frame.filter(on: Station.countrycodeColumn, { $0 == country.valueCount.value })
+                    }
+                    NavigationLink(destination: StationList(title: navTitle, frame: countriesFrame)) {
                         title.label(image: Text(emojiFlag(countryCode: country.valueCount.value.isEmpty ? "UN" : country.valueCount.value)))
                             .badge(country.valueCount.count)
                     }
+                    .detailLink(false)
                 }
             }
         } header: {
@@ -671,19 +928,23 @@ struct Sidebar: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct StationView: View {
-    let source: Station
+    let station: Station
     @StateObject var tuner: RadioTuner
+    @Binding var itemTitle: String?
+    /// The current play rate
+    @State var rate: Float = 0.0
 
-    init(source: Station) {
-        self.source = source
-        self._tuner = StateObject(wrappedValue: RadioTuner(streamingURL: wip(source.streamingURL!))) // TODO: check for bad url
+    init(station: Station, itemTitle: Binding<String?>) {
+        self.station = station
+        self._itemTitle = itemTitle
+        self._tuner = StateObject(wrappedValue: RadioTuner(streamingURL: wip(station.streamingURL!))) // TODO: check for bad url
     }
 
     var body: some View {
         VideoPlayer(player: tuner.player) {
             VStack {
                 Spacer()
-                Text(source.name ?? "")
+                Text(station.name ?? "")
                     .font(.largeTitle)
                     .frame(maxWidth: .infinity)
 
@@ -695,15 +956,80 @@ struct StationView: View {
                 Spacer()
 
             }
-            //.background(source.imageView().blur(radius: 20, opaque: true))
+            //.background(station.imageView().blur(radius: 20, opaque: true))
             .background(Material.thick)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVPlayer.rateDidChangeNotification, object: tuner.player)) { note in
+            self.rate = (note.object as! AVPlayer).rate
         }
         .textSelection(.enabled)
         .onAppear {
+            //tuner.player.prepareToPlay()
             tuner.player.play()
         }
+        .toolbar(id: "playpausetoolbar") {
+            ToolbarItem(id: "play", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+                Button {
+                    dbg("playing")
+                    tuner.player.play()
+                } label: {
+                    Text("Play").label(symbol: "play").symbolVariant(.fill)
+                }
+                .keyboardShortcut(.space, modifiers: [])
+                .disabled(self.rate > 0)
+                .help(Text("Play the current track"))
+            }
+            ToolbarItem(id: "pause", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+                Button {
+                    dbg("pausing")
+                    tuner.player.pause()
+                } label: {
+                    Text("Pause").label(symbol: "pause").symbolVariant(.fill)
+                }
+                .keyboardShortcut(.space, modifiers: [])
+                .disabled(self.rate == 0)
+                .help(Text("Pause the current track"))
+            }
+        }
+        .onChange(of: tuner.itemTitle, perform: updateTitle)
+        //.preference(key: TrackTitleKey.self, value: tuner.itemTitle)
+        //.focusedSceneValue(\.trackTitle, tuner.itemTitle)
+        .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station"), subtitle: Text(tuner.itemTitle))
+    }
+
+    func updateTitle(title: String?) {
+        self.itemTitle = title
+
+        #if os(iOS)
+        // NOTE: seems to not be working yet
+
+        // update the shared playing information for the lock screen
+        let center = MPNowPlayingInfoCenter.default()
+        var info = center.nowPlayingInfo ?? [String: Any]()
+
+        //let title = "title"
+        //let album = "album"
+
+        info[MPMediaItemPropertyTitle] = title
+        info[MPMediaItemPropertyAlbumTitle] = station.name
+
+        if false {
+            let artworkData = Data()
+            let image = UIImage(data: artworkData) ?? UIImage()
+
+            // TODO: use iconView() by wrapping it in UXViewRep
+            let artwork = MPMediaItemArtwork(boundsSize: image.size, requestHandler: {  (_) -> UIImage in
+                return image
+            })
+            info[MPMediaItemPropertyArtwork] = artwork
+        }
+
+
+        center.nowPlayingInfo = info
+        #endif
     }
 }
+
 
 // TODO: figure out: App[20783:6049981] [] [19:59:59.139] FigICYBytePumpCopyProperty signalled err=-12784 (kFigBaseObjectError_PropertyNotFound) (no such property) at FigICYBytePump.c:1396
 
@@ -727,6 +1053,10 @@ final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPu
         let metaOutput = AVPlayerItemMetadataOutput(identifiers: allAVMetadataIdentifiers.map(\.rawValue))
         metaOutput.setDelegate(self, queue: DispatchQueue.main)
         self.playerItem.add(metaOutput)
+    }
+
+    func outputSequenceWasFlushed(_ output: AVPlayerItemOutput) {
+        dbg(output)
     }
 
     func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
@@ -764,108 +1094,119 @@ extension Station {
         // cat Sources/App/Resources/stations.csv | tr '"' '\n' | grep ',' | tr ',' '\n' | tr '[A-Z]' '[a-z]' | grep '[a-z]' | sort | uniq -c | sort -nr | head -n 100
 
         switch tagString {
+        case "60s": return (tagString, Text("tag-60s"), Image(systemName: "6.circle"))
+        case "70s": return (tagString, Text("tag-70s"), Image(systemName: "7.circle"))
+        case "80s": return (tagString, Text("tag-80s"), Image(systemName: "8.circle"))
+        case "90s": return (tagString, Text("tag-90s"), Image(systemName: "9.circle"))
+
         case "pop": return (tagString, Text("tag-pop"), Image(systemName: "sparkles"))
         case "news": return (tagString, Text("tag-news"), Image(systemName: "newspaper"))
+
         case "rock": return (tagString, Text("tag-rock"), Image(systemName: "guitars"))
+        case "classic rock": return (tagString, Text("tag-classic-rock"), Image(systemName: "guitars"))
+        case "pop rock": return (tagString, Text("tag-pop-rock"), Image(systemName: "guitars"))
+
+        case "metal": return (tagString, Text("tag-metal"), Image(systemName: "amplifier"))
+        case "hard rock": return (tagString, Text("tag-hard-rock"), Image(systemName: "amplifier"))
+
+        case "npr": return (tagString, Text("tag-npr"), Image(systemName: "building.columns"))
+        case "public radio": return (tagString, Text("tag-public-radio"), Image(systemName: "building.columns"))
+        case "community radio": return (tagString, Text("tag-community-radio"), Image(systemName: "building.columns"))
+
+        case "classical": return (tagString, Text("tag-classical"), Image(systemName: "theatermasks"))
+
         case "music": return (tagString, Text("tag-music"), Image(systemName: "music.note"))
         case "talk": return (tagString, Text("tag-talk"), Image(systemName: "mic.square"))
-        case "public radio": return (tagString, Text("tag-public-radio"), Image(systemName: "building.columns"))
-        //case "english": return (tagString, Text("tag-english"), Image(systemName: "e.circle"))
-        //case "dance": return (tagString, Text("tag-dance"), Image(systemName: "d.circle"))
-        //case "spanish": return (tagString, Text("tag-spanish"), Image(systemName: "s.circle"))
-        //case "top 40": return (tagString, Text("tag-top-40"), Image(systemName: "t.circle"))
-        case "80s": return (tagString, Text("tag-80s"), Image(systemName: "8.circle"))
-        //case "español": return (tagString, Text("tag-español"), Image(systemName: "e.circle"))
-        //case "greek": return (tagString, Text("tag-greek"), Image(systemName: "g.circle"))
+        case "dance": return (tagString, Text("tag-dance"), Image(systemName: "figure.walk"))
+        case "spanish": return (tagString, Text("tag-spanish"), Image(systemName: "globe.europe.africa"))
+        case "top 40": return (tagString, Text("tag-top-40"), Image(systemName: "chart.bar"))
+        case "greek": return (tagString, Text("tag-greek"), Image(systemName: "globe.europe.africa"))
         case "radio": return (tagString, Text("tag-radio"), Image(systemName: "radio"))
         case "oldies": return (tagString, Text("tag-oldies"), Image(systemName: "tortoise"))
-        //case "estación": return (tagString, Text("tag-estación"), Image(systemName: "e.circle"))
-        //case "community radio": return (tagString, Text("tag-community-radio"), Image(systemName: "c.circle"))
-        //case "mex": return (tagString, Text("tag-mex"), Image(systemName: "m.circle"))
-        //case "fm": return (tagString, Text("tag-fm"), Image(systemName: "f.circle"))
+        case "fm": return (tagString, Text("tag-fm"), Image(systemName: "antenna.radiowaves.left.and.right"))
         case "méxico": return (tagString, Text("tag-méxico"), Image(systemName: "globe.americas"))
         case "christian": return (tagString, Text("tag-christian"), Image(systemName: "cross"))
-        //case "mx": return (tagString, Text("tag-mx"), Image(systemName: "m.circle"))
-        //case "jazz": return (tagString, Text("tag-jazz"), Image(systemName: "j.circle"))
         case "hits": return (tagString, Text("tag-hits"), Image(systemName: "sparkle"))
-        //case "classical": return (tagString, Text("tag-classical"), Image(systemName: "c.circle"))
-        case "90s": return (tagString, Text("tag-90s"), Image(systemName: "9.circle"))
-        //case "electronic": return (tagString, Text("tag-electronic"), Image(systemName: "e.circle"))
-        //case "folk": return (tagString, Text("tag-folk"), Image(systemName: "f.circle"))
-        //case "classic rock": return (tagString, Text("tag-classic-rock"), Image(systemName: "c.circle"))
-        //case "adult contemporary": return (tagString, Text("tag-adult-contemporary"), Image(systemName: "a.circle"))
         case "mexico": return (tagString, Text("tag-mexico"), Image(systemName: "globe.americas"))
-        //case "local news": return (tagString, Text("tag-local-news"), Image(systemName: "l.circle"))
-        //case "house": return (tagString, Text("tag-house"), Image(systemName: "h.circle"))
-        //case "alternative": return (tagString, Text("tag-alternative"), Image(systemName: "a.circle"))
+        case "local news": return (tagString, Text("tag-local-news"), Image(systemName: "newspaper"))
         case "german": return (tagString, Text("tag-german"), Image(systemName: "globe.europe.africa"))
-        case "70s": return (tagString, Text("tag-70s"), Image(systemName: "7.circle"))
-        //case "música": return (tagString, Text("tag-música"), Image(systemName: "m.circle"))
-        //case "classic hits": return (tagString, Text("tag-classic-hits"), Image(systemName: "c.circle"))
-        //case "commercial": return (tagString, Text("tag-commercial"), Image(systemName: "c.circle"))
-        //case "npr": return (tagString, Text("tag-npr"), Image(systemName: "n.circle"))
-        //case "hiphop": return (tagString, Text("tag-hiphop"), Image(systemName: "h.circle"))
-        //case "country": return (tagString, Text("tag-country"), Image(systemName: "c.circle"))
-        //case "pop music": return (tagString, Text("tag-pop-music"), Image(systemName: "p.circle"))
-        //case "soul": return (tagString, Text("tag-soul"), Image(systemName: "s.circle"))
-        //case "musica": return (tagString, Text("tag-musica"), Image(systemName: "m.circle"))
-        //case "s": return (tagString, Text("tag-s"), Image(systemName: "s.circle"))
-        //case "indie": return (tagString, Text("tag-indie"), Image(systemName: "i.circle"))
-        //case "deutsch": return (tagString, Text("tag-deutsch"), Image(systemName: "d.circle"))
-        //case "information": return (tagString, Text("tag-information"), Image(systemName: "i.circle"))
+        case "deutsch": return (tagString, Text("tag-deutsch"), Image(systemName: "globe.europe.africa"))
         case "university radio": return (tagString, Text("tag-university-radio"), Image(systemName: "graduationcap"))
         case "chillout": return (tagString, Text("tag-chillout"), Image(systemName: "snowflake"))
         case "ambient": return (tagString, Text("tag-ambient"), Image(systemName: "headphones"))
-        //case "xp_5": return (tagString, Text("tag-xp_5"), Image(systemName: "u.circle"))
-        //case "g_7": return (tagString, Text("tag-g_7"), Image(systemName: "g.circle"))
-        //case "techno": return (tagString, Text("tag-techno"), Image(systemName: "t.circle"))
-        //case "sport": return (tagString, Text("tag-sport"), Image(systemName: "s.circle"))
         case "world music": return (tagString, Text("tag-world-music"), Image(systemName: "globe"))
-        //case "noticias": return (tagString, Text("tag-noticias"), Image(systemName: "n.circle"))
-        //case "french": return (tagString, Text("tag-french"), Image(systemName: "f.circle"))
-        //case "música pop": return (tagString, Text("tag-música-pop"), Image(systemName: "m.circle"))
-        //case "pop rock": return (tagString, Text("tag-pop-rock"), Image(systemName: "p.circle"))
+        case "french": return (tagString, Text("tag-french"), Image(systemName: "globe.europe.africa"))
         case "local music": return (tagString, Text("tag-local-music"), Image(systemName: "flag"))
-        case "metal": return (tagString, Text("tag-metal"), Image(systemName: "hammer"))
-        //case "lounge": return (tagString, Text("tag-lounge"), Image(systemName: "l.circle"))
         case "disco": return (tagString, Text("tag-disco"), Image(systemName: "dot.arrowtriangles.up.right.down.left.circle"))
-        //case "mainstream": return (tagString, Text("tag-mainstream"), Image(systemName: "m.circle"))
-        //case "alternative rock": return (tagString, Text("tag-alternative-rock"), Image(systemName: "a.circle"))
-        //case "religion": return (tagString, Text("tag-religion"), Image(systemName: "r.circle"))
         case "regional mexican": return (tagString, Text("tag-regional-mexican"), Image(systemName: "globe.americas"))
-        case "60s": return (tagString, Text("tag-60s"), Image(systemName: "6.circle"))
-        //case "on": return (tagString, Text("tag-on"), Image(systemName: "o.circle"))
         case "electro": return (tagString, Text("tag-electro"), Image(systemName: "cable.connector.horizontal"))
-        case "talk & speech": return (tagString, Text("tag-talk-&-speech"), Image(systemName: "mic"))
-        //case "funk": return (tagString, Text("tag-funk"), Image(systemName: "f.circle"))
+        case "talk & speech": return (tagString, Text("tag-talk-&-speech"), Image(systemName: "text.bubble"))
         case "college radio": return (tagString, Text("tag-college-radio"), Image(systemName: "graduationcap"))
         case "catholic": return (tagString, Text("tag-catholic"), Image(systemName: "cross"))
-        //case "regional radio": return (tagString, Text("tag-regional-radio"), Image(systemName: "r.circle"))
-        //case "aac": return (tagString, Text("tag-aac"), Image(systemName: "a.circle"))
-        //case "musica regional mexicana": return (tagString, Text("tag-musica-regional-mexicana"), Image(systemName: "m.circle"))
-        //case "rnb": return (tagString, Text("tag-rnb"), Image(systemName: "r.circle"))
-        //case "hard rock": return (tagString, Text("tag-hard-rock"), Image(systemName: "h.circle"))
-        //case "juvenil": return (tagString, Text("tag-juvenil"), Image(systemName: "j.circle"))
-        //case "charts": return (tagString, Text("tag-charts"), Image(systemName: "c.circle"))
-        //case "regional": return (tagString, Text("tag-regional"), Image(systemName: "r.circle"))
-        //case "grupera": return (tagString, Text("tag-grupera"), Image(systemName: "g.circle"))
-        //case "blues": return (tagString, Text("tag-blues"), Image(systemName: "b.circle"))
-        //case "reggae": return (tagString, Text("tag-reggae"), Image(systemName: "r.circle"))
-        //case "russian": return (tagString, Text("tag-russian"), Image(systemName: "r.circle"))
-        //case "news talk": return (tagString, Text("tag-news-talk"), Image(systemName: "n.circle"))
-        //case "trance": return (tagString, Text("tag-trance"), Image(systemName: "t.circle"))
-        //case "rap": return (tagString, Text("tag-rap"), Image(systemName: "r.circle"))
-        //case "musica regional": return (tagString, Text("tag-musica-regional"), Image(systemName: "m.circle"))
-        //case "latin music": return (tagString, Text("tag-latin-music"), Image(systemName: "l.circle"))
-        //case "edm": return (tagString, Text("tag-edm"), Image(systemName: "e.circle"))
-        //case "easy listening": return (tagString, Text("tag-easy-listening"), Image(systemName: "e.circle"))
-        //case "culture": return (tagString, Text("tag-culture"), Image(systemName: "c.circle"))
-        //case "entertainment": return (tagString, Text("tag-entertainment"), Image(systemName: "e.circle"))
-        //case "variety": return (tagString, Text("tag-variety"), Image(systemName: "v.circle"))
-        //case "entretenimiento": return (tagString, Text("tag-entretenimiento"), Image(systemName: "a.circle"))
+        case "regional radio": return (tagString, Text("tag-regional-radio"), Image(systemName: "flag"))
+        case "musica regional mexicana": return (tagString, Text("tag-musica-regional-mexicana"), Image(systemName: "m.circle"))
+        case "charts": return (tagString, Text("tag-charts"), Image(systemName: "chart.bar"))
+        case "regional": return (tagString, Text("tag-regional"), Image(systemName: "flag"))
+        case "russian": return (tagString, Text("tag-russian"), Image(systemName: "globe.asia.australia"))
+        case "musica regional": return (tagString, Text("tag-musica-regional"), Image(systemName: "flag"))
+
+        case "religion": return (tagString, Text("tag-religion"), Image(systemName: "staroflife"))
+        case "pop music": return (tagString, Text("tag-pop-music"), Image(systemName: "person.3"))
+        case "easy listening": return (tagString, Text("tag-easy-listening"), Image(systemName: "dial.min"))
+        case "culture": return (tagString, Text("tag-culture"), Image(systemName: "metronome"))
+        case "mainstream": return (tagString, Text("tag-mainstream"), Image(systemName: "gauge"))
+        case "news talk": return (tagString, Text("tag-news-talk"), Image(systemName: "captions.bubble"))
+        case "commercial": return (tagString, Text("tag-commercial"), Image(systemName: "coloncurrencysign.circle"))
+        case "folk": return (tagString, Text("tag-folk"), Image(systemName: "tuningfork"))
+
+        case "sport": return (tagString, Text("tag-sport"), Image(systemName: "figure.walk.diamond"))
+        case "jazz": return (tagString, Text("tag-jazz"), Image(systemName: "ear"))
+        case "country": return (tagString, Text("tag-country"), Image(systemName: "photo"))
+        case "house": return (tagString, Text("tag-house"), Image(systemName: "house"))
+        case "soul": return (tagString, Text("tag-soul"), Image(systemName: "suit.heart"))
+        case "reggae": return (tagString, Text("tag-reggae"), Image(systemName: "smoke"))
+
+        // default (letter) icons
+        case "classic hits": return (tagString, Text("tag-classic-hits"), Image(systemName: "c.circle"))
+        case "electronic": return (tagString, Text("tag-electronic"), Image(systemName: "e.circle"))
+        case "funk": return (tagString, Text("tag-funk"), Image(systemName: "f.circle"))
+        case "blues": return (tagString, Text("tag-blues"), Image(systemName: "b.circle"))
+
+        case "english": return (tagString, Text("tag-english"), Image(systemName: "e.circle"))
+        case "español": return (tagString, Text("tag-español"), Image(systemName: "e.circle"))
+        case "estación": return (tagString, Text("tag-estación"), Image(systemName: "e.circle"))
+        case "mex": return (tagString, Text("tag-mex"), Image(systemName: "m.circle"))
+        case "mx": return (tagString, Text("tag-mx"), Image(systemName: "m.circle"))
+        case "adult contemporary": return (tagString, Text("tag-adult-contemporary"), Image(systemName: "a.circle"))
+        case "alternative": return (tagString, Text("tag-alternative"), Image(systemName: "a.circle"))
+        case "música": return (tagString, Text("tag-música"), Image(systemName: "m.circle"))
+        case "hiphop": return (tagString, Text("tag-hiphop"), Image(systemName: "h.circle"))
+        case "musica": return (tagString, Text("tag-musica"), Image(systemName: "m.circle"))
+        case "s": return (tagString, Text("tag-s"), Image(systemName: "s.circle"))
+        case "indie": return (tagString, Text("tag-indie"), Image(systemName: "i.circle"))
+        case "information": return (tagString, Text("tag-information"), Image(systemName: "i.circle"))
+        case "techno": return (tagString, Text("tag-techno"), Image(systemName: "t.circle"))
+        case "noticias": return (tagString, Text("tag-noticias"), Image(systemName: "n.circle"))
+        case "música pop": return (tagString, Text("tag-música-pop"), Image(systemName: "m.circle"))
+        case "lounge": return (tagString, Text("tag-lounge"), Image(systemName: "l.circle"))
+        case "alternative rock": return (tagString, Text("tag-alternative-rock"), Image(systemName: "a.circle"))
+        case "on": return (tagString, Text("tag-on"), Image(systemName: "o.circle"))
+        case "aac": return (tagString, Text("tag-aac"), Image(systemName: "a.circle"))
+        case "rnb": return (tagString, Text("tag-rnb"), Image(systemName: "r.circle"))
+        case "juvenil": return (tagString, Text("tag-juvenil"), Image(systemName: "j.circle"))
+        case "grupera": return (tagString, Text("tag-grupera"), Image(systemName: "g.circle"))
+        case "trance": return (tagString, Text("tag-trance"), Image(systemName: "t.circle"))
+        case "rap": return (tagString, Text("tag-rap"), Image(systemName: "r.circle"))
+        case "latin music": return (tagString, Text("tag-latin-music"), Image(systemName: "l.circle"))
+        case "edm": return (tagString, Text("tag-edm"), Image(systemName: "e.circle"))
+        case "entertainment": return (tagString, Text("tag-entertainment"), Image(systemName: "e.circle"))
+        case "variety": return (tagString, Text("tag-variety"), Image(systemName: "v.circle"))
+        case "entretenimiento": return (tagString, Text("tag-entretenimiento"), Image(systemName: "e.circle"))
+        case "xp_5": return (tagString, Text("tag-xp_5"), Image(systemName: "u.circle"))
+        case "g_7": return (tagString, Text("tag-g_7"), Image(systemName: "g.circle"))
+
         default: return nil
         }
     }
 
 }
-
