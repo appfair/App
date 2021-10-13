@@ -38,8 +38,7 @@ on:
 jobs:
   fork_apply:
     name: "Fork Apply"
-      #if: github.event_name == 'push' && github.repository != 'appfair/App'
-
+    if: github.event_name == 'push'
     runs-on: macos-11
     timeout-minutes: 45
 
