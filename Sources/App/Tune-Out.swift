@@ -1066,6 +1066,9 @@ struct StationView: View {
 
                         Spacer()
                     }
+                    .disabled(true)
+                    .textFieldStyle(.roundedBorder)
+                    .disableAutocorrection(true)
                 }
             }
             //.textFieldStyle(.plain)
