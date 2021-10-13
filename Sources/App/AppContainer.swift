@@ -36,7 +36,7 @@ public extension AppContainer {
                     //await store.setDockMenu()
                     do {
                         #if os(iOS)
-                        try AVAudioSession.sharedInstance().setCategory(.playback, mode: nil)
+                        try AVAudioSession.sharedInstance().setCategory(.playback)
                         try AVAudioSession.sharedInstance().setActive(true)
                         #endif
                     } catch {

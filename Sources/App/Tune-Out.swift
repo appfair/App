@@ -1005,11 +1005,17 @@ struct StationView: View {
 //    var geo_long: Double?
 //    var has_extended_info: Bool?
 
+    #if os(iOS)
+    typealias VForm = VStack
+    #else
+    typealias VForm = Form
+    #endif
+
     var body: some View {
         VideoPlayer(player: tuner.player) {
             ScrollView {
                 Section(header: Text(tuner.itemTitle).font(.largeTitle)) {
-                    Form {
+                    VForm { // doesn't seem to show up on iOS, but BStack does
                         Group {
                             TextField(text: .constant(station.name ?? ""), prompt: Text("Unknown")) {
                                 Text("Station Name")
