@@ -414,6 +414,16 @@ public protocol FilterableFrame : DataFrameProtocol {
     /// `DataFrame` and `DataFrame.Slice`, its absence from `DataFrameProtocol` is assumed to be an
     /// oversight.
     func filter<T>(on: ColumnID<T>, _ isIncluded: (T?) throws -> Bool) throws -> DataFrame.Slice
+
+    /// Returns a slice that contains the initial rows up to a maximum length.
+    ///
+    /// - Parameter maxLength: The maximum number of rows.
+    func prefix(_ maxLength: Int) -> DataFrame.Slice
+
+    /// Returns a slice that contains the final rows up to a maximum length.
+    ///
+    /// - Parameter maxLength: The maximum number of rows.
+    func suffix(_ maxLength: Int) -> DataFrame.Slice
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -442,10 +452,14 @@ struct StationList<Frame: FilterableFrame> : View {
     let navTitle: Text
 
     /// The title of the currently-playing track
-    @State var nowPlayingTitle: String? = ""
+    @State var nowPlayingTitle: String? = nil
 
     //@FocusedBinding(\.selection) var selectionFocus: Station?? // not working
-    @State var selectedStation: Station? = nil
+    @State var selectedStation: Station? = nil {
+        didSet {
+            nowPlayingTitle = nil
+        }
+    }
 
     @State var queryString: String = ""
 
@@ -472,14 +486,16 @@ struct StationList<Frame: FilterableFrame> : View {
 //        wip([])
 //    }
 
-    var selectedStations: DataFrame.Slice {
-        // queryString.isEmpty ? frame()
-        try! frame()
-            .filter(on: Station.nameColumn, matchesQueryString)
+    var queriedStations: DataFrame.Slice {
+        if queryString.isEmpty {
+            return frame().prefix(Int.max)
+        } else {
+            return try! frame().filter(on: Station.nameColumn, matchesQueryString)
+        }
     }
 
     var sortedStations: DataFrame {
-        let stations = self.selectedStations
+        let stations = self.queriedStations
 
         if sortByName {
             return stations.sorted(on: Station.nameColumn) { a, b in
@@ -505,7 +521,7 @@ struct StationList<Frame: FilterableFrame> : View {
     }
 
     var arrangedStations: [DataFrame.Row] {
-        arrangedRows.filter({ _ in true })
+        arrangedRows.prefix(while: { _ in true })
     }
 
     func matchesQueryString(name: String?) -> Bool {
@@ -524,7 +540,7 @@ struct StationList<Frame: FilterableFrame> : View {
         }
         .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
         .toolbar(id: "navtoolbar") {
-            ToolbarItem(id: "previous", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+            ToolbarItem(id: "previous", placement: ToolbarItemPlacement.accessory(or: .principal), showsByDefault: true) {
                 Button {
                     dbg("previous")
                     selectStation(next: false, query: false)
@@ -536,12 +552,12 @@ struct StationList<Frame: FilterableFrame> : View {
                 .help(Text("Select the previous station"))
             }
 
-            ToolbarItem(id: "shuffle", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+            ToolbarItem(id: "shuffle", placement: ToolbarItemPlacement.automatic, showsByDefault: true) {
                 Button {
                     dbg("shuffling")
                     withAnimation {
                         self.shuffledIDs = Dictionary(grouping: frame().rows.compactMap(\.stationID).shuffled().enumerated(), by: \.element).compactMapValues(\.first).mapValues(\.offset)
-                        if let randomStation = arrangedStations.first {
+                        if let randomStation = arrangedRows.first {
                             // shuffling selected the first row in the list
                             self.selectedStation = Station(row: randomStation)
                         }
@@ -554,7 +570,7 @@ struct StationList<Frame: FilterableFrame> : View {
                 .symbolRenderingMode(self.shuffledIDs == nil ? .monochrome : .multicolor)
             }
 
-            ToolbarItem(id: "next", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+            ToolbarItem(id: "next", placement: ToolbarItemPlacement.accessory(or: .principal), showsByDefault: true) {
                 Button {
                     dbg("next")
                     selectStation(next: true, query: false)
@@ -570,7 +586,7 @@ struct StationList<Frame: FilterableFrame> : View {
     }
 
     @discardableResult func selectStation(next: Bool, query: Bool) -> Bool {
-        if arrangedFrame.shape.rows <= 1 {
+        if queriedStations.shape.rows <= 1 {
             return false
         }
 
@@ -595,15 +611,17 @@ struct StationList<Frame: FilterableFrame> : View {
            !stationName.isEmpty {
             title = title + Text(": ") + Text(stationName)
         }
-        if let nowPlayingTitle = nowPlayingTitle,
-           !nowPlayingTitle.isEmpty {
-            title = title + Text(": ") + Text(nowPlayingTitle)
-        }
         return title
     }
 
     var subtitle: Text? {
-        wip(nil)
+        if let nowPlayingTitle = nowPlayingTitle,
+           !nowPlayingTitle.isEmpty {
+            return Text(nowPlayingTitle)
+        } else {
+            // it might be better to return nil here, but it messes up the navigation headers
+            return Text("")
+        }
     }
 
     func stationElement(stationRow: DataFrame.Row) -> some View {
@@ -701,6 +719,16 @@ struct StationList<Frame: FilterableFrame> : View {
     }
 }
 
+extension ToolbarItemPlacement {
+    /// A toolbar item that is placed in the bottom accessory on iOS
+    static func accessory(or alternative: ToolbarItemPlacement = .automatic) -> Self {
+        #if os(iOS)
+        Self.bottomBar
+        #else
+        alternative
+        #endif
+    }
+}
 
 public struct StationLabelStyle : LabelStyle {
     public func makeBody(configuration: LabelStyleConfiguration) -> some View {
@@ -823,7 +851,8 @@ struct Sidebar: View {
     }
 
     func stationsSectionPopular(frame: DataFrame, count: Int = 256, title: Text = Text("Popular")) -> some View {
-        let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
+        //let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
+        let popularFrame = { frame.sorted(on: Station.votesColumn, order: .descending).prefix(count) }
         return NavigationLink(destination: StationList(title: title, frame: popularFrame)) {
             title.label(symbol: "star", color: .yellow)
         }
@@ -940,24 +969,103 @@ struct StationView: View {
         self._tuner = StateObject(wrappedValue: RadioTuner(streamingURL: wip(station.streamingURL!))) // TODO: check for bad url
     }
 
+//    var changeuuid: UUIDString?
+//    var stationuuid: UUIDString?
+//    var name: String?
+//    var url: URLString?
+//    var url_resolved: URLString?
+//    var homepage: URLString?
+//    var favicon: URLString?
+//    var tags: String?
+//    var country: String?
+//    var countrycode: String?
+//    var iso_3166_2: String?
+//    var state: String?
+//    var language: String?
+//    var languagecodes: String?
+//    var votes: Int?
+//    var lastchangetime: DateString?
+//    var lastchangetime_iso8601: DateString?
+//    var codec: String? // e.g., "MP3" or "AAC,H.264"
+//    var bitrate: Double?
+//    var hls: DateString?
+//    var lastcheckok: Int?
+//    //var lastchecktime: OldDateString?
+//    var lastchecktime_iso8601: DateString?
+//    //var lastcheckoktime: OldDateString?
+//    var lastcheckoktime_iso8601: DateString?
+//    //var lastlocalchecktime: OldDateString?
+//    var lastlocalchecktime_iso8601: DateString?
+//    //var clicktimestamp: OldDateString?
+//    var clicktimestamp_iso8601: DateString?
+//    var clickcount: Int?
+//    var clicktrend: Int?
+//    var ssl_error: String?
+//    var geo_lat: Double?
+//    var geo_long: Double?
+//    var has_extended_info: Bool?
+
     var body: some View {
         VideoPlayer(player: tuner.player) {
-            VStack {
-                Spacer()
-                Text(station.name ?? "")
-                    .font(.largeTitle)
-                    .frame(maxWidth: .infinity)
+            ScrollView {
+                Section(header: Text(tuner.itemTitle).font(.largeTitle)) {
+                    Form {
+                        Group {
+                            TextField(text: .constant(station.name ?? ""), prompt: Text("Unknown")) {
+                                Text("Station Name")
+                            }
+                            TextField(text: .constant(station.stationuuid ?? ""), prompt: Text("Unknown")) {
+                                Text("ID")
+                            }
+                            TextField(text: .constant(station.homepage ?? ""), prompt: Text("Unknown")) {
+                                Text("Home Page")
+                            }
+                            TextField(text: .constant(station.tags ?? ""), prompt: Text("Unknown")) {
+                                Text("Tags")
+                            }
+                            TextField(text: .constant(station.country ?? ""), prompt: Text("Unknown")) {
+                                Text("Country")
+                            }
+                            TextField(text: .constant(station.state ?? ""), prompt: Text("Unknown")) {
+                                Text("State")
+                            }
+                            TextField(text: .constant(station.language ?? ""), prompt: Text("Unknown")) {
+                                Text("Language")
+                            }
+                        }
 
-                Text("Now Playing: \(tuner.itemTitle)")
-                    .font(.largeTitle)
-                    .frame(maxWidth: .infinity)
+                        Group {
+                            TextField(text: .constant(station.codec ?? ""), prompt: Text("Unknown")) {
+                                Text("Codec")
+                            }
+                            TextField(text: .constant(station.lastchangetime ?? ""), prompt: Text("Unknown")) {
+                                Text("Last Change")
+                            }
+                            TextField(text: .constant(station.iso_3166_2 ?? ""), prompt: Text("Unknown")) {
+                                Text("ISO 3166")
+                            }
+                        }
 
-                Spacer()
-                Spacer()
+                        Group {
+                            TextField(value: .constant(station.bitrate), format: .number, prompt: Text("Unknown")) {
+                                Text("Bitrate")
+                            }
+                            TextField(value: .constant(station.clickcount), format: .number, prompt: Text("Unknown")) {
+                                Text("Click Count")
+                            }
+                            TextField(value: .constant(station.clicktrend), format: .number, prompt: Text("Unknown")) {
+                                Text("Trend")
+                            }
+                        }
 
+                        Spacer()
+                    }
+                }
             }
+            //.textFieldStyle(.plain)
+            .padding()
             //.background(station.imageView().blur(radius: 20, opaque: true))
-            .background(Material.thick)
+            .background(Material.thin)
         }
         .onReceive(NotificationCenter.default.publisher(for: AVPlayer.rateDidChangeNotification, object: tuner.player)) { note in
             self.rate = (note.object as! AVPlayer).rate
@@ -968,7 +1076,7 @@ struct StationView: View {
             tuner.player.play()
         }
         .toolbar(id: "playpausetoolbar") {
-            ToolbarItem(id: "play", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+            ToolbarItem(id: "play", placement: ToolbarItemPlacement.accessory(), showsByDefault: true) {
                 Button {
                     dbg("playing")
                     tuner.player.play()
@@ -979,7 +1087,7 @@ struct StationView: View {
                 .disabled(self.rate > 0)
                 .help(Text("Play the current track"))
             }
-            ToolbarItem(id: "pause", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
+            ToolbarItem(id: "pause", placement: ToolbarItemPlacement.accessory(), showsByDefault: true) {
                 Button {
                     dbg("pausing")
                     tuner.player.pause()

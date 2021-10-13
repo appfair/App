@@ -29,14 +29,14 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView()
-                .windowToolbarUnified(compact: false, showsTitle: true)
+                .windowToolbarUnified(compact: true, showsTitle: true)
                 .environmentObject(store)
                 .task {
                     //await store.createStatusItems()
                     //await store.setDockMenu()
                     do {
                         #if os(iOS)
-                        try AVAudioSession.sharedInstance().setCategory(.playback)
+                        try AVAudioSession.sharedInstance().setCategory(.playback, mode: nil)
                         try AVAudioSession.sharedInstance().setActive(true)
                         #endif
                     } catch {
