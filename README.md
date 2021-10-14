@@ -27,7 +27,6 @@ originating from another country.
 Tune Out uses the station database from the free
 [RadioBrowser](https://www.radio-browser.info/) catalog.
 
-Tune Out is a zeet app.
 
 ## TODO:
 
@@ -35,13 +34,11 @@ Tune Out is a zeet app.
   - [ ] Merge play/pause buttons 
   - [ ] Table-based frame browsing
   - [ ] Languages section in sidebar
-  - [ ] Display video category
   - [ ] Display video streams ("MP3,H.264", "AAC+,H.264")
   - [ ] Make Countries section collapsed by default
   - [ ] Place "Pinned" badge inside chevron
   - [ ] App preferences:
     1. [ ] Default visible tags
     1. [ ] Visible bitrate range
-
 
 
