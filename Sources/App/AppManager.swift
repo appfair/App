@@ -254,6 +254,7 @@ extension AppManager {
 
 
         try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress, handler: { url in
+            #if macOS
             // attempt to clear quarantine flag so we can launch the app
 
             // https://eclecticlight.co/2020/10/29/quarantine-and-the-quarantine-flag/
@@ -300,6 +301,7 @@ extension AppManager {
                 throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
             }
 
+            #endif
             return true
         })
 
