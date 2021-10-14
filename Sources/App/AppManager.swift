@@ -101,7 +101,7 @@ extension AppManager {
     /// Returns the installed path for this app; this will always be
     /// `/Applications/Fair Ground/App Name.app`, except for the
     /// `Fair Ground.app` catalog app itself, which will be at:
-    /// `/Applications/Fair Ground.app`.
+    /// `/Applications/Fair Ground.app`.scanInstalledApps
     static func appInstallPath(for item: AppCatalogItem) -> URL {
         // e.g., "App Fair.app" matches "/Applications/App Fair"
         URL(fileURLWithPath: item.name + FairCLI.appSuffix, isDirectory: true, relativeTo: installFolderURL.lastPathComponent == item.name ? installFolderURL.deletingLastPathComponent() : installFolderURL)
@@ -121,6 +121,10 @@ extension AppManager {
         dbg()
         do {
             let start = CFAbsoluteTimeGetCurrent()
+
+            // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
+            try FileManager.default.createDirectory(at: Self.installFolderURL, withIntermediateDirectories: true, attributes: nil)
+
             var installPathContents = try FileManager.default.contentsOfDirectory(at: Self.installFolderURL, includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
             installPathContents.append(Self.catalogAppURL)
 
@@ -247,7 +251,59 @@ extension AppManager {
 
         let t3 = CFAbsoluteTimeGetCurrent()
         let expandURL = downloadedZip.appendingPathExtension("expanded")
-        try FileManager.default.unzipItem(at: downloadedZip, to: expandURL, progress: progress)
+
+
+        try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress, handler: { url in
+            // attempt to clear quarantine flag so we can launch the app
+
+            // https://eclecticlight.co/2020/10/29/quarantine-and-the-quarantine-flag/
+            // let qtprops1 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
+
+            /*
+             Default properties look like:
+            /var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_o89pPj.tmp.expanded/Cloud Cuckoo.app/Contents/_CodeSignature/CodeResources flags: [__C.NSURLResourceKey(_rawValue: NSURLQuarantinePropertiesKey): {
+                LSQuarantineAgentName = "AppFair App";
+                LSQuarantineIsOwnedByCurrentUser = 1;
+                LSQuarantineTimeStamp = "2021-10-14 17:57:12 +0000";
+                LSQuarantineType = LSQuarantineTypeSandboxed;
+            }]
+             */
+
+            // try to just clear the quarantine
+            // let qprops: [String: Any] = [
+            //   kLSQuarantineAgentNameKey as String: "App Fair",
+            //   kLSQuarantineAgentBundleIdentifierKey as String: "app.App-Fair",
+            //   kLSQuarantineTypeKey as String: kLSQuarantineTypeWebDownload,
+            //   kLSQuarantineDataURLKey as String: downloadedZip,
+            //   kLSQuarantineOriginURLKey as String: item.downloadURL
+            //]
+
+            //try (url as NSURL).setResourceValues([URLResourceKey.quarantinePropertiesKey: qprops])
+
+            // try! (url as NSURL).setResourceValues([URLResourceKey.quarantinePropertiesKey: [] as NSArray])
+
+
+            // try to clear the quarantine flag; this will fail if the app is sandboxed
+            var url = url
+            var resourceValues = URLResourceValues()
+            resourceValues.quarantineProperties = nil // this should clear the quarantine flag
+            do {
+                try url.setResourceValues(resourceValues) // note: “Attempts to set a read-only resource property or to set a resource property not supported by the resource are ignored and are not considered errors. This method is currently applicable only to URLs for file system resources.”
+            } catch {
+                dbg("unable to clear quarantine flag for:", url.path)
+            }
+
+            // check to ensure we have cleared the props
+            let qtprops2 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
+            if !qtprops2.isEmpty {
+                dbg("found quarantine xattr for:", url.path, "keys:", qtprops2)
+                throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
+            }
+
+            return true
+        })
+
+        // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_ZGu16E.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
         dbg("unzipped:", downloadedZip.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)

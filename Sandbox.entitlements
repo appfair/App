@@ -2,9 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- sadly this needs to be false because com.apple.security.files.user-selected.executable doesn't work -->
 	<key>com.apple.security.app-sandbox</key>
-    <true/>
+    <false/> <!-- sadly this needs to be false because com.apple.security.files.user-selected.executable doesn't work -->
+
 	<key>com.apple.security.files.user-selected.executable</key>
     <true/>
 
