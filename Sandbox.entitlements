@@ -4,7 +4,7 @@
 <dict>
     <!-- sadly this needs to be false because com.apple.security.files.user-selected.executable doesn't work -->
 	<key>com.apple.security.app-sandbox</key>
-    <false/>
+    <true/>
 	<key>com.apple.security.files.user-selected.executable</key>
     <true/>
 
