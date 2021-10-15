@@ -308,7 +308,7 @@ extension Station {
         case "soul": return (tagString, Text("tag-soul"), Image(systemName: "suit.heart"), tint)
         case "reggae": return (tagString, Text("tag-reggae"), Image(systemName: "smoke"), tint)
 
-        // default (letter) icons
+            // default (letter) icons
         case "classic hits": return (tagString, Text("tag-classic-hits"), Image(systemName: "c.circle"), tint)
         case "electronic": return (tagString, Text("tag-electronic"), Image(systemName: "e.circle"), tint)
         case "funk": return (tagString, Text("tag-funk"), Image(systemName: "f.circle"), tint)
@@ -359,7 +359,7 @@ extension Station {
         self.url.flatMap(URL.init(string:))
     }
 
-    func iconView(size: CGFloat) -> some View {
+    func iconView(size: CGFloat, blurFlag: CGFloat? = 1.5) -> some View {
         let url = URL(string: self.favicon ?? "about:blank") ?? URL(string: "about:blank")!
         return AsyncImage(url: url, content: { image in
             image
@@ -367,16 +367,18 @@ extension Station {
                 .aspectRatio(contentMode: .fit)
         }, placeholder: {
             ZStack {
-                // use a blurred color flag backdrop
-                let countryCode = self.countrycode?.isEmpty != false ? "UN" : (self.countrycode ?? "")
-                Text(emojiFlag(countryCode: countryCode))
-                    .font(Font.system(size: size * 1.4))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .blur(radius: 3)
-                    .clipShape(Circle())
+                if let blurFlag = blurFlag {
+                    // use a blurred color flag backdrop
+                    let countryCode = self.countrycode?.isEmpty != false ? "UN" : (self.countrycode ?? "")
+                    Text(emojiFlag(countryCode: countryCode))
+                        .font(Font.system(size: size))
+                        .frame(maxHeight: size)
+                        .blur(radius: blurFlag)
+                    //.clipShape(Capsule())
+                }
             }
         })
-            .frame(width: size, height: size)
+        .frame(maxHeight: size)
     }
 }
 
@@ -475,9 +477,9 @@ struct StationCatalog {
 extension String {
     var tagsSet: Set<String> {
         Set(self
-            .split(separator: ",")
-            .map({ $0.trimmingCharacters(in: .whitespacesAndNewlines )})
-            .filter({ !$0.isEmpty }))
+                .split(separator: ",")
+                .map({ $0.trimmingCharacters(in: .whitespacesAndNewlines )})
+                .filter({ !$0.isEmpty }))
     }
 }
 

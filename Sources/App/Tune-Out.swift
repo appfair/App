@@ -43,6 +43,7 @@ public struct TuneOutView: View {
                 .foregroundColor(.secondary)
             #endif
         }
+        .environmentObject(RadioTuner.shared)
     }
 }
 
@@ -339,7 +340,7 @@ struct StationList<Frame: FilterableFrame> : View {
                 //.focusedValue(\.selectedStation, Binding.constant(station)) // causes a hang!
         }) {
             Label(title: { stationLabelTitle(station) }) {
-                station.iconView(size: 50)
+                station.iconView(size: 50).frame(width: 50)
             }
             .labelStyle(StationLabelStyle())
             //.badge(station.Bitrate ?? wip(0))
@@ -648,7 +649,8 @@ struct Sidebar: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct StationView: View {
     let station: Station
-    @StateObject var tuner: RadioTuner
+    @State var collapseInfo = false
+    @EnvironmentObject var tuner: RadioTuner
     @Binding var itemTitle: String?
     /// The current play rate
     @State var rate: Float = 0.0
@@ -656,7 +658,6 @@ struct StationView: View {
     init(station: Station, itemTitle: Binding<String?>) {
         self.station = station
         self._itemTitle = itemTitle
-        self._tuner = StateObject(wrappedValue: RadioTuner(streamingURL: wip(station.streamingURL!))) // TODO: check for bad url
     }
 
     #if os(iOS)
@@ -669,76 +670,48 @@ struct StationView: View {
 
     var body: some View {
         VideoPlayer(player: tuner.player) {
-            ScrollView {
-                Section(header: Text(tuner.itemTitle).font(.largeTitle)) {
-                    VForm { // doesn't seem to show up on iOS, but BStack does
-                        Group {
-                            TextField(text: .constant(station.name ?? ""), prompt: unknown) {
-                                Text("Station Name") + Text(":")
-                            }
-                            TextField(text: .constant(station.stationuuid ?? ""), prompt: unknown) {
-                                Text("ID") + Text(":")
-                            }
-                            TextField(text: .constant(station.homepage ?? ""), prompt: unknown) {
-                                (Text("Home Page") + Text(":"))
-                            }
-                            .overlink(to: station.homepage.flatMap(URL.init(string:)))
-                            TextField(text: .constant(station.tags ?? ""), prompt: unknown) {
-                                Text("Tags") + Text(":")
-                            }
-                            TextField(text: .constant(paranthetically(station.country, station.countrycode)), prompt: unknown) {
-                                Text("Country") + Text(":")
-                            }
-                            TextField(text: .constant(station.state ?? ""), prompt: unknown) {
-                                Text("State") + Text(":")
-                            }
-                            TextField(text: .constant(paranthetically(station.language, station.languagecodes)), prompt: unknown) {
-                                Text("Language") + Text(":")
-                            }
-                        }
+            ZStack {
+                Rectangle()
+                    .fill(.clear)
+                    .background(Material.ultraThin)
+                    .opacity(collapseInfo ? 0.0 : 1.0)
 
-                        Group {
-                            TextField(text: .constant(station.codec ?? ""), prompt: unknown) {
-                                Text("Codec") + Text(":")
-                            }
-                            TextField(text: .constant(station.lastchangetime ?? ""), prompt: unknown) {
-                                Text("Last Change") + Text(":")
-                            }
-                        }
-
-                        Group {
-                            TextField(value: .constant(station.bitrate), format: .number, prompt: unknown) {
-                                Text("Bitrate") + Text(":")
-                            }
-                            TextField(value: .constant(station.votes), format: .number, prompt: unknown) {
-                                Text("Votes") + Text(":")
-                            }
-                            TextField(value: .constant(station.clickcount), format: .number, prompt: unknown) {
-                                Text("Clicks") + Text(":")
-                            }
-                            TextField(value: .constant(station.clicktrend), format: .number, prompt: unknown) {
-                                Text("Trend") + Text(":")
-                            }
+                ScrollView {
+                    Section(header: sectionHeaderView()) {
+                        if !collapseInfo {
+                            trackInfoView()
+                            //.editable(false)
+                            .textFieldStyle(.roundedBorder)
+                            .disableAutocorrection(true)
                         }
 
                         Spacer()
                     }
-                    .textFieldStyle(.roundedBorder)
-                    .disableAutocorrection(true)
+                    .padding()
+
                 }
             }
             //.textFieldStyle(.plain)
-            .padding()
             //.background(station.imageView().blur(radius: 20, opaque: true))
-            .background(Material.thin)
+            //.background(Material.thin)
+            //.frame(maxHeight: collapseInfo ? 40 : nil)
         }
         .onReceive(NotificationCenter.default.publisher(for: AVPlayer.rateDidChangeNotification, object: tuner.player)) { note in
+            // the rate change is also how we know if the player is started or stopped
             self.rate = (note.object as! AVPlayer).rate
         }
-        .textSelection(.enabled)
         .onAppear {
             //tuner.player.prepareToPlay()
-            tuner.player.play()
+            if let url = station.streamingURL {
+                tuner.stream(url: url)
+                tuner.player.play()
+            } else {
+                tuner.player.pause()
+            }
+        }
+        .onDisappear {
+            tuner.stream(url: nil)
+            tuner.player.pause()
         }
         .toolbar(id: "playpausetoolbar") {
             playPauseToolbarItem()
@@ -747,6 +720,92 @@ struct StationView: View {
         //.preference(key: TrackTitleKey.self, value: tuner.itemTitle)
         //.focusedSceneValue(\.trackTitle, tuner.itemTitle)
         .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station"), subtitle: Text(tuner.itemTitle))
+    }
+
+    func sectionHeaderView() -> some View {
+        ZStack {
+            // the background buttons
+            HStack {
+                station
+                    .iconView(size: 50, blurFlag: 0)
+
+                Text(tuner.itemTitle)
+                    .textSelection(.enabled)
+                    .font(.title)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity)
+                    .help(Text(tuner.itemTitle))
+
+                Button {
+                    withAnimation {
+                        collapseInfo.toggle()
+                    }
+                } label: {
+                    (collapseInfo ? Text("Expand") : Text("Collapse"))
+                        .label(image: Image(systemName: collapseInfo ? "chevron.down.circle" : "chevron.up.circle").resizable().aspectRatio(contentMode: .fit))
+                        .help(Text("Show or hide the station information"))
+                }
+                .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut)
+                .symbolRenderingMode(.hierarchical)
+                .buttonStyle(PlainButtonStyle())
+                .labelStyle(.iconOnly)
+                .font(.largeTitle) // also affects the symbol size
+            }
+            .frame(maxHeight: 50)
+        }
+    }
+
+    func trackInfoView() -> some View {
+        VForm { // doesn't scroll correctly in iOS if this is a Form, but VStack does work
+            Group {
+                TextField(text: .constant(station.name ?? ""), prompt: unknown) {
+                    Text("Station Name") + Text(":")
+                }
+                TextField(text: .constant(station.stationuuid ?? ""), prompt: unknown) {
+                    Text("ID") + Text(":")
+                }
+                TextField(text: .constant(station.homepage ?? ""), prompt: unknown) {
+                    (Text("Home Page") + Text(":"))
+                }
+                .overlink(to: station.homepage.flatMap(URL.init(string:)))
+                TextField(text: .constant(station.tags ?? ""), prompt: unknown) {
+                    Text("Tags") + Text(":")
+                }
+                TextField(text: .constant(paranthetically(station.country, station.countrycode)), prompt: unknown) {
+                    Text("Country") + Text(":")
+                }
+                TextField(text: .constant(station.state ?? ""), prompt: unknown) {
+                    Text("State") + Text(":")
+                }
+                TextField(text: .constant(paranthetically(station.language, station.languagecodes)), prompt: unknown) {
+                    Text("Language") + Text(":")
+                }
+            }
+
+            Group {
+                TextField(text: .constant(station.codec ?? ""), prompt: unknown) {
+                    Text("Codec") + Text(":")
+                }
+                TextField(text: .constant(station.lastchangetime ?? ""), prompt: unknown) {
+                    Text("Last Change") + Text(":")
+                }
+            }
+
+            Group {
+                TextField(value: .constant(station.bitrate), format: .number, prompt: unknown) {
+                    Text("Bitrate") + Text(":")
+                }
+                TextField(value: .constant(station.votes), format: .number, prompt: unknown) {
+                    Text("Votes") + Text(":")
+                }
+                TextField(value: .constant(station.clickcount), format: .number, prompt: unknown) {
+                    Text("Clicks") + Text(":")
+                }
+                TextField(value: .constant(station.clicktrend), format: .number, prompt: unknown) {
+                    Text("Trend") + Text(":")
+                }
+            }
+        }
     }
 
     func paranthetically(_ first: String?, _ second: String?) -> String {
@@ -846,23 +905,33 @@ struct StationView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
+    static let shared = RadioTuner()
+
     @Published var itemTitle: String = "Unknown"
+    @Published var playerItem: AVPlayerItem?
 
-    let streamingURL: URL
+    let player: AVPlayer = AVPlayer()
 
-    let player: AVPlayer
-    let playerItem: AVPlayerItem
-
-    init(streamingURL: URL) {
-        self.streamingURL = streamingURL
-        self.playerItem = AVPlayerItem(url: self.streamingURL)
-        self.player = AVPlayer(playerItem: self.playerItem)
-
+    private override init() {
         super.init()
+    }
+
+    func stream(url: URL?) {
+        guard let url = url else {
+            itemTitle = "Unknown"
+            return player.replaceCurrentItem(with: nil)
+        }
+
+        let asset = AVAsset(url: url)
+
+        let item = AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: [AVPartialAsyncProperty<AVAsset>.isPlayable])
+        self.playerItem = item
 
         let metaOutput = AVPlayerItemMetadataOutput(identifiers: allAVMetadataIdentifiers.map(\.rawValue))
         metaOutput.setDelegate(self, queue: DispatchQueue.main)
-        self.playerItem.add(metaOutput)
+        item.add(metaOutput)
+
+        player.replaceCurrentItem(with: item)
     }
 
     func outputSequenceWasFlushed(_ output: AVPlayerItemOutput) {
