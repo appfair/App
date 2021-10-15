@@ -6,7 +6,7 @@ for browsing and listening to internet radio stations.
 It includes 30,000 stations from sources such as the free
 [RadioBrowser](https://www.radio-browser.info/) catalog.
 
-zero–tel
+![Tune Out Preview Screen](assets/Tune-Out-Preview.png)
 
 
 ## FAQ

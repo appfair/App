@@ -43,7 +43,7 @@ public struct TuneOutView: View {
                 .foregroundColor(.secondary)
             #endif
         }
-        .environmentObject(RadioTuner.shared)
+        //.environmentObject(RadioTuner.shared) // having this at this high a level results in dreadful performance
     }
 }
 
@@ -337,10 +337,13 @@ struct StationList<Frame: FilterableFrame> : View {
         // Text(station.Name ?? "Unknown")
         return NavigationLink(tag: station, selection: $selectedStation, destination: {
             StationView(station: station, itemTitle: $nowPlayingTitle)
+                .environmentObject(RadioTuner.shared)
+
                 //.focusedValue(\.selectedStation, Binding.constant(station)) // causes a hang!
         }) {
             Label(title: { stationLabelTitle(station) }) {
-                station.iconView(size: 50).frame(width: 50)
+                station.iconView(size: 50)
+                    .frame(width: 50)
             }
             .labelStyle(StationLabelStyle())
             //.badge(station.Bitrate ?? wip(0))
@@ -719,7 +722,11 @@ struct StationView: View {
         .onChange(of: tuner.itemTitle, perform: updateTitle)
         //.preference(key: TrackTitleKey.self, value: tuner.itemTitle)
         //.focusedSceneValue(\.trackTitle, tuner.itemTitle)
-        .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station"), subtitle: Text(tuner.itemTitle))
+        .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station"), subtitle: itemOrStatonTitle)
+    }
+
+    var itemOrStatonTitle: Text {
+        Text(tuner.itemTitle ?? station.name ?? "")
     }
 
     func sectionHeaderView() -> some View {
@@ -729,12 +736,11 @@ struct StationView: View {
                 station
                     .iconView(size: 50, blurFlag: 0)
 
-                Text(tuner.itemTitle)
+                itemOrStatonTitle
                     .textSelection(.enabled)
-                    .font(.title)
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity)
-                    .help(Text(tuner.itemTitle))
+                    .help(itemOrStatonTitle)
 
                 Button {
                     withAnimation {
@@ -742,15 +748,15 @@ struct StationView: View {
                     }
                 } label: {
                     (collapseInfo ? Text("Expand") : Text("Collapse"))
-                        .label(image: Image(systemName: collapseInfo ? "chevron.down.circle" : "chevron.up.circle").resizable().aspectRatio(contentMode: .fit))
+                        .label(image: Image(systemName: collapseInfo ? "chevron.down.circle" : "chevron.up.circle"))
                         .help(Text("Show or hide the station information"))
                 }
                 .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut)
                 .symbolRenderingMode(.hierarchical)
                 .buttonStyle(PlainButtonStyle())
                 .labelStyle(.iconOnly)
-                .font(.largeTitle) // also affects the symbol size
             }
+            .font(.largeTitle) // also affects the symbol size
             .frame(maxHeight: 50)
         }
     }
@@ -904,10 +910,10 @@ struct StationView: View {
 
 
 @available(macOS 12.0, iOS 15.0, *)
-final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
+@MainActor final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
     static let shared = RadioTuner()
 
-    @Published var itemTitle: String = "Unknown"
+    @Published var itemTitle: String? = nil
     @Published var playerItem: AVPlayerItem?
 
     let player: AVPlayer = AVPlayer()
@@ -918,7 +924,7 @@ final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPu
 
     func stream(url: URL?) {
         guard let url = url else {
-            itemTitle = "Unknown"
+            itemTitle = nil
             return player.replaceCurrentItem(with: nil)
         }
 
