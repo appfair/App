@@ -139,7 +139,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# needed to force code re-signing\ntouch Info.plist\n";
+			shellScript = "# needed to force code re-signing\ntouch -c Info.plist\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
