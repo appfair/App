@@ -38,8 +38,7 @@ on:
 jobs:
   fork_apply:
     name: "Fork Apply"
-      #if: github.event_name == 'push' && github.repository != 'appfair/App'
-
+    if: github.event_name == 'push'
     runs-on: macos-11
     timeout-minutes: 45
 
@@ -210,23 +209,6 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
 
-      - name: "Build iOS App"
-        # there's no way to export iOS archives without re-signing with a teamID, 
-        # so just build the .ipa manually; it needs to be in staging/ first
-        run: |
-          xcodebuild archive \
-            -workspace "App.xcworkspace" \
-            -configuration Release \
-            -scheme "AppFairApp" \
-            -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="-" \
-            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
-            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-
       - name: "Stage Release Metadata"
         # Extract the Info.plist from the archives themselves, since they contain
         # the same post-processed metadata that the app will use.
@@ -300,6 +282,9 @@ jobs:
           ref: ${{ env.COMMITHASH }}
           fetch-depth: 0
           submodules: false
+
+      - name: Verify workflow integrity
+        run: diff .github/workflows/fairground.yml ReleasePR/.github/workflows/fairground.yml
 
       - name: Get PR commit message
         id: get_commit_message
