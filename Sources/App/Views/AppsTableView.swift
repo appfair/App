@@ -180,10 +180,30 @@ extension AppManager.SidebarItem {
         case .installed: return true
         case .recent: return true
         case .category(let category): return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
-        case .search(let query): return true
+        case .search(let _): return wip(true)
         }
     }
 }
 
+
+@available(macOS 12.0, *)
+struct AppsTableView_Previews: PreviewProvider {
+    static var previews: some View {
+        AppManager.default.catalog = [
+            AppCatalogItem(name: "ABC", bundleIdentifier: "ABC", subtitle: "ABC", developerName: "ABC", localizedDescription: "ABC", size: 123, version: "1.2.3", versionDate: Date(), downloadURL: URL(string: "https://www.github.com")!, iconURL: nil, screenshotURLs: nil, versionDescription: nil, tintColor: nil, beta: nil, sourceIdentifier: nil, categories: nil, downloadCount: nil, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: nil, permissions: nil)
+        ]
+
+        //AppManager.default.catalog += AppManager.default.catalog
+
+        assert(AppManager.default.catalog.count == 1)
+
+        return VStack {
+            Text("App Catalog Table")
+                .font(.largeTitle)
+            AppsTableView()
+            .environmentObject(AppManager.default)
+        }
+    }
+}
 #endif // os(macOS)
 

@@ -473,7 +473,6 @@ public extension View {
             EmptyView()
             //Button(wip("ERROR")) { dbg("XXX") }
         })
-
     }
 }
 
@@ -482,38 +481,30 @@ public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
 
     public var body: some View {
-        Group {
+        triptychView
+            .displayingFirstAlert($appManager.errors)
+            .toolbar {
+                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                    DisplayModePicker(mode: $appManager.displayMode)
+                }
+            }
+            .task {
+                dbg("fetching app catalog")
+                await appManager.fetchApps()
+            }
+    }
+
+    public var triptychView : some View {
+        TriptychView(orient: $appManager.displayMode) {
+            SidebarView()
+        } list: {
+            AppsListView(item: nil)
+        } table: {
             #if os(macOS)
-            switch appManager.displayMode {
-            case .table:
-                NavigationView {
-                    SidebarView()
-                    AppTableDetailSplitView(item: nil)
-                }
-            case .list:
-                NavigationView {
-                    SidebarView()
-                    AppsListView(item: nil)
-                    AppDetailView()
-                }
-            }
-            #else
-            NavigationView {
-                SidebarView()
-                AppsListView(item: nil)
-                AppDetailView()
-            }
+            AppsTableView(sidebarItem: nil)
             #endif
-        }
-        .displayingFirstAlert($appManager.errors)
-        .toolbar {
-            ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
-                DisplayModePicker(mode: $appManager.displayMode)
-            }
-        }
-        .task {
-            dbg("fetching app catalog")
-            await appManager.fetchApps()
+        } content: {
+            AppDetailView()
         }
     }
 }
@@ -799,12 +790,10 @@ struct SidebarView: View {
         switch appManager.displayMode {
         case .list:
             AppsListView(item: item)
+        #if os(macOS)
         case .table:
-            #if os(macOS)
             AppTableDetailSplitView(item: item)
-            #else
-            AppsListView(item: item)
-            #endif
+        #endif
         }
     }
 
@@ -854,35 +843,38 @@ extension FocusedValues {
         get { self[FocusedReloadCommand.self] }
         set { self[FocusedReloadCommand.self] = newValue }
     }
-
-
 }
 
 
 @available(macOS 12.0, iOS 15.0, *)
 struct DisplayModePicker: View {
-    @Binding var mode: AppManager.ViewMode
+    @Binding var mode: TriptychOrient
 
     var body: some View {
-        Picker(selection: $mode) {
-            ForEach(AppManager.ViewMode.allCases) { viewMode in
-                viewMode.label
+        // only display the picker if there is more than one element (i.e., on macOS)
+        if TriptychOrient.allCases.count > 1 {
+            Picker(selection: $mode) {
+                ForEach(TriptychOrient.allCases) { viewMode in
+                    viewMode.label
+                }
+            } label: {
+                Text("Display Mode")
             }
-        } label: {
-            Text("Display Mode")
+            .pickerStyle(SegmentedPickerStyle())
         }
-        .pickerStyle(SegmentedPickerStyle())
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-extension AppManager.ViewMode {
+extension TriptychOrient {
     var labelContent: (name: LocalizedStringKey, systemImage: String) {
         switch self {
+        case .list:
+            return ("List", "list.bullet.rectangle")
+        #if os(macOS)
         case .table:
             return ("Table", "tablecells")
-        case .list:
-            return ("List", "square.grid.3x2.fill")
+        #endif
         }
     }
 

@@ -18,14 +18,7 @@ import FairApp
 
     @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 
-    @AppStorage("displayMode") var displayMode: ViewMode = .table
-
-    /// Whether to display the items as a table or gallery
-    enum ViewMode: String, CaseIterable, Identifiable {
-        var id: Self { self }
-        case list
-        case table
-    }
+    @AppStorage("displayMode") var displayMode: TriptychOrient = .list
 
     @Published public var errors: [AppError] = []
 
