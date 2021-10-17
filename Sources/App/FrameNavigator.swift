@@ -16,6 +16,8 @@ import FairApp
 import TabularData
 import SwiftUI
 
+#warning("TODO: remove and replace with FrameNavigator")
+
 /// An `EnvironmentObject` that is used to coordinate the various
 /// components of a `FrameNavigator`.
 @available(macOS 12.0, iOS 15.0, *)
@@ -47,49 +49,49 @@ public struct FrameDisplayMode: OptionSet, Hashable {
     }
 }
 
-/// A `FrameNavigator` is a three-part user interface for browsing
-/// a `TabularData.DataFrame`. On iOS and macOS, it is displayed
-/// as a traditional three-column app with a sidebar, selectable list view,
-/// and a focused detail view. In addition, on macOS, the sidebar can
-/// be swapped for a `SwiftUI.TableView` to display additional
-/// details about the list and permit advances sorting, selection, and filtering.
-@available(macOS 12.0, iOS 15.0, *)
-public struct FrameNavigator</*Coordinator: ObservableObject, */SidebarView: View, ListView: View, TableView: View, ContentView: View>: View {
-    /*@Environment(\.frameDisplayMode)*/ let displayMode: Set<FrameDisplayMode> = [.table, .list]
-
-    //@EnvironmentObject var coordinator: Coordinator
-    let sidebarView: () -> SidebarView
-    let listView: () -> ListView
-    let tableView: () -> TableView
-    let contentView: () -> ContentView
-
-    internal init(@ViewBuilder sidebarView: @escaping () -> SidebarView, @ViewBuilder listView: @escaping () -> ListView, @ViewBuilder tableView: @escaping () -> TableView, @ViewBuilder contentView: @escaping () -> ContentView) {
-        self.sidebarView = sidebarView
-        self.listView = listView
-        self.tableView = tableView
-        self.contentView = contentView
-    }
-
-    public var body: some View {
-        NavigationView {
-            sidebarView()
-            if displayMode.contains(.list) {
-                listView()
-            }
-            #if os(iOS)
-            contentView()
-            #endif
-            #if os(macOS)
-            HSplitView {
-                if displayMode.contains(.table) {
-                    tableView()
-                }
-                contentView()
-            }
-            #endif
-        }
-    }
-}
+///// A `FrameNavigator` is a three-part user interface for browsing
+///// a `TabularData.DataFrame`. On iOS and macOS, it is displayed
+///// as a traditional three-column app with a sidebar, selectable list view,
+///// and a focused detail view. In addition, on macOS, the sidebar can
+///// be swapped for a `SwiftUI.TableView` to display additional
+///// details about the list and permit advances sorting, selection, and filtering.
+//@available(macOS 12.0, iOS 15.0, *)
+//public struct FrameNavigator</*Coordinator: ObservableObject, */SidebarView: View, ListView: View, TableView: View, ContentView: View>: View {
+//    /*@Environment(\.frameDisplayMode)*/ let displayMode: Set<FrameDisplayMode> = [.table, .list]
+//
+//    //@EnvironmentObject var coordinator: Coordinator
+//    let sidebarView: () -> SidebarView
+//    let listView: () -> ListView
+//    let tableView: () -> TableView
+//    let contentView: () -> ContentView
+//
+//    internal init(@ViewBuilder sidebarView: @escaping () -> SidebarView, @ViewBuilder listView: @escaping () -> ListView, @ViewBuilder tableView: @escaping () -> TableView, @ViewBuilder contentView: @escaping () -> ContentView) {
+//        self.sidebarView = sidebarView
+//        self.listView = listView
+//        self.tableView = tableView
+//        self.contentView = contentView
+//    }
+//
+//    public var body: some View {
+//        NavigationView {
+//            sidebarView()
+//            if displayMode.contains(.list) {
+//                listView()
+//            }
+//            #if os(iOS)
+//            contentView()
+//            #endif
+//            #if os(macOS)
+//            HSplitView {
+//                if displayMode.contains(.table) {
+//                    tableView()
+//                }
+//                contentView()
+//            }
+//            #endif
+//        }
+//    }
+//}
 
 @available(macOS 12.0, *)
 @available(iOS 15.0, *)
@@ -141,57 +143,57 @@ extension XOr.Or : TableColumnContent where P : TableColumnContent, Q : TableCol
 #endif
 
 
-@available(macOS 12.0, iOS 15.0, *)
-struct FrameNavigator_Previews: PreviewProvider {
-    static var previews: some View {
-        let people = [
-            Person(givenName: "Juan", familyName: "Chavez"),
-            Person(givenName: "Mei", familyName: "Chen"),
-            Person(givenName: "Tom", familyName: "Clark"),
-            Person(givenName: "Gita", familyName: "Kumar"),
-        ]
-
-        //@State private var selectedPeople = Set<Person.ID>()
-        let selectedPeople = Binding.constant(Set<Person.ID>())
-        //@State private var sortOrder = [KeyPathComparator(\Person.givenName)]
-        let sortOrder = Binding.constant([KeyPathComparator(\Person.givenName)])
-
-        let fn = FrameNavigator {
-            List(people) { person in
-                Text("Person: \(person.fullName)")
-            }
-        } listView: {
-            List(people) { person in
-                Text("Person: \(person.fullName)")
-            }
-        } tableView: {
-            #if os(macOS)
-            Table(people, selection: selectedPeople, sortOrder: sortOrder) {
+//@available(macOS 12.0, iOS 15.0, *)
+//struct FrameNavigator_Previews: PreviewProvider {
+//    static var previews: some View {
+//        let people = [
+//            Person(givenName: "Juan", familyName: "Chavez"),
+//            Person(givenName: "Mei", familyName: "Chen"),
+//            Person(givenName: "Tom", familyName: "Clark"),
+//            Person(givenName: "Gita", familyName: "Kumar"),
+//        ]
+//
+//        //@State private var selectedPeople = Set<Person.ID>()
+//        let selectedPeople = Binding.constant(Set<Person.ID>())
+//        //@State private var sortOrder = [KeyPathComparator(\Person.givenName)]
+//        let sortOrder = Binding.constant([KeyPathComparator(\Person.givenName)])
+//
+//        let fn = FrameNavigator {
+//            List(people) { person in
+//                Text("Person: \(person.fullName)")
+//            }
+//        } listView: {
+//            List(people) { person in
+//                Text("Person: \(person.fullName)")
+//            }
+//        } tableView: {
+//            #if os(macOS)
+//            Table(people, selection: selectedPeople, sortOrder: sortOrder) {
+////                TableColumn("Given Name", value: \.givenName)
+////                TableColumn("Family Name", value: \.familyName)
+//
 //                TableColumn("Given Name", value: \.givenName)
-//                TableColumn("Family Name", value: \.familyName)
-
-                TableColumn("Given Name", value: \.givenName)
-//                    .withColumn {
-                        TableColumn("Family Name", value: \.familyName)
-//                    }
-
-            }
-            #endif
-        } contentView: {
-            Text("\(selectedPeople.wrappedValue.count) people selected")
-        }
-
-        return fn
-    }
-
-    struct Person: Identifiable {
-        let id = UUID()
-        let givenName: String
-        let familyName: String
-
-        /// Returns the localized full name of the person
-        var fullName: String {
-            PersonNameComponentsFormatter.localizedString(from: PersonNameComponents(givenName: givenName, familyName: familyName), style: PersonNameComponentsFormatter.Style.medium, options: PersonNameComponentsFormatter.Options())
-        }
-    }
-}
+////                    .withColumn {
+//                        TableColumn("Family Name", value: \.familyName)
+////                    }
+//
+//            }
+//            #endif
+//        } contentView: {
+//            Text("\(selectedPeople.wrappedValue.count) people selected")
+//        }
+//
+//        return fn
+//    }
+//
+//    struct Person: Identifiable {
+//        let id = UUID()
+//        let givenName: String
+//        let familyName: String
+//
+//        /// Returns the localized full name of the person
+//        var fullName: String {
+//            PersonNameComponentsFormatter.localizedString(from: PersonNameComponents(givenName: givenName, familyName: familyName), style: PersonNameComponentsFormatter.Style.medium, options: PersonNameComponentsFormatter.Options())
+//        }
+//    }
+//}

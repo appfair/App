@@ -95,32 +95,6 @@ struct StationCommands: Commands {
 //}
 
 
-/// A `DataFrameProtocol` that can filter itself efficiently.
-@available(macOS 12.0, iOS 15.0, *)
-public protocol FilterableFrame : DataFrameProtocol {
-    /// Filter on a specific column value. Since this is already implemented in both
-    /// `DataFrame` and `DataFrame.Slice`, its absence from `DataFrameProtocol` is assumed to be an
-    /// oversight.
-    func filter<T>(on: ColumnID<T>, _ isIncluded: (T?) throws -> Bool) throws -> DataFrame.Slice
-
-    /// Returns a slice that contains the initial rows up to a maximum length.
-    ///
-    /// - Parameter maxLength: The maximum number of rows.
-    func prefix(_ maxLength: Int) -> DataFrame.Slice
-
-    /// Returns a slice that contains the final rows up to a maximum length.
-    ///
-    /// - Parameter maxLength: The maximum number of rows.
-    func suffix(_ maxLength: Int) -> DataFrame.Slice
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-extension DataFrame : FilterableFrame { }
-
-@available(macOS 12.0, iOS 15.0, *)
-extension DataFrame.Slice : FilterableFrame { }
-
-
 /// Making `DataFrame.Rows` implement `RandomAccessCollection` would allow
 /// us to use it directly in a `ForEach`, but the performance with
 /// large row sets is abyssmal
