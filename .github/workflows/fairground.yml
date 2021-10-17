@@ -283,6 +283,9 @@ jobs:
           fetch-depth: 0
           submodules: false
 
+      - name: Verify workflow integrity
+        run: diff .github/workflows/fairground.yml ReleasePR/.github/workflows/fairground.yml
+
       - name: Get PR commit message
         id: get_commit_message
         run: echo ::set-output name=commit_message::$(git -C ReleasePR log --format=%B -n 1 "${{ env.COMMITHASH }}")
