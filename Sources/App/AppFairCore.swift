@@ -131,6 +131,7 @@ struct SearchCommands: Commands {
     var body: some Commands {
         CommandGroup(after: CommandGroupPlacement.textEditing) {
             Section {
+                #if os(macOS)
                 Text("Search").button {
                     if let window = NSApp.currentEvent?.window,
                        let toolbar = window.toolbar {
@@ -141,6 +142,7 @@ struct SearchCommands: Commands {
                     }
                 }
                 .keyboardShortcut("F")
+                #endif
             }
         }
     }
