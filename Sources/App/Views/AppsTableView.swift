@@ -209,5 +209,6 @@ struct AppsTableView_Previews: PreviewProvider {
         }
     }
 }
+
 #endif // os(macOS)
 
