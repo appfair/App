@@ -38,7 +38,7 @@ public extension AppContainer {
 
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: AppStoreObject {
+@MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
 }
 
