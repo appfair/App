@@ -26,8 +26,10 @@ public extension AppContainer {
         }
         .commands {
             SidebarCommands()
+            SearchCommands()
             AppFairCommands(appManager: appManager)
             ToolbarCommands()
+
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {

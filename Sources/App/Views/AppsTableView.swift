@@ -190,12 +190,16 @@ extension AppManager.SidebarItem {
 struct AppsTableView_Previews: PreviewProvider {
     static var previews: some View {
         AppManager.default.catalog = [
-            AppCatalogItem(name: "ABC", bundleIdentifier: "ABC", subtitle: "ABC", developerName: "ABC", localizedDescription: "ABC", size: 123, version: "1.2.3", versionDate: Date(), downloadURL: URL(string: "https://www.github.com")!, iconURL: nil, screenshotURLs: nil, versionDescription: nil, tintColor: nil, beta: nil, sourceIdentifier: nil, categories: nil, downloadCount: nil, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: nil, permissions: nil)
+            AppCatalogItem.sample,
+            //AppCatalogItem.sample,
+            //AppCatalogItem.sample,
+            //AppCatalogItem.sample,
+            AppCatalogItem.sample,
         ]
 
         //AppManager.default.catalog += AppManager.default.catalog
 
-        assert(AppManager.default.catalog.count == 1)
+        assert(AppManager.default.catalog.count > 0)
 
         return VStack {
             Text("App Catalog Table")

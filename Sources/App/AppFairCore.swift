@@ -127,6 +127,27 @@ enum Selection {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
+struct SearchCommands: Commands {
+    var body: some Commands {
+        CommandGroup(after: CommandGroupPlacement.textEditing) {
+            Section {
+                Text("Search").button {
+                    if let window = NSApp.currentEvent?.window,
+                       let toolbar = window.toolbar {
+                        dbg("search toolbar:", toolbar, toolbar.visibleItems?.compactMap(\.view).flatMap(\.subviews))
+                        if let textField = toolbar.visibleItems?.compactMap(\.view).flatMap(\.subviews).compactMap({ $0 as? UXTextField }).first {
+                            window.makeFirstResponder(textField)
+                        }
+                    }
+                }
+                .keyboardShortcut("F")
+            }
+        }
+    }
+}
+
+
+@available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
@@ -484,9 +505,11 @@ public struct NavigationRootView : View {
         triptychView
             .displayingFirstAlert($appManager.errors)
             .toolbar {
-                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                #if DEBUG
+                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: wip(true)) {
                     DisplayModePicker(mode: $appManager.displayMode)
                 }
+                #endif
             }
             .task {
                 dbg("fetching app catalog")
@@ -501,7 +524,7 @@ public struct NavigationRootView : View {
             AppsListView(item: nil)
         } table: {
             #if os(macOS)
-            AppsTableView(sidebarItem: nil)
+            AppsTableView(sidebarItem: nil).frame(idealHeight: 120)
             #endif
         } content: {
             AppDetailView()

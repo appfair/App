@@ -189,8 +189,8 @@ struct CatalogItemView: View {
                     .help(Text("Opens link to the issues page for this app at: \(info.release.issuesURL.absoluteString)"))
                 linkTextField(Text("Source Code"), url: info.release.sourceURL)
                     .help(Text("Opens link to source code repository for this app at: \(info.release.sourceURL.absoluteString)"))
-                linkTextField(Text("Seal"), url: info.release.fairsealURL, linkText: String(info.release.sha256?.prefix(7) ?? ""))
-                    .help(Text("Searches for this fairseal at: \(info.release.fairsealURL)"))
+                linkTextField(Text("Seal"), url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
+                    .help(Text("Lookup fairseal at: \(info.release.fairsealURL)"))
                 linkTextField(Text("Developer"), url: info.release.developerURL, linkText: item.developerName)
                     .help(Text("Searches for this developer at: \(info.release.developerURL)"))
             }
@@ -700,13 +700,11 @@ struct CatalogItemView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
-    static let sampleCatalogEntry = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 23_456, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: nil, permissions: AppEntitlement.bitsetRepresentation(for: Set(AppEntitlement.allCases)))
-
     static var previews: some View {
-        CatalogItemView(info: AppInfo(release: Self.sampleCatalogEntry), previewMode: true)
+        CatalogItemView(info: AppInfo(release: AppCatalogItem.sample), previewMode: true)
             .environmentObject(AppManager.default)
             .frame(width: 800)
-            .frame(height: 1000)
+            .frame(height: 600)
         //.environment(\.locale, Locale(identifier: "fr"))
     }
 }
