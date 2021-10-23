@@ -30,8 +30,8 @@ public extension AppContainer {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: AppStoreObject {
-    @Published public var errors: [Error] = []
+@MainActor public final class Store: SceneManager {
+    @AppStorage("someToggle") public var someToggle = false
 }
 
 @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
