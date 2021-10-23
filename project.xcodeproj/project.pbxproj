@@ -139,7 +139,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# needed to force code re-signing\nif [ \"${ENABLE_PREVIEWS}\" != \"YES\" ]; then\n    touch -c Info.plist\nfi\n";
+			shellScript = "# needed to force code re-signing and enable sandbox\nif [ \"${ENABLE_PREVIEWS}\" != \"YES\" ]; then\n    touch -c Info.plist\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
