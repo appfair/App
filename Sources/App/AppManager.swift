@@ -18,7 +18,7 @@ import FairApp
 
     @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 
-    @AppStorage("displayMode") var displayMode: TriptychOrient = .list
+    @AppStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.last!
 
     @Published public var errors: [AppError] = []
 
