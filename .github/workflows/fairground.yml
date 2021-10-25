@@ -97,7 +97,7 @@ jobs:
       - name: "Pre-build iOS App"
         # this should be unnecessary, but for some reason we need to build twice
         # in order to guarantee that a reproducible artifact is produced
-        if: false
+        if: true
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -136,7 +136,7 @@ jobs:
       - name: "Pre-build macOS App"
         # this should be unnecessary, but for some reason we need to build twice
         # in order to guarantee that a reproducible artifact is produced
-        if: false
+        if: true
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
