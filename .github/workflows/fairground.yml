@@ -36,6 +36,12 @@ on:
 
 
 jobs:
+  # The Fork-Apply phases run in the /App.git fork's repository.
+  # This workflow builds and validates the app, and if a semver tag 
+  # tag is pushed, it will also create a release and publish the artifacts.
+  # Released artifacts will only be published in the App Fair catalog
+  # once the Integrate-Release phases (below) are successfully run
+  # and a fairseal is published.
   fork_apply:
     name: "Fork Apply"
     if: github.event_name == 'push'
@@ -43,7 +49,7 @@ jobs:
     timeout-minutes: 45
 
     env:
-      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_13.1.app/Contents/Developer
       ZERO_AR_DATE: 1
 
     steps:
@@ -88,6 +94,24 @@ jobs:
         if: github.event_name == 'push' # only run tests in forks
         run: xcrun swift test
 
+      - name: "Pre-build iOS App"
+        # this should be unnecessary, but for some reason we need to build twice
+        # in order to guarantee that a reproducible artifact is produced
+        if: true
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "AppFairApp" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+
       - name: "Build iOS App"
         # there's no way to export iOS archives without re-signing with a teamID, 
         # so just build the .ipa manually; it needs to be in staging/ first
@@ -108,12 +132,6 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
           ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-
-      # Notarization is not yet supported for iOS apps.
-      - name: "Notarize iOS App"
-        if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
-        run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
-
 
       - name: "Pre-build macOS App"
         # this should be unnecessary, but for some reason we need to build twice
@@ -191,25 +209,8 @@ jobs:
         if: false # "${{ secrets.FAIR_NOTARIZATION_TEAMID }} != ''"
         run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
 
-      - name: "Pre-build iOS App"
-        # this should be unnecessary, but for some reason we need to build twice
-        # in order to guarantee that a reproducible artifact is produced
-        if: true
-        run: |
-          xcodebuild archive \
-            -workspace "App.xcworkspace" \
-            -configuration Release \
-            -scheme "AppFairApp" \
-            -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="-" \
-            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
-            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-
       - name: "Stage Release Metadata"
+        if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
         # Extract the Info.plist from the archives themselves, since they contain
         # the same post-processed metadata that the app will use.
         # And convert to XML for ease of integration.
@@ -242,6 +243,10 @@ jobs:
             staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
 
 
+  # The Integrate-Release phases run in the base fairground.
+  # This workflow validates and re-builds the app, and if the artifact hash
+  # matches that of the public release, it will publish the fairseal
+  # required for inclusion in the catalog.  
   integrate_release:
     name: "Integrate Release"
     if: github.event_name == 'pull_request_target' && github.repository == 'appfair/App'
@@ -249,7 +254,7 @@ jobs:
     runs-on: macos-11
     timeout-minutes: 45
     env:
-      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_13.1.app/Contents/Developer
       ZERO_AR_DATE: 1
 
     steps:
@@ -284,6 +289,7 @@ jobs:
           submodules: false
 
       - name: Verify workflow integrity
+        # the workflows must be identical; rebase from upstream if this fails
         run: diff .github/workflows/fairground.yml ReleasePR/.github/workflows/fairground.yml
 
       - name: Get PR commit message
@@ -311,20 +317,7 @@ jobs:
             --integrationTitle "${{ env.PRTITLE }}" \
             --allow-license "GNU Affero General Public License" \
             --allow-from '.*@appfair.net' \
-            --allow-from '.*@bc.edu' \
-            --allow-from '.*@berkeley.edu' \
-            --allow-from '.*@caltech.edu' \
-            --allow-from '.*@cornell.edu' \
-            --allow-from '.*@cmu.edu' \
-            --allow-from '.*@harvard.edu' \
-            --allow-from '.*@illinois.edu' \
-            --allow-from '.*@mit.edu' \
-            --allow-from '.*@princeton.edu' \
-            --allow-from '.*@rit.edu' \
-            --allow-from '.*@stanford.edu' \
-            --allow-from '.*@ucla.edu' \
-            --allow-from '.*@washington.edu' \
-            --allow-from '.*@yale.edu' \
+            --allow-from '.*@.*.edu' \
             --verbose true \
             --output -
 
