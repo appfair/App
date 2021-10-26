@@ -89,19 +89,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
-      # TODO: Move this to post-release
-      - name: "Create Integrate-Release PR"
-        if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Creating Integrate-Release PR: ${GITHUB_REF#refs/tags/}"
-          git checkout ${GITHUB_REF#refs/tags/}
-          gh pr create \
-            --repo appfair/app \
-            --title "${{ env.BUNDLE_ID }}" \
-            --body "Release ${GITHUB_REF#refs/tags/}"
-
       - name: "Validate App Organization: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
