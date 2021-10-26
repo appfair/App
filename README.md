@@ -9,6 +9,23 @@ It includes 30,000 stations from sources such as the free
 ![Tune Out Preview Screen](assets/Tune-Out-Preview.png)
 
 
+## Installation
+
+[Homebrew](https://brew.sh/) users on macOS 12 ("Monterey") can install 
+Tune Out directly with the command:
+
+```shell
+$ brew install appfair/app/tune-out
+```
+
+Tune Out will be installed in the `/Applications/App Fair/` folder,
+and can be launched by opening it in the Finder, or by running:
+
+```
+$ open "/Applications/App Fair/Tune Out.app"
+```
+
+
 ## FAQ
 
 ### Does Tune Out use tracking or advertising?
