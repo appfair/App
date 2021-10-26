@@ -96,7 +96,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating Integrate-Release PR: ${GITHUB_REF#refs/tags/}"
-          git checkout ${GITHUB_REF#refs/tags/}
+            #git checkout ${GITHUB_REF#refs/tags/}
+          git checkout main
           gh pr create \
             --no-maintainer-edit \
             --repo appfair/app \
