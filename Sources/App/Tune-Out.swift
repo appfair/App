@@ -109,7 +109,7 @@ extension DataFrame.Row {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-struct StationList<Frame: FilterableFrame> : View {
+struct StationList<Frame: DataSlice> : View {
     /// The navigation title for this view
     let navTitle: Text
 
@@ -152,7 +152,7 @@ struct StationList<Frame: FilterableFrame> : View {
         if queryString.isEmpty {
             return frame().prefix(Int.max)
         } else {
-            return try! frame().filter(on: Station.nameColumn, matchesQueryString)
+            return frame().filter(on: Station.nameColumn, matchesQueryString)
         }
     }
 
