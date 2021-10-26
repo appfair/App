@@ -87,7 +87,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: ${{ github.ref }}
+          #ref: ${{ github.ref }}
 
       # TODO: Move this to post-release
       - name: "Create Integrate-Release PR"
