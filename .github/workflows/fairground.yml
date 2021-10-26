@@ -54,6 +54,20 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_13.1.app/Contents/Developer
       ZERO_AR_DATE: 1
 
+    permissions:
+      actions: write
+      checks: write
+      contents: write
+      deployments: write
+      id_token: write
+      issues: write
+      discussions: write
+      packages: write
+      pull-requests: write
+      repository-projects: write
+      security-events: write
+      statuses: write
+
     steps:
       - name: "Initialize fair-ground"
         env:
