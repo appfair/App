@@ -27,9 +27,11 @@
 name: "App Fairground"
 
 on:
+  # The fork-apply phases are initiated in the fork repo with any push to main 
   push:
     branches: [ main ]
     tags: "[0-9]+.[0-9]+.[0-9]+"
+  # The integrate-release phases are initiated in the base repo upon a PR
   pull_request_target:
     branches: [ main ]
     types: [opened, synchronize, reopened]
@@ -53,19 +55,15 @@ jobs:
       ZERO_AR_DATE: 1
 
     steps:
-
       - name: "Initialize fair-ground"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
-          echo "$GITHUB_CONTEXT"
           echo "ORGNAME=${{ github.repository_owner }}" >> $GITHUB_ENV
           echo "COMMITHASH=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: "Configure Fork: ${{ env.ORGNAME }}"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "FAIR_APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
@@ -76,15 +74,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: ${{ github.ref }}
+          #ref: ${{ github.ref }}
 
-      - name: "Check releases"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release list
-
-      - name: "Validate App Name: ${{ env.ORGNAME }}"
+      - name: "Validate App Organization: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
       - name: "Generate Icon"
@@ -242,7 +234,6 @@ jobs:
             staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
             staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
 
-
   # The Integrate-Release phases run in the base fairground.
   # This workflow validates and re-builds the app, and if the artifact hash
   # matches that of the public release, it will publish the fairseal
@@ -269,14 +260,18 @@ jobs:
           echo "PRID=${{ github.event.pull_request.id }}" >> $GITHUB_ENV
 
       - name: "Configure App: ${{ env.ORGNAME }}"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "FAIR_APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
           echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
           echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
-      
+ 
+      - name: Close PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr close ${{ github.event.pull_request.html_url }}
+
       - name: Checkout Base Fairground
         uses: actions/checkout@v2
 
@@ -292,18 +287,9 @@ jobs:
         # the workflows must be identical; rebase from upstream if this fails
         run: diff .github/workflows/fairground.yml ReleasePR/.github/workflows/fairground.yml
 
-      - name: Get PR commit message
-        id: get_commit_message
-        run: echo ::set-output name=commit_message::$(git -C ReleasePR log --format=%B -n 1 "${{ env.COMMITHASH }}")
-
-      - name: Get PR commit tag
-        id: get_commit_tag
-        if: false # doesn't work for some reason
-        run: echo ::set-output name=commit_message::$(git -C ReleasePR tag "${{ env.COMMITHASH }}") # doesn't work for some reason
-
-      - name: Get app version
-        id: get_app_version
-        run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
+      - name: Get version tag
+        id: get_semver_tag
+        run: echo ::set-output name=semver_tag::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
 
       - name: "Validate App-Name: ${{ env.ORGNAME }}"
         run: |
@@ -322,8 +308,6 @@ jobs:
             --output -
 
       - name: Integrate PR
-        if: startsWith(steps.get_commit_message.outputs.commit_message, 'release')
-
         run: |
           rm -rf "staging/"
           mkdir "staging/"
@@ -447,10 +431,6 @@ jobs:
           plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
           find "staging/" -type f
 
-      - name: "Install reproducible-builds.org diffoscope"
-        run: |
-          brew install diffoscope || true # in case it is already installed
-
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
       - name: "Generate macOS fairseal"
@@ -458,7 +438,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
           # build the URL for the GitHub download artifact
-          ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
+          ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
 
           echo "Generating fairseal for: $ZIPURL"
 
@@ -479,6 +459,7 @@ jobs:
             --project . -o -
 
           # also run diffoscope to see what it says about the differences
+          brew install diffoscope || true # in case it is already installed
           curl -o /tmp/checkartifact.zip "$ZIPURL"
           diffoscope --html staging/diffoscope-macOS.html /tmp/checkartifact.zip "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" || true # tolerate changes while developing reproducible builds
 
@@ -488,7 +469,7 @@ jobs:
         run: |
 
           # build the URL for the GitHub download artifact
-          IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_app_version.outputs.app_version }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
+          IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
 
           echo "Generating fairseal for: $IPAURL"
 
