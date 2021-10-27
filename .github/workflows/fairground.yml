@@ -31,10 +31,11 @@ on:
   push:
     branches: [ main ]
     tags: "[0-9]+.[0-9]+.[0-9]+"
-  # The integrate-release phases are initiated in the base repo upon a PR
+  # The integrate-release phases are initiated in the base repo upon 
+  # the creation or re-opening of a PR 
   pull_request_target:
     branches: [ main ]
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened]
 
 
 jobs:
@@ -74,7 +75,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          #ref: ${{ github.ref }}
+          ref: ${{ github.ref }}
 
       - name: "Validate App Organization: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
@@ -234,7 +235,7 @@ jobs:
             staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
             staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
 
-  # The Integrate-Release phases run in the base fairground.
+  # The Integrate-Release phases run in the trusted base fairground.
   # This workflow validates and re-builds the app, and if the artifact hash
   # matches that of the public release, it will publish the fairseal
   # required for inclusion in the catalog.  
@@ -266,12 +267,6 @@ jobs:
           echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
           echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
  
-      - name: Close PR
-        if: false # ${{ github.event_name == 'pull_request_target' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr close ${{ github.event.pull_request.html_url }}
-
       - name: Checkout Base Fairground
         uses: actions/checkout@v2
 
@@ -467,13 +462,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
-
           # build the URL for the GitHub download artifact
           IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
 
           echo "Generating fairseal for: $IPAURL"
 
-          # Reproducable builds on iOS not yet working
+          # Builds on iOS are currently not reproducible (help wanted!),
+          # so we accept a diff tolerance of 1,000,000 bytes for fairseal-match
           xcrun swift run -- fairtool fairseal \
             --verbose true \
             --hub github.com/appfair \
@@ -503,4 +498,11 @@ jobs:
           # https://github.com/appfair/appfair.github.io/actions
           gh workflow --repo appfair/appfair.github.io run "catalog.yml"
 
+      - name: "Close Pull Request"
+        # Pull Requests are always closed after the integrate-release phases.
+        # Re-builds can be initiated by re-opening the PR or making a new one.
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr close ${{ github.event.pull_request.html_url }}
 
