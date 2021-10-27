@@ -5,7 +5,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>app.Tune-Out</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.284</string>
+	<string>0.8.285</string>
 	<key>CFBundleVersion</key>
-	<string>208</string>
+	<string>206</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-write</key>
