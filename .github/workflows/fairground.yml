@@ -503,6 +503,6 @@ jobs:
         # Re-builds can be initiated by re-opening the PR or making a new one.
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr close ${{ github.event.pull_request.html_url }}
 
