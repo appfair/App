@@ -9,6 +9,9 @@ your forked App release when the following conditions are met:
 2. Release artifacts must exist for the semantic release tag version.
    It must match `CFBundleShortVersionString` in `Info.plist`.
 
+This PR will be automatically closed upon completion.
+Subsequent releases of the app can be published with a new PR.
+
 For more information, see: 
 
     https://www.appfair.net/#integration-release-pull-requests
