@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "App",
     defaultLocalization: "en",
-    platforms: [ .macOS(.v11), .iOS(.v14) ],
+    platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the first dependency to pass integration
@@ -48,7 +48,7 @@ precondition(!package.targets[0].dependencies.isEmpty, "package target must have
 
 // Target.Depencency is opaque and non-equatable, so resort to using the description for validation
 precondition(String(describing: package.targets[0].dependencies[0]) == "productItem(name: \"FairApp\", package: Optional(\"Fair\"), condition: nil)", "first package dependency must be FairApp")
-precondition(String(describing: package.platforms?.first) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"macos\"), version: Optional(\"11.0\")))", "package must support macOS 11")
-precondition(String(describing: package.platforms?.last) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"ios\"), version: Optional(\"14.0\")))", "package must support iOS 14")
+precondition(String(describing: package.platforms?.first) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"macos\"), version: Optional(\"12.0\")))", "package must support macOS 12")
+precondition(String(describing: package.platforms?.last) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"ios\"), version: Optional(\"15.0\")))", "package must support iOS 15")
 
 
