@@ -1,0 +1,2507 @@
+{
+  "Version": 1,
+  "MergeDocumentTypes": {
+    "com.adobe.Photoshop": [
+      {
+        "CFBundleTypeExtensions": [
+          "psd"
+        ],
+        "LSHandlerRank": "Owner"
+      }
+    ],
+    "com.apple.quicktimeplayer": [
+      {
+        "CFBundleTypeExtensions": [
+          "mov"
+        ],
+        "LSHandlerRank": "Alternate"
+      },
+      {
+        "LSOverride": true,
+        "CFBundleTypeExtensions": [
+          "3g2",
+          "3gp",
+          "aif",
+          "aifc",
+          "aiff",
+          "amc",
+          "amr",
+          "atr",
+          "au",
+          "avi",
+          "dif",
+          "dv",
+          "dvd",
+          "gsm",
+          "kar",
+          "m15",
+          "m1a",
+          "m1s",
+          "m1v",
+          "m2p",
+          "m2s",
+          "m75",
+          "mid",
+          "midi",
+          "mov",
+          "mp2",
+          "mp4",
+          "mpa",
+          "mpeg",
+          "mpg",
+          "mpg4",
+          "mpm",
+          "mqv",
+          "qt",
+          "qtl",
+          "rts",
+          "rtsp",
+          "sd2",
+          "sdp",
+          "smf",
+          "sml",
+          "snd",
+          "ulw",
+          "vfw",
+          "wav"
+        ],
+        "LSIsAppleDefaultForType": false
+      }
+    ],
+    "com.microsoft.Powerpoint": [
+      {
+        "CFBundleTypeExtensions": [
+          "ppt",
+          "pptx"
+        ],
+        "LSHandlerRank": "Owner"
+      }
+    ],
+    "com.apple.iWork.Numbers": [
+      {
+        "LSOverride": true,
+        "CFBundleTypeExtensions": [
+          "xls",
+          "xlsx"
+        ],
+        "CFBundleTypeRole": "Editor"
+      }
+    ],
+    "com.apple.iWork.Keynote": [
+      {
+        "LSOverride": true,
+        "CFBundleTypeExtensions": [
+          "ppt",
+          "pptx"
+        ],
+        "CFBundleTypeRole": "Editor"
+      }
+    ],
+    "com.microsoft.Excel": [
+      {
+        "CFBundleTypeExtensions": [
+          "xls",
+          "xlsx"
+        ],
+        "LSHandlerRank": "Owner"
+      }
+    ],
+    "com.apple.iWork.Pages": [
+      {
+        "LSOverride": true,
+        "CFBundleTypeExtensions": [
+          "doc",
+          "docx"
+        ],
+        "CFBundleTypeRole": "Editor"
+      }
+    ],
+    "com.microsoft.PowerPoint": [
+      {
+        "CFBundleTypeExtensions": [
+          "ppt",
+          "pptx"
+        ],
+        "LSHandlerRank": "Owner"
+      }
+    ],
+    "com.microsoft.Word": [
+      {
+        "CFBundleTypeExtensions": [
+          "doc",
+          "docx"
+        ],
+        "LSHandlerRank": "Owner"
+      }
+    ]
+  },
+  "Additions": {
+    "com.delicious-monster.library2": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.stuffit.StuffItConnect": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.Entourage": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.productivity"
+    },
+    "com.apple.myCocoaApp": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.real.converter": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.ame.application": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.quicken.dotmac": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.ThomsonResearchSoft.Dictionary_Converter": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.makemusic.Finale": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.apple.logic.express": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.adobe.flash-10.0": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "jp.co.pfu.ScanSnap.ScanToFolder": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.yourcompany.ArchiveInfo": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.bridge2": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.CaptivateAggregator": {
+      "LSMaximumVersionRequiringJava": "7.9.99",
+      "Java": {}
+    },
+    "com.newtek.LightWave.Layout": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.robosoft.Hood": {
+      "LSApplicationCategoryType": "public.app-category.adventure-games"
+    },
+    "com.adobe.InCopy": {
+      "LSMaximumVersionRequiringJava": "7599",
+      "Java": {}
+    },
+    "com.roxio.Streamer": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.soundtrackpro": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.corel.Register": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.apple.SoundtrackLoopUtility": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.WavesAudio.GTR 3.5.7.0.1": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.motu.DigitalPerformer": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.microsoft.ExpressionMediaQuickStartGuide": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.laminar_research.X-Plane": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.stuffit.StuffItSEAMaker": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.iWeb": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.google.Chrome.helper": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.microsoft.office_pg": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.corel.Painter11": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.transgaming.cider.bf2142": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.adobe.Photoshop": {
+      "LSMaximumVersionRequiringJava": "12.19",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mackiev.3dweatherglobev2": {
+      "LSApplicationCategoryType": "public.app-category.weather"
+    },
+    "com.mackiev.mavis": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.apple.Qadministrator": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.micromat.TechToolProStartup": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.mcafee.virusscan": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.intuit.LayoutDesigner": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.lightcrafts.CrashReporter": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.myob.upgrade": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "org.mozilla.camino": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.aol.aim.desktop": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.stuffit.StuffIt_User_Guide": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.feral.CMR05": {
+      "LSApplicationCategoryType": "public.app-category.racing-games"
+    },
+    "com.roxio.restore": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.MicrosoftCertManager": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.vmware.fusion": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.dreamweaver-11.0": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.aspyr.gameagenthelper": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "org.m0k.transmission": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.micromat.TechToolProDaemon": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.newtek.LightWave.LScript Editor": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.flashplayer.installmanager": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.AfterEffects": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.StarryNight.StarryNight": {
+      "LSApplicationCategoryType": "public.app-category.lifestyle"
+    },
+    "com.myob.firstedge": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.blizzard.BNUpdate": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.transgaming.cityofheroes": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "com.aspyr.NWN2Server": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "com.blizzard.worldofwarcraft": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "com.adobe.Installers.Setup": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "org.xlife.Xtorrent": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.autodesk.systemchecker": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.blackmagic-design.BlackmagicDiskSpeedTest": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.panic.Transmit": {
+      "LSFileQuarantineEnabled": true
+    },
+    "com.aspyr.callofduty4": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.valvesoftware.steam": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.newtek.LightWave.Modeler": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.belightsoft.GetBackup2": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.parallels.desktop.console": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.dreamweaver-10.0": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mathworks.matlab": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.adobe.drive.ConnectUI": {
+      "Java": {}
+    },
+    "com.stuffit.ExpanderDaemon": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.roxio.Toast": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.omnigroup.OmniFocus": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.spss.SPSSStatistics.17.0": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.transgaming.NeedForSpeedCarbon": {
+      "LSApplicationCategoryType": "public.app-category.racing-games"
+    },
+    "com.mackiev.wbregistration": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.adobe.Reader": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.aspyr.lego.star.wars": {
+      "LSApplicationCategoryType": "public.app-category.kids-games"
+    },
+    "com.Aja.ConflictChecker": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.mackiev.cat": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.microsoft.entourage.database_daemon": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.adobe.bridge4": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.smartsound.PurchaseTask": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "APP_ID": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.quark.crashreporter": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.stuffit.MenuPrefs": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.ClipGallery": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.google.Reporter": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.mackiev.2010worldbook": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.adobe.stockphotos-1.5": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.emc.Retrospect": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.secondlife.indra.crashreporter": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.4d.4d": {
+      "LSApplicationCategoryType": "public.app-category.developer-tools"
+    },
+    "com.adobe.AdobeResourceSynchronizer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.yourcompany.TransportCall": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.roxio.RXTivoServer": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.AdobePremierePro": {
+      "LSMaximumVersionRequiringJava": "5.5.99",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.Garritan.InstrumentsFinale": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.adobe.estoolkit-3.0": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.macsoft.zootycoon2": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.alias.uninstaller1.1": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.ElectronicArts.ERegWeb.HarryPotter5": {
+      "LSApplicationCategoryType": "public.app-category.adventure-games"
+    },
+    "com.apple.shake": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.laminar_research.Plane-Maker": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.AdobeSystems.Adobe3DAndVideoServer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.mauby.4875E02D9FB21EE389F73B8D1702B320485DF8CE.1": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.aspyr.NWN2": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "com.apple.WaveBurner": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.extensis.SuitcaseFusion2": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.DotMacKit.MessageManager": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.autodesk.Maya.2010": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.bias-inc.AuthorizationManager": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.lemkesoft.graphicconverter": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.microsoft.openxml.chart.app": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.yourcompany.AdobeCrashRealTimeNotification": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "org.HelixCommunity.dtdrive": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.AdobeCrashDaemon": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.transgaming.cider.tigerwoods": {
+      "LSApplicationCategoryType": "public.app-category.sports-games"
+    },
+    "com.apple.automator.SaveasAdobePDF": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.wolfram.jlink.JLinkBundle": {
+      "LSApplicationCategoryType": "public.app-category.education",
+      "LSMaximumVersionRequiringJava": "4.4.99"
+    },
+    "com.emc.retrospect.client.defer": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.aspyr.Quake4": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.boinx.fotomagico.player": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.mentalimages.imf_disp": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.operasoftware.opera": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.productivity"
+    },
+    "com.adobe.estoolkit-3.5": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.apple.logic.pro": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.ableton.live": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.apple.shake.quicktimeviewer": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.macromedia.fireworks": {
+      "LSMaximumVersionRequiringJava": "11.1.99",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.aspyr.colonization": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.adobe.headlights.LogTransport2App": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.luxology.modo": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "jp.co.pfu.ScanSnap.STMApp": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.aspyr.TheSims2PackageInstaller": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.aspyr.doom3": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.pangea.nano2": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.blizzard.errorreporter": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.microsoft.entourage.syncservices12": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.mackiev.UPPumaAdapter": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.native-instruments.Controller Editor": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.AOL.Talkback": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.alsoft.diskwarrior": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.kurzweiledu.3000": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.niemconsult.layoutkitchen": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.niemconsult.switchxs": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.Aja.KonaUninstaller": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.InDesignServer": {
+      "LSMaximumVersionRequiringJava": "7599",
+      "Java": {}
+    },
+    "com.ImagineerSystems.mocha4ae_adobe": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mac.fujisoft.DiskCatalogMaker": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.ibm.lotus.Notes": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.real.convertertool": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.air.NativeTemplate": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.Breakpad.crash_report_sender": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.blizzard.launcher": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.yourcompany.tgUpdate": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "com.apple.music.apps.AUIPCServerApp": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.4D.4DRuntimeVolumeLicense": {
+      "LSApplicationCategoryType": "public.app-category.developer-tools"
+    },
+    "org.mozilla.mozilla": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.apple.iWork.Numbers": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.belightsoft.GetBackupAgent2": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.blizzard.starcraft2switcher": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.abbyy.FineReader for ScanSnap": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.WavesAudio.MultiRack.1.0.1": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.aspyr.etqw": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "org.pythonmac.unspecified.ScriptAlign": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.stuffit.MagicMenu": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.aja.KonaQTToDPXTranslator": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.microsoft.Graph": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.adobe.CaptivateVideoPublisher": {
+      "LSMaximumVersionRequiringJava": "7.9.99",
+      "Java": {}
+    },
+    "com.graphisoft.FTPUploader": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.EMC.reader": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.stuffit.dropstuff.droplet": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.Acrobat.Pro": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.myob.Optimizer": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.tivo.desktop": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.parallels.starter": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.mackiev.2010wbatlas": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.micromat.TechToolProSerialNumber": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.explorer": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.productivity"
+    },
+    "com.native-instruments.Traktor": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "org.andymatuschak.Sparkle.relaunch": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.secondlife.indra.viewer": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.hrblock.taxcut": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.nikon.CaptureNX 2": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.adobe.Captivate": {
+      "LSMaximumVersionRequiringJava": "7.9.99",
+      "Java": {}
+    },
+    "com.stuffit.SmartSendWelcome": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.QT32Server": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.ARM": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.air.Template": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.mainstage": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.microsoft.expressionmedia": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.CrashCatcher": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.adobe.air.Installer": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.shake.viewer": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "se.propellerheads.reason": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.baidu.netdiskmac": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.microsoft.Messenger": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.adobe.GPUSniffer": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.LogTransportApp": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.WavesAudio.GTRSolo 3.5.7.0.1": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.microsoft.Word": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.ibm.caihandler": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.graphisoft.PlotFlow": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.stuffit.StuffIt.Scheduler": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.PXBToolkit": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.acapela.iVox.PronunciationEditor": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.newtek.LightWave.Hub": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mackiev.kidpix": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.adobe.Soundbooth": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.aol.aoldesktop": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.Waves.WavesAuthorizer": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.adobe.flash": {
+      "LSMaximumVersionRequiringJava": "11.5.99",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.macromedia.Flash Player Debugger.app": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.ThomsonResearchSoft.EndNote.ENService": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "org.mozilla.firefox": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.productivity"
+    },
+    "com.fujitsu.pfu.CardMinder": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.aja.IoHDUpdater": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.microsoft.entourage.database_utility": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.smartsound.sonicfire5": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.quark.QuarkXPressApplicationHelp7.2": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.InDesign": {
+      "LSMaximumVersionRequiringJava": "7599",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.JHandShake": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.stuffit.StuffItFileSystem": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.graphisoft.ArchiCAD_MoviePlayer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.PhotoshopElements": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.microsoft.DocumentConnection": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.google.Chrome": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.CinemaTools": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.apple.motion": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.aspyr.gameagent": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.graphisoft.LP_XMLConverter": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.abbyy.FineReader for ScanSnap.Preferences": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.apple.dvdstudiopro": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.filemaker.runtime85": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.ElectronicArts.ERegWeb.2142": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.aatrix.payroll.FormsViewer": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.alsoft.scriptrunner": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.elgato.VideoPlayer": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.quark.QuarkXPressActivationHelp7.2": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.transgaming.ElectronicArts.CNC3": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.roxio.Slideshow": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.aspyr.empireatwar": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.adobe.photodownloader": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.Symantec.LiveUpdate": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.ElectronicArts.ERegWeb.carbon": {
+      "LSApplicationCategoryType": "public.app-category.racing-games"
+    },
+    "com.alsoft.diskwarriorpreview": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.acapelagroup.infovox.uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.mathworks.StartMATLAB": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.apple.Backup2Restore": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.barebones.bbedit": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.garageband": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.mackiev.2010mknotepad": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.adobe.dreamweaver-11.5": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.aspyr.GuitarHero3": {
+      "LSApplicationCategoryType": "public.app-category.music-games"
+    },
+    "com.skype.skype": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.newtek.LightWave.LScript Interface Designer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.Google.GoogleEarthPlus": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "org.gudy.azureus2": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.aspyr.readme": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.microsoft.Powerpoint": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.WavesAudio.Waves Uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.adobe.amp.4875E02D9FB21EE389F73B8D1702B320485DF8CE.1": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.RealNetworks.RealPlayer": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.illustrator": {
+      "LSMaximumVersionRequiringJava": "16.99.99",
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.quark.QuarkXPress": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.blackmagic-design.LiveKey": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.intuit.QBMobileMeBackup": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.emc.retrospect.client.cpgui": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.removeoffice": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.blizzard.downloader": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.xunlei.Thunder": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.autodesk.smokesetup": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.stuffit.StuffItHelper": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.lightroom.flash_server": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.apple.stomp.Droplet": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.blizzard.starcraft2": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.native-instruments.Audio 4 DJ Settings": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.aja.KonaDPXToQTTranslator": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.WavesAudio.Waves AU Reg Utility.7.0.0": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.autodesk.licensewizard": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.native-instruments.Service Center": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "org.python.python.app": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.fujitsu.pfu.CMCRecog": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.adobe.headlights.HLCrashProcessorApp": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.microsoft.entourage.office_reminders": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.alias.Fcheck.1.0": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.bridge3": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.stuffit.ArchiveManager": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.iggsoftware.iBiz": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "org.mozilla.crashreporter": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.nikon.UninstallCaptureNX": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.intuit.QuickbooksTutorialCenter": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.yourcompany.FlashVideoExporter": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.FIDirPatcher": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.aja.KonaSystemTest": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.microsoft.error_reporting": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.britannica.cd.dlxd09": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "org.mozilla.seamonkey": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.intuit.QuickBooks2009": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.laminar_research.Airfoil-Maker": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.adobe.thermo": {
+      "Java": {}
+    },
+    "com.micromat.techtoolpro5": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.masi.ddpp.serverapp": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.apple.FinalCutPro": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "org.wxwindows.src": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.roxio.Mac2Tivo": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.iWork.Keynote": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.iPhoto": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "net.telestream.wmv.player": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.apple.music.apps.ProgressService": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.native-instruments.Audio 8 DJ Settings": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.boinx.fotomagico": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.smithmicro.stuffitinstaller": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.logic.node": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.aspyr.TheSims2": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.filemaker.wc9": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.WavesAudio.MRRCEditor.1.0.0": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.alsoft.Mailer": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.autodesk.smokemonitor": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.Symantec.Scheduler": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "Microsoft/com.microsoft.MessengerDaemon": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.apple.iWork.Pages": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.parallels.server.transporter": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.4D.4DServer": {
+      "LSApplicationCategoryType": "public.app-category.developer-tools"
+    },
+    "com.symantec.nortonantivirus": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.setupassistant": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.roxio.CDSpinDoctor6": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.novadevelopment.PrintExplosion": {
+      "LSApplicationCategoryType": "public.app-category.lifestyle"
+    },
+    "com.adobe.Lightroom2": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.bias-inc.soundsoap-se-app": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.abbyy.FineReader for ScanSnap.Scan to Word": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.leadertech.powerReg": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.aja.KonaControlPanel": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.lightcrafts.LightZone": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "org.eclipse.eclipse": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.hrblock.taxcutupdater": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.boinx.BXCrashReporter.BoinxCrashReporter": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "org.mozilla.updater": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.transgaming.shaunwhitesnowboarding": {
+      "LSApplicationCategoryType": "public.app-category.sports-games"
+    },
+    "com.MindVision.VISEX": {
+      "LSApplicationCategoryType": "public.app-category.developer-tools"
+    },
+    "com.aspyr.etqwServerLauncher": {
+      "LSApplicationCategoryType": "public.app-category.action-games"
+    },
+    "com.ThomsonResearchSoft.EndNote": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.berlitz.BYKIViewer": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.aquaminds.NoteTaker": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.mackiev.printshop2": {
+      "LSApplicationCategoryType": "public.app-category.lifestyle"
+    },
+    "com.apple.bootcampassistant": [
+      {
+        "Platform": "arm64",
+        "LSSupportedRegions": [
+          "NOWHERE"
+        ]
+      }
+    ],
+    "com.apple.quicktimeplayer": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.secondlife.indra.autoupdater": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.ni.labview": {
+      "LSApplicationCategoryType": "public.app-category.developer-tools"
+    },
+    "com.autodesk.toxik2010": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.devicecentral.application": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.Adobe Help Viewer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.ElectronicArts.ERegWeb.tigerwoods08": {
+      "LSApplicationCategoryType": "public.app-category.sports-games"
+    },
+    "com.stuffit.StuffItSetupAssistant": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "org.mozilla.navigator": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.adobe.Acrobat.Uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.microsoft.OrgChart": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.stuffit.StuffItSEA": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.microsoft.language_register": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.belightsoft.DiscCover2": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.devicecentral-3.5": {
+      "Java": {}
+    },
+    "com.aja.DataCalc": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.graphisoft.ArchiCAD": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.TurboTax.2009": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.laminar_research.Briefer": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "jp.co.pfu.OnlineUpdate": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.transgaming.cider": {
+      "LSApplicationCategoryType": "public.app-category.adventure-games"
+    },
+    "com.wolfram.Mathematica": {
+      "LSApplicationCategoryType": "public.app-category.education",
+      "Java": {},
+      "LSMaximumVersionRequiringJava": "9.99"
+    },
+    "com.adobe.Contribute": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.spss.SPSSStatistics17.0LicenseAuthorizationWizard": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.Adobe.Uninstall Product": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.iggsoftware.iBank": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.macromedia.Otto": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.stuffit.StuffItScheduler.Helper": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.estoolkit-2.0": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.red.ImporterRED": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.microsoft.EquationEditor": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.alias.uninstaller.RegisterPkg": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.apple.AppleQmaster": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.myob.accountedge": {
+      "LSApplicationCategoryType": "public.app-category.business"
+    },
+    "com.stuffit.DropStuff": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.examples.FileStructureTool": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.mackiev.2010trivia": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.pixelmatorteam.pixelmator": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.emc.retrospect.client.busco": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "jp.co.pfu.ScanSnap.STPApp": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "org.mozilla.thunderbird": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.filemaker.bento": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.adobe.ARMHelper": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.transgaming.tgUpdateMulti": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.adobe.PhotoshopServer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.microsoft.rdc": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.smartsound.fcpexport": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "net.nemetschek.vectorworks": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.omnigroup.CrashCatcher": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.extensis.SFCoreHelper": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.acapelagroup.Infovox_iVox": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "jp.co.pfu.ScanSnap.SSLog": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "Microsoft/com.microsoft.AlertsDaemon": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.apple.iMovie8": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.SolidWorks.EDrawings": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mcafee.VirusScanScheduleEditor": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.distiller": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.ElectronicArts.ERegWeb.cnc3": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.apple.BatchMonitor": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.musitek.scanning-ppc": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.autodesk.lmu": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.mackiev.TypingUtilities": {
+      "LSApplicationCategoryType": "public.app-category.education"
+    },
+    "com.filemaker.client.pro": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.macromedia.Flash Player.app": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.aja.KonaTV": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.transgaming.thesims3": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.mackiev.whatsnew2010": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.omnigroup.OmniGrafflePro": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.blizzard.WarcraftIII": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.transgaming.gamestartup": {
+      "LSApplicationCategoryType": "public.app-category.sports-games"
+    },
+    "com.microsoft.myday": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.aspyr.TheSims2BodyShop": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.apple.Impulse Response Utility": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.symantec.uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "jp.co.pfu.ScanSnap.V10L10": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.yourcompany.AdobeQTServer": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.aerendercore": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.macsoft.age3": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.apple.iDVD": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.hrblock.taxcut08": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.adobe.PProHeadless": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.adobe.devicecentral-3.0": {
+      "Java": {},
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.apple.LiveType": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.blizzard.starcraft2.repair": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.quark.QuarkXPress8.1": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.apple.color": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.stuffit.Expander": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.apple.compressor.Compressor": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.graphisoft.EventSender": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.transgaming.thesims3-uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.mackiev.2010dictionary": {
+      "LSApplicationCategoryType": "public.app-category.reference"
+    },
+    "com.transgaming.EVEOnline": {
+      "LSApplicationCategoryType": "public.app-category.role-playing-games"
+    },
+    "chc.4875E02D9FB21EE389F73B8D1702B320485DF8CE.1": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.intuit.HomeInventory": {
+      "LSApplicationCategoryType": "public.app-category.finance"
+    },
+    "com.graphisoft.GSReport": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.abbyy.FineReader for ScanSnap.Scan to Excel": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.apple.Aperture": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.sibelius.sibelius6": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.barebones.crashreporter": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.zerog.powerupdate.client": {
+      "LSApplicationCategoryType": "public.app-category.lifestyle"
+    },
+    "com.DiamondWare.dwTVC for mac": {
+      "LSApplicationCategoryType": "public.app-category.simulation-games"
+    },
+    "com.blackmagic-design.DeckLinkMultibridgeUtility": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.apple.FinalCutExpress": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.blizzard.starcraft2.editor": {
+      "LSApplicationCategoryType": "public.app-category.strategy-games"
+    },
+    "com.omnigroup.OmniWeb5": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.productivity"
+    },
+    "com.aja.KonaFirmwareUpdater": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "org.pythonmac.unspecified.BitTorrent": {
+      "LSFileQuarantineEnabled": true,
+      "LSApplicationCategoryType": "public-category.internet"
+    },
+    "com.adobe.air.ApplicationInstaller": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    },
+    "com.parallels.server.imagetool": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.alsoft.DiskWarriorHelp": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.autodesk.uninstaller": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "jp.hmdt.shiira": {
+      "LSFileQuarantineEnabled": true
+    },
+    "com.adobe.Captivate.MultiSco": {
+      "LSMaximumVersionRequiringJava": "7.9.99",
+      "Java": {}
+    },
+    "com.adobe.ContributeFirefoxPlugin": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.realnetworks.realplayerdownloader": {
+      "LSApplicationCategoryType": "public.app-category.video"
+    },
+    "com.fujitsu.pfu.SSMagAdjust": {
+      "LSApplicationCategoryType": "public.app-category.photography"
+    },
+    "com.apple.Backup": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.autodesk.MatchMover.1.0": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.alsoft.diskwarriorstarter": {
+      "LSApplicationCategoryType": "public.app-category.utilities"
+    },
+    "com.adobe.crashreporter": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.adobe.ExtensionManager": {
+      "LSApplicationCategoryType": "public.app-category.graphics-design"
+    },
+    "com.yahoo.messenger3": {
+      "LSApplicationCategoryType": "public.app-category.social-networking"
+    },
+    "com.bias-inc.peak": {
+      "LSApplicationCategoryType": "public.app-category.music"
+    },
+    "com.yourcompany.starwars": {
+      "LSApplicationCategoryType": "public.app-category.kids-games"
+    },
+    "com.microsoft.Excel": {
+      "LSApplicationCategoryType": "public.app-category.productivity"
+    }
+  },
+  "Overrides": {
+    "com.apple.DefaultQuickTimePlayer": {
+      "CFBundleDocumentTypes": {},
+      "LSApplicationCategoryType": "public.app-category.video"
+    }
+  },
+  "LaunchOverrides": {
+    "com.apple.airport.airportutility56": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.Compressor": [
+      {
+        "AppStoreIdentifier": "424390742",
+        "HardDisabled": true,
+        "HighVersion": "358560"
+      }
+    ],
+    "com.apple.iBooksX": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1799.0"
+      }
+    ],
+    "com.apple.Preview": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "887"
+      }
+    ],
+    "com.apple.podcasts": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1499.999.999"
+      }
+    ],
+    "com.apple.iAdProducer": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.FontBook": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "243.0"
+      }
+    ],
+    "com.apple.Stapler": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "2.1"
+      }
+    ],
+    "com.apple.NetworkDiagnostics": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "99.0"
+      }
+    ],
+    "com.apple.PodcastComposer": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "68.0"
+      }
+    ],
+    "com.apple.Xcode": [
+      {
+        "AppStoreIdentifier": "497799835",
+        "HardDisabled": true,
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.servermonitor": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "5.0"
+      }
+    ],
+    "com.apple.DVDPlayer": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "5.5"
+      }
+    ],
+    "com.apple.airport.clientmonitor": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.AppStore": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1003.9999999.9999999"
+      }
+    ],
+    "com.apple.Aperture": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.Dashcode": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.motionapp": [
+      {
+        "AppStoreIdentifier": "434290957",
+        "HardDisabled": true,
+        "HighVersion": "358560"
+      }
+    ],
+    "com.apple.iPhotoLibraryUpgrader": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "8.1"
+      }
+    ],
+    "com.apple.FinalCutTrial": [
+      {
+        "AppStoreIdentifier": "424389933",
+        "HardDisabled": true,
+        "HighVersion": "366731"
+      }
+    ],
+    "com.apple.ActivityMonitor": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "929.0"
+      }
+    ],
+    "com.apple.AppleQmaster": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.iphonesimulator": [
+      {
+        "HighVersion": "919",
+        "Radar": "59620355",
+        "Platform": "arm64",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.AccessibilityInspector": [
+      {
+        "HighVersion": "88",
+        "Radar": "59620355",
+        "Platform": "arm64",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.Keynote": [
+      {
+        "AppStoreIdentifier": "409183694",
+        "HardDisabled": true,
+        "HighVersion": "136.0"
+      }
+    ],
+    "com.apple.photostream-agent": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "31.33"
+      }
+    ],
+    "com.apple.airport.managementutility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.logic.node": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1700.67"
+      }
+    ],
+    "com.apple.DiskUtility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "514.0"
+      }
+    ],
+    "com.apple.mainstage": [
+      {
+        "AppStoreIdentifier": "634159523",
+        "HardDisabled": true,
+        "HighVersion": "420.4"
+      }
+    ],
+    "com.apple.MallocDebug": [
+      {
+        "HighVersion": "88.0",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.DirectoryUtility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "359.0"
+      }
+    ],
+    "com.apple.airport.assistant": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.dt.Instruments": [
+      {
+        "Radar": "59620355",
+        "HardDisabled": true,
+        "AppStoreUpdateIsFree": true,
+        "LowVersion": "2",
+        "HighVersion": "64539",
+        "AppStoreIdentifier": "497799835",
+        "Platform": "arm64"
+      }
+    ],
+    "com.apple.iMovieApp": [
+      {
+        "AppStoreIdentifier": "408981434",
+        "HardDisabled": true,
+        "HighVersion": "358560"
+      }
+    ],
+    "com.apple.iWork.Keynote": [
+      {
+        "AppStoreIdentifier": "409183694",
+        "HardDisabled": true,
+        "HighVersion": "422.0"
+      }
+    ],
+    "com.apple.iTunes": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "12.9.9999999"
+      }
+    ],
+    "com.apple.FinalCutExpress": [
+      {
+        "AppStoreIdentifier": "424389933",
+        "HardDisabled": true,
+        "HighVersion": "4.0.1"
+      }
+    ],
+    "com.apple.CreateDisc": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1.0"
+      }
+    ],
+    "com.apple.mail": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1751.0"
+      }
+    ],
+    "com.apple.Photos": [
+      {
+        "HardDisabled": true,
+        "LowVersion": "1",
+        "HighVersion": "399.999999"
+      },
+      {
+        "HardDisabled": true,
+        "LowVersion": "3130"
+      }
+    ],
+    "com.apple.Disk-Utility": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.iPhoto": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.Server.v4": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "699.99"
+      }
+    ],
+    "com.apple.isync": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "582.0"
+      }
+    ],
+    "com.apple.xgrid.admin": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "40.0"
+      }
+    ],
+    "com.apple.CinemaTools": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "4.5.1"
+      }
+    ],
+    "com.apple.BatchMonitor": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.Server.v3": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "399.99"
+      }
+    ],
+    "com.apple.Qadministrator": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.Server.v2": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "199.0"
+      }
+    ],
+    "com.apple.SafariTechnologyPreview": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "16999.999"
+      }
+    ],
+    "com.apple.XsanAdmin": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "374.9999999.9999999"
+      }
+    ],
+    "com.apple.WaveBurner": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "399.9999999"
+      }
+    ],
+    "com.apple.ServerAssistant": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "410.0"
+      }
+    ],
+    "com.apple.Stickies": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9.0"
+      }
+    ],
+    "com.apple.InterfaceBuilder": [
+      {
+        "HighVersion": "462.0",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.FileMerge": [
+      {
+        "HighVersion": "17000",
+        "Radar": "59620355",
+        "Platform": "arm64",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      },
+      {
+        "HardDisabled": true,
+        "HighVersion": "791.0"
+      }
+    ],
+    "com.apple.reminders": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1999.9999999.9999999"
+      }
+    ],
+    "com.apple.ServerAdmin": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "355.0"
+      }
+    ],
+    "com.apple.server.SystemImageUtility": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "663.0"
+      }
+    ],
+    "com.apple.airport.adminutility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.dt.Xcode": [
+      {
+        "HighVersion": "9999.99.98",
+        "LowVersion": "2",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      },
+      {
+        "HighVersion": "14154.9999999",
+        "LowVersion": "9999.99.100",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      },
+      {
+        "Radar": "59620355",
+        "HardDisabled": true,
+        "AppStoreUpdateIsFree": true,
+        "LowVersion": "9999.99.100",
+        "HighVersion": "17027",
+        "AppStoreIdentifier": "497799835",
+        "Platform": "arm64"
+      }
+    ],
+    "com.apple.dvdstudiopro": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "431.40"
+      }
+    ],
+    "com.apple.ImpulseResponseUtility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "4300.44"
+      }
+    ],
+    "com.apple.iCalServerUtility": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.LaunchServices.TestApp_Incompatible": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1.0"
+      }
+    ],
+    "com.apple.iCal": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1795.0"
+      }
+    ],
+    "com.apple.WorkgroupManager": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "409.0"
+      }
+    ],
+    "com.apple.shake": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "4.10"
+      }
+    ],
+    "com.apple.SystemProfiler": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "907.0"
+      }
+    ],
+    "com.apple.FinalCutPro": [
+      {
+        "AppStoreIdentifier": "424389933",
+        "HardDisabled": true,
+        "HighVersion": "7.0.3"
+      }
+    ],
+    "com.apple.RealityComposer": [
+      {
+        "HighVersion": "130",
+        "Radar": "59620355",
+        "Platform": "arm64",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "497799835",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.logic.pro": [
+      {
+        "AppStoreIdentifier": "634148309",
+        "HardDisabled": true,
+        "HighVersion": "1700.67"
+      }
+    ],
+    "com.apple.systempreferences": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "11.0"
+      }
+    ],
+    "com.apple.Server": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true,
+        "HighVersion": "90.0"
+      }
+    ],
+    "com.apple.FinalCut": [
+      {
+        "AppStoreIdentifier": "424389933",
+        "HardDisabled": true,
+        "HighVersion": "358560"
+      }
+    ],
+    "com.apple.QuickTimePlayerX": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1015.1"
+      }
+    ],
+    "com.apple.configurator": [
+      {
+        "HighVersion": "508",
+        "HardDisabled": true,
+        "AppStoreIdentifier": "434433123",
+        "AppStoreUpdateIsFree": true
+      }
+    ],
+    "com.apple.motion": [
+      {
+        "AppStoreIdentifier": "434290957",
+        "HardDisabled": true,
+        "HighVersion": "729"
+      }
+    ],
+    "com.apple.appstore": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "999.9999999.9999999"
+      }
+    ],
+    "com.apple.Dictionary": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "147.0"
+      }
+    ],
+    "com.apple.PhotoBooth": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "421.0"
+      }
+    ],
+    "com.apple.DefaultQuickTimePlayer": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1.0"
+      }
+    ],
+    "com.apple.iMovie7": [
+      {
+        "AppStoreIdentifier": "408981434",
+        "HardDisabled": true,
+        "HighVersion": "505.0"
+      }
+    ],
+    "com.apple.AddressBook": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1338.0"
+      }
+    ],
+    "com.apple.InstallAssistant.Sierra": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "12300"
+      }
+    ],
+    "com.apple.iChat": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "4072.0"
+      }
+    ],
+    "com.apple.Automator": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "423.0"
+      }
+    ],
+    "com.apple.iMovie": [
+      {
+        "HighVersion": "6.0.4",
+        "HardDisabled": true,
+        "LowVersion": "6.0",
+        "AppStoreIdentifier": "408981434"
+      }
+    ],
+    "com.apple.installassistant": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "99.0"
+      }
+    ],
+    "com.apple.airport.airportutility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "620.34"
+      }
+    ],
+    "com.apple.compressor.Compressor": [
+      {
+        "AppStoreIdentifier": "424390742",
+        "HardDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.quicktimeplayer": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.ServerPreferences": [
+      {
+        "AppStoreIdentifier": "714547929",
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.ImageCaptureApp": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "502.0"
+      }
+    ],
+    "com.apple.LiveType": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "2.1.4"
+      }
+    ],
+    "com.apple.setup.airport": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "9999"
+      }
+    ],
+    "com.apple.ColorSyncUtility": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "293.9999999.9999999"
+      }
+    ],
+    "com.apple.logic.express": [
+      {
+        "AppStoreIdentifier": "634148309",
+        "HardDisabled": true,
+        "HighVersion": "1700.67"
+      }
+    ],
+    "com.apple.Chess": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "3.9"
+      }
+    ],
+    "com.apple.color": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "596"
+      }
+    ],
+    "com.apple.Notes": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "260.0"
+      }
+    ],
+    "com.apple.SoundtrackLoopUtility": [
+      {
+        "HardDisabled": true
+      }
+    ],
+    "com.apple.soundtrackpro": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "960"
+      }
+    ],
+    "com.apple.Sherlock": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "199.0"
+      }
+    ],
+    "com.apple.spincontrol": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "19.0"
+      }
+    ],
+    "com.apple.Safari": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "12601.9999999.9999999"
+      }
+    ],
+    "com.apple.QuickTime Player": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "6.5.2"
+      }
+    ],
+    "com.apple.calculator": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "122.0"
+      }
+    ],
+    "com.apple.ThreadViewer": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "20.1"
+      }
+    ],
+    "com.apple.iDVD": [
+      {
+        "HardDisabled": true,
+        "HighVersion": "1099.0"
+      }
+    ]
+  },
+  "AppNapOverrides": {
+    "com.apple.CrashTestDummy": [
+      {
+        "SoftDisabled": true
+      }
+    ]
+  },
+  "HighResolutionOverrides": {
+    "com.apple.mainstage": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "416.81"
+      }
+    ],
+    "com.apple.logic.pro": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "1700.43"
+      }
+    ],
+    "com.apple.dvdstudiopro": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "431.40"
+      }
+    ],
+    "com.apple.iWork.Numbers": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "436"
+      }
+    ],
+    "com.apple.CinemaTools": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "4.5.1"
+      }
+    ],
+    "com.apple.iWork.Pages": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "923"
+      }
+    ],
+    "com.apple.color": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "596"
+      }
+    ],
+    "com.apple.iWork.Keynote": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "1034"
+      }
+    ],
+    "com.apple.Qadministrator": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.compressor.Compressor": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.soundtrackpro": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "960"
+      }
+    ],
+    "com.apple.WaveBurner": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "331.9"
+      }
+    ],
+    "com.apple.iBooksAuthor": [
+      {
+        "SoftDisabled": true
+      }
+    ],
+    "com.apple.AppleQmaster": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "3.5.3"
+      }
+    ],
+    "com.apple.preference.FinalCutServer": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "1.5.2"
+      }
+    ],
+    "com.apple.logic.express": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "1700.45"
+      }
+    ],
+    "com.apple.Impulse Response Utility": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "192.7"
+      }
+    ],
+    "com.apple.FinalCutPro": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "7.0.3"
+      }
+    ],
+    "com.apple.garageband": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "427.96"
+      }
+    ],
+    "com.apple.FinalCutExpress": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "4.0.1"
+      }
+    ],
+    "com.apple.LiveType": [
+      {
+        "SoftDisabled": true,
+        "HighVersion": "2.1.4"
+      }
+    ]
+  }
+}
