@@ -500,17 +500,51 @@ public extension View {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
+extension View {
+    /// Creates a button with the given optional async action.
+    ///
+    /// This is intended to be used with something like:
+    ///
+    /// ```
+    /// @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+    ///
+    /// Text("Reload")
+    ///     .label(symbol: "arrow.triangle.2.circlepath.circle")
+    ///     .button(command: reloadCommand)
+    /// ```
+    ///
+    /// The button will be disabled when the action is `nil`.
+    func button(command: (() async -> ())?) -> some View {
+        button {
+            Task {
+                await command?()
+            }
+        }
+        .disabled(command == nil)
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
 public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
+    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
     public var body: some View {
         triptychView
             .displayingFirstAlert($appManager.errors)
-            .toolbar {
-                #if DEBUG
-                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: wip(true)) {
-                    DisplayModePicker(mode: $appManager.displayMode)
+            .toolbar(id: "NavToolbar") {
+                ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
+                    Text("Reload")
+                        .label(symbol: "arrow.triangle.2.circlepath.circle")
+                        .button(command: reloadCommand)
+                        .hoverSymbol(activeVariant: .fill)
+                        .help(Text("Reload the App Fair catalog"))
+                        .keyboardShortcut("R")
                 }
+                #if DEBUG
+//                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: wip(true)) {
+//                    DisplayModePicker(mode: $appManager.displayMode)
+//                }
                 #endif
             }
             .task {
