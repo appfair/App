@@ -15,11 +15,11 @@
 
     <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
-    <string>App Name</string>
+    <string>Grudge Infirmary</string>
 
     <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
-    <string>app.App-Name</string>
+    <string>app.Grudge-Infirmary</string>
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>
