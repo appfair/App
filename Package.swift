@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "App",
     defaultLocalization: "en",
-    platforms: [ .macOS(.v11), .iOS(.v14) ],
+    platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the first dependency to pass integration
