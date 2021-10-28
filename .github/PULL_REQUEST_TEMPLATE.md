@@ -1,25 +1,21 @@
-## App Fair Integrate-Release Pull Request
+This is an App Fair Integrate-Release Pull Request.
+It acts as a signat to initiate the workflow that
+validates and publishes the release of your forked app.
 
-This Pull Request acts as a signal to initiate the
-[App Fair Integrate-Release process](https://www.appfair.net/#the-integrate-pull-request).
-Creating or updating the PR will build a new release of
-your App fork.
+Creating or updating the PR will validate and publish 
+your App fork release if the following conditions are met:
 
-The title of your Pull Request must be of the form:
-`app.App-Name`,
-where `app.App-Name` is the `CFBundleIdentifier` 
-in your `Info.plist` metadata file.
+1. The title of your Pull Request must be: `app.App-Name`.
+   It must match `CFBundleIdentifier` in `Info.plist`.
 
-Note that these integration Pull Requests will never be 
-merged into the base /App/ repository.
-They are simply triggers to initiate the app integration process
-at [/appfair/App/actions](https://github.com/appfair/App/actions).
+2. Artifacts must exist for the semantic release tag version.
+   It must match `CFBundleShortVersionString` in `Info.plist`.
+
+This PR will be automatically closed upon completion.
+Subsequent releases of the app can be published with a new PR.
+
+For more information, see: 
+
+    https://www.appfair.net/#integration-release-pull-requests
 
 
-You can leave open a PR and just update it in order to
-initiate a new release.
-Subsequent releases must increment the version both in the
-`Info.plist` and in the PR title.
-
-For more information, see the documentation at
-[https://www.appfair.net](https://www.appfair.net).
