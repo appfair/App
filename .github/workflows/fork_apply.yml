@@ -70,6 +70,7 @@ jobs:
           echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
 
       - name: "Install fairtool"
+        if: false # needs macOS 12
         run: brew install --build-from-source fair-ground/tool/fairtool
 
       - name: Checkout
@@ -79,10 +80,10 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: "Validate App Organization: ${{ env.ORGNAME }}"
-        run: fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
       - name: "Generate Icon"
-        run: fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+        run: xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
 
       - name: Test Swift Package
         if: false # needs macOS 12 # github.event_name == 'push' # only run tests in forks
