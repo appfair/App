@@ -15,6 +15,8 @@
 import Swift
 import XCTest
 
+/** Cannot run on macOS11
+
 #if canImport(TabularData)
 import TabularData
 import FairApp
@@ -83,3 +85,4 @@ open class AppTests: XCTestCase {
     #endif
 }
 #endif // canImport(TabularData)
+*/
