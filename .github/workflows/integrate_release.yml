@@ -101,8 +101,8 @@ jobs:
             --maxsize $[100 * 1024 * 1024] \
             --integrationTitle "${{ env.PRTITLE }}" \
             --allow-license "GNU Affero General Public License" \
-            --allow-from '.*@appfair.net' \
-            --allow-from '.*@.*.edu' \
+            --allow-from "${{ secrets.APP_FAIR_ALLOW }}" \
+            --deny-from "${{ secrets.APP_FAIR_DENY }}" \
             --verbose true \
             --output -
 
