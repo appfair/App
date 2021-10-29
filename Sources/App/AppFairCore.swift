@@ -4,6 +4,7 @@ struct AppInfo : Identifiable {
     var release: AppCatalogItem
     var installedPlist: Plist? = nil
 
+    /// The bundle ID of the selected app (e.g., "app.App-Name")
     var id: AppCatalogItem.ID {
         release.id
     }
@@ -43,7 +44,7 @@ extension Plist {
 
 
 extension AppCatalogItem : Identifiable {
-    public var id: URL { downloadURL }
+    public var id: String { bundleIdentifier }
 
     /// The hyphenated form of this app's name
     var appNameHyphenated: String {
@@ -528,6 +529,7 @@ extension View {
 public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+    @State var selection: AppInfo.ID? = nil
 
     public var body: some View {
         triptychView
@@ -551,16 +553,32 @@ public struct NavigationRootView : View {
                 dbg("fetching app catalog")
                 await appManager.fetchApps()
             }
+            .onChange(of: selection) { newSelection in
+                dbg("selected:", newSelection)
+            }
+            .onOpenURL { url in
+                let components = url.pathComponents
+                dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
+                // e.g., appfair://app/App-Name
+                if let scheme = url.scheme, scheme == "appfair",
+                    url.absoluteString.hasPrefix("appfair:app.") {
+                    let appName = url.lastPathComponent
+                    // prefix the app-id with the app name
+                    let appID = appName.hasPrefix("app.") ? appName : ("app." + appName)
+                    self.selection = appID
+                    dbg("selected app ID", self.selection)
+                }
+            }
     }
 
     public var triptychView : some View {
         TriptychView(orient: $appManager.displayMode) {
-            SidebarView()
+            SidebarView(selection: $selection)
         } list: {
             AppsListView(item: nil)
         } table: {
             #if os(macOS)
-            AppsTableView(sidebarItem: nil).frame(idealHeight: 120)
+            AppsTableView(selection: $selection, sidebarItem: nil).frame(idealHeight: 120)
             #endif
         } content: {
             AppDetailView()
@@ -571,11 +589,12 @@ public struct NavigationRootView : View {
 #if os(macOS)
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
+    @Binding var selection: AppInfo.ID?
     var item: AppManager.SidebarItem? = nil
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(sidebarItem: item)
+            AppsTableView(selection: $selection, sidebarItem: item)
                 .navigationTitle(item?.label.title ?? Text("Apps"))
                 .frame(minHeight: 150)
             AppDetailView()
@@ -785,6 +804,7 @@ public extension AppCategory {
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
+    @Binding var selection: AppInfo.ID?
 
     func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
         let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
@@ -851,7 +871,7 @@ struct SidebarView: View {
             AppsListView(item: item)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(item: item)
+            AppTableDetailSplitView(selection: $selection, item: item)
         #endif
         }
     }

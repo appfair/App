@@ -599,7 +599,8 @@ struct CatalogItemView: View {
     }
 
     func fetchREADME() async {
-        dbg("fetching")
+        dbg("fetching README for:", self.info.id)
+        
         //        do {
         //            // let await
         //            let contents = ""

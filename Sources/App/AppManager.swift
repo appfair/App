@@ -13,7 +13,8 @@ import FairApp
     /// The name of the base repository for the provider
     @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
 
-    /// An optional authorization token for direct API usage
+    /// An optional authorization token for direct API usagefor the organization must
+    /// 
     @AppStorage("hubToken") public var hubToken = ""
 
     @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!

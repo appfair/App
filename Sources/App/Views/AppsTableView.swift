@@ -19,7 +19,7 @@ struct AppsListView : View {
 struct AppsTableView : View, ItemTableView {
     typealias TableRowValue = AppInfo
     @EnvironmentObject var appManager: AppManager
-    @State var selection: AppInfo.ID? = nil
+    @Binding var selection: AppInfo.ID?
     @State var sortOrder = [KeyPathComparator(\TableRowValue.release.versionDate)]
     @State var searchText: String = ""
     var displayExtensions: Set<String>? = ["zip"] // , "ipa"]
@@ -194,7 +194,7 @@ struct AppsTableView_Previews: PreviewProvider {
             //AppCatalogItem.sample,
             //AppCatalogItem.sample,
             //AppCatalogItem.sample,
-            AppCatalogItem.sample,
+            //AppCatalogItem.sample,
         ]
 
         //AppManager.default.catalog += AppManager.default.catalog
@@ -204,7 +204,7 @@ struct AppsTableView_Previews: PreviewProvider {
         return VStack {
             Text("App Catalog Table")
                 .font(.largeTitle)
-            AppsTableView()
+            AppsTableView(selection: .constant(AppCatalogItem.sample.id))
             .environmentObject(AppManager.default)
         }
     }
