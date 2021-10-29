@@ -559,9 +559,10 @@ public struct NavigationRootView : View {
             .onOpenURL { url in
                 let components = url.pathComponents
                 dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
-                // e.g., appfair://app/App-Name
-                if let scheme = url.scheme, scheme == "appfair",
-                    url.absoluteString.hasPrefix("appfair:app.") {
+                // e.g., appfair://app/app.App-Name
+                // e.g., appfair://update/app.App-Name
+                // e.g., appfair:app.App-Name
+                if let scheme = url.scheme, scheme == "appfair" {
                     let appName = url.lastPathComponent
                     // prefix the app-id with the app name
                     let appID = appName.hasPrefix("app.") ? appName : ("app." + appName)
