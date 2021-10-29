@@ -41,7 +41,7 @@ extension AppManager {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         do {
             let start = CFAbsoluteTimeGetCurrent()
-            let catalog = try await self.hub().fetchCatalog(catalogURL: catalogURL, cache: cache)
+            let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
             let end = CFAbsoluteTimeGetCurrent()
             dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))

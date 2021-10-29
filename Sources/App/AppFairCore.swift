@@ -211,10 +211,6 @@ public enum AppFailure {
 extension AppManager {
     typealias Item = URL
 
-    func hub() throws -> FairHub {
-        try FairHub(hostOrg: hubProvider + "/" + hubOrg, authToken: hubToken.isEmpty ? nil : hubToken)
-    }
-
     func activateFind() {
         dbg("### ", #function) // TODO: is there a way to focus the search field?
     }
