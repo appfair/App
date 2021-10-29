@@ -14,8 +14,11 @@
  */
 import Swift
 import XCTest
+
+#if canImport(TabularData)
 import TabularData
 import FairApp
+
 @testable import App
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -79,3 +82,4 @@ open class AppTests: XCTestCase {
     #endif
     #endif
 }
+#endif // canImport(TabularData)
