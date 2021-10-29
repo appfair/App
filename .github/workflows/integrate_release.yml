@@ -98,11 +98,14 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
-            --maxsize $[100 * 1024 * 1024] \
             --integrationTitle "${{ env.PRTITLE }}" \
-            --allow-license "GNU Affero General Public License" \
-            --allow-from "${{ secrets.APP_FAIR_ALLOW }}" \
-            --deny-from "${{ secrets.APP_FAIR_DENY }}" \
+            --fairseal-issuer "appfairbot" \
+            --allow-license "AGPL-3.0" \
+            --allow-name "${{ secrets.APP_FAIR_ALLOW_NAME }}" \
+            --deny-name "${{ secrets.APP_FAIR_DENY_NAME }}" \
+            --allow-from "${{ secrets.APP_FAIR_ALLOW_FROM }}" \
+            --deny-from "${{ secrets.APP_FAIR_DENY_FROM }}" \
+            --maxsize $[100 * 1024 * 1024] \
             --verbose true \
             --output -
 
