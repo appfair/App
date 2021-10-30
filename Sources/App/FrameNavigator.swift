@@ -16,8 +16,6 @@ import FairApp
 import TabularData
 import SwiftUI
 
-#warning("TODO: remove and replace with FrameNavigator")
-
 /// An `EnvironmentObject` that is used to coordinate the various
 /// components of a `FrameNavigator`.
 @available(macOS 12.0, iOS 15.0, *)
