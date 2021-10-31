@@ -68,7 +68,7 @@ struct CatalogItemView: View {
                 }
             }
         }
-        //        .background(Material.ultraThinMaterial)
+        // .background(Material.ultraThinMaterial)
     }
 
     func pinnedHeaderView() -> some View {
@@ -82,9 +82,9 @@ struct CatalogItemView: View {
 
     func appPreviewImages() -> some View {
         EmptyView()
-        //        groupBox(title: Text("Previews")) {
-        //            catalogPreviewImages()
-        //        }
+        // groupBox(title: Text("Previews")) {
+        //     catalogPreviewImages()
+        // }
     }
 
     func starsCard() -> some View {
@@ -336,7 +336,6 @@ struct CatalogItemView: View {
             return SwiftUI.Text(Image(systemName: "questionmark.square"))
         }
     }
-
 
     func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
         wip(Image(systemName: "chart.bar.xaxis"))
