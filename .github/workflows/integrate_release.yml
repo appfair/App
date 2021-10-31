@@ -116,7 +116,6 @@ jobs:
 
           xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --version-marker-dir "staging/" --project ReleasePR --output .
 
-          xcrun swift package resolve
           xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
           # next generate a default icon, if one doesn't yet exist
@@ -128,6 +127,10 @@ jobs:
           cp -a .build/checkouts Dependencies
           tar cvzf "staging/${{ env.FAIR_APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
           rm -rf Dependencies
+
+          xcrun swift package resolve
+          cat Package.resolved # useful for the log
+          cp Package.resolved Sources/App/Resources/ # embed in the app
 
       - name: "Pre-build iOS App: ${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
         # this should be unnecessary, but for some reason we need to build twice
