@@ -28,7 +28,7 @@
     <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleShortVersionString</key>
-    <string>0.0.3</string>
+    <string>0.0.5</string>
 
     <!-- the monotonically non-decreasing build number -->
     <!-- each fair-ground integration must increase this value -->
