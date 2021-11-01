@@ -15,11 +15,11 @@
 
     <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
-    <string>Numeral XLIV</string>
+    <string>Numeral XLIVX</string>
 
     <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
-    <string>app.Numeral-XLIV</string>
+    <string>app.Numeral-XLIVX</string>
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>
@@ -28,7 +28,7 @@
     <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleShortVersionString</key>
-    <string>0.0.1</string>
+    <string>0.0.2</string>
 
     <!-- the monotonically non-decreasing build number -->
     <!-- each fair-ground integration must increase this value -->
