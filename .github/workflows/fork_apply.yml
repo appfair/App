@@ -99,7 +99,7 @@ jobs:
       - name: "Pre-build iOS App"
         env:
           FAIR_PLATFORM_IOS: ${{ secrets.FAIR_PLATFORM_IOS }}
-        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'"
+        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -117,7 +117,7 @@ jobs:
       - name: "Build iOS App"
         env:
           FAIR_PLATFORM_IOS: ${{ secrets.FAIR_PLATFORM_IOS }}
-        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'"
+        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'
         # there's no way to export iOS archives without re-signing with a teamID, 
         # so just build the .ipa manually; it needs to be in staging/ first
         run: |
@@ -143,7 +143,7 @@ jobs:
       - name: "Pre-build macOS App"
         env:
           FAIR_PLATFORM_MACOS: ${{ secrets.FAIR_PLATFORM_MACOS }}
-        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'"
+        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -162,7 +162,7 @@ jobs:
       - name: "Build macOS App"
         env:
           FAIR_PLATFORM_MACOS: ${{ secrets.FAIR_PLATFORM_MACOS }}
-        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'"
+        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
