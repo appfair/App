@@ -97,7 +97,9 @@ jobs:
       - name: "Pre-build iOS App"
         # this should be unnecessary, but for some reason we need to build twice
         # in order to guarantee that a reproducible artifact is produced
-        if: "${{ secrets.FAIR_PLATFORM_IOS }} != 'disable'"
+        env:
+          FAIR_PLATFORM_IOS: ${{ secrets.FAIR_PLATFORM_IOS }}
+        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'"
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -113,7 +115,9 @@ jobs:
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
 
       - name: "Build iOS App"
-        if: "${{ secrets.FAIR_PLATFORM_IOS }} != 'disable'"
+        env:
+          FAIR_PLATFORM_IOS: ${{ secrets.FAIR_PLATFORM_IOS }}
+        if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'"
         # there's no way to export iOS archives without re-signing with a teamID, 
         # so just build the .ipa manually; it needs to be in staging/ first
         run: |
@@ -135,7 +139,9 @@ jobs:
           ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       - name: "Pre-build macOS App"
-        if: "${{ secrets.FAIR_PLATFORM_MACOS }} != 'disable'"
+        env:
+          FAIR_PLATFORM_MACOS: ${{ secrets.FAIR_PLATFORM_MACOS }}
+        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'"
         # this should be unnecessary, but for some reason we need to build twice
         # in order to guarantee that a reproducible artifact is produced
         if: true
@@ -155,7 +161,9 @@ jobs:
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
 
       - name: "Build macOS App"
-        if: "${{ secrets.FAIR_PLATFORM_MACOS }} != 'disable'"
+        env:
+          FAIR_PLATFORM_MACOS: ${{ secrets.FAIR_PLATFORM_MACOS }}
+        if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'"
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
