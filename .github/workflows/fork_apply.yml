@@ -94,9 +94,9 @@ jobs:
           swift package resolve
           cp Package.resolved Sources/App/Resources/
 
+      # this should be unnecessary, but for some reason we need to build twice
+      # in order to guarantee that a reproducible artifact is produced
       - name: "Pre-build iOS App"
-        # this should be unnecessary, but for some reason we need to build twice
-        # in order to guarantee that a reproducible artifact is produced
         env:
           FAIR_PLATFORM_IOS: ${{ secrets.FAIR_PLATFORM_IOS }}
         if: ${{ env.FAIR_PLATFORM_IOS }} != 'disable'"
@@ -138,13 +138,12 @@ jobs:
           rm -rf "staging/Payload" # cleanup
           ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
+      # pre-build should be unnecessary, but for some reason we need to build 
+      # twice in order to guarantee that a reproducible artifact is produced
       - name: "Pre-build macOS App"
         env:
           FAIR_PLATFORM_MACOS: ${{ secrets.FAIR_PLATFORM_MACOS }}
         if: ${{ env.FAIR_PLATFORM_MACOS }} != 'disable'"
-        # this should be unnecessary, but for some reason we need to build twice
-        # in order to guarantee that a reproducible artifact is produced
-        if: true
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
