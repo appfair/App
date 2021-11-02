@@ -6,9 +6,12 @@
     <key>com.apple.security.files.user-selected.read-write</key>
     <false/>
 
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+
     <!-- If your app needs access to the network, set com.apple.security.network.client to true and describe in plain language how it is used in your Info.plist FairAppNetworkCientUsageDescription property -->
     <key>com.apple.security.network.client</key>
-    <false/>
+    <true/>
 
     <!-- Sandboxing is always required on fair-ground apps -->
     <key>com.apple.security.app-sandbox</key>
