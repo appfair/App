@@ -218,7 +218,7 @@ jobs:
       - name: "Notarize macOS App"
         env:
           FAIR_NOTARIZATION_TEAMID: ${{ secrets.FAIR_NOTARIZATION_TEAMID }}
-        if: ${{ env.FAIR_NOTARIZATION_TEAMID }} != ''
+        if: ${{ env.FAIR_NOTARIZATION_TEAMID }}
 
         run: xcrun notarytool submit "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --password "${{ secrets.FAIR_NOTARIZATION_PASSWORD }}" --apple-id "${{ secrets.FAIR_NOTARIZATION_USERNAME }}" --team-id "${{ secrets.FAIR_NOTARIZATION_TEAMID }}" --progress --wait
 
