@@ -296,7 +296,7 @@ struct CatalogItemView: View {
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
             .truncationMode(.tail)
-            .textSelection(.enabled)
+            //.textSelection(.enabled)
             .help(entitlement.localizedInfo.info + Text(": ") + Text(permission.usageDescription))
     }
 
