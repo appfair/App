@@ -20,7 +20,8 @@ extension AppCatalogItem {
 
     /// All the entitlements, ordered by their index in the `AppEntitlement` cases.
     public func orderedEntitlements(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppEntitlement> {
-        let activeEntitlements = self.entitlements
+        let activeEntitlements = (self.permissions ?? [])
+            .map(\.type)
             .filter {
                 $0.categories.intersection(filterCategories).isEmpty
             }
@@ -30,7 +31,7 @@ extension AppCatalogItem {
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5
     var riskLevel: Int {
         // let groups = Set(item.appCategories.flatMap(\.groupings))
-        let categories = Set(self.entitlements.flatMap(\.categories)).subtracting([.prerequisite, .harmless])
+        let categories = Set((self.permissions ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
         // the naieve classification just counts the categories
         return max(0, min(5, categories.count))
     }
@@ -338,5 +339,5 @@ extension AppCatalogItem {
     private static var rndgen = SeededRandomNumberGenerator(uuids: UUID(uuidString: "E3C3FF63-EF95-4BF4-BE53-EC88EE097556")!)
     private static func rnd() -> UInt8 { UInt8.random(in: .min...(.max), using: &rndgen) }
 
-    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 23_456, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: AppEntitlement.bitsetRepresentation(for: Set(AppEntitlement.allCases)), metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plkist"), sha256Metadata: UUID(bytes: rnd).uuidString)
+    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 23_456, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: [AppPermission(type: .files_downloads_read_only, usageDescription: "reading files from user download folder is what this app does")], metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plist"), sha256Metadata: UUID(bytes: rnd).uuidString)
 }

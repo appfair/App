@@ -133,7 +133,7 @@ extension AppManager {
                 }
                 let infoPlist = installPath.appendingPathComponent("Contents/Info.plist")
                 do {
-                    let plist = try Plist(propertyListURL: infoPlist)
+                    let plist = try Plist(data: Data(contentsOf: infoPlist))
                     // here was can validate some of the app's metadata, version number, etc
                     installedApps[installPath] = .success(plist)
                 } catch {
