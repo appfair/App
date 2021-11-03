@@ -295,9 +295,9 @@ struct CatalogItemView: View {
             .listItemTint(ListItemTint.monochrome)
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
-            .truncationMode(.head)
+            .truncationMode(.tail)
             .textSelection(.enabled)
-            .help(entitlement.localizedInfo.info + ": " + permission.usageDescription)
+            .help(entitlement.localizedInfo.info + Text(": ") + Text(permission.usageDescription))
     }
 
     /// The entitlements that will appear in the list.
