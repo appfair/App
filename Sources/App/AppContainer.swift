@@ -49,7 +49,7 @@ public struct ContentView: View {
     public var body: some View {
         // A FairApp comes with built-in FairContentView behaviors.
         // The `.placeholder` content will display some info about your app.
-        Text("Welcome to my App Fair App!")
+        Text("Welcome to my App Fair App! NEW VERSION!").foregroundColor(.red)
             .font(.largeTitle)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
