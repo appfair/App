@@ -19,13 +19,11 @@ import SwiftUI
 extension AppCatalogItem {
 
     /// All the entitlements, ordered by their index in the `AppEntitlement` cases.
-    public func orderedEntitlements(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppEntitlement> {
-        let activeEntitlements = (self.permissions ?? [])
-            .map(\.type)
+    public func orderedPermissions(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppPermission> {
+        (self.permissions ?? [])
             .filter {
-                $0.categories.intersection(filterCategories).isEmpty
+                $0.type.categories.intersection(filterCategories).isEmpty
             }
-        return AppEntitlement.allCases.filter(activeEntitlements.contains)
     }
 
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5

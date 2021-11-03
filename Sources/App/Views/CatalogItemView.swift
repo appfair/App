@@ -257,7 +257,7 @@ struct CatalogItemView: View {
                 groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
-                    entitlementsList()
+                    permissionsList()
                         .frame(minHeight: 20)
                 }
                 .padding()
@@ -283,25 +283,32 @@ struct CatalogItemView: View {
             .frame(maxWidth: .infinity)
     }
 
-    func entitlementListItem(entitlement: AppEntitlement) -> some View {
-        return entitlement.localizedInfo.title.label(symbol: entitlement.localizedInfo.symbol)
+    func permissionListItem(permission: AppPermission) -> some View {
+        let entitlement = permission.type
+
+        var title = entitlement.localizedInfo.title
+        if !permission.usageDescription.isEmpty {
+            title = title + Text(" – ") + Text(permission.usageDescription).foregroundColor(.secondary).italic()
+        }
+
+        return title.label(symbol: entitlement.localizedInfo.symbol)
             .listItemTint(ListItemTint.monochrome)
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
-            .truncationMode(.middle)
-        //.textSelection(.enabled)
-            .help(entitlement.localizedInfo.info)
+            .truncationMode(.head)
+            .textSelection(.enabled)
+            .help(entitlement.localizedInfo.info + ": " + permission.usageDescription)
     }
 
     /// The entitlements that will appear in the list.
     /// These filter out entitlements that are pre-requisites (e.g., sandboxing) as well as harmless entitlements (e.g., JIT).
-    var listedEntitlements: [AppEntitlement] {
-        item.orderedEntitlements(filterCategories: [.harmless, .prerequisite])
+    var listedPermissions: [AppPermission] {
+        item.orderedPermissions(filterCategories: [.harmless, .prerequisite])
     }
 
-    func entitlementsList() -> some View {
+    func permissionsList() -> some View {
         List {
-            ForEach(listedEntitlements, content: entitlementListItem)
+            ForEach(listedPermissions, id: \.type, content: permissionListItem)
         }
         .conditionally {
 #if os(macOS)
