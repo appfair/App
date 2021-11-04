@@ -349,6 +349,13 @@ extension AppManager {
 
         // always re-scan after altering apps
         await scanInstalledApps()
+
+        // re-scan doesn't seem to pick up a newly-installed app; try to re-scan again a bit later
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
+            Task {
+                await self.scanInstalledApps()
+            }
+        }
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
