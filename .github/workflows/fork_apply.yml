@@ -134,8 +134,8 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
 
-          ditto -c -k --sequesterRsrc --keepParent "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-          rm -rf "staging/Payload" # cleanup
+          cp -a "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       # pre-build should be unnecessary, but for some reason we need to build 
       # twice in order to guarantee that a reproducible artifact is produced
