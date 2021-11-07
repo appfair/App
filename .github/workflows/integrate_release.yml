@@ -246,6 +246,9 @@ jobs:
 
           echo "Generating fairseal for: $ZIPURL"
 
+          mkdir -p staging/.artifact_stash
+          mv staging/*.ipa staging/.artifact_stash/ # don't seal the ipa when sealing macOS
+
           # if the seals match, we indicate success by publishing
           # the SHA256 for the release's pull request;
           # client apps will use this hash to verify that the untrusted
@@ -263,6 +266,8 @@ jobs:
             --artifact-staging "staging/" \
             --project . -o -
 
+          mv staging/.artifact_stash/* staging/ # restore stash
+
           # also run diffoscope to see what it says about the differences
           brew install diffoscope || true # in case it is already installed
           curl -o /tmp/checkartifact.zip "$ZIPURL"
@@ -277,6 +282,9 @@ jobs:
 
           echo "Generating fairseal for: $IPAURL"
 
+          mkdir -p staging/.artifact_stash
+          mv staging/*.zip staging/.artifact_stash/ # don't seal the macOS zip for iOS seal
+
           # Builds on iOS are currently not reproducible (help wanted!),
           # so we accept a diff tolerance of 1,000,000 bytes for fairseal-match
           xcrun swift run -- fairtool fairseal \
@@ -290,6 +298,8 @@ jobs:
             --artifact-url "$IPAURL" \
             --artifact-staging "staging/" \
             --project . -o -
+
+          mv staging/.artifact_stash/* staging/ # restore stash
 
           # also run diffoscope to see what it says about the differences
           curl -o /tmp/checkartifact.ipa "$IPAURL"
