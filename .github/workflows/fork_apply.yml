@@ -238,5 +238,5 @@ jobs:
           # replace any existing release
           gh release delete "${GITHUB_REF#refs/tags/}" -y || true
           # create a new release with the tag name and the staging assets
-          gh release create \ "${GITHUB_REF#refs/tags/}" -- staging/*.*
+          gh release create "${GITHUB_REF#refs/tags/}" -- staging/*.*
 
