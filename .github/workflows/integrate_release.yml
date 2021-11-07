@@ -260,7 +260,6 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" \
-            --artifact-staging "staging/" \
             --fairseal-match 0 \
             --retry-duration 600 \
             --artifact-url "$ZIPURL" \
@@ -294,7 +293,6 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" \
-            --artifact-staging "staging/" \
             --fairseal-match 1000000 \
             --retry-duration 600 \
             --artifact-url "$IPAURL" \
