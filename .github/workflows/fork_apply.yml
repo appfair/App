@@ -231,7 +231,8 @@ jobs:
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
           plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
           plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          find "staging/" -type f
+          cp README.md LICENSE.txt screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          find "staging/" -maxdepth 1 -type f
 
       # create and upload the release artifacts, which will be
       # vaidates in the base fair-ground by integrate_release
