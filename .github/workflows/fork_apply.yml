@@ -106,7 +106,7 @@ jobs:
             -configuration Release \
             -scheme "AppFairApp" \
             -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -126,17 +126,15 @@ jobs:
             -configuration Release \
             -scheme "AppFairApp" \
             -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             CODE_SIGN_IDENTITY="-" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
-          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-          rm -rf "staging/Payload" # cleanup
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
+
+          ditto -c -k --sequesterRsrc --keepParent "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       # pre-build should be unnecessary, but for some reason we need to build 
       # twice in order to guarantee that a reproducible artifact is produced
@@ -151,7 +149,7 @@ jobs:
             -scheme "AppFairApp" \
             -sdk "macosx" \
             -destination 'platform=macOS' \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -170,7 +168,7 @@ jobs:
             -scheme "AppFairApp" \
             -sdk "macosx" \
             -destination 'platform=macOS' \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -178,13 +176,13 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
 
-          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string><key>uploadBitcode</key><false/><key>compileBitcode</key><false/><key>uploadSymbols</key><false/></dict></plist>' > "staging/exportOptions.plist"
+          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string><key>uploadBitcode</key><false/><key>compileBitcode</key><false/><key>uploadSymbols</key><false/></dict></plist>' > "staging/.exportOptions.plist"
 
           xcodebuild \
             -exportArchive \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
-            -exportOptionsPlist "staging/exportOptions.plist"
+            -exportOptionsPlist "staging/.exportOptions.plist"
 
           codesign --verify --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
           codesign -dv --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
@@ -192,12 +190,7 @@ jobs:
 
           # create the zip file
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-
-          # show the binary checksum
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          rm -rf "staging/${{ env.PRODUCT_NAME }}.app" # cleanup
 
       # Notarization is not required for the App Fair, but a developer
       # can opt to notarize their own build which will allow them to 
@@ -229,10 +222,10 @@ jobs:
         # And convert to XML for ease of integration.
         run: |
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          cp README.md LICENSE.txt screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
-          find "staging/" -maxdepth 1 -type f
+          cp README.md LICENSE.txt Info.plist Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          ls -la staging/
+          # log the checksum for each of the staging elements
+          openssl sha256 staging/*.*
 
       # create and upload the release artifacts, which will be
       # vaidates in the base fair-ground by integrate_release
@@ -242,17 +235,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating release: ${GITHUB_REF#refs/tags/}"
-          # if the release already exists, clobber it
+          # replace any existing release
           gh release delete "${GITHUB_REF#refs/tags/}" -y || true
-          # initiate a new release with the tag name
-          gh release create \
-            "${GITHUB_REF#refs/tags/}" \
-            -- \
-            Sandbox.entitlements \
-            Package.resolved \
-            staging/${{ env.FAIR_APP_ARTIFACT }}.png \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
+          # create a new release with the tag name and the staging assets
+          gh release create "${GITHUB_REF#refs/tags/}" -- staging/*.*
 

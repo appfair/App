@@ -232,10 +232,10 @@ jobs:
         # And convert to XML for ease of integration.
         run: |
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          cp README.md LICENSE.txt screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          cp README.md LICENSE.txt Info.plist Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
           find "staging/" -maxdepth 1 -type f
+          # log the checksum for each of the staging elements
+          shasum -a 256 staging/*.*
 
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
@@ -245,7 +245,6 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist"
 
           echo "Generating fairseal for: $ZIPURL"
 
@@ -260,11 +259,10 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" \
-            --artifact-staging "staging/" \
             --fairseal-match 0 \
             --retry-duration 600 \
             --artifact-url "$ZIPURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
             --project . -o -
 
           # also run diffoscope to see what it says about the differences
@@ -278,7 +276,6 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist"
 
           echo "Generating fairseal for: $IPAURL"
 
@@ -290,11 +287,10 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" \
-            --artifact-staging "staging/" \
             --fairseal-match 1000000 \
             --retry-duration 600 \
             --artifact-url "$IPAURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
             --project . -o -
 
           # also run diffoscope to see what it says about the differences
