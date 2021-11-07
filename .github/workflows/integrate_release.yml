@@ -169,7 +169,6 @@ jobs:
           cp -a "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       - name: "Pre-build macOS App: ${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
         # this should be unnecessary, but for some reason we need to build twice
@@ -220,11 +219,10 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
           # show the binary checksum
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
           openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
           openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
+          rm -rf "staging/${{ env.PRODUCT_NAME }}.app" # cleanup
 
       - name: Stage Release Metadata
         # Extract the Info.plist from the archives themselves, since they contain
@@ -233,7 +231,7 @@ jobs:
         run: |
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
           cp README.md LICENSE.txt Info.plist Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
-          find "staging/" -maxdepth 1 -type f
+          ls -la staging/
           # log the checksum for each of the staging elements
           shasum -a 256 staging/*.*
 
