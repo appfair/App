@@ -136,7 +136,6 @@ jobs:
           cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       # pre-build should be unnecessary, but for some reason we need to build 
       # twice in order to guarantee that a reproducible artifact is produced
@@ -192,6 +191,7 @@ jobs:
 
           # create the zip file
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          rm -rf "staging/${{ env.PRODUCT_NAME }}.app" # cleanup
 
       # Notarization is not required for the App Fair, but a developer
       # can opt to notarize their own build which will allow them to 
