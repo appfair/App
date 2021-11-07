@@ -193,12 +193,6 @@ jobs:
           # create the zip file
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
-          # show the binary checksum
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-
       # Notarization is not required for the App Fair, but a developer
       # can opt to notarize their own build which will allow them to 
       # distribute the app outside of the App Fair without having to
@@ -231,8 +225,10 @@ jobs:
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
           plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
           plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          cp README.md LICENSE.txt screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
-          find "staging/" -maxdepth 1 -type f
+          cp README.md LICENSE.txt Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          ls -la staging/
+          # log the checksum for each of the staging elements
+          openssl sha256 staging/*.*
 
       # create and upload the release artifacts, which will be
       # vaidates in the base fair-ground by integrate_release
@@ -242,17 +238,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating release: ${GITHUB_REF#refs/tags/}"
-          # if the release already exists, clobber it
+          # replace any existing release
           gh release delete "${GITHUB_REF#refs/tags/}" -y || true
-          # initiate a new release with the tag name
-          gh release create \
-            "${GITHUB_REF#refs/tags/}" \
-            -- \
-            Sandbox.entitlements \
-            Package.resolved \
-            staging/${{ env.FAIR_APP_ARTIFACT }}.png \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
+          # create a new release with the tag name and the staging assets
+          gh release create \ "${GITHUB_REF#refs/tags/}" -- staging/*.*
 
