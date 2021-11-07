@@ -50,7 +50,7 @@ struct CatalogItemView: View {
             catalogOverview()
             appPreviewImages()
         }
-        //        .background(Material.ultraThinMaterial)
+        // .background(Material.ultraThinMaterial)
     }
 
     func catalogBodyScrolling() -> some View {
@@ -173,9 +173,12 @@ struct CatalogItemView: View {
         .frame(height: 54)
     }
 
-    func linkTextField(_ title: Text, url: URL, linkText: String? = nil) -> some View {
+    func linkTextField(_ title: Text, icon: String, url: URL, linkText: String? = nil) -> some View {
         TextField(text: .constant(linkText ?? url.absoluteString)) {
-            title.link(to: url)
+            title
+                .label(symbol: icon)
+                .labelStyle(.titleAndIconFlipped)
+                .link(to: url)
                 .font(Font.body)
         }
     }
@@ -183,39 +186,22 @@ struct CatalogItemView: View {
     func detailsView() -> some View {
         ScrollView(.vertical, showsIndicators: true) {
             Form {
-                linkTextField(Text("Discussions"), url: info.release.discussionsURL)
+                linkTextField(Text("Discussions"), icon: "text.bubble", url: info.release.discussionsURL)
                     .help(Text("Opens link to the discussions page for this app at: \(info.release.discussionsURL.absoluteString)"))
-                linkTextField(Text("Issues"), url: info.release.issuesURL)
+                linkTextField(Text("Issues"), icon: "checklist", url: info.release.issuesURL)
                     .help(Text("Opens link to the issues page for this app at: \(info.release.issuesURL.absoluteString)"))
-                linkTextField(Text("Source Code"), url: info.release.sourceURL)
+                linkTextField(Text("Source Code"), icon: "chevron.left.forwardslash.chevron.right", url: info.release.sourceURL)
                     .help(Text("Opens link to source code repository for this app at: \(info.release.sourceURL.absoluteString)"))
-                linkTextField(Text("Seal"), url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
+                linkTextField(Text("Seal"), icon: "rosette", url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
                     .help(Text("Lookup fairseal at: \(info.release.fairsealURL)"))
-                linkTextField(Text("Developer"), url: info.release.developerURL, linkText: item.developerName)
+                linkTextField(Text("Developer"), icon: "person", url: info.release.developerURL, linkText: item.developerName)
                     .help(Text("Searches for this developer at: \(info.release.developerURL)"))
             }
+            .symbolRenderingMode(SymbolRenderingMode.multicolor)
             .font(Font.body.monospaced())
             .textFieldStyle(.plain)
             .truncationMode(.middle)
         }
-
-        //        VStack {
-        //            Group {
-        //                Text("Developer: \(item.developerName)")
-        //                Text("Size: \(item.size)")
-        //                Text("BundleIdentifier: \(item.bundleIdentifier)")
-        //                //Text("Categories: \(item.categories ?? [])")
-        //                //Text("SHA256: \(item.sha256 ?? "")")
-        //            }
-        //            Group {
-        //                Text("ForkCount: \(item.forkCount ?? 0)")
-        //                Text("issueCount: \(item.issueCount ?? 0)")
-        //                Text("starCount: \(item.starCount ?? 0)")
-        //                Text("watcherCount: \(item.watcherCount ?? 0)")
-        //                Text("downloadCount: \(item.downloadCount ?? 0)")
-        //            }
-        //        }
-        //        .textSelection(.enabled)
     }
 
     func groupBox<V: View, L: View>(title: Text, trailing: L, @ViewBuilder content: () -> V) -> some View {
@@ -247,7 +233,7 @@ struct CatalogItemView: View {
                 groupBox(title: Text("Description"), trailing: EmptyView()) {
                     ScrollView {
                         descriptionSummary()
-                            .redacted(reason: wip(.placeholder))
+                            //.redacted(reason: wip(.placeholder))
                     }
                 }
                 .padding()
@@ -276,10 +262,12 @@ struct CatalogItemView: View {
         Text(atx: """
         This is an app that does *stuff*, a whole lot of stuff, and does it really well.
 
-        Installing this app will make you smarter and stronger, and generally better.
+        This app uses various permissons to access information and edit documents.
+        Another options is.
         """)
             .font(.body)
             .textSelection(.enabled)
+            .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity)
     }
 
@@ -705,15 +693,29 @@ struct CatalogItemView: View {
     }
 }
 
+extension LabelStyle where Self == TitleAndIconFlippedLabelStyle {
+    /// The same as `titleAndIcon` with the icon at the end
+    public static var titleAndIconFlipped: TitleAndIconFlippedLabelStyle {
+        TitleAndIconFlippedLabelStyle()
+    }
+}
+
+public struct TitleAndIconFlippedLabelStyle : LabelStyle {
+    public func makeBody(configuration: TitleAndIconLabelStyle.Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            configuration.title
+            configuration.icon
+        }
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(release: AppCatalogItem.sample), previewMode: true)
             .environmentObject(AppManager.default)
-            .frame(width: 800)
-            .frame(height: 600)
+            .frame(width: 600)
+            .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))
     }
 }
-
-

@@ -166,62 +166,62 @@ extension AppEntitlement : Identifiable {
                 "calendar")
         case .files_user_selected_read_only:
             return (
-                Text("User-Selected Read-Only"),
+                Text("Read User-Selected Files"),
                 Text("Read access to files explicitly selected by the user."),
                 "doc")
         case .files_user_selected_read_write:
             return (
-                Text("User-Selected Read-Write"),
+                Text("Read & Write User-Selected Files"),
                 Text("Read and write access to files explicitly selected by the user."),
                 "doc.fill")
         case .files_user_selected_executable:
             return (
-                Text("User-Selected Executable"),
+                Text("Executables (User-Selected)"),
                 Text("Read access to executables explicitly selected by the user."),
                 "doc.text.below.ecg")
         case .files_downloads_read_only:
             return (
-                Text("Downloads Read-Only"),
+                Text("Read Download Folder"),
                 Text("Read access to the user's Downloads folder"),
                 "arrow.up.and.down.square")
         case .files_downloads_read_write:
             return (
-                Text("Downloads Read-Write"),
+                Text("Read & Write Downloads Folder"),
                 Text("Read and write access to the user's Downloads folder"),
                 "arrow.up.and.down.square.fill")
         case .assets_pictures_read_only:
             return (
-                Text("Pictures Read-Only"),
+                Text("Read Pictures"),
                 Text("Read access to the user's Pictures folder"),
                 "photo")
         case .assets_pictures_read_write:
             return (
-                Text("Pictures Read-Write"),
+                Text("Read & Write Pictures"),
                 Text("Read and write access to the user's Pictures folder"),
                 "photo.fill")
         case .assets_music_read_only:
             return (
-                Text("Music Read-Only"),
+                Text("Read Music"),
                 Text("Read access to the user's Music folder"),
                 "radio")
         case .assets_music_read_write:
             return (
-                Text("Music Read-Write"),
+                Text("Read & Write Music"),
                 Text("Read and write access to the user's Music folder"),
                 "radio.fill")
         case .assets_movies_read_only:
             return (
-                Text("Movies Read-Only"),
+                Text("Read Movies"),
                 Text("Read access to the user's Movies folder"),
                 "film")
         case .assets_movies_read_write:
             return (
-                Text("Movies Read-Write"),
+                Text("Read & Write Movies"),
                 Text("Read and write access to the user's Movies folder"),
                 "film.fill")
         case .files_all:
             return (
-                Text("All Files"),
+                Text("Read & Write All Files"),
                 Text("Read and write all files on the system."),
                 "doc.on.doc.fill")
         case .cs_allow_jit:
@@ -321,21 +321,23 @@ extension AppEntitlement : Identifiable {
                 "list.bullet.rectangle.fill")
         case .shared_preference_read_only:
             return (
-                Text("Shared Preferences Read-Only"),
+                Text("Read Shared Preferences"),
                 Text("Read shared preferences."),
                 "list.triangle")
         case .shared_preference_read_write:
             return (
-                Text("Shared Preferences Read-Write"),
+                Text("Read & Write Shared Preferences"),
                 Text("Read and write shared preferences."),
                 "list.star")
         }
     }
 }
 
+
+
 extension AppCatalogItem {
     private static var rndgen = SeededRandomNumberGenerator(uuids: UUID(uuidString: "E3C3FF63-EF95-4BF4-BE53-EC88EE097556")!)
     private static func rnd() -> UInt8 { UInt8.random(in: .min...(.max), using: &rndgen) }
 
-    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 23_456, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: [AppPermission(type: .files_downloads_read_only, usageDescription: "reading files from user download folder is what this app does")], metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plist"), sha256Metadata: UUID(bytes: rnd).uuidString)
+    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: "app.App-Fair", subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#AABBCC", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.topicIdentifier], downloadCount: 1_234, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: AppEntitlement.allCases.map { AppPermission(type: $0, usageDescription: "This app needs this entitlement") }, metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plist"), sha256Metadata: UUID(bytes: rnd).uuidString)
 }
