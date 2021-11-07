@@ -245,7 +245,6 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist"
 
           echo "Generating fairseal for: $ZIPURL"
 
@@ -260,11 +259,10 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" \
-            --artifact-staging "staging/" \
             --fairseal-match 0 \
             --retry-duration 600 \
             --artifact-url "$ZIPURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
             --project . -o -
 
           # also run diffoscope to see what it says about the differences
@@ -278,7 +276,6 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist"
 
           echo "Generating fairseal for: $IPAURL"
 
@@ -290,11 +287,10 @@ jobs:
             --org "${{ env.ORGNAME }}" \
             --ref "${{ env.COMMITHASH }}" \
             --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" \
-            --artifact-staging "staging/" \
             --fairseal-match 1000000 \
             --retry-duration 600 \
             --artifact-url "$IPAURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
             --project . -o -
 
           # also run diffoscope to see what it says about the differences
