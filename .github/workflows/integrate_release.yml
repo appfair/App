@@ -119,7 +119,7 @@ jobs:
           xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
           # next generate a default icon, if one doesn't yet exist
-          xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+          xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
           file Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
         
           #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
@@ -264,6 +264,7 @@ jobs:
             --retry-duration 600 \
             --artifact-url "$ZIPURL" \
             --artifact-staging "staging/" \
+            --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" \
             --project . -o -
 
           mv staging/.artifact_stash/* staging/ # restore stash
@@ -297,6 +298,7 @@ jobs:
             --retry-duration 600 \
             --artifact-url "$IPAURL" \
             --artifact-staging "staging/" \
+            --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" \
             --project . -o -
 
           mv staging/.artifact_stash/* staging/ # restore stash
