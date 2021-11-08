@@ -83,7 +83,7 @@ jobs:
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
 
       - name: "Generate Icon"
-        run: xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+        run: xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
 
       - name: "Test Swift Package"
         if: false # needs macOS 12 # github.event_name == 'push' # only run tests in forks
