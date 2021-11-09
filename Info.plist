@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.123</string>
+	<string>0.8.124</string>
 	<key>CFBundleVersion</key>
-	<string>176</string>
+	<string>178</string>
 	<key>FairUsage</key>
 	<dict/>
 	<key>LSApplicationCategoryType</key>
