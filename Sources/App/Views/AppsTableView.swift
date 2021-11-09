@@ -20,24 +20,16 @@ struct AppsTableView : View, ItemTableView {
     typealias TableRowValue = AppInfo
     @EnvironmentObject var appManager: AppManager
     @Binding var selection: AppInfo.ID?
-    @State var sortOrder = [KeyPathComparator(\TableRowValue.release.versionDate)]
+    @Binding var category: AppManager.SidebarItem?
+    
+    @State var sortOrder: [KeyPathComparator<AppsTableView.TableRowValue>] = []
     @State var searchText: String = ""
     var displayExtensions: Set<String>? = ["zip"] // , "ipa"]
-    var sidebarItem: AppManager.SidebarItem?
 
     var items: [AppInfo] {
-        appManager.catalog
-            .map(appInfo(for:))
-            .sorted(using: sortOrder)
-    }
-
-    func appInfo(for item: AppCatalogItem) -> AppInfo {
-        // let plist = appManager.installedApps[appManager.appInstallPath(for: $0)]
-
-        let plist = appManager.installedApps.values.compactMap(\.successValue).first(where: {
-            $0.CFBundleIdentifier == item.bundleIdentifier
-        })
-        return AppInfo(release: item, installedPlist: plist)
+        appManager
+            .appInfoItems()
+            .sorted(using: sortOrder + categorySortOrder())
     }
 
     struct Columnator : OptionSet {
@@ -74,26 +66,27 @@ struct AppsTableView : View, ItemTableView {
 
             Group {
                 let nameColumn = strColumn(named: "Name", path: \TableRowValue.release.name)
-                nameColumn
+                nameColumn.width(ideal: 125)
 
 //                let subtitleColumn = ostrColumn(named: "Subtitle", path: \TableRowValue.release.subtitle)
 //                subtitleColumn
 
-                let descColumn = strColumn(named: "Description", path: \TableRowValue.release.localizedDescription)
-                descColumn
+//                let descColumn = strColumn(named: "Description", path: \TableRowValue.release.localizedDescription)
+//                descColumn
             }
 
             Group {
                 let versionColumn = oversionColumn(named: "Version", path: \TableRowValue.releasedVersion)
-                versionColumn
+                versionColumn.width(ideal: 60)
 
                 let installedColumn = oversionColumn(named: "Installed", path: \TableRowValue.installedVersion)
-                installedColumn
+                installedColumn.width(ideal: 60)
+
                 let sizeColumn = TableColumn("Size", value: \TableRowValue.release.size) { item in
                     Text(item.release.size.localizedByteCount())
                         .multilineTextAlignment(.trailing)
                 }
-                sizeColumn
+                sizeColumn.width(ideal: 60)
 
 //                let coreSizeColumn = onumColumn(named: "Core Size", path: \TableRowValue.release.coreSize)
 //                coreSizeColumn
@@ -101,7 +94,7 @@ struct AppsTableView : View, ItemTableView {
                 let riskColumn = TableColumn("Risk", value: \TableRowValue.release.riskLevel) { item in
                     item.release.riskLabel()
                 }
-                riskColumn
+                riskColumn.width(ideal: 125)
 
                 let dateColumn = TableColumn("Date", value: \TableRowValue.release.versionDate, comparator: optionalDateComparator) { item in
                     Text(item.release.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
@@ -113,16 +106,22 @@ struct AppsTableView : View, ItemTableView {
 
             Group {
                 let starCount = onumColumn(named: "Stars", path: \TableRowValue.release.starCount)
-                starCount
+                starCount.width(ideal: 40)
 
                 let downloadCount = onumColumn(named: "Downloads", path: \TableRowValue.release.downloadCount)
-                downloadCount
+                downloadCount.width(ideal: 40)
 
                 //let forkCount = onumColumn(named: "Forks", path: \TableRowValue.release.forkCount)
-                //forkCount
+                //forkCount.width(ideal: 40)
 
                 let issueCount = onumColumn(named: "Issues", path: \TableRowValue.release.issueCount)
-                issueCount
+                issueCount.width(ideal: 40)
+
+                let catgoryColumn = ostrColumn(named: "Category", path: \TableRowValue.release.primaryCategoryIdentifier?.rawValue)
+                catgoryColumn
+
+                let authorColumn = strColumn(named: "Author", path: \TableRowValue.release.developerName)
+                authorColumn.width(ideal: 200)
             }
         }, rows: { self })
     }
@@ -147,11 +146,32 @@ struct AppsTableView : View, ItemTableView {
         return Selection.app(item)
     }
 
+    func categorySortOrder() -> [KeyPathComparator<AppsTableView.TableRowValue>] {
+        switch category {
+        case .none:
+            return []
+        case .popular:
+            return [KeyPathComparator(\TableRowValue.release.starCount, order: .reverse), KeyPathComparator(\TableRowValue.release.downloadCount, order: .reverse)]
+        case .recent:
+            return [KeyPathComparator(\TableRowValue.release.versionDate, order: .reverse)]
+        case .updated:
+            return [KeyPathComparator(\TableRowValue.release.versionDate, order: .reverse)]
+        case .installed:
+            return [KeyPathComparator(\TableRowValue.release.name, order: .forward)]
+        case .category:
+            return [KeyPathComparator(\TableRowValue.release.starCount, order: .reverse), KeyPathComparator(\TableRowValue.release.downloadCount, order: .reverse)]
+        }
+    }
+
+    func categoryFilter(item: TableRowValue) -> Bool {
+        category?.matches(item: item) != false
+    }
+
     func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
         items
             .filter(matchesFilterText)
             .filter(matchesSearch)
-            .filter(matchesSidebarItem)
+            .filter(categoryFilter)
     }
 
     func matchesFilterText(item: TableRowValue) -> Bool {
@@ -164,10 +184,6 @@ struct AppsTableView : View, ItemTableView {
             || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
             || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
     }
-
-    func matchesSidebarItem(item: TableRowValue) -> Bool {
-        sidebarItem?.matches(item: item) != false
-    }
 }
 
 
@@ -175,12 +191,16 @@ struct AppsTableView : View, ItemTableView {
 extension AppManager.SidebarItem {
     func matches(item: AppInfo) -> Bool {
         switch self {
-        case .popular: return true
-        case .pinned: return true
-        case .installed: return true
-        case .recent: return true
-        case .category(let category): return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
-        case .search(let _): return wip(true)
+        case .popular:
+            return true
+        case .updated:
+            return item.installedVersion != nil && item.releasedVersion != nil && (item.installedVersion! < item.releasedVersion!)
+        case .installed:
+            return item.installedVersion != nil
+        case .recent:
+            return true
+        case .category(let category):
+            return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
         }
     }
 }
@@ -204,8 +224,8 @@ struct AppsTableView_Previews: PreviewProvider {
         return VStack {
             Text("App Catalog Table")
                 .font(.largeTitle)
-            AppsTableView(selection: .constant(AppCatalogItem.sample.id))
-            .environmentObject(AppManager.default)
+            AppsTableView(selection: .constant(AppCatalogItem.sample.id), category: .constant(.popular))
+                .environmentObject(AppManager.default)
         }
     }
 }

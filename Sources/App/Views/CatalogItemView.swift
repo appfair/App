@@ -30,12 +30,15 @@ struct CatalogItemView: View {
 
     var body: some View {
         catalogBody()
+            .background(Material.ultraThinMaterial)
+            .background(item.tintColor())
             .task {
                 await fetchREADME()
             }
     }
 
     func catalogBody() -> some View {
+        // testing whether to have a scrolling or fixed-position catalog
         catalogBodyFixed()
         //catalogBodyScrolling()
     }
@@ -43,7 +46,6 @@ struct CatalogItemView: View {
     func headerView() -> some View {
         pinnedHeaderView()
             .padding(.top)
-            .background(item.tintColor()?.opacity(0.2))
             //.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)) // doesn't apply the material effect
             //.overlay(Material.thinMaterial)
             //.overlay(Material.thinMaterial))
@@ -57,7 +59,6 @@ struct CatalogItemView: View {
             catalogOverview()
             appPreviewImages()
         }
-        // .background(Material.ultraThinMaterial)
     }
 
     func catalogBodyScrolling() -> some View {
@@ -155,7 +156,7 @@ struct CatalogItemView: View {
     func releaseDateCard() -> some View {
         summarySegment {
             card(
-                Text("Updated"),
+                Text("Updates"),
                 Text(info.release.versionDate ?? Date(), format: .relative(presentation: .numeric, unitsStyle: .abbreviated)),
                 histogramView(\.issueCount)
             )
@@ -353,6 +354,7 @@ struct CatalogItemView: View {
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
             iconView()
+                .frame(width: 100, height: 100)
                 .padding(.leading, 40)
 
             VStack(alignment: .center) {
@@ -374,6 +376,7 @@ struct CatalogItemView: View {
             .hcenter()
 
             categorySymbol()
+                .frame(width: 100, height: 100)
                 .padding(.trailing, 40)
         }
     }
@@ -612,9 +615,13 @@ struct CatalogItemView: View {
     }
 
     func iconView() -> some View {
-        FairIconView(item.name)
-            .frame(width: 100, height: 100)
-        //AppIconView(iconName: item.name, baseColor: .yellow)
+        Group {
+            if let iconURL = item.iconURL {
+                URLImage(url: iconURL, resizable: .fit)
+            } else {
+                FairIconView(item.name)
+            }
+        }
     }
 
     func categorySymbol() -> some View {
@@ -627,7 +634,6 @@ struct CatalogItemView: View {
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
-            .frame(width: 100, height: 100)
     }
 
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3) -> some View {

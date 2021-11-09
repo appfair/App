@@ -20,7 +20,7 @@ struct AppInfo : Identifiable {
     }
 
     /// The installed version of this app
-    private var installedVersionString: String? {
+    var installedVersionString: String? {
         installedPlist?.versionString
     }
 }
@@ -243,16 +243,25 @@ extension AppManager {
         }
     }
 
+    func updateCount() -> Int {
+        appInfoItems().filter { item in
+            guard let installedVersion = item.installedVersion,
+                let releasedVersion = item.releasedVersion else {
+                return false
+            }
+            return installedVersion < releasedVersion
+        }
+        .count
+    }
+
     func badgeCount(for item: SidebarItem) -> Text? {
         switch item {
-        case .search(_):
-            return nil
         case .popular:
             return nil // Text(123.localizedNumber(style: .decimal))
-        case .pinned:
-            return nil // Text(11.localizedNumber(style: .decimal))
         case .recent:
-            return nil // Text(32.localizedNumber(style: .decimal))
+            return nil // Text(11.localizedNumber(style: .decimal))
+        case .updated:
+            return Text(updateCount().localizedNumber(style: .decimal))
         case .installed:
             return Text(installedBundleIDs.count.localizedNumber(style: .decimal))
         case .category:
@@ -265,31 +274,26 @@ extension AppManager {
         }
     }
 
-    enum SidebarItem {
+    enum SidebarItem : Hashable {
         case popular
-        case pinned
+        case updated
         case installed
         case recent
-
         case category(_ group: AppCategory.Grouping)
-
-        case search(_ term: String)
 
         /// The persistent identifier for this grouping
         var id: String {
             switch self {
             case .popular:
                 return "popular"
-            case .pinned:
-                return "pinned"
+            case .updated:
+                return "updated"
             case .installed:
                 return "installed"
             case .recent:
                 return "recent"
             case .category(let grouping):
                 return "category:" + grouping.rawValue
-            case .search(let term):
-                return "search:" + term
             }
         }
 
@@ -297,16 +301,14 @@ extension AppManager {
             switch self {
             case .popular:
                 return Text("Popular", bundle:. module)
-            case .pinned:
-                return Text("Pinned", bundle:. module)
+            case .updated:
+                return Text("Updated", bundle:. module)
             case .installed:
                 return Text("Installed", bundle:. module)
             case .recent:
                 return Text("Recent", bundle:. module)
             case .category(let grouping):
                 return grouping.text
-            case .search(let term):
-                return Text("Search: \(term)", bundle:. module)
             }
         }
 
@@ -314,7 +316,7 @@ extension AppManager {
             switch self {
             case .popular:
                 return TintedLabel(title: self.text, systemName: "star", tint: Color.red)
-            case .pinned:
+            case .updated:
                 return TintedLabel(title: self.text, systemName: "pin", tint: Color.red)
             case .installed:
                 return TintedLabel(title: self.text, systemName: "internaldrive", tint: Color.green)
@@ -322,8 +324,6 @@ extension AppManager {
                 return TintedLabel(title: self.text, systemName: "clock", tint: Color.blue)
             case .category(let grouping):
                 return grouping.tintedLabel
-            case .search(let term):
-                return TintedLabel(title: self.text, systemName: "magnifyingglass", tint: Color.gray)
             }
         }
     }
@@ -526,6 +526,7 @@ public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
+    @State var category: AppManager.SidebarItem?  = .popular
 
     public var body: some View {
         triptychView
@@ -558,6 +559,7 @@ public struct NavigationRootView : View {
                 // e.g., appfair://app/app.App-Name
                 // e.g., appfair://update/app.App-Name
                 // e.g., appfair:app.App-Name
+                // e.g., appfair:/app/App-Name
                 if let scheme = url.scheme, scheme == "appfair" {
                     let appName = url.lastPathComponent
                     // prefix the app-id with the app name
@@ -570,12 +572,12 @@ public struct NavigationRootView : View {
 
     public var triptychView : some View {
         TriptychView(orient: $appManager.displayMode) {
-            SidebarView(selection: $selection)
+            SidebarView(selection: $selection, category: $category)
         } list: {
             AppsListView(item: nil)
         } table: {
             #if os(macOS)
-            AppsTableView(selection: $selection, sidebarItem: nil).frame(idealHeight: 120)
+            AppsTableView(selection: $selection, category: $category).frame(idealHeight: 120)
             #endif
         } content: {
             AppDetailView()
@@ -587,12 +589,12 @@ public struct NavigationRootView : View {
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
     @Binding var selection: AppInfo.ID?
-    var item: AppManager.SidebarItem? = nil
+    @Binding var category: AppManager.SidebarItem?
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(selection: $selection, sidebarItem: item)
-                .navigationTitle(item?.label.title ?? Text("Apps"))
+            AppsTableView(selection: $selection, category: $category)
+                .navigationTitle(category?.label.title ?? Text("Apps"))
                 .frame(minHeight: 150)
             AppDetailView()
                 .layoutPriority(1.0)
@@ -802,6 +804,7 @@ public extension AppCategory {
 struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
     @Binding var selection: AppInfo.ID?
+    @Binding var category: AppManager.SidebarItem?
 
     func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
         let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
@@ -818,7 +821,7 @@ struct SidebarView: View {
             Section("Apps") {
                 item(.popular).keyboardShortcut("1")
                 item(.recent).keyboardShortcut("2")
-                item(.pinned).keyboardShortcut("3")
+                item(.updated).keyboardShortcut("3")
                 item(.installed).keyboardShortcut("4")
             }
 
@@ -843,7 +846,7 @@ struct SidebarView: View {
         .toolbar(id: "SidebarView") {
             tool(.popular)
             tool(.recent)
-            tool(.pinned)
+            tool(.updated)
             tool(.installed)
 
             tool(.category(.entertain))
@@ -856,10 +859,12 @@ struct SidebarView: View {
     }
 
     func item(_ item: AppManager.SidebarItem) -> some View {
-        NavigationLink(destination: navigationDestinationView(item: item)) {
+        NavigationLink(tag: item, selection: $category, destination: {
+            navigationDestinationView(item: item)
+        }, label: {
             item.label
                 .badge(appManager.badgeCount(for: item))
-        }
+        })
     }
 
     @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
@@ -868,7 +873,7 @@ struct SidebarView: View {
             AppsListView(item: item)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(selection: $selection, item: item)
+            AppTableDetailSplitView(selection: $selection, category: $category)
         #endif
         }
     }

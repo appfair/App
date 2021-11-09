@@ -59,6 +59,17 @@ extension AppManager {
         }
     }
 
+    func appInfoItems() -> [AppInfo] {
+        let installedApps = self.installedApps.values.compactMap(\.successValue)
+
+        return catalog.map { item in
+            let plist = installedApps.first(where: {
+                $0.CFBundleIdentifier == item.bundleIdentifier
+            })
+            return AppInfo(release: item, installedPlist: plist)
+        }
+    }
+
     static var installFolderURL: URL {
         URL(fileURLWithPath: installPath)
     }
