@@ -114,12 +114,12 @@ jobs:
           rm -rf "staging/"
           mkdir "staging/"
 
-          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --version-marker-dir "staging/" --project ReleasePR --output .
+          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
 
           xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
           # next generate a default icon, if one doesn't yet exist
-          xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
+          xcrun swift run -- fairtool icon --org "${{ env.ORGNAME }}" --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" --output Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png --output Assets.xcassets/AppIcon.appiconset/AppIcon-512.png || true # tolerate failure
           file Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
         
           #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
@@ -142,7 +142,7 @@ jobs:
             -configuration Release \
             -scheme "AppFairApp" \
             -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -159,17 +159,16 @@ jobs:
             -configuration Release \
             -scheme "AppFairApp" \
             -sdk "iphoneos" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             CODE_SIGN_IDENTITY="-" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
-          cp -a "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+
+          cp -a "staging/.${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
-          rm -rf "staging/Payload" # cleanup
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
 
       - name: "Pre-build macOS App: ${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
         # this should be unnecessary, but for some reason we need to build twice
@@ -182,7 +181,7 @@ jobs:
             -scheme "AppFairApp" \
             -sdk "macosx" \
             -destination "platform=macOS" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -198,7 +197,7 @@ jobs:
             -scheme "AppFairApp" \
             -sdk "macosx" \
             -destination "platform=macOS" \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -210,7 +209,7 @@ jobs:
 
           xcodebuild \
             -exportArchive \
-            -archivePath "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
+            -archivePath "staging/.${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
             -exportOptionsPlist "staging/exportOptions.plist"
 
@@ -220,11 +219,10 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
           # show the binary checksum
-          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
           openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
           openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
+          rm -rf "staging/${{ env.PRODUCT_NAME }}.app" # cleanup
 
       - name: Stage Release Metadata
         # Extract the Info.plist from the archives themselves, since they contain
@@ -232,9 +230,10 @@ jobs:
         # And convert to XML for ease of integration.
         run: |
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
-          plutil -convert xml1 -r -o "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          find "staging/" -type f
+          cp README.md LICENSE.txt Info.plist Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          ls -la staging/
+          # log the checksum for each of the staging elements
+          shasum -a 256 staging/*.*
 
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
@@ -244,9 +243,11 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           ZIPURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist"
 
           echo "Generating fairseal for: $ZIPURL"
+
+          mkdir -p staging/.artifact_stash
+          mv staging/*.ipa staging/.artifact_stash/ # don't seal the ipa when sealing macOS
 
           # if the seals match, we indicate success by publishing
           # the SHA256 for the release's pull request;
@@ -262,8 +263,11 @@ jobs:
             --fairseal-match 0 \
             --retry-duration 600 \
             --artifact-url "$ZIPURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
+            --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" \
             --project . -o -
+
+          mv staging/.artifact_stash/* staging/ # restore stash
 
           # also run diffoscope to see what it says about the differences
           brew install diffoscope || true # in case it is already installed
@@ -276,9 +280,11 @@ jobs:
         run: |
           # build the URL for the GitHub download artifact
           IPAURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa" 
-          INFOURL="https://github.com/${{ env.ORGNAME }}/App/releases/download/${{ steps.get_semver_tag.outputs.semver_tag }}/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist"
 
           echo "Generating fairseal for: $IPAURL"
+
+          mkdir -p staging/.artifact_stash
+          mv staging/*.zip staging/.artifact_stash/ # don't seal the macOS zip for iOS seal
 
           # Builds on iOS are currently not reproducible (help wanted!),
           # so we accept a diff tolerance of 1,000,000 bytes for fairseal-match
@@ -291,8 +297,11 @@ jobs:
             --fairseal-match 1000000 \
             --retry-duration 600 \
             --artifact-url "$IPAURL" \
-            --info-url "$INFOURL" \
+            --artifact-staging "staging/" \
+            --accent-color "Assets.xcassets/AccentColor.colorset/Contents.json" \
             --project . -o -
+
+          mv staging/.artifact_stash/* staging/ # restore stash
 
           # also run diffoscope to see what it says about the differences
           curl -o /tmp/checkartifact.ipa "$IPAURL"
