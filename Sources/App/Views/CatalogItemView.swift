@@ -40,11 +40,18 @@ struct CatalogItemView: View {
         //catalogBodyScrolling()
     }
 
+    func headerView() -> some View {
+        pinnedHeaderView()
+            .padding(.top)
+            .background(item.tintColor()?.opacity(0.2))
+            //.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)) // doesn't apply the material effect
+            //.overlay(Material.thinMaterial)
+            //.overlay(Material.thinMaterial))
+    }
+
     func catalogBodyFixed() -> some View {
         VStack {
-            pinnedHeaderView()
-                .padding(.top)
-                .background(Material.ultraThinMaterial)
+            headerView()
             catalogSummaryCards()
             Divider()
             catalogOverview()
@@ -62,9 +69,7 @@ struct CatalogItemView: View {
                     catalogOverview()
                     appPreviewImages()
                 } header: {
-                    pinnedHeaderView()
-                        .padding(.top)
-                        .background(Material.ultraThinMaterial)
+                    headerView()
                 }
             }
         }
@@ -625,27 +630,6 @@ struct CatalogItemView: View {
             .frame(width: 100, height: 100)
     }
 
-    func iconView2() -> some View {
-        let baseColor = Color.randomIconColor()
-        return ZStack {
-            RoundedRectangle(cornerRadius: 15)
-                .foregroundStyle(
-                    .linearGradient(colors: [Color.gray, .white], startPoint: .bottomLeading, endPoint: .topTrailing))
-            RoundedRectangle(cornerRadius: 15)
-                .foregroundStyle(
-                    .linearGradient(colors: [Color.gray, .white], startPoint: .topTrailing, endPoint: .bottomLeading))
-                .padding(4)
-            Image(systemName: "trash")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .symbolVariant(.fill)
-                .symbolVariant(.square)
-                .foregroundStyle(.linearGradient(colors: [baseColor, baseColor.opacity(0.9)], startPoint: .topTrailing, endPoint: .bottomLeading))
-                .padding(20)
-        }
-        .frame(width: 100, height: 100)
-    }
-
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3) -> some View {
         VStack(alignment: .center) {
             s1
@@ -690,6 +674,31 @@ struct CatalogItemView: View {
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
         await appManager.trash(item: item)
+    }
+}
+
+extension AppCatalogItem {
+    func tintColor() -> Color? {
+        func hexColor(hex: Int, opacity: Double = 1.0) -> Color {
+            let red = Double((hex & 0xff0000) >> 16) / 255.0
+            let green = Double((hex & 0xff00) >> 8) / 255.0
+            let blue = Double((hex & 0xff) >> 0) / 255.0
+            return Color(.sRGB, red: red, green: green, blue: blue, opacity: opacity)
+        }
+
+        guard var tint = self.tintColor else {
+            return nil
+        }
+
+        if tint.hasPrefix("#") {
+            tint.removeFirst()
+        }
+
+        if let intValue = Int(tint, radix: 16) {
+            return hexColor(hex: intValue)
+        }
+
+        return nil
     }
 }
 
