@@ -99,5 +99,3 @@ $ brew install appfair/app/app-name
 ```
 
 Download, share and enjoy!
-
->>>>>>> upstream/main
