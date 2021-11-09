@@ -1,25 +1,22 @@
 
 ## Description
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in catalog browser applications.
-
-It supports **basic** formatting, but not images, lists, or links.
+Bon Mot is a simple e-book reader application.
 
 ## Installation
 
 ### App Fair Installation
 
-This app can be installed with the [App Fair.app](https://www.appfair.net)
-by launching: [appfair://app/This-App](appfair://app/This-App)
+Bon Mot can be installed with the [App Fair.app](https://www.appfair.net)
+by launching: [appfair://app/Bon-Mot](appfair://app/Bon-Mot)
 
 ### Homebrew Installation
 
 [Homebrew](https://brew.sh/) users on macOS can alternatively
-install this app directly with the command:
+install bon-mot directly with the command:
 
 ```shell
-$ brew install appfair/app/this-app
+$ brew install appfair/app/bon-mot
 ```
 
 The app will be installed in the `/Applications/App Fair/` folder.
@@ -27,7 +24,7 @@ It can be un-installed by dragging it to the Trash.
 
 ## Support
 
-Community Support for this app is available from its
+Community Support for Bon Mot is available from its
 [Discussion](../../discussions) forums.
 
 Issue reports and suggestions for improvement are available from the
