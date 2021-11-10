@@ -15,15 +15,15 @@
 
     <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
-    <string>App Name</string>
+    <string>Numeral MXMMXVI</string>
 
     <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
-    <string>app.App-Name</string>
+    <string>app.Numeral-MXMMXVI</string>
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>
-    <string>public.app-category.utilities</string>
+    <string>public.app-category.business</string>
 
     <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
     <!-- each fair-ground integration must increase this value -->
