@@ -11,12 +11,12 @@ struct AppInfo : Identifiable {
 
     /// The released version of this app
     var releasedVersion: AppVersion? {
-        release.version.flatMap(AppVersion.init(string:))
+        release.version.flatMap({ AppVersion(string: $0, prerelease: release.beta == true) })
     }
 
-    /// The installed version of this app
+    /// The installed version of this app, which will always be indicated as a non-prerelease
     var installedVersion: AppVersion? {
-        installedVersionString.flatMap(AppVersion.init(string:))
+        installedVersionString.flatMap({ AppVersion(string: $0, prerelease: false) })
     }
 
     /// The installed version of this app
