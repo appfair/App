@@ -338,8 +338,9 @@ struct CatalogItemView: View {
         }
     }
 
+    /// Show a histogram of where the given value lies in the context of other apps in the grouping
     func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        wip(Image(systemName: "chart.bar.xaxis"))
+        Image(systemName: "chart.bar.xaxis")
             .resizable()
     }
 
@@ -425,7 +426,7 @@ struct CatalogItemView: View {
 
     func updateButton() -> some View {
         button(activity: .update)
-            .disabled((!appInstalled || appUpdated) && !previewMode)
+            .disabled((!appInstalled || info.appUpdated) && !previewMode)
             .accentColor(.orange)
     }
 
@@ -532,11 +533,6 @@ struct CatalogItemView: View {
         return !appInstallURLs.isEmpty
     }
 
-    /// The app is updated if its version is
-    var appUpdated: Bool {
-        (info.installedVersion ?? .min) >= (info.releasedVersion ?? .min)
-    }
-
     func confirmationBinding(_ activity: Activity) -> Binding<Bool> {
         Binding {
             confirmations[activity] ?? false
@@ -630,7 +626,7 @@ struct CatalogItemView: View {
         return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(color: category.tintColor)
+            .fairTint(color: item.tintColor() ?? category.tintColor)
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)

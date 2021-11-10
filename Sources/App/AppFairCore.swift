@@ -23,6 +23,11 @@ struct AppInfo : Identifiable {
     var installedVersionString: String? {
         installedPlist?.versionString
     }
+
+    /// The app is updated if its installed version is less than the released version
+    var appUpdated: Bool {
+        installedVersion != nil && (installedVersion ?? .min) >= (releasedVersion ?? .min)
+    }
 }
 
 extension Plist {
@@ -233,14 +238,6 @@ extension AppManager {
 
     func openFilters() {
         dbg("### ", #function)
-    }
-
-    func appCount(_ grouping: AppCategory.Grouping) -> Text? {
-        if grouping == .research {
-            return Text(wip("10"))
-        } else {
-            return nil
-        }
     }
 
     func updateCount() -> Int {

@@ -21,9 +21,9 @@ struct AppsTableView : View, ItemTableView {
     @EnvironmentObject var appManager: AppManager
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
-    
     @State var sortOrder: [KeyPathComparator<AppsTableView.TableRowValue>] = []
     @State var searchText: String = ""
+    let showBetaReleases: Bool = wip(false) // TODO: preference to enable betas
     var displayExtensions: Set<String>? = ["zip"] // , "ipa"]
 
     var items: [AppInfo] {
@@ -129,6 +129,7 @@ struct AppsTableView : View, ItemTableView {
     var table: some View {
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: false))
+            .id(category) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
             .font(Font.body.monospacedDigit())
             .focusedSceneValue(\.selection, .constant(itemSelection))
             .focusedSceneValue(\.reloadCommand, .constant({
@@ -171,11 +172,16 @@ struct AppsTableView : View, ItemTableView {
         items
             .filter(matchesFilterText)
             .filter(matchesSearch)
+            .filter(matchesBeta)
             .filter(categoryFilter)
     }
 
     func matchesFilterText(item: TableRowValue) -> Bool {
         displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
+    }
+
+    func matchesBeta(item: TableRowValue) -> Bool {
+        showBetaReleases == (item.release.beta ?? false)
     }
 
     func matchesSearch(item: TableRowValue) -> Bool {
@@ -194,7 +200,7 @@ extension AppManager.SidebarItem {
         case .popular:
             return true
         case .updated:
-            return item.installedVersion != nil && item.releasedVersion != nil && (item.installedVersion! < item.releasedVersion!)
+            return item.appUpdated
         case .installed:
             return item.installedVersion != nil
         case .recent:
