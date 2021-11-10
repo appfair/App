@@ -19,9 +19,6 @@ let package = Package(
         ], resources: [
             .process("Resources"),
             .copy("Bundle")
-        ],
-        linkerSettings: [
-            .linkedFramework("SwiftUI"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
