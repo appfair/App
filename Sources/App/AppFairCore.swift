@@ -328,15 +328,15 @@ extension AppManager {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
-    @AppStorage("showPreview") private var showPreview = true
+    @AppStorage("showBetas") private var showBetas = false
     @AppStorage("fontSize") private var fontSize = 12.0
 
     var body: some View {
         Form {
-            Toggle("Show Previews", isOn: $showPreview)
-            Slider(value: $fontSize, in: 9...96) {
-                Text("Font Size (\(fontSize, specifier: "%.0f") pts)")
-            }
+            Toggle("Show Beta Releases", isOn: $showBetas)
+//            Slider(value: $fontSize, in: 9...96) {
+//                Text("Font Size (\(fontSize, specifier: "%.0f") pts)")
+//            }
         }
         .padding(20)
     }
@@ -410,10 +410,20 @@ public struct AppSettingsView: View {
     public var body: some View {
         TabView {
             GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gear") }
+                .tabItem {
+                    Label("General", systemImage: "gear")
+                        .symbolVariant(.fill)
+                        .symbolRenderingMode(.hierarchical)
+                        .tint(Color.blue)
+                }
                 .tag(Tabs.general)
             AdvancedSettingsView()
-                .tabItem { Label("Advanced", systemImage: "star") }
+                .tabItem {
+                    Label("Advanced", systemImage: "star")
+                        .symbolVariant(.fill)
+                        .symbolRenderingMode(.hierarchical)
+                        .tint(Color.yellow)
+                }
                 .tag(Tabs.advanced)
         }
         .padding(20)

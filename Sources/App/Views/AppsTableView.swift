@@ -23,7 +23,7 @@ struct AppsTableView : View, ItemTableView {
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppsTableView.TableRowValue>] = []
     @State var searchText: String = ""
-    let showBetaReleases: Bool = wip(false) // TODO: preference to enable betas
+    @AppStorage("showBetas") private var showBetas = false
     var displayExtensions: Set<String>? = ["zip"] // , "ipa"]
 
     var items: [AppInfo] {
@@ -181,7 +181,7 @@ struct AppsTableView : View, ItemTableView {
     }
 
     func matchesBeta(item: TableRowValue) -> Bool {
-        showBetaReleases == (item.release.beta ?? false)
+        showBetas == (item.release.beta ?? false)
     }
 
     func matchesSearch(item: TableRowValue) -> Bool {
