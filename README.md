@@ -1,17 +1,15 @@
 
 ## Description
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in catalog browser applications.
+A very basic business application for the App Fair.
 
-It supports **basic** formatting, but not images, lists, or links.
 
 ## Installation
 
 ### App Fair Installation
 
 This app can be installed with the [App Fair.app](https://www.appfair.net)
-by launching: [appfair://app/This-App](appfair://app/This-App)
+by launching: [appfair://app/This-App](appfair://app/Numeral-MXMMXVI)
 
 ### Homebrew Installation
 
@@ -19,7 +17,7 @@ by launching: [appfair://app/This-App](appfair://app/This-App)
 install this app directly with the command:
 
 ```shell
-$ brew install appfair/app/this-app
+$ brew install appfair/app/numeral-mxmmxvi
 ```
 
 The app will be installed in the `/Applications/App Fair/` folder.
