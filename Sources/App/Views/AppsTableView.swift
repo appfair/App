@@ -23,12 +23,12 @@ struct AppsTableView : View, ItemTableView {
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppsTableView.TableRowValue>] = []
     @State var searchText: String = ""
-    @AppStorage("showBetas") private var showBetas = false
+    @AppStorage("showPreReleases") private var showPreReleases = false
     var displayExtensions: Set<String>? = ["zip"] // , "ipa"]
 
     var items: [AppInfo] {
         appManager
-            .appInfoItems()
+            .appInfoItems(includePrereleases: showPreReleases)
             .sorted(using: sortOrder + categorySortOrder())
     }
 
@@ -172,16 +172,11 @@ struct AppsTableView : View, ItemTableView {
         items
             .filter(matchesFilterText)
             .filter(matchesSearch)
-            .filter(matchesBeta)
             .filter(categoryFilter)
     }
 
     func matchesFilterText(item: TableRowValue) -> Bool {
         displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
-    }
-
-    func matchesBeta(item: TableRowValue) -> Bool {
-        showBetas == (item.release.beta ?? false)
     }
 
     func matchesSearch(item: TableRowValue) -> Bool {

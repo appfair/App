@@ -241,7 +241,7 @@ extension AppManager {
     }
 
     func updateCount() -> Int {
-        appInfoItems().filter { item in
+        appInfoItems(includePrereleases: false).filter { item in
             guard let installedVersion = item.installedVersion,
                 let releasedVersion = item.releasedVersion else {
                 return false
@@ -328,12 +328,13 @@ extension AppManager {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
-    @AppStorage("showBetas") private var showBetas = false
+    @AppStorage("showPreReleases") private var showPreReleases = false
     @AppStorage("fontSize") private var fontSize = 12.0
 
     var body: some View {
         Form {
-            Toggle("Show Beta Releases", isOn: $showBetas)
+            Toggle("Show Pre-Releases", isOn: $showPreReleases)
+                .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
 //            Slider(value: $fontSize, in: 9...96) {
 //                Text("Font Size (\(fontSize, specifier: "%.0f") pts)")
 //            }

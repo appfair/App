@@ -59,15 +59,34 @@ extension AppManager {
         }
     }
 
-    func appInfoItems() -> [AppInfo] {
-        let installedApps = self.installedApps.values.compactMap(\.successValue)
+    /// All the app-info items.
+    /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
+    /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
+    func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
+        let installedApps: [String?: [Plist]] = Dictionary(grouping: self.installedApps.values.compactMap(\.successValue), by: \.CFBundleIdentifier)
 
-        return catalog.map { item in
-            let plist = installedApps.first(where: {
-                $0.CFBundleIdentifier == item.bundleIdentifier
-            })
-            return AppInfo(release: item, installedPlist: plist)
-        }
+        // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
+        // the visibility of these will be controlled by whether we want to display pre-releases
+        let bundleAppInfoMap: [String: [AppInfo]] = catalog
+            .map { item in
+                AppInfo(release: item, installedPlist: installedApps[item.bundleIdentifier]?.first)
+            }
+            .grouping(by: \.release.bundleIdentifier)
+
+        // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
+        let infos = bundleAppInfoMap.values.compactMap({ appInfos in
+            appInfos
+                .filter { item in
+                    // "beta" apps are are included when the pre-release flag is set
+                    includePrereleases == true || item.release.beta == false || item.installedPlist != nil
+                }
+                .sorted(by: {
+                    ($0.releasedVersion ?? AppVersion.min) < ($1.releasedVersion  ?? AppVersion.max)
+                })
+                .first // there can be only a single bundle identifier in the list for Identifiable
+        })
+
+        return infos.sorting(by: \.release.bundleIdentifier) // needs to return in constant order
     }
 
     static var installFolderURL: URL {
