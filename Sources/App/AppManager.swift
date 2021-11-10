@@ -59,7 +59,8 @@ extension AppManager {
         }
     }
 
-    /// All the app-info items.
+    /// All the app-info items, sorted and filtered based on whether to include pre-releases.
+    /// 
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
     /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
     func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
@@ -80,9 +81,7 @@ extension AppManager {
                     // "beta" apps are are included when the pre-release flag is set
                     includePrereleases == true || item.release.beta == false || item.installedPlist != nil
                 }
-                .sorted(by: {
-                    ($0.releasedVersion ?? AppVersion.min) < ($1.releasedVersion  ?? AppVersion.max)
-                })
+                .sorting(by: \.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
                 .first // there can be only a single bundle identifier in the list for Identifiable
         })
 

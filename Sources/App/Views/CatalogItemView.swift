@@ -312,7 +312,7 @@ struct CatalogItemView: View {
     }
 
     func catalogVersionRow() -> some View {
-        Text(info.releasedVersion?.versionDescription ?? "")
+        Text(info.releasedVersion?.versionDescriptionExtended ?? "")
     }
 
     func catalogAuthorRow() -> some View {
