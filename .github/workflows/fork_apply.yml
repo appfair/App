@@ -240,9 +240,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Creating release: ${GITHUB_REF#refs/tags/}"
-          # replace any existing release
-          gh release delete "${GITHUB_REF#refs/tags/}" -y || true
-          # create a new release with the tag name and the staging assets
-          gh release create "${GITHUB_REF#refs/tags/}" -- staging/*.*
+          echo "Uploading release assets: ${GITHUB_REF#refs/tags/}"
+          # create the release if it doesn't already exist 
+          gh release create "${GITHUB_REF#refs/tags/}" || true
+          # upload staging assets to the existing GitHub release
+          gh release upload "${GITHUB_REF#refs/tags/}" -- staging/*.*
 
