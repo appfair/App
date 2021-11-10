@@ -225,12 +225,10 @@ jobs:
           rm -rf "staging/${{ env.PRODUCT_NAME }}.app" # cleanup
 
       - name: Stage Release Metadata
-        # Extract the Info.plist from the archives themselves, since they contain
-        # the same post-processed metadata that the app will use.
-        # And convert to XML for ease of integration.
+        # copy over the un-processed assets from the ReleasePR/
         run: |
           cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.FAIR_APP_ARTIFACT }}.png"
-          cp README.md LICENSE.txt Info.plist Sandbox.entitlements Package.resolved screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
+          cp LICENSE.txt Package.resolved ReleasePR/README.md ReleasePR/Info.plist ReleasePR/Sandbox.entitlements ReleasePR/screenshots/screenshot-[a-z]*-[0-9][0-9]-[0-9]*x[0-9]*.png staging/
           ls -la staging/
           # log the checksum for each of the staging elements
           shasum -a 256 staging/*.*
