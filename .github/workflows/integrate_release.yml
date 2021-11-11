@@ -8,12 +8,14 @@ on:
 jobs:
   call-workflow:
     uses: fair-ground/Fair/.github/workflows/integrate_release.yml@main
+    inputs:
+      fairground: appfair
+      fairseal_issuer: appfairbot
     secrets:
-      token: ${{ secrets.TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      APP_FAIR_BOT_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
-      APP_FAIR_ALLOW_NAME: ${{ secrets.APP_FAIR_ALLOW_NAME }}
-      APP_FAIR_DENY_NAME: ${{ secrets.APP_FAIR_DENY_NAME }}
-      APP_FAIR_ALLOW_FROM: ${{ secrets.APP_FAIR_ALLOW_FROM }}
-      APP_FAIR_DENY_FROM: ${{ secrets.APP_FAIR_DENY_FROM }}
+      token: ${{ secrets.GITHUB_TOKEN }}
+      bot_token: ${{ secrets.APP_FAIR_BOT_TOKEN }}
+      allow_name: ${{ secrets.APP_FAIR_ALLOW_NAME }}
+      deny_name: ${{ secrets.APP_FAIR_DENY_NAME }}
+      allow_from: ${{ secrets.APP_FAIR_ALLOW_FROM }}
+      deny_from: ${{ secrets.APP_FAIR_DENY_FROM }}
 
