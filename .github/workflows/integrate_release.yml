@@ -1,5 +1,11 @@
 name: "Integrate Release"
-# Integrate release runs in the base repo when it receives a pull request
+# Integrate release runs in the base repo
+# when it receives a pull request
+#
+# This workflow only needs to be configured 
+# by the base (upstream) fairground.
+#
+# See: https://www.appfair.net
 on:
   pull_request_target:
     branches: [ main ]
@@ -17,6 +23,7 @@ jobs:
       target_tvos: false
       target_watchos: false
       fairseal_issuer: appfairbot
+      license: AGPL-3.0
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
       bot_token: ${{ secrets.APP_FAIR_BOT_TOKEN }}
