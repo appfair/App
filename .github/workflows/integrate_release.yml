@@ -10,6 +10,12 @@ jobs:
     uses: fair-ground/Fair/.github/workflows/integrate_release.yml@main
     with:
       fairground: appfair
+      target_macos: true
+      target_linux: false
+      target_windows: false
+      target_ios: true
+      target_tvos: false
+      target_watchos: false
       fairseal_issuer: appfairbot
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
@@ -18,4 +24,5 @@ jobs:
       deny_name: ${{ secrets.APP_FAIR_DENY_NAME }}
       allow_from: ${{ secrets.APP_FAIR_ALLOW_FROM }}
       deny_from: ${{ secrets.APP_FAIR_DENY_FROM }}
+
 
