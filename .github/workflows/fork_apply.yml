@@ -8,4 +8,3 @@ on:
 jobs:
   call-workflow:
     uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
-
