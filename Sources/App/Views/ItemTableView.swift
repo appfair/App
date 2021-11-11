@@ -114,7 +114,7 @@ struct VersionLabel : View {
     let version: AppVersion?
 
     var body: some View {
-        Text(version?.versionDescription ?? "-")
+        Text(version?.versionDescriptionExtended ?? "-")
             .multilineTextAlignment(.trailing)
     }
 }
