@@ -1,5 +1,10 @@
 name: "Fork Apply"
-# Fork Apply runs in the forked repo with any push to main or semver tag
+# Fork Apply runs in the forked repo with
+# any push to main or semver tag.
+# Tagged pushes will automatically create a release
+# with the built artifacts.
+#
+# See: https://www.appfair.net
 on:
   push:
     branches: [ main ]
