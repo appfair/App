@@ -8,7 +8,7 @@ on:
 jobs:
   call-workflow:
     uses: fair-ground/Fair/.github/workflows/integrate_release.yml@main
-    inputs:
+    with:
       fairground: appfair
       fairseal_issuer: appfairbot
     secrets:
