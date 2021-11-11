@@ -241,6 +241,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading release assets: ${GITHUB_REF#refs/tags/}"
+          # create a pre-release if it doesn't already exist 
+          gh release create "${GITHUB_REF#refs/tags/}" --prerelease || true
           # upload staging assets to the existing GitHub release
           gh release upload "${GITHUB_REF#refs/tags/}" -- staging/*.*
 
