@@ -25,3 +25,4 @@ jobs:
       allow_from: ${{ secrets.APP_FAIR_ALLOW_FROM }}
       deny_from: ${{ secrets.APP_FAIR_DENY_FROM }}
 
+
