@@ -15,6 +15,7 @@ jobs:
     uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
     with:
       fairground: appfair
+      notarize_macos: true
       target_macos: true
       target_linux: false
       target_windows: false
@@ -22,6 +23,7 @@ jobs:
       target_tvos: false
       target_watchos: false
     secrets:
+      # pass notarization secrets to the workflow
       NOTARY_TEAMID: ${{ secrets.NOTARY_TEAMID }}
       NOTARY_USERID: ${{ secrets.NOTARY_USERID }}
       NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
