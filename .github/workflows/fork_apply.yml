@@ -15,7 +15,6 @@ jobs:
     uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
     with:
       fairground: appfair
-      notarize_macos: true
       target_macos: true
       target_linux: false
       target_windows: false
