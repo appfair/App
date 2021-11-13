@@ -30,8 +30,6 @@ struct CatalogItemView: View {
 
     var body: some View {
         catalogBody()
-            .background(Material.ultraThinMaterial)
-            .background(item.tintColor())
             .task {
                 await fetchREADME()
             }
@@ -46,6 +44,8 @@ struct CatalogItemView: View {
     func headerView() -> some View {
         pinnedHeaderView()
             .padding(.top)
+            //.background(item.tintColor()?.opacity(0.1))
+            //.background(Material.thick)
             //.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)) // doesn't apply the material effect
             //.overlay(Material.thinMaterial)
             //.overlay(Material.thinMaterial))
@@ -626,7 +626,7 @@ struct CatalogItemView: View {
         return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(color: item.tintColor() ?? category.tintColor)
+            .fairTint(color: item.tintColor() ?? FairIconView.iconColor(name: item.appNameHyphenated))
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
