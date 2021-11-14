@@ -29,6 +29,9 @@ import FairApp
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
+    /// The fetched readmes for the apps
+    @Published private var readmes: [AppCatalogItem: Result<AttributedString, Error>] = [:]
+
     static let `default`: AppManager = AppManager()
 
     internal required init() {
@@ -179,7 +182,6 @@ extension AppManager {
         }
     }
 
-
     /// The `appInstallPath`, or nil if it does not exist
     static func installedPath(for item: AppCatalogItem) -> URL? {
         appInstallPath(for: item).asDirectory
@@ -194,7 +196,6 @@ extension AppManager {
             }
 
             // TODO: quit the app if it is running
-
             let trashedURL = try FileManager.default.trash(url: installPath)
             dbg("trashed:", item.name, "to:", trashedURL?.path)
 
@@ -392,6 +393,50 @@ extension AppManager {
         if appPathName != release.name {
             throw Errors.wrongAppName(appPathName, release.name)
         }
+    }
+
+    private static let readmeRegex = Result {
+        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+    }
+
+    func readme(for release: AppCatalogItem) -> AttributedString? {
+        guard let readmeURL = release.readmeURL else {
+            return nil
+        }
+
+        if let result = self.readmes[release] {
+            switch result {
+            case .success(let string): return string
+            case .failure(let error): return AttributedString("Error: \(error)")
+            }
+        }
+
+        Task {
+            do {
+                dbg("fetching README for:", release.id, readmeURL.absoluteString)
+                let data = try await URLRequest(url: readmeURL)
+                    .fetch(validateFragmentHash: true)
+                var atx = String(data: data, encoding: .utf8) ?? ""
+                // extract the portion of text between the "# Description" and following "#" sections
+                if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+                    print("### match", match)
+                    atx = (atx as NSString).substring(with: match)
+                } else {
+                    atx = ""
+                }
+
+                // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
+                let baseURL = release.baseURL.appendingPathComponent("blob/main/")
+                self.readmes[release] = Result {
+                    try AttributedString(markdown: atx, options: .init(allowsExtendedAttributes: true, interpretedSyntax: .full, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+                }
+            } catch {
+                dbg("error handling README:", error)
+                self.readmes[release] = .failure(error)
+            }
+        }
+
+        return nil
     }
 
     enum Errors : Error {

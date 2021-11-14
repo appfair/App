@@ -1,6 +1,6 @@
 import FairApp
 
-struct AppInfo : Identifiable {
+struct AppInfo : Identifiable, Equatable {
     var release: AppCatalogItem
     var installedPlist: Plist? = nil
 
@@ -432,6 +432,30 @@ public struct AppSettingsView: View {
     }
 }
 
+public extension View {
+    /// Places the given closure in a stack, either an `HStack` for `Axis.horizontal`
+    /// or a `VStack` for `Axis.vertical`, with the given `proportion` granted to the view.
+    @ViewBuilder func stack<V: View>(_ direction: Axis, proportion: Double, @ViewBuilder view neighbor: @escaping () -> V) -> some View {
+        GeometryReader { proxy in
+            switch direction {
+            case .horizontal:
+                HStack {
+                    self
+                    neighbor()
+                        .frame(idealWidth: proxy.size.width * proportion)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            case .vertical:
+                VStack {
+                    self
+                    neighbor()
+                        .frame(idealHeight: proxy.size.height * proportion)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+}
 
 extension View {
     /// Applies a modifier to the view that matches a static directive.

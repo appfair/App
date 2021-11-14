@@ -6,7 +6,7 @@ struct AppsListView : View {
     var item: AppManager.SidebarItem?
 
     var body : some View {
-        wip(EmptyView())
+        EmptyView() // TODO: list view for iOS
     }
 }
 

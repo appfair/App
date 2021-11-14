@@ -25,14 +25,10 @@ struct CatalogItemView: View {
 
     @State var currentActivity: Activity? = nil
     @State var progress = Progress(totalUnitCount: 1)
-    @State var readme: AttributedString? = nil
     @State var confirmations: [Activity: Bool] = [:]
 
     var body: some View {
         catalogBody()
-            .task {
-                await fetchREADME()
-            }
     }
 
     func catalogBody() -> some View {
@@ -156,7 +152,7 @@ struct CatalogItemView: View {
     func releaseDateCard() -> some View {
         summarySegment {
             card(
-                Text("Updates"),
+                Text("Updated"),
                 Text(info.release.versionDate ?? Date(), format: .relative(presentation: .numeric, unitsStyle: .abbreviated)),
                 histogramView(\.issueCount)
             )
@@ -233,44 +229,56 @@ struct CatalogItemView: View {
         }
     }
 
+    @ViewBuilder func catalogDescriptionColumn() -> some View {
+        VStack(alignment: .leading) {
+            groupBox(title: Text("Description"), trailing: EmptyView()) {
+                ScrollView(.vertical) {
+                    descriptionSummary()
+                        //.redacted(reason: wip(.placeholder))
+                }
+            }
+            .padding()
+            
+            groupBox(title: Text("Preview"), trailing: EmptyView()) {
+                ScrollView(.horizontal) {
+                    previewView()
+                        .frame(minHeight: 20)
+                }
+            }
+            .padding()
+
+        }
+    }
+    
+    @ViewBuilder func catalogInfoColumns() -> some View {
+        VStack(alignment: .leading) {
+            groupBox(title: Text("Details"), trailing: EmptyView()) {
+                detailsView()
+                    .frame(minHeight: 20)
+            }
+            .padding()
+            
+            groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
+                        .labelStyle(IconOnlyLabelStyle())
+                        .padding(.trailing)) {
+                permissionsList()
+                    .frame(minHeight: 20)
+            }
+                        .padding()
+        }
+    }
+    
     func catalogOverview() -> some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading) {
-                groupBox(title: Text("Description"), trailing: EmptyView()) {
-                    ScrollView {
-                        descriptionSummary()
-                            //.redacted(reason: wip(.placeholder))
-                    }
-                }
-                .padding()
-            }
-
-            VStack(alignment: .leading) {
-                groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
-                            .labelStyle(IconOnlyLabelStyle())
-                            .padding(.trailing)) {
-                    permissionsList()
-                        .frame(minHeight: 20)
-                }
-                .padding()
-
-                groupBox(title: Text("Details"), trailing: EmptyView()) {
-                    detailsView()
-                        .frame(minHeight: 20)
-                }
-                .padding()
-            }
+        Group {
+            catalogInfoColumns()
+        }
+        .stack(.horizontal, proportion: 3.0/5.0) {
+            catalogDescriptionColumn()
         }
     }
 
     func descriptionSummary() -> some View {
-        // TODO: load the content from the README.md
-        Text(atx: """
-        This is an app that does *stuff*, a whole lot of stuff, and does it really well.
-
-        This app uses various permissons to access information and edit documents.
-        Another options is.
-        """)
+        Text(self.appManager.readme(for: self.info.release) ?? .init(""))
             .font(.body)
             .textSelection(.enabled)
             .multilineTextAlignment(.leading)
@@ -311,6 +319,14 @@ struct CatalogItemView: View {
         }
     }
 
+    func previewView() -> some View {
+        LazyHStack {
+            ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+                URLImage(sync: false, url: url, resizable: .fit, showProgress: true)
+            }
+        }
+    }
+    
     func catalogVersionRow() -> some View {
         Text(info.releasedVersion?.versionDescriptionExtended ?? "")
     }
@@ -594,20 +610,6 @@ struct CatalogItemView: View {
         case .reveal: await revealButtonTapped()
         case .launch: await launchButtonTapped()
         }
-    }
-
-    func fetchREADME() async {
-        dbg("fetching README for:", self.info.id)
-        
-        //        do {
-        //            // let await
-        //            let contents = ""
-        //            // self.readme = try contents.atx()
-        //            self.readme = wip(nil) // FIXME: no point in rendering markdown until headers and other formatting are supported
-        //        } catch {
-        //            self.readme = AttributedString("Error fetching README.md")
-        //            appManager.reportError(error)
-        //        }
     }
 
     func iconView() -> some View {
