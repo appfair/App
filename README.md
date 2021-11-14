@@ -9,6 +9,12 @@ It includes 30,000 stations from sources such as the free
 ![Tune Out Preview Screen](assets/Tune-Out-Preview.png)
 
 
+## Description
+
+Tune Out is a free internet radio app with a catalog of over 30,000
+stations from around the world.
+
+
 ## Installation
 
 ### App Fair Installation
