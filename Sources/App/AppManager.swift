@@ -14,12 +14,14 @@ import FairApp
     @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
 
     /// An optional authorization token for direct API usagefor the organization must
-    /// 
+    ///
     @AppStorage("hubToken") public var hubToken = ""
 
     @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 
     @AppStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.last!
+
+    @AppStorage("showPreReleases") var showPreReleases = false
 
     @Published public var errors: [AppError] = []
 
@@ -35,7 +37,18 @@ import FairApp
     static let `default`: AppManager = AppManager()
 
     internal required init() {
-
+        super.init()
+        
+        /// The gloal quick actions for the App Fair
+        self.quickActions = [
+            QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
+                dbg("refresh-action")
+                Task {
+                    await self.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                    completion(true)
+                }
+            }
+        ]
     }
 }
 
@@ -63,7 +76,7 @@ extension AppManager {
     }
 
     /// All the app-info items, sorted and filtered based on whether to include pre-releases.
-    /// 
+    ///
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
     /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
     func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
@@ -110,14 +123,14 @@ extension AppManager {
 
             dbg("launching:", installPath)
 
-            #if os(macOS)
+#if os(macOS)
             let cfg = NSWorkspace.OpenConfiguration()
             cfg.activates = true
 
             try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
-            #else
+#else
             throw Errors.launchAppNotSupported
-            #endif
+#endif
         } catch {
             dbg("error performing launch for:", item, "error:", error)
             self.reportError(error)
@@ -217,10 +230,10 @@ extension AppManager {
             }
             dbg("revealing:", installPath.path)
 
-            #if os(macOS)
+#if os(macOS)
             // NSWorkspace.shared.activateFileViewerSelecting([installPath]) // unreliable
             NSWorkspace.shared.selectFile(installPath.path, inFileViewerRootedAtPath: Self.installFolderURL.path)
-            #endif
+#endif
 
         } catch {
             dbg("error performing trash for:", item.name, "error:", error)
@@ -278,7 +291,7 @@ extension AppManager {
 
 
         try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress, handler: { url in
-            #if macOS
+#if macOS
             // attempt to clear quarantine flag so we can launch the app
 
             // https://eclecticlight.co/2020/10/29/quarantine-and-the-quarantine-flag/
@@ -286,12 +299,12 @@ extension AppManager {
 
             /*
              Default properties look like:
-            /var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_o89pPj.tmp.expanded/Cloud Cuckoo.app/Contents/_CodeSignature/CodeResources flags: [__C.NSURLResourceKey(_rawValue: NSURLQuarantinePropertiesKey): {
-                LSQuarantineAgentName = "AppFair App";
-                LSQuarantineIsOwnedByCurrentUser = 1;
-                LSQuarantineTimeStamp = "2021-10-14 17:57:12 +0000";
-                LSQuarantineType = LSQuarantineTypeSandboxed;
-            }]
+             /var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_o89pPj.tmp.expanded/Cloud Cuckoo.app/Contents/_CodeSignature/CodeResources flags: [__C.NSURLResourceKey(_rawValue: NSURLQuarantinePropertiesKey): {
+             LSQuarantineAgentName = "AppFair App";
+             LSQuarantineIsOwnedByCurrentUser = 1;
+             LSQuarantineTimeStamp = "2021-10-14 17:57:12 +0000";
+             LSQuarantineType = LSQuarantineTypeSandboxed;
+             }]
              */
 
             // try to just clear the quarantine
@@ -325,7 +338,7 @@ extension AppManager {
                 throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
             }
 
-            #endif
+#endif
             return true
         })
 
@@ -361,7 +374,7 @@ extension AppManager {
         // if we are the catalog app ourselves, re-launch after updating
         if item.bundleIdentifier == Bundle.mainBundleID {
             dbg("re-launching catalog app")
-            #if os(macOS)
+#if os(macOS)
             //let proc = Process()
             //proc.executableURL = destinationURL
             //proc.launch()
@@ -374,7 +387,7 @@ extension AppManager {
             DispatchQueue.main.async {
                 NSApp.terminate(self)
             }
-            #endif // #if os(macOS)
+#endif // #if os(macOS)
         }
 
         // always re-scan after altering apps

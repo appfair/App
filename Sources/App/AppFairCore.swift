@@ -26,7 +26,7 @@ struct AppInfo : Identifiable, Equatable {
 
     /// The app is updated if its installed version is less than the released version
     var appUpdated: Bool {
-        installedVersion != nil && (installedVersion ?? .min) >= (releasedVersion ?? .min)
+        installedVersion != nil && (installedVersion ?? .max) < (releasedVersion ?? .min)
     }
 }
 
@@ -241,12 +241,8 @@ extension AppManager {
     }
 
     func updateCount() -> Int {
-        appInfoItems(includePrereleases: false).filter { item in
-            guard let installedVersion = item.installedVersion,
-                let releasedVersion = item.releasedVersion else {
-                return false
-            }
-            return installedVersion < releasedVersion
+        appInfoItems(includePrereleases: showPreReleases).filter { item in
+            item.appUpdated
         }
         .count
     }
@@ -558,7 +554,7 @@ public struct NavigationRootView : View {
     @EnvironmentObject var appManager: AppManager
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
-    @State var category: AppManager.SidebarItem?  = .popular
+    @State var category: AppManager.SidebarItem? = .popular
 
     public var body: some View {
         triptychView
@@ -853,8 +849,8 @@ struct SidebarView: View {
             Section("Apps") {
                 item(.popular).keyboardShortcut("1")
                 item(.recent).keyboardShortcut("2")
-                item(.updated).keyboardShortcut("3")
-                item(.installed).keyboardShortcut("4")
+                item(.installed).keyboardShortcut("3")
+                item(.updated).keyboardShortcut("4")
             }
 
             Section("Categories") {
