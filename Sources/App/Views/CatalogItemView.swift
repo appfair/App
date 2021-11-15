@@ -18,7 +18,6 @@ import SwiftUI
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView: View {
     let info: AppInfo
-    var previewMode: Bool = false
 
     @EnvironmentObject var appManager: AppManager
     @Environment(\.openURL) var openURLAction
@@ -404,17 +403,17 @@ struct CatalogItemView: View {
 
         return HStack {
             installButton()
-                .disabled(isCatalogApp && !previewMode)
+                .disabled(isCatalogApp)
                 .hcenter()
             updateButton()
                 .hcenter()
             launchButton()
-                .disabled(isCatalogApp && !previewMode)
+                .disabled(isCatalogApp)
                 .hcenter()
             revealButton()
                 .hcenter()
             trashButton()
-                .disabled(isCatalogApp && !previewMode)
+                .disabled(isCatalogApp)
                 .hcenter()
         }
         .buttonStyle(.bordered)
@@ -424,7 +423,7 @@ struct CatalogItemView: View {
 
     func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: true)
-            .disabled(appInstalled && !previewMode)
+            .disabled(appInstalled)
             .confirmationDialog(Text("Install \(info.release.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
                 Text("Download & Install \(info.release.name)").button {
                     runTask(activity: .install, confirm: true)
@@ -443,26 +442,26 @@ struct CatalogItemView: View {
 
     func updateButton() -> some View {
         button(activity: .update)
-            .disabled((!appInstalled || info.appUpdated) && !previewMode)
+            .disabled((!appInstalled || !info.appUpdated))
             .accentColor(.orange)
     }
 
     func launchButton() -> some View {
         button(activity: .launch)
-            .disabled(!appInstalled && !previewMode)
+            .disabled(!appInstalled)
             .accentColor(.green)
     }
 
     func revealButton() -> some View {
         button(activity: .reveal)
-            .disabled(!appInstalled && !previewMode)
+            .disabled(!appInstalled)
             .accentColor(.teal)
     }
 
     func trashButton() -> some View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: true)
         //.keyboardShortcut(.delete)
-            .disabled(!appInstalled && !previewMode)
+            .disabled(!appInstalled)
             .accentColor(.red)
             .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
                 Text("Delete").button {
@@ -726,7 +725,7 @@ public struct TitleAndIconFlippedLabelStyle : LabelStyle {
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
-        CatalogItemView(info: AppInfo(release: AppCatalogItem.sample), previewMode: true)
+        CatalogItemView(info: AppInfo(release: AppCatalogItem.sample))
             .environmentObject(AppManager.default)
             .frame(width: 600)
             .frame(height: 800)

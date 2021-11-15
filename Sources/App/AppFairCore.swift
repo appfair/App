@@ -578,6 +578,9 @@ public struct NavigationRootView : View {
                 dbg("fetching app catalog")
                 await appManager.fetchApps()
             }
+            .onChange(of: appManager.updateCount()) { updateCount in
+                UXApplication.shared.setBadge(updateCount)
+            }
             .onChange(of: selection) { newSelection in
                 dbg("selected:", newSelection)
             }
