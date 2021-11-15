@@ -1,5 +1,10 @@
 name: "Fork Apply"
-# Fork Apply runs in the forked repo with any push to main or semver tag
+# Fork Apply runs in the forked repo with
+# any push to main or semver tag.
+# Tagged pushes will automatically create a release
+# with the built artifacts.
+#
+# See: https://www.appfair.net
 on:
   push:
     branches: [ main ]
@@ -16,4 +21,11 @@ jobs:
       target_ios: true
       target_tvos: false
       target_watchos: false
+    secrets:
+      # Optional notarization secrets that can be configured in the fork's organization
+      NOTARY_TEAMID: ${{ secrets.NOTARY_TEAMID }}
+      NOTARY_USERID: ${{ secrets.NOTARY_USERID }}
+      NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+      NOTARY_CERTKEY_P12_BASE64: ${{ secrets.NOTARY_CERTKEY_P12_BASE64 }}
+      NOTARY_CERTKEY_PASSWORD: ${{ secrets.NOTARY_CERTKEY_PASSWORD }}
 
