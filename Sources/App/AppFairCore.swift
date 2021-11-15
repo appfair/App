@@ -568,11 +568,9 @@ public struct NavigationRootView : View {
                         .help(Text("Reload the App Fair catalog"))
                         .keyboardShortcut("R")
                 }
-                #if DEBUG
-//                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: wip(true)) {
-//                    DisplayModePicker(mode: $appManager.displayMode)
-//                }
-                #endif
+                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                    DisplayModePicker(mode: $appManager.displayMode)
+                }
             }
             .task {
                 dbg("fetching app catalog")
@@ -605,10 +603,10 @@ public struct NavigationRootView : View {
         TriptychView(orient: $appManager.displayMode) {
             SidebarView(selection: $selection, category: $category)
         } list: {
-            AppsListView(item: nil)
+            AppsListView(selection: $selection, category: $category)
         } table: {
             #if os(macOS)
-            AppsTableView(selection: $selection, category: $category).frame(idealHeight: 120)
+            AppsTableView(selection: $selection, category: $category)
             #endif
         } content: {
             AppDetailView()
@@ -625,7 +623,6 @@ public struct AppTableDetailSplitView : View {
     @ViewBuilder public var body: some View {
         VSplitView {
             AppsTableView(selection: $selection, category: $category)
-                .navigationTitle(category?.label.title ?? Text("Apps"))
                 .frame(minHeight: 150)
             AppDetailView()
                 .layoutPriority(1.0)
@@ -892,6 +889,7 @@ struct SidebarView: View {
     func item(_ item: AppManager.SidebarItem) -> some View {
         NavigationLink(tag: item, selection: $category, destination: {
             navigationDestinationView(item: item)
+                .navigationTitle(category?.label.title ?? Text("Apps"))
         }, label: {
             item.label
                 .badge(appManager.badgeCount(for: item))
@@ -901,7 +899,7 @@ struct SidebarView: View {
     @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
         switch appManager.displayMode {
         case .list:
-            AppsListView(item: item)
+            AppsListView(selection: $selection, category: $category)
         #if os(macOS)
         case .table:
             AppTableDetailSplitView(selection: $selection, category: $category)

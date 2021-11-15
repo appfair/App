@@ -1,5 +1,17 @@
 import FairApp
 
+
+
+#if os(macOS)
+let displayExtensions: Set<String>? = ["zip"]
+let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
+#endif
+
+#if os(iOS)
+let displayExtensions: Set<String>? = ["ipa"]
+let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
+#endif
+
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class AppManager: SceneManager {
@@ -16,8 +28,6 @@ import FairApp
     /// An optional authorization token for direct API usagefor the organization must
     ///
     @AppStorage("hubToken") public var hubToken = ""
-
-    @AppStorage("catalogURL") public var catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 
     @AppStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.last!
 
@@ -102,6 +112,48 @@ extension AppManager {
         })
 
         return infos.sorting(by: \.release.bundleIdentifier) // needs to return in constant order
+    }
+
+    /// The items arranged for the given category with the specifed sort order and search text
+    func arrangedItems(category: SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        self
+            .appInfoItems(includePrereleases: showPreReleases)
+            .filter({ matchesFilterText(item: $0) })
+            .filter({ matchesSearch(item: $0, searchText: searchText) })
+            .filter({ categoryFilter(category: category, item: $0) })
+            .sorted(using: sortOrder + categorySortOrder(category: category))
+    }
+
+    func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
+        switch category {
+        case .none:
+            return []
+        case .popular:
+            return [KeyPathComparator(\AppInfo.release.starCount, order: .reverse), KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
+        case .recent:
+            return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
+        case .updated:
+            return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
+        case .installed:
+            return [KeyPathComparator(\AppInfo.release.name, order: .forward)]
+        case .category:
+            return [KeyPathComparator(\AppInfo.release.starCount, order: .reverse), KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
+        }
+    }
+
+    func categoryFilter(category: SidebarItem?, item: AppInfo) -> Bool {
+        category?.matches(item: item) != false
+    }
+
+    func matchesFilterText(item: AppInfo) -> Bool {
+        displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
+    }
+
+    func matchesSearch(item: AppInfo, searchText: String) -> Bool {
+        (searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || item.release.name.localizedCaseInsensitiveContains(searchText) == true
+            || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
+            || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
     }
 
     static var installFolderURL: URL {
@@ -432,7 +484,6 @@ extension AppManager {
                 var atx = String(data: data, encoding: .utf8) ?? ""
                 // extract the portion of text between the "# Description" and following "#" sections
                 if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
-                    print("### match", match)
                     atx = (atx as NSString).substring(with: match)
                 } else {
                     atx = ""
@@ -469,3 +520,22 @@ extension AppManager {
         case noAppContents(URL)
     }
 }
+
+@available(macOS 12.0, iOS 15.0, *)
+extension AppManager.SidebarItem {
+    func matches(item: AppInfo) -> Bool {
+        switch self {
+        case .popular:
+            return true
+        case .updated:
+            return item.appUpdated
+        case .installed:
+            return item.installedVersion != nil
+        case .recent:
+            return true
+        case .category(let category):
+            return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
+        }
+    }
+}
+

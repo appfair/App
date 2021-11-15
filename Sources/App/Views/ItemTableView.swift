@@ -7,44 +7,6 @@ import FairApp
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 protocol ItemTableView : TableRowContent {
-
-    /// The items that this table holds
-    var items: [TableRowValue] { get }
-
-    /// The current selection, if any
-    var selection: TableRowValue.ID? { get nonmutating set }
-
-    /// The current sort orders
-    var sortOrder: [KeyPathComparator<TableRowValue>] { get nonmutating set }
-
-    /// Filters the rows based on the current search term
-    func filterRows(_ items: [TableRowValue]) -> [TableRowValue]
-
-    /// The type of column that is to be displayed
-    associatedtype Columnator: SetAlgebra
-    func columnVisible(element: Columnator.Element) -> Bool
-}
-
-@available(macOS 12.0, *)
-@available(iOS, unavailable)
-@available(tvOS, unavailable)
-@available(watchOS, unavailable)
-extension ItemTableView {
-    /// By default no searching is performed
-    func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
-        return items
-    }
-
-    var filteredRows: [TableRowValue] {
-        filterRows(self.items)
-    }
-
-    var tableRowBody: some TableRowContent {
-        ForEach(filteredRows) { item in
-            TableRow(item)
-                //.itemProvider { items.itemProvider }
-        }
-    }
 }
 
 
