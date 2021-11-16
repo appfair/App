@@ -342,14 +342,7 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
-            Picker(selection: $themeStyle) {
-                ForEach(ThemeStyle.allCases) { themeStyle in
-                    themeStyle.label
-                }
-            } label: {
-                Text("Theme:")
-            }
-            .radioPickerStyle()
+            ThemeStylePicker(style: $themeStyle)
 
 //            Slider(value: $controlSize, in: 1...5, step: 1) {
 //                Text("Interface Scale:")
@@ -410,9 +403,9 @@ struct ThemeStylePicker: View {
                 themeStyle.label
             }
         } label: {
-            Text("Theme")
+            Text("Theme:")
         }
-        .pickerStyle(RadioGroupPickerStyle())
+        .radioPickerStyle()
     }
 }
 
