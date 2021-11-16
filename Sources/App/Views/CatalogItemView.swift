@@ -383,7 +383,7 @@ struct CatalogItemView: View {
                     .font(Font.title2)
                     .truncationMode(.tail)
                 catalogAuthorRow()
-                    .redacted(reason: .placeholder)
+                    //.redacted(reason: .placeholder)
                     .font(Font.title3)
             }
             .textSelection(.enabled)

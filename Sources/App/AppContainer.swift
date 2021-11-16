@@ -16,12 +16,12 @@ import FairApp
 
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
-
     /// The root scene for this application
     static func rootScene(store appManager: AppManager) -> some Scene {
         WindowGroup {
             NavigationRootView()
                 .environmentObject(appManager)
+                .preferredColorScheme(appManager.themeStyle.colorScheme)
                 .task({ await appManager.scanInstalledApps() })
         }
         .commands {
@@ -39,6 +39,8 @@ public extension AppContainer {
 
     /// The app-wide settings view
     @ViewBuilder static func settingsView(store appManager: AppManager) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(appManager)
+        AppSettingsView()
+            .environmentObject(appManager)
+            .preferredColorScheme(appManager.themeStyle.colorScheme)
     }
 }

@@ -62,7 +62,7 @@ extension ItemTableView {
     }
 }
 
-struct AlignedText : View {
+struct AlignedText : Equatable, View {
     let text: Text
     let alignment: TextAlignment
 
@@ -72,7 +72,7 @@ struct AlignedText : View {
 }
 
 /// The label that renders a version of an app
-struct VersionLabel : View {
+struct VersionLabel : Equatable, View {
     let version: AppVersion?
 
     var body: some View {

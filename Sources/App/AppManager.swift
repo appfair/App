@@ -18,6 +18,8 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     /// The location where apps will be installed; the last component must match the catalog browser app itself, so a fair-ground named the "Games Arcade" would install into "/Applications/Games Arcade/" and the name of the catalog browser app itself would be "/Applications/Games Arcade.app"
     static let installPath = "/Applications/" + Bundle.mainBundleName + "/"
 
+    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
+
     /// The base domain of the provider for the hub
     @AppStorage("hubProvider") public var hubProvider = "github.com"
     /// The organization name of the hub

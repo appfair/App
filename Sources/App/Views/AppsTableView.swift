@@ -182,7 +182,7 @@ struct AppsTableView : View, ItemTableView {
 
     var table: some View {
         return tableView
-            .tableStyle(.inset(alternatesRowBackgrounds: false))
+            .tableStyle(.inset(alternatesRowBackgrounds: true))
             .id(category) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
             .font(Font.body.monospacedDigit())
             .focusedSceneValue(\.selection, .constant(itemSelection))

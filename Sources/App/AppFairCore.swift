@@ -325,17 +325,82 @@ extension AppManager {
 @available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
     @AppStorage("showPreReleases") private var showPreReleases = false
-    @AppStorage("fontSize") private var fontSize = 12.0
+//    @AppStorage("controlSize") private var controlSize = 3.0
+    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
 
     var body: some View {
         Form {
-            Toggle("Show Pre-Releases", isOn: $showPreReleases)
-                .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
-//            Slider(value: $fontSize, in: 9...96) {
-//                Text("Font Size (\(fontSize, specifier: "%.0f") pts)")
+            Picker(selection: $themeStyle) {
+                ForEach(ThemeStyle.allCases) { themeStyle in
+                    themeStyle.label
+                }
+            } label: {
+                Text("Theme:")
+            }
+            .pickerStyle(RadioGroupPickerStyle())
+
+//            Slider(value: $controlSize, in: 1...5, step: 1) {
+//                Text("Interface Scale:")
 //            }
+
+            Divider()
+
+            Toggle(isOn: $showPreReleases) {
+                Text("Show Pre-Releases")
+            }
+                .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
+            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
+                .font(.body)
+                .multilineTextAlignment(.leading)
+                .frame(maxHeight: .infinity, alignment: .top)
+
         }
         .padding(20)
+    }
+}
+
+
+/// The preferred theme style for the app
+public enum ThemeStyle: String, CaseIterable {
+    case system
+    case light
+    case dark
+}
+
+extension ThemeStyle : Identifiable {
+    public var id: Self { self }
+
+    public var label: Text {
+        switch self {
+        case .system: return Text("System")
+        case .light: return Text("Light")
+        case .dark: return Text("Dark")
+        }
+    }
+
+    public var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
+
+@available(macOS 12.0, iOS 15.0, *)
+struct ThemeStylePicker: View {
+    @Binding var style: ThemeStyle
+
+    var body: some View {
+        Picker(selection: $style) {
+            ForEach(ThemeStyle.allCases) { themeStyle in
+                themeStyle.label
+            }
+        } label: {
+            Text("Theme")
+        }
+        .pickerStyle(RadioGroupPickerStyle())
     }
 }
 
@@ -410,16 +475,12 @@ public struct AppSettingsView: View {
                 .tabItem {
                     Label("General", systemImage: "gear")
                         .symbolVariant(.fill)
-                        .symbolRenderingMode(.hierarchical)
-                        .tint(Color.blue)
                 }
                 .tag(Tabs.general)
             AdvancedSettingsView()
                 .tabItem {
                     Label("Advanced", systemImage: "star")
                         .symbolVariant(.fill)
-                        .symbolRenderingMode(.hierarchical)
-                        .tint(Color.yellow)
                 }
                 .tag(Tabs.advanced)
         }
@@ -673,11 +734,11 @@ public struct TintedLabel : View {
 extension View {
     /// The custom tinting style for the App Fair
     @available(macOS 12.0, iOS 15.0, *)
-    func fairTint(color: Color) -> some View {
+    func fairTint(color: Color, offset: Color = Color.secondary.opacity(0.8)) -> some View {
         foregroundStyle(
-            .linearGradient(colors: [color, .white], startPoint: .top, endPoint: .bottomTrailing),
-            .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
-            .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing)
+            .linearGradient(colors: [color, offset], startPoint: .top, endPoint: .bottomTrailing),
+            .linearGradient(colors: [.green, offset], startPoint: .top, endPoint: .bottomTrailing),
+            .linearGradient(colors: [.blue, offset], startPoint: .top, endPoint: .bottomTrailing)
         )
 
     }
