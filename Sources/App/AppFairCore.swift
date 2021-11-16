@@ -322,6 +322,18 @@ extension AppManager {
     }
 }
 
+extension Picker {
+    /// On macOS, sets the style as a radio picker style.
+    /// On other platforms, has no effect.
+    func radioPickerStyle() -> some View {
+        #if os(macOS)
+        self.pickerStyle(RadioGroupPickerStyle())
+        #else
+        self
+        #endif
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
     @AppStorage("showPreReleases") private var showPreReleases = false
@@ -337,7 +349,7 @@ struct GeneralSettingsView: View {
             } label: {
                 Text("Theme:")
             }
-            .pickerStyle(RadioGroupPickerStyle())
+            .radioPickerStyle()
 
 //            Slider(value: $controlSize, in: 1...5, step: 1) {
 //                Text("Interface Scale:")
