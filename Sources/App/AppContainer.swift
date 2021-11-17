@@ -20,6 +20,7 @@ public extension AppContainer {
     static func rootScene(store appManager: AppManager) -> some Scene {
         WindowGroup {
             NavigationRootView()
+                // .edgesIgnoringSafeArea(.all) // doesn't affect iPhone landscape catalog info header 
                 .environmentObject(appManager)
                 .preferredColorScheme(appManager.themeStyle.colorScheme)
                 .task({ await appManager.scanInstalledApps() })

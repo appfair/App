@@ -27,50 +27,37 @@ struct CatalogItemView: View {
     @State var progress = Progress(totalUnitCount: 1)
     @State var confirmations: [Activity: Bool] = [:]
 
-    var body: some View {
-        catalogBody()
-    }
+    #if os(macOS) // horizontalSizeClass unavailable on macOS
+    func horizontalCompact() -> Bool { false }
+    #else
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    func horizontalCompact() -> Bool { horizontalSizeClass == .compact }
+    #endif
 
-    func catalogBody() -> some View {
-        // testing whether to have a scrolling or fixed-position catalog
-        catalogBodyFixed()
-        //catalogBodyScrolling()
+
+    var body: some View {
+        catalogGrid()
     }
 
     func headerView() -> some View {
         pinnedHeaderView()
             .padding(.top)
-            //.background(item.tintColor()?.opacity(0.1))
-            //.background(Material.thick)
-            //.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)) // doesn't apply the material effect
-            //.overlay(Material.thinMaterial)
-            //.overlay(Material.thinMaterial))
+            //.background(item.tintColor())
+            .background(Material.ultraThinMaterial)
     }
 
-    func catalogBodyFixed() -> some View {
-        VStack {
-            headerView()
-            catalogSummaryCards()
-            Divider()
-            catalogOverview()
-            appPreviewImages()
-        }
-    }
-
-    func catalogBodyScrolling() -> some View {
+    func catalogGrid() -> some View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(pinnedViews: [.sectionHeaders]) {
                 Section {
                     catalogSummaryCards()
                     Divider()
                     catalogOverview()
-                    appPreviewImages()
                 } header: {
                     headerView()
                 }
             }
         }
-        // .background(Material.ultraThinMaterial)
     }
 
     func pinnedHeaderView() -> some View {
@@ -80,13 +67,6 @@ struct CatalogItemView: View {
             catalogActionButtons()
             Divider()
         }
-    }
-
-    func appPreviewImages() -> some View {
-        EmptyView()
-        // groupBox(title: Text("Previews")) {
-        //     catalogPreviewImages()
-        // }
     }
 
     func starsCard() -> some View {
@@ -215,47 +195,39 @@ struct CatalogItemView: View {
                 Spacer()
                 trailing
             }
-                .font(Font.headline)
+            .font(Font.system(.headline, design: .rounded))
                 .lineLimit(1)
         })
             .groupBoxStyle(.automatic)
-    }
-
-    func catalogPreviewImages() -> some View {
-        ScrollView(.horizontal, showsIndicators: true) {
-            Image(systemName: "a")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-        }
+            .padding()
     }
 
     func catalogOverview() -> some View {
         ScrollView {
             LazyVGrid(columns: [
-                GridItem(GridItem.Size.adaptive(minimum: 300, maximum: 2000)),
-            ]) {
+                // GridItem(.fixed(300)),
+                horizontalCompact() ? nil : GridItem(.flexible(minimum: 200, maximum: 300)),
+                GridItem(.flexible(minimum: 250, maximum: .infinity)),
+                // GridItem(.flexible(minimum: 300, maximum: 500)),
+                // GridItem(.adaptive(minimum: 300, maximum: .infinity)),
+            ].compactMap({ $0 })) {
                 groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
                     permissionsList()
-                        .frame(height: 100)
+                        .frame(height: 120)
                 }
-                .padding()
-
 
                 groupBox(title: Text("Description"), trailing: EmptyView()) {
                     descriptionSummary()
                         //.redacted(reason: wip(.placeholder))
-                        .frame(height: 100, alignment: .top)
+                        .frame(height: 120, alignment: .top)
                 }
-                .padding()
 
                 groupBox(title: Text("Details"), trailing: EmptyView()) {
                     detailsView()
                         .frame(height: 200)
                 }
-                .padding()
-
 
                 groupBox(title: Text("Preview"), trailing: EmptyView()) {
                     ScrollView(.horizontal) {
@@ -263,48 +235,6 @@ struct CatalogItemView: View {
                             .frame(height: 200)
                     }
                 }
-                .padding()
-
-            }
-        }
-    }
-
-    func catalogOverviewOLD() -> some View {
-        Group {
-            VStack(alignment: .leading) {
-                groupBox(title: Text("Details"), trailing: EmptyView()) {
-                    detailsView()
-                        .frame(minHeight: 20)
-                }
-                .padding()
-
-                groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
-                            .labelStyle(IconOnlyLabelStyle())
-                            .padding(.trailing)) {
-                    permissionsList()
-                        .frame(minHeight: 20)
-                }
-                            .padding()
-            }
-        }
-        .stack(.horizontal, proportion: 3.0/5.0) {
-            VStack(alignment: .leading) {
-                groupBox(title: Text("Description"), trailing: EmptyView()) {
-                    ScrollView(.vertical) {
-                        descriptionSummary()
-                            //.redacted(reason: wip(.placeholder))
-                    }
-                }
-                .padding()
-
-                groupBox(title: Text("Preview"), trailing: EmptyView()) {
-                    ScrollView(.horizontal) {
-                        previewView()
-                            .frame(minHeight: 20)
-                    }
-                }
-                .padding()
-
             }
         }
     }
@@ -314,7 +244,7 @@ struct CatalogItemView: View {
             .font(.body)
             .textSelection(.enabled)
             .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     func permissionListItem(permission: AppPermission) -> some View {
