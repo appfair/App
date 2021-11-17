@@ -154,6 +154,18 @@ struct ClockView: View {
     public var statusItem: NSStatusItem? = nil
     #endif
 
+    internal required init() {
+        super.init()
+
+        /// The gloal quick actions for the App Fair
+        self.quickActions = [
+            QuickAction(id: "play-action", localizedTitle: loc("Play"), iconSymbol: "play") { completion in
+                dbg("play-action")
+                completion(true)
+            }
+        ]
+    }
+
     @objc public func menuItemTapped(_ sender: Any?) {
         dbg()
     }
@@ -177,11 +189,30 @@ public struct AppSettingsView : View {
     }
 }
 
-/// Work-in-Progress marker
-@available(*, deprecated, message: "work in progress")
-internal func wip<T>(_ value: T) -> T { value }
+// MARK: Package-Specific Utilities
 
 /// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
 @usableFromInline internal func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
     SwiftUI.Text(string, bundle: .module)
 }
+
+
+/// Returns the localized string for the current module.
+///
+/// - Note: This is boilerplate package-local code that could be copied
+///  to any Swift package with localized strings.
+internal func loc(_ key: String, tableName: String? = nil, comment: String? = nil) -> String {
+    // TODO: use StringLocalizationKey
+    NSLocalizedString(key, tableName: tableName, bundle: .module, comment: comment ?? "")
+}
+
+/// Work-in-Progress marker
+@available(*, deprecated, message: "work in progress")
+internal func wip<T>(_ value: T) -> T { value }
+
+extension String {
+    static func localizedString(for key: String, locale: Locale = .current, comment: StaticString = "") -> String {
+        NSLocalizedString(key, bundle: Bundle.module.path(forResource: locale.languageCode, ofType: "lproj").flatMap(Bundle.init(path:)) ?? Bundle.module, comment: comment.description)
+    }
+}
+
