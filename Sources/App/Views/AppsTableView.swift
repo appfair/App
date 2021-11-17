@@ -40,20 +40,23 @@ struct AppsListView : View {
             .frame(width: 50)
 
             VStack(alignment: .leading) {
-                Text(item.release.name)
+                Text(verbatim: item.release.name)
                     .font(.headline)
                     .lineLimit(1)
-                Text(item.release.subtitle ?? "")
+                Spacer()
+                Text(verbatim: item.release.subtitle ?? "")
                     .font(.subheadline)
                     .lineLimit(1)
 
                 HStack {
-                    Text(item.release.version ?? "")
+                    Text(verbatim: item.releasedVersion?.versionDescriptionExtended ?? "")
                         .font(.body)
-                        .lineLimit(1)
+
                     Divider()
-                    Text(item.release.versionDate ?? .distantPast, format: .relative(presentation: .numeric, unitsStyle: .abbreviated))
+
+                    Text(item.release.versionDate ?? .distantPast, format: .relative(presentation: .numeric, unitsStyle: .narrow))
                 }
+                .lineLimit(1)
             }
             .allowsTightening(true)
         }

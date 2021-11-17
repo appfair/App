@@ -229,51 +229,83 @@ struct CatalogItemView: View {
         }
     }
 
-    @ViewBuilder func catalogDescriptionColumn() -> some View {
-        VStack(alignment: .leading) {
-            groupBox(title: Text("Description"), trailing: EmptyView()) {
-                ScrollView(.vertical) {
+    func catalogOverview() -> some View {
+        ScrollView {
+            LazyVGrid(columns: [
+                GridItem(GridItem.Size.adaptive(minimum: 300, maximum: 2000)),
+            ]) {
+                groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
+                            .labelStyle(IconOnlyLabelStyle())
+                            .padding(.trailing)) {
+                    permissionsList()
+                        .frame(height: 100)
+                }
+                .padding()
+
+
+                groupBox(title: Text("Description"), trailing: EmptyView()) {
                     descriptionSummary()
                         //.redacted(reason: wip(.placeholder))
+                        .frame(height: 100, alignment: .top)
                 }
+                .padding()
+
+                groupBox(title: Text("Details"), trailing: EmptyView()) {
+                    detailsView()
+                        .frame(height: 200)
+                }
+                .padding()
+
+
+                groupBox(title: Text("Preview"), trailing: EmptyView()) {
+                    ScrollView(.horizontal) {
+                        previewView()
+                            .frame(height: 200)
+                    }
+                }
+                .padding()
+
             }
-            .padding()
-            
-            groupBox(title: Text("Preview"), trailing: EmptyView()) {
-                ScrollView(.horizontal) {
-                    previewView()
+        }
+    }
+
+    func catalogOverviewOLD() -> some View {
+        Group {
+            VStack(alignment: .leading) {
+                groupBox(title: Text("Details"), trailing: EmptyView()) {
+                    detailsView()
                         .frame(minHeight: 20)
                 }
-            }
-            .padding()
+                .padding()
 
-        }
-    }
-    
-    @ViewBuilder func catalogInfoColumns() -> some View {
-        VStack(alignment: .leading) {
-            groupBox(title: Text("Details"), trailing: EmptyView()) {
-                detailsView()
-                    .frame(minHeight: 20)
+                groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
+                            .labelStyle(IconOnlyLabelStyle())
+                            .padding(.trailing)) {
+                    permissionsList()
+                        .frame(minHeight: 20)
+                }
+                            .padding()
             }
-            .padding()
-            
-            groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
-                        .labelStyle(IconOnlyLabelStyle())
-                        .padding(.trailing)) {
-                permissionsList()
-                    .frame(minHeight: 20)
-            }
-                        .padding()
-        }
-    }
-    
-    func catalogOverview() -> some View {
-        Group {
-            catalogInfoColumns()
         }
         .stack(.horizontal, proportion: 3.0/5.0) {
-            catalogDescriptionColumn()
+            VStack(alignment: .leading) {
+                groupBox(title: Text("Description"), trailing: EmptyView()) {
+                    ScrollView(.vertical) {
+                        descriptionSummary()
+                            //.redacted(reason: wip(.placeholder))
+                    }
+                }
+                .padding()
+
+                groupBox(title: Text("Preview"), trailing: EmptyView()) {
+                    ScrollView(.horizontal) {
+                        previewView()
+                            .frame(minHeight: 20)
+                    }
+                }
+                .padding()
+
+            }
         }
     }
 
