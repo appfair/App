@@ -49,7 +49,7 @@ struct AppsListView : View {
                     .lineLimit(1)
 
                 HStack {
-                    Text(verbatim: item.releasedVersion?.versionDescriptionExtended ?? "")
+                    Text(verbatim: item.releasedVersion?.versionStringExtended ?? "")
                         .font(.body)
 
                     Divider()

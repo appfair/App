@@ -37,6 +37,7 @@ struct CatalogItemView: View {
 
     var body: some View {
         catalogGrid()
+        //catalogStack()
     }
 
     func headerView() -> some View {
@@ -44,6 +45,15 @@ struct CatalogItemView: View {
             .padding(.top)
             //.background(item.tintColor())
             .background(Material.ultraThinMaterial)
+    }
+
+    func catalogStack() -> some View {
+        VStack {
+            headerView()
+            catalogSummaryCards()
+            Divider()
+            catalogOverview()
+        }
     }
 
     func catalogGrid() -> some View {
@@ -166,15 +176,15 @@ struct CatalogItemView: View {
     }
 
     func detailsView() -> some View {
-        ScrollView(.vertical, showsIndicators: true) {
+        ScrollView(.horizontal, showsIndicators: true) {
             Form {
                 linkTextField(Text("Discussions"), icon: "text.bubble", url: info.release.discussionsURL)
                     .help(Text("Opens link to the discussions page for this app at: \(info.release.discussionsURL.absoluteString)"))
                 linkTextField(Text("Issues"), icon: "checklist", url: info.release.issuesURL)
                     .help(Text("Opens link to the issues page for this app at: \(info.release.issuesURL.absoluteString)"))
-                linkTextField(Text("Source Code"), icon: "chevron.left.forwardslash.chevron.right", url: info.release.sourceURL)
+                linkTextField(Text("Source"), icon: "chevron.left.forwardslash.chevron.right", url: info.release.sourceURL)
                     .help(Text("Opens link to source code repository for this app at: \(info.release.sourceURL.absoluteString)"))
-                linkTextField(Text("Seal"), icon: "rosette", url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
+                linkTextField(Text("Fairseal"), icon: "rosette", url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
                     .help(Text("Lookup fairseal at: \(info.release.fairsealURL)"))
                 linkTextField(Text("Developer"), icon: "person", url: info.release.developerURL, linkText: item.developerName)
                     .help(Text("Searches for this developer at: \(info.release.developerURL)"))
@@ -192,10 +202,11 @@ struct CatalogItemView: View {
         }, label: {
             HStack {
                 title
+                    .font(.headline)
                 Spacer()
                 trailing
+                    .font(.subheadline)
             }
-            .font(Font.system(.headline, design: .rounded))
                 .lineLimit(1)
         })
             .groupBoxStyle(.automatic)
@@ -203,40 +214,62 @@ struct CatalogItemView: View {
     }
 
     func catalogOverview() -> some View {
-        ScrollView {
-            LazyVGrid(columns: [
-                // GridItem(.fixed(300)),
-                horizontalCompact() ? nil : GridItem(.flexible(minimum: 200, maximum: 300)),
-                GridItem(.flexible(minimum: 250, maximum: .infinity)),
-                // GridItem(.flexible(minimum: 300, maximum: 500)),
-                // GridItem(.adaptive(minimum: 300, maximum: .infinity)),
-            ].compactMap({ $0 })) {
+        LazyVStack {
+            Section {
+                catalogColumns()
+            } footer: {
+                groupBox(title: Text("Preview"), trailing: EmptyView()) {
+                    ScrollView(.horizontal) {
+                        previewView()
+                    }
+                    .frame(height: 300)
+                }
+            }
+        }
+    }
+
+    func catalogColumns() -> some View {
+        HStack {
+            VStack {
+                groupBox(title: Text("Description"), trailing: EmptyView()) {
+                    ScrollView {
+                        descriptionSummary()
+                    }
+                    .frame(maxHeight: .infinity)
+                }
+                .frame(height: 200)
+
+                groupBox(title: Text("Version: ") + Text(verbatim: info.releasedVersion?.versionStringExtended ?? ""), trailing: Text(info.release.versionDate ?? .distantPast, format: .dateTime)) {
+                    ScrollView {
+                        versionSummary()
+                    }
+                    .frame(maxHeight: .infinity)
+                }
+                .frame(height: 150)
+            }
+
+            VStack(alignment: .leading) {
+                groupBox(title: Text("Details"), trailing: EmptyView()) {
+                    detailsView()
+                }
+                .frame(height: 200)
+
                 groupBox(title: Text("Permissions: ") + item.riskText().fontWeight(.regular), trailing: item.riskLabel()
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
                     permissionsList()
-                        .frame(height: 120)
                 }
-
-                groupBox(title: Text("Description"), trailing: EmptyView()) {
-                    descriptionSummary()
-                        //.redacted(reason: wip(.placeholder))
-                        .frame(height: 120, alignment: .top)
-                }
-
-                groupBox(title: Text("Details"), trailing: EmptyView()) {
-                    detailsView()
-                        .frame(height: 200)
-                }
-
-                groupBox(title: Text("Preview"), trailing: EmptyView()) {
-                    ScrollView(.horizontal) {
-                        previewView()
-                            .frame(height: 200)
-                    }
-                }
+                .frame(height: 150)
             }
         }
+    }
+
+    func versionSummary() -> some View {
+        Text(atx: self.info.release.versionDescription ?? "")
+            .font(.body)
+            .textSelection(.enabled)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     func descriptionSummary() -> some View {
@@ -284,15 +317,11 @@ struct CatalogItemView: View {
     func previewView() -> some View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
-                URLImage(sync: false, url: url, resizable: .fit, showProgress: true)
+                URLImage(sync: false, url: url, resizable: .fit, showProgress: false)
             }
         }
     }
     
-    func catalogVersionRow() -> some View {
-        Text(info.releasedVersion?.versionDescriptionExtended ?? "")
-    }
-
     func catalogAuthorRow() -> some View {
         Group {
             if info.release.developerName.isEmpty {
@@ -333,29 +362,27 @@ struct CatalogItemView: View {
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
             iconView()
-                .frame(width: 100, height: 100)
+                .frame(width: 80, height: 80)
                 .padding(.leading, 40)
 
             VStack(alignment: .center) {
                 Text(item.name)
                     .font(Font.largeTitle)
-                catalogVersionRow()
-                    .font(Font.title)
+                    .truncationMode(.middle)
                 Text(item.subtitle ?? item.localizedDescription)
-                    .font(Font.title2)
+                .font(Font.title2)
                     .truncationMode(.tail)
                 catalogAuthorRow()
-                    //.redacted(reason: .placeholder)
                     .font(Font.title3)
+                    .truncationMode(.head)
             }
             .textSelection(.enabled)
             .lineLimit(1)
             .allowsTightening(true)
-            .truncationMode(.middle)
             .hcenter()
 
             categorySymbol()
-                .frame(width: 100, height: 100)
+                .frame(width: 80, height: 80)
                 .padding(.trailing, 40)
         }
     }
