@@ -234,6 +234,10 @@ struct CatalogItemView: View {
                 groupBox(title: Text("Description"), trailing: EmptyView()) {
                     ScrollView {
                         descriptionSummary()
+                            .font(.body)
+                            .textSelection(.enabled)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .frame(maxHeight: .infinity)
                 }
@@ -272,12 +276,12 @@ struct CatalogItemView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    func descriptionSummary() -> some View {
-        Text(self.appManager.readme(for: self.info.release) ?? .init(""))
-            .font(.body)
-            .textSelection(.enabled)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    @ViewBuilder func descriptionSummary() -> some View {
+        if let readme = self.appManager.readme(for: self.info.release) {
+            Text(readme)
+        } else {
+            Text("Loading README…")
+        }
     }
 
     func permissionListItem(permission: AppPermission) -> some View {
