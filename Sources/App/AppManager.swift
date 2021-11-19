@@ -44,7 +44,7 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     @Published var catalog: [AppCatalogItem] = []
 
     /// The fetched readmes for the apps
-    @Published private var readmes: [AppCatalogItem: Result<AttributedString, Error>] = [:]
+    @Published private var readmes: [URL: Result<AttributedString, Error>] = [:]
 
     static let `default`: AppManager = AppManager()
 
@@ -471,7 +471,7 @@ extension AppManager {
             return nil
         }
 
-        if let result = self.readmes[release] {
+        if let result = self.readmes[readmeURL] {
             switch result {
             case .success(let string): return string
             case .failure(let error): return AttributedString("Error: \(error)")
@@ -493,12 +493,12 @@ extension AppManager {
 
                 // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
                 let baseURL = release.baseURL.appendingPathComponent("blob/main/")
-                self.readmes[release] = Result {
+                self.readmes[readmeURL] = Result {
                     try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
                 }
             } catch {
                 dbg("error handling README:", error)
-                self.readmes[release] = .failure(error)
+                self.readmes[readmeURL] = .failure(error)
             }
         }
 
