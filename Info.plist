@@ -15,11 +15,11 @@
 
     <!-- the name of your app; must match your App-Name with a space for the hyphen -->
     <key>CFBundleName</key>
-    <string>Numeral IXMCIX</string>
+    <string>Neural Scry</string>
 
     <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
     <key>CFBundleIdentifier</key>
-    <string>app.Numeral-IXMCIX</string>
+    <string>app.Neural-Scry</string>
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>
@@ -28,12 +28,12 @@
     <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleShortVersionString</key>
-    <string>0.0.9</string>
+    <string>0.0.10</string>
 
     <!-- the monotonically non-decreasing build number -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleVersion</key>
-    <string>9</string>
+    <string>10</string>
 
     <!-- Each key in Sandbox.entitlements must have a corresponding explanation here -->
     <key>FairUsage</key>
