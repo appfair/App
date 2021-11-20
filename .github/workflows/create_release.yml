@@ -1,0 +1,26 @@
+name: "Create Release"
+# Create Release is invoked manually to build and distribute
+# a new release to the App Fair.
+#
+# See: https://www.appfair.net
+on: 
+  workflow_dispatch
+  inputs:
+    version:
+      description: 'Semantic Version'
+      required: true
+
+on:
+  push:
+    branches: [ main ]
+    tags: "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  call-workflow:
+    uses: fair-ground/Fair/.github/workflows/create_release.yml@main
+    with:
+      fairground: appfair
+      version: "${{ github.event.inputs.version }}"
+
+
+
