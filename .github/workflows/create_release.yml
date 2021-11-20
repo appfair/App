@@ -11,16 +11,11 @@ on:
         required: true
 
 jobs:
-  call_create_release:
-    uses: fair-ground/Fair/.github/workflows/create_release.yml@main
-    with:
-      fairground: appfair
-      version: "${{ github.event.inputs.version }}"
-
   call_fork_apply:
     uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
     with:
       fairground: appfair
+      release_version: "${{ github.event.inputs.version }}"
       target_macos: true
       target_linux: false
       target_windows: false
