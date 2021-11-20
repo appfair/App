@@ -1,7 +1,4 @@
 import FairApp
-import OpenGL
-
-
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]

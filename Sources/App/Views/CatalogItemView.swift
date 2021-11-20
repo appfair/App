@@ -606,18 +606,7 @@ struct CatalogItemView: View {
     }
 
     func iconView() -> some View {
-        Group {
-            if let iconURL = item.iconURL {
-                URLImage(url: iconURL, resizable: .fit)
-            } else {
-                // fall-back to the generated image for the app
-                FairIconView(item.name, subtitle: "App Fair", iconColor: itemTintColor())
-            }
-        }
-    }
-
-    func itemTintColor() -> Color {
-         item.tintColor() ?? FairIconView.iconColor(name: item.appNameHyphenated)
+        item.iconImage()
     }
 
     func categorySymbol() -> some View {
@@ -626,7 +615,7 @@ struct CatalogItemView: View {
         return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(color: itemTintColor())
+            .fairTint(color: item.itemTintColor())
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
@@ -679,7 +668,56 @@ struct CatalogItemView: View {
     }
 }
 
+
 extension AppCatalogItem {
+    @ViewBuilder func iconImage() -> some View {
+//        fallbackIcon()
+//            .frame(width: 25, height: 25)
+
+        if let iconURL = self.iconURL {
+            AsyncImage(url: iconURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable(resizingMode: .stretch)
+                        .aspectRatio(contentMode: .fit)
+                case .failure(let error):
+                    fallbackIcon()
+                        .brightness(0.4)
+                        .help(error.localizedDescription)
+                case .empty:
+                    fallbackIcon()
+                        .grayscale(0.9)
+                @unknown default:
+                    fallbackIcon()
+                        .grayscale(0.9)
+                }
+            }
+        } else {
+            fallbackIcon()
+                .grayscale(1.0)
+        }
+    }
+
+    @ViewBuilder func iconImageOLD() -> some View {
+        if let iconURL = self.iconURL {
+            URLImage(url: iconURL, resizable: .fit)
+        } else {
+            fallbackIcon()
+        }
+    }
+
+    @ViewBuilder func fallbackIcon() -> some View {
+        // fall-back to the generated image for the app, but with no title or sub-title
+        FairIconView("", subtitle: "", iconColor: itemTintColor())
+    }
+
+    /// The specified tint color, falling back on the default tint for the app name
+    func itemTintColor() -> Color {
+         self.tintColor() ?? FairIconView.iconColor(name: self.appNameHyphenated)
+    }
+
+
     func tintColor() -> Color? {
         func hexColor(hex: Int, opacity: Double = 1.0) -> Color {
             let red = Double((hex & 0xff0000) >> 16) / 255.0

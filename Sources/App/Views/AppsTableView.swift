@@ -1,68 +1,5 @@
 import FairApp
 
-
-/// List version of the `AppsTableView` for list browsing mode.
-@available(macOS 12.0, iOS 15.0, *)
-struct AppsListView : View {
-    @EnvironmentObject var appManager: AppManager
-    @Binding var selection: AppInfo.ID?
-    @Binding var category: AppManager.SidebarItem?
-    @State var sortOrder: [KeyPathComparator<AppInfo>] = []
-    @State var searchText: String = ""
-    @AppStorage("showPreReleases") private var showPreReleases = false
-
-    var items: [AppInfo] {
-        appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
-    }
-
-    var body : some View {
-        List {
-            ForEach(items) { item in
-                NavigationLink(tag: item.id, selection: $selection, destination: {
-                    CatalogItemView(info: item)
-                }, label: {
-                    label(for: item)
-                })
-            }
-        }
-        .searchable(text: $searchText)
-    }
-
-    func label(for item: AppInfo) -> some View {
-        HStack(alignment: .center) {
-            Group {
-                if let iconURL = item.release.iconURL {
-                    URLImage(url: iconURL, resizable: .fit)
-                } else {
-                    Circle()
-                }
-            }
-            .frame(width: 50)
-
-            VStack(alignment: .leading) {
-                Text(verbatim: item.release.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                Spacer()
-                Text(verbatim: item.release.subtitle ?? "")
-                    .font(.subheadline)
-                    .lineLimit(1)
-
-                HStack {
-                    Text(verbatim: item.releasedVersion?.versionStringExtended ?? "")
-                        .font(.body)
-
-                    Divider()
-
-                    Text(item.release.versionDate ?? .distantPast, format: .relative(presentation: .numeric, unitsStyle: .narrow))
-                }
-                .lineLimit(1)
-            }
-            .allowsTightening(true)
-        }
-    }
-}
-
 #if os(macOS)
 
 @available(macOS 12.0, *)
@@ -117,13 +54,11 @@ struct AppsTableView : View, ItemTableView {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
                 let imageColumn = TableColumn("", value: \AppInfo.release.iconURL, comparator: URLComparator()) { item in
-                    if let iconURL = item.release.iconURL {
-                        URLImage(url: iconURL, resizable: .fit)
-                    }
-                    //FairIconView(item.release.name)
+                    item.release.iconImage()
+                        .frame(width: 20, height: 20)
                 }
                 imageColumn
-                    .width(40)
+                    .width(20)
             }
 
             Group {

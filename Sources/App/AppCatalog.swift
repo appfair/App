@@ -30,7 +30,12 @@ extension AppCatalogItem {
     var riskLevel: AppRisk {
         // let groups = Set(item.appCategories.flatMap(\.groupings))
         let categories = Set((self.permissions ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
-        // the naieve classification just counts the categories
+        // the risk level is simply the number of categories the permissions fall into. E.g.:
+        // nothing -> harmless
+        // network -> mostly harmless
+        // read files -> mostly harmless
+        // read & write files -> risky
+        // network + read & write files -> hazardous
         let value = max(0, min(5, categories.count))
         return AppRisk(rawValue: value) ?? .allCases.last!
     }
@@ -38,15 +43,15 @@ extension AppCatalogItem {
     /// The label summarizing how risky the app appears to be
     func riskLabel() -> some View {
         Group {
-            let level = riskLevel
-            level.textLabel()
-                .label(image: Image(systemName: "\(level.rawValue)"))
-                .foregroundColor(level.riskColor())
+            riskLevel.textLabel()
+                .label(image: Image(systemName: "\(riskLevel.rawValue)"))
+                .foregroundColor(riskLevel.riskColor())
         }
         .symbolVariant(.square)
         .symbolVariant(.fill)
         .symbolRenderingMode(SymbolRenderingMode.hierarchical)
-        .help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
+        //.help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
+        .help(riskLevel.riskSummaryText())
     }
 
     /// The topic identfier for the initial category
