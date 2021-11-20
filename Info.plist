@@ -23,17 +23,17 @@
 
     <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
     <key>LSApplicationCategoryType</key>
-    <string>public.app-category.graphics-design</string>
+    <string>public.app-category.medical</string>
 
     <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleShortVersionString</key>
-    <string>0.0.10</string>
+    <string>0.0.11</string>
 
     <!-- the monotonically non-decreasing build number -->
     <!-- each fair-ground integration must increase this value -->
     <key>CFBundleVersion</key>
-    <string>10</string>
+    <string>11</string>
 
     <!-- Each key in Sandbox.entitlements must have a corresponding explanation here -->
     <key>FairUsage</key>
@@ -51,6 +51,10 @@
         <key>com.apple.security.device.camera</key>
         <string>This enabled this permission for testing</string>
         <key>com.apple.security.device.usb</key>
+        <string>This enabled this permission for testing</string>
+        <key>com.apple.security.cs.debugger</key>
+        <string>This enabled this permission for testing</string>
+        <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
         <string>This enabled this permission for testing</string>
     </dict>
 
