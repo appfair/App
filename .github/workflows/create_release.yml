@@ -4,11 +4,11 @@ name: "Create Release"
 #
 # See: https://www.appfair.net
 on: 
-  workflow_dispatch
-  inputs:
-    version:
-      description: 'Semantic Version'
-      required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semantic Version'
+        required: true
 
 on:
   push:
