@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  call_fork_apply:
+  call-workflow:
     uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
     with:
       fairground: appfair
