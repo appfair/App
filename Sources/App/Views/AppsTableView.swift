@@ -105,7 +105,12 @@ struct AppsTableView : View, ItemTableView {
     }
 
     var body: some View {
-        table
+        return tableView
+            .tableStyle(.inset(alternatesRowBackgrounds: true))
+            .id(category) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
+            .font(Font.body.monospacedDigit())
+            .focusedSceneValue(\.selection, .constant(itemSelection))
+            .searchable(text: $searchText)
     }
 
     var tableView: some View {
@@ -181,18 +186,6 @@ struct AppsTableView : View, ItemTableView {
                 authorColumn.width(ideal: 200)
             }
         }, rows: { self })
-    }
-
-    var table: some View {
-        return tableView
-            .tableStyle(.inset(alternatesRowBackgrounds: true))
-            .id(category) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
-            .font(Font.body.monospacedDigit())
-            .focusedSceneValue(\.selection, .constant(itemSelection))
-            .focusedSceneValue(\.reloadCommand, .constant({
-                await appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-            }))
-            .searchable(text: $searchText)
     }
 
     /// The currently selected item

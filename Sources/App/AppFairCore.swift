@@ -158,7 +158,7 @@ struct SearchCommands: Commands {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
-    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+//    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     var appManager: AppManager
 
     var body: some Commands {
@@ -184,19 +184,20 @@ struct AppFairCommands: Commands {
         CommandMenu(Text("Fair")) {
             Text("Reload Apps")
                 .button {
-                    guard let cmd = reloadCommand else {
-                        dbg("no reload command")
-                        return
-                    }
-                    let start = CFAbsoluteTimeGetCurrent()
-                    Task {
-                        await cmd()
-                        let end = CFAbsoluteTimeGetCurrent()
-                        dbg("reloaded:", end - start)
-                    }
+                    await appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+//                    guard let cmd = reloadCommand else {
+//                        dbg("no reload command")
+//                        return
+//                    }
+//                    let start = CFAbsoluteTimeGetCurrent()
+//                    Task {
+//                        await cmd()
+//                        let end = CFAbsoluteTimeGetCurrent()
+//                        dbg("reloaded:", end - start)
+//                    }
                 }
                 .keyboardShortcut("R")
-                .disabled(reloadCommand == nil)
+//                .disabled(reloadCommand == nil)
         }
     }
 }
@@ -677,6 +678,10 @@ public struct NavigationRootView : View {
         } content: {
             AppDetailView()
         }
+        // warning: this spikes CPU usage when idle
+//        .focusedSceneValue(\.reloadCommand, .constant({
+//            await appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+//        }))
     }
 }
 
