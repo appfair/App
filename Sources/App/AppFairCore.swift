@@ -745,7 +745,6 @@ extension View {
             .linearGradient(colors: [.green, offset], startPoint: .top, endPoint: .bottomTrailing),
             .linearGradient(colors: [.blue, offset], startPoint: .top, endPoint: .bottomTrailing)
         )
-
     }
 }
 

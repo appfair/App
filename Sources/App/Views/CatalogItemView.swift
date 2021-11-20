@@ -610,9 +610,14 @@ struct CatalogItemView: View {
             if let iconURL = item.iconURL {
                 URLImage(url: iconURL, resizable: .fit)
             } else {
-                FairIconView(item.name)
+                // fall-back to the generated image for the app
+                FairIconView(item.name, subtitle: "App Fair", iconColor: itemTintColor())
             }
         }
+    }
+
+    func itemTintColor() -> Color {
+         item.tintColor() ?? FairIconView.iconColor(name: item.appNameHyphenated)
     }
 
     func categorySymbol() -> some View {
@@ -621,7 +626,7 @@ struct CatalogItemView: View {
         return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(color: item.tintColor() ?? FairIconView.iconColor(name: item.appNameHyphenated))
+            .fairTint(color: itemTintColor())
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
