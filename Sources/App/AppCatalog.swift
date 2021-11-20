@@ -27,64 +27,99 @@ extension AppCatalogItem {
     }
 
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5
-    var riskLevel: Int {
+    var riskLevel: AppRisk {
         // let groups = Set(item.appCategories.flatMap(\.groupings))
         let categories = Set((self.permissions ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
         // the naieve classification just counts the categories
-        return max(0, min(5, categories.count))
-    }
-
-    func riskColor() -> Color {
-        switch riskLevel {
-        case 0: return Color.green
-        case 1: return Color.mint
-        case 2: return Color.yellow
-        case 3: return Color.orange
-        default: return Color.red
-        }
+        let value = max(0, min(5, categories.count))
+        return AppRisk(rawValue: value) ?? .allCases.last!
     }
 
     /// The label summarizing how risky the app appears to be
     func riskLabel() -> some View {
         Group {
             let level = riskLevel
-            switch level {
-            case 0...50:
-                riskText()
-                    .label(image: Image(systemName: "\(level)"))
-                    .foregroundColor(riskColor())
-            default:
-                riskText()
-                    .label(image: Image(systemName: "exclamationmark.triangle.fill"))
-            }
+            level.textLabel()
+                .label(image: Image(systemName: "\(level.rawValue)"))
+                .foregroundColor(level.riskColor())
         }
         .symbolVariant(.square)
         .symbolVariant(.fill)
         .symbolRenderingMode(SymbolRenderingMode.hierarchical)
-        .help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskText())
-    }
-
-    /// The text summarizing how risky the app appears to be
-    func riskText() -> Text {
-        switch riskLevel {
-        case 0:
-            return Text("Harmless")
-        case 1:
-            return Text("Mostly Harmless")
-        case 2:
-            return Text("Risky")
-        case 3:
-            return Text("Hazardous")
-        case 4:
-            return Text("Dangerous")
-        default:
-            return Text("Perilous")
-        }
+        .help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
     }
 
     /// The topic identfier for the initial category
     var primaryCategoryIdentifier: AppCategory? {
         categories?.compactMap(AppCategory.init(metadataID:)).first
+    }
+}
+
+enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
+    case harmless
+    case mostlyHarmless
+    case risky
+    case hazardous
+    case dangerous
+    case perilous
+
+    var id: Self { self }
+
+    static func < (lhs: AppRisk, rhs: AppRisk) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    func textLabel() -> Text {
+        switch self {
+        case .harmless:
+            return Text("Harmless")
+        case .mostlyHarmless:
+            return Text("Mostly Harmless")
+        case .risky:
+            return Text("Risky")
+        case .hazardous:
+            return Text("Hazardous")
+        case .dangerous:
+            return Text("Dangerous")
+        case .perilous:
+            return Text("Perilous")
+        }
+    }
+
+    func riskColor() -> Color {
+        switch self {
+        case .harmless:
+            return Color.green
+        case .mostlyHarmless:
+            return Color.mint
+        case .risky:
+            return Color.yellow
+        case .hazardous:
+            return Color.orange
+        case .dangerous:
+            return Color.red
+        case .perilous:
+            return Color.red
+        }
+    }
+
+    func riskSummaryText() -> Text {
+        let prefix = textLabel()
+
+        switch self {
+        case .harmless:
+            return prefix + Text(" apps are sandboxed and have no ability to connect to the internet, read or write files outside of the sandbox, or connect to a camera, microphone, or other device. They can be considered harmless in terms of the potential risks to your system and personal information.")
+        case .mostlyHarmless:
+            return prefix + Text(" apps are granted a single category of permission, which means they can either connect to the internet, connect to a device (such as the camera or microphone) or read files outside of the sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered mostly harmless.")
+        case .risky:
+            return prefix + Text(" apps are sandboxed and have a variety of permissions which, in combination, can put your system at risk. For example, they may be able to both read & write user-selected files, as well as connect to the internet, which makes them potential sources of data exfiltration or corruption. You should only install these apps from a reputable source.")
+        case .hazardous:
+            return prefix + Text(" apps are sandboxed and have a variety of permissions enabled. As such, they can perform many system operations that are unavailable to apps with reduced permission sets. You should only install these apps from a reputable source.")
+        case .dangerous:
+            return prefix + Text(" apps are still sandboxed, but they are granted a wide array of entitlements that makes them capable of damaging or hijacking your system. You should only install these apps from a trusted source.")
+        case .perilous:
+            return prefix + Text(" apps are granted all the categories of permission entitlement, and so can modify your system or damage your system in many ways. Despite being sandboxed, they should be considered to have the maximum possible permissions. You should only install these apps from a very trusted source.")
+        }
     }
 }
 

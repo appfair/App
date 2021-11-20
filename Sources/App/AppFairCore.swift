@@ -340,6 +340,7 @@ struct GeneralSettingsView: View {
     @AppStorage("showPreReleases") private var showPreReleases = false
 //    @AppStorage("controlSize") private var controlSize = 3.0
     @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
+    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
 
     var body: some View {
         Form {
@@ -351,14 +352,23 @@ struct GeneralSettingsView: View {
 
             Divider()
 
+            HStack(alignment: .firstTextBaseline) {
+                AppRiskPicker(risk: $riskFilter)
+                riskFilter.riskSummaryText()
+                    .textSelection(.enabled)
+                    .font(.body)
+                    .frame(height: 150, alignment: .top)
+            }
+
             Toggle(isOn: $showPreReleases) {
                 Text("Show Pre-Releases")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
+
             Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
                 .font(.body)
                 .multilineTextAlignment(.leading)
-                .frame(maxHeight: .infinity, alignment: .top)
+                .frame(height: 200, alignment: .top)
 
         }
         .padding(20)
@@ -405,6 +415,22 @@ struct ThemeStylePicker: View {
             }
         } label: {
             Text("Theme:")
+        }
+        .radioPickerStyle()
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct AppRiskPicker: View {
+    @Binding var risk: AppRisk
+
+    var body: some View {
+        Picker(selection: $risk) {
+            ForEach(AppRisk.allCases) { appRisk in
+                appRisk.textLabel()
+            }
+        } label: {
+            Text("Risk Exposure:")
         }
         .radioPickerStyle()
     }
@@ -491,7 +517,7 @@ public struct AppSettingsView: View {
                 .tag(Tabs.advanced)
         }
         .padding(20)
-        .frame(width: 500)
+        .frame(width: 600)
     }
 }
 
@@ -622,6 +648,7 @@ public struct NavigationRootView : View {
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
     @State var category: AppManager.SidebarItem? = .popular
+    @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
 
     public var body: some View {
         triptychView
@@ -636,7 +663,7 @@ public struct NavigationRootView : View {
                         .keyboardShortcut("R")
                 }
                 ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
-                    DisplayModePicker(mode: $appManager.displayMode)
+                    DisplayModePicker(mode: $displayMode)
                 }
             }
             .task {
@@ -667,8 +694,8 @@ public struct NavigationRootView : View {
     }
 
     public var triptychView : some View {
-        TriptychView(orient: $appManager.displayMode) {
-            SidebarView(selection: $selection, category: $category)
+        TriptychView(orient: $displayMode) {
+            SidebarView(selection: $selection, category: $category, displayMode: $displayMode)
         } list: {
             AppsListView(selection: $selection, category: $category)
         } table: {
@@ -903,6 +930,7 @@ struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
+    @Binding var displayMode: TriptychOrient
 
     func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
         let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
@@ -967,7 +995,7 @@ struct SidebarView: View {
     }
 
     @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
-        switch appManager.displayMode {
+        switch displayMode {
         case .list:
             AppsListView(selection: $selection, category: $category)
         #if os(macOS)

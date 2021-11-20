@@ -1,4 +1,5 @@
 import FairApp
+import OpenGL
 
 
 
@@ -31,9 +32,9 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     ///
     @AppStorage("hubToken") public var hubToken = ""
 
-    @AppStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.last!
-
     @AppStorage("showPreReleases") var showPreReleases = false
+
+    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
 
     @Published public var errors: [AppError] = []
 
@@ -121,6 +122,7 @@ extension AppManager {
         self
             .appInfoItems(includePrereleases: showPreReleases)
             .filter({ matchesFilterText(item: $0) })
+            .filter({ category == .updated || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ categoryFilter(category: category, item: $0) })
             .sorted(using: sortOrder + categorySortOrder(category: category))
@@ -149,6 +151,10 @@ extension AppManager {
 
     func matchesFilterText(item: AppInfo) -> Bool {
         displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
+    }
+
+    func matchesRiskFilter(item: AppInfo) -> Bool {
+        item.release.riskLevel <= riskFilter
     }
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
