@@ -233,7 +233,7 @@ extension Station {
         // check the top 100 tag list with:
         // cat Sources/App/Resources/stations.csv | tr '"' '\n' | grep ',' | tr ',' '\n' | tr '[A-Z]' '[a-z]' | grep '[a-z]' | sort | uniq -c | sort -nr | head -n 100
 
-        let tint = Color(hue: tagString.seededRandom, saturation: 0.8, brightness: 0.8)
+        let tint = Color(hue: tagString.hueComponent, saturation: 0.8, brightness: 0.8)
 
         switch tagString {
         case "60s": return (tagString, Text("tag-60s"), Image(systemName: "6.circle"), tint)
@@ -379,6 +379,14 @@ extension Station {
             }
         })
         .frame(maxHeight: size)
+    }
+}
+
+private extension String {
+    /// Returns a pseudo-random value from 0.0-1.0 based on the word's SHA hash
+    var hueComponent: CGFloat {
+        let i: UInt8 = self.utf8Data.sha256().last ?? 0
+        return CGFloat(i) / CGFloat(UInt8.max)
     }
 }
 
