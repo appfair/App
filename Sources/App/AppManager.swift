@@ -119,7 +119,7 @@ extension AppManager {
         self
             .appInfoItems(includePrereleases: showPreReleases)
             .filter({ matchesFilterText(item: $0) })
-            .filter({ category == .updated || matchesRiskFilter(item: $0) })
+            .filter({ category == .installed || category == .updated || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ categoryFilter(category: category, item: $0) })
             .sorted(using: sortOrder + categorySortOrder(category: category))
