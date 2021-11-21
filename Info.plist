@@ -13,9 +13,13 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.353</string>
+	<string>0.8.354</string>
 	<key>CFBundleVersion</key>
-	<string>371</string>
+	<string>375</string>
+	<key>FairSymbol</key>
+	<string>music.note.list</string>
+	<key>FairTint</key>
+	<string></string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-write</key>
