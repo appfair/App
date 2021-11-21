@@ -108,14 +108,21 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
         }
     }
 
-    func riskSummaryText() -> Text {
-        let prefix = textLabel()
+    /// The summary text.
+    /// - Parameter bold: whether to bold the risk name
+    /// - Returns: the text to use to describe the risk level
+    func riskSummaryText(bold: Bool = false) -> Text {
+        var prefix = textLabel()
+        if bold {
+            // set bold=false for .help() text, or else the following will be logged: “[SwiftUI] Only unstyled text can be used with help(_:)”
+            prefix = prefix.bold()
+        }
 
         switch self {
         case .harmless:
             return prefix + Text(" apps are sandboxed and have no ability to connect to the internet, read or write files outside of the sandbox, or connect to a camera, microphone, or other device. They can be considered harmless in terms of the potential risks to your system and personal information.")
         case .mostlyHarmless:
-            return prefix + Text(" apps are granted a single category of permission, which means they can either connect to the internet, connect to a device (such as the camera or microphone) or read files outside of the sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered mostly harmless.")
+            return prefix + Text(" apps are granted a single category of permission, which means they can either connect to the internet, connect to a device (such as the camera or microphone) or read files outside of their sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered safe.")
         case .risky:
             return prefix + Text(" apps are sandboxed and have a variety of permissions which, in combination, can put your system at risk. For example, they may be able to both read & write user-selected files, as well as connect to the internet, which makes them potential sources of data exfiltration or corruption. You should only install these apps from a reputable source.")
         case .hazardous:

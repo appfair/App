@@ -354,7 +354,7 @@ struct GeneralSettingsView: View {
 
             HStack(alignment: .firstTextBaseline) {
                 AppRiskPicker(risk: $riskFilter)
-                riskFilter.riskSummaryText()
+                riskFilter.riskSummaryText(bold: true)
                     .textSelection(.enabled)
                     .font(.body)
                     .frame(height: 150, alignment: .top)
