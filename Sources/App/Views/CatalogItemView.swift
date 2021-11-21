@@ -688,10 +688,10 @@ extension AppCatalogItem {
                         .help(error.localizedDescription)
                 case .empty:
                     fallbackIcon()
-                        .grayscale(0.9)
+                        .grayscale(1.0)
                 @unknown default:
                     fallbackIcon()
-                        .grayscale(0.9)
+                        .grayscale(1.0)
                 }
             }
         } else {
