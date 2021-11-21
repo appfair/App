@@ -35,6 +35,14 @@
     <key>CFBundleVersion</key>
     <string>1</string>
 
+    <!-- a hex tint color to apply as the base of the generated icon -->
+    <key>FairTint</key>
+    <string></string>
+
+    <!-- a system symbol name to place in the icon instead of the app's monogram -->
+    <key>FairSymbol</key>
+    <string></string>
+
     <!-- Each key in Sandbox.entitlements must have a corresponding explanation here -->
     <key>FairUsage</key>
     <dict>
