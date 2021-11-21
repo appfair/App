@@ -40,20 +40,6 @@ extension AppCatalogItem {
         return AppRisk(rawValue: value) ?? .allCases.last!
     }
 
-    /// The label summarizing how risky the app appears to be
-    func riskLabel() -> some View {
-        Group {
-            riskLevel.textLabel()
-                .label(image: Image(systemName: "\(riskLevel.rawValue)"))
-                .foregroundColor(riskLevel.riskColor())
-        }
-        .symbolVariant(.square)
-        .symbolVariant(.fill)
-        .symbolRenderingMode(SymbolRenderingMode.hierarchical)
-        //.help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
-        .help(riskLevel.riskSummaryText())
-    }
-
     /// The topic identfier for the initial category
     var primaryCategoryIdentifier: AppCategory? {
         categories?.compactMap(AppCategory.init(metadataID:)).first
@@ -91,6 +77,20 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
         }
     }
 
+    /// The label summarizing how risky the app appears to be
+    func riskLabel(help: Bool = true) -> some View {
+        Group {
+            textLabel()
+                .label(image: Image(systemName: "\(self.rawValue)"))
+                .foregroundColor(self.riskColor())
+        }
+        .symbolVariant(.square)
+        .symbolVariant(.fill)
+        .symbolRenderingMode(SymbolRenderingMode.hierarchical)
+        //.help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
+    }
+
+
     func riskColor() -> Color {
         switch self {
         case .harmless:
@@ -104,7 +104,7 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
         case .dangerous:
             return Color.red
         case .perilous:
-            return Color.red
+            return Color.pink
         }
     }
 

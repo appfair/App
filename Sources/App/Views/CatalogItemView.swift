@@ -258,7 +258,8 @@ struct CatalogItemView: View {
                 }
                 .frame(height: 200)
 
-                groupBox(title: Text("Permissions: ") + item.riskLevel.textLabel().fontWeight(.regular), trailing: item.riskLabel()
+                groupBox(title: Text("Permissions: ") + item.riskLevel.textLabel().fontWeight(.regular), trailing: item.riskLevel.riskLabel()
+                            .help(item.riskLevel.riskSummaryText())
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
                     permissionsList()

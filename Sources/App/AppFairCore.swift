@@ -427,7 +427,7 @@ struct AppRiskPicker: View {
     var body: some View {
         Picker(selection: $risk) {
             ForEach(AppRisk.allCases) { appRisk in
-                appRisk.textLabel()
+                appRisk.riskLabel()
             }
         } label: {
             Text("Risk Exposure:")

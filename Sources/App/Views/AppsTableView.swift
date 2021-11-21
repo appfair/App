@@ -89,7 +89,8 @@ struct AppsTableView : View, ItemTableView {
 //                coreSizeColumn
 
                 let riskColumn = TableColumn("Risk", value: \AppInfo.release.riskLevel) { item in
-                    item.release.riskLabel()
+                    item.release.riskLevel.riskLabel()
+                        .help(item.release.riskLevel.riskSummaryText())
                 }
                 riskColumn.width(ideal: 125)
 

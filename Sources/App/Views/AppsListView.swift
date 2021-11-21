@@ -48,7 +48,8 @@ struct AppsListView : View {
                         .lineLimit(1)
                 }
                 HStack {
-                    item.release.riskLabel()
+                    item.release.riskLevel.riskLabel()
+                        .help(item.release.riskLevel.riskSummaryText())
                         .labelStyle(.iconOnly)
                         .frame(width: 20)
                     Text(verbatim: item.releasedVersion?.versionStringExtended ?? "")
