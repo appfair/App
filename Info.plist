@@ -29,6 +29,15 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>302</string>
+
+    <!-- a hex tint color to apply as the base of the generated icon -->
+    <key>FairTint</key>
+    <string></string>
+
+    <!-- a system symbol name to place in the icon instead of the app's monogram -->
+    <key>FairSymbol</key>
+    <string>gift.fill</string>
+
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.executable</key>
