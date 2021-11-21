@@ -31,13 +31,13 @@
       "size" : "40x40"
     },
     {
-      "filename" : "AppIcon-120.png",
+      "filename" : "appicon-iphone-60x60@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60"
     },
     {
-      "filename" : "AppIcon-180.png",
+      "filename" : "appicon-iphone-60x60@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60"
@@ -73,25 +73,25 @@
       "size" : "40x40"
     },
     {
-      "filename" : "AppIcon-76.png",
+      "filename" : "appicon-ipad-76x76@1x.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "size" : "76x76"
     },
     {
-      "filename" : "AppIcon-152.png",
+      "filename" : "appicon-ipad-76x76@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "76x76"
     },
     {
-      "filename" : "AppIcon-167.png",
+      "filename" : "appicon-ipad-83.5x83.5@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "83.5x83.5"
     },
     {
-      "filename" : "AppIcon-1024.png",
+      "filename" : "appicon-ios-marketing-1024x1024@1x.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"
@@ -102,7 +102,7 @@
       "size" : "16x16"
     },
     {
-      "filename" : "AppIcon-32.png",
+      "filename" : "appicon-mac-16x16@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
@@ -123,7 +123,7 @@
       "size" : "128x128"
     },
     {
-      "filename" : "AppIcon-256.png",
+      "filename" : "appicon-mac-128x128@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
@@ -134,7 +134,7 @@
       "size" : "256x256"
     },
     {
-      "filename" : "AppIcon-512.png",
+      "filename" : "appicon-mac-256x256@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
@@ -145,7 +145,7 @@
       "size" : "512x512"
     },
     {
-      "filename" : "AppIcon-1024.png",
+      "filename" : "appicon-mac-512x512@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"
