@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.355</string>
+	<string>0.8.356</string>
 	<key>CFBundleVersion</key>
-	<string>376</string>
+	<string>377</string>
 	<key>FairSymbol</key>
 	<string>music.note.list</string>
 	<key>FairTint</key>
