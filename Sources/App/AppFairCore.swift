@@ -487,8 +487,8 @@ public struct HelpButton : View {
                 openURL(url)
             }
         }) {
-            //Image(systemName: "questionmark.circle.fill")
-            Image(systemName: "questionmark")
+            //FairSymbol.questionmark_circle_fill
+            FairSymbol.questionmark
         }
         .buttonStyle(.bordered)
     }

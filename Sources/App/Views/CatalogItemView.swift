@@ -346,13 +346,13 @@ struct CatalogItemView: View {
                 return Text(value, format: .number)
             }
         } else {
-            return SwiftUI.Text(Image(systemName: "questionmark.square"))
+            return SwiftUI.Text(FairSymbol.questionmark_square.image)
         }
     }
 
     /// Show a histogram of where the given value lies in the context of other apps in the grouping
     func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        Image(systemName: "chart.bar.xaxis")
+        FairSymbol.chart_bar_xaxis.image
             .resizable()
     }
 
@@ -581,7 +581,7 @@ struct CatalogItemView: View {
                                 .controlSize(.small) // needs to be small to fit in the button
                                 .opacity(currentActivity == activity ? 1 : 0)
                         } else {
-                            Image(systemName: "circle")
+                            FairSymbol.circle
                         }
                     }
                     .frame(width: 20, height: 15)
@@ -672,9 +672,6 @@ struct CatalogItemView: View {
 
 extension AppCatalogItem {
     @ViewBuilder func iconImage() -> some View {
-//        fallbackIcon()
-//            .frame(width: 25, height: 25)
-
         if let iconURL = self.iconURL {
             AsyncImage(url: iconURL) { phase in
                 switch phase {
@@ -682,23 +679,19 @@ extension AppCatalogItem {
                     image
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
-                        .transition(.opacity)
                 case .failure(let error):
                     fallbackIcon()
                         .brightness(0.4)
                         .help(error.localizedDescription)
-                        .transition(.opacity)
                 case .empty:
                     fallbackIcon()
                         .grayscale(1.0)
-                        .transition(.opacity)
                 @unknown default:
                     fallbackIcon()
-                        .grayscale(1.0)
-                        .transition(.opacity)
+                        .grayscale(0.8)
                 }
             }
-            .transition(.opacity)
+            .transition(.slide)
         } else {
             fallbackIcon()
                 .grayscale(1.0)
