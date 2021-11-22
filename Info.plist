@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.7</string>
+	<string>0.0.8</string>
 	<key>CFBundleVersion</key>
-	<string>77</string>
+	<string>78</string>
 	<key>FairSymbol</key>
 	<string>41.circle</string>
 	<key>FairTint</key>
