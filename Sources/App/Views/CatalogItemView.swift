@@ -21,7 +21,6 @@ struct CatalogItemView: View {
 
     @EnvironmentObject var appManager: AppManager
     @Environment(\.openURL) var openURLAction
-    @AppStorage("showPreReleases") private var showPreReleases = false
 
     @State var currentActivity: Activity? = nil
     @State var progress = Progress(totalUnitCount: 1)

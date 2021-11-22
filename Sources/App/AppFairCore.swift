@@ -773,13 +773,33 @@ extension View {
     @available(macOS 12.0, iOS 15.0, *)
     func fairTint(color: Color, offset: Color = Color.secondary.opacity(0.8)) -> some View {
         foregroundStyle(
-            .linearGradient(colors: [color, offset], startPoint: .top, endPoint: .bottomTrailing),
-            .linearGradient(colors: [.green, offset], startPoint: .top, endPoint: .bottomTrailing),
-            .linearGradient(colors: [.blue, offset], startPoint: .top, endPoint: .bottomTrailing)
+            .linearGradient(colors: [color, color.opacity(0.8)], startPoint: .top, endPoint: .bottom)
         )
+//        foregroundStyle(
+//            .linearGradient(colors: [color, offset], startPoint: .top, endPoint: .bottomTrailing),
+//            .linearGradient(colors: [.green, offset], startPoint: .top, endPoint: .bottomTrailing),
+//            .linearGradient(colors: [.blue, offset], startPoint: .top, endPoint: .bottomTrailing)
+//        )
     }
 }
 
+extension SwiftUI.Color {
+    /// Adjusrs the given components of the color
+    @available(*, deprecated, message: "must handle color space conversion") // else: “-getHue:saturation:brightness:alpha: not valid for the NSColor Catalog color: #$customDynamic 2939580E-3E73-4C4B-B435-371CEF86B9D1; need to first convert colorspace.”
+    func adjust(hue: Double = 0.0, saturation: Double = 0.0, brightness: Double = 0.0, alpha: Double = 0.0) -> Color {
+        var h = CGFloat(0.0)
+        var s = CGFloat(0.0)
+        var b = CGFloat(0.0)
+        var a = CGFloat(0.0)
+        UXColor(self).getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        h += hue
+        s += saturation
+        b += brightness
+        a += alpha
+        return Color(hue: h, saturation: s, brightness: b, opacity: a)
+
+    }
+}
 public extension AppCategory {
     /// The grouping for an app category
     enum Grouping : String, CaseIterable, Hashable {

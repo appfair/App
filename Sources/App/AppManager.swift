@@ -105,7 +105,7 @@ extension AppManager {
             appInfos
                 .filter { item in
                     // "beta" apps are are included when the pre-release flag is set
-                    includePrereleases == true || item.release.beta == false || item.installedPlist != nil
+                    includePrereleases == true || item.release.beta == false // || item.installedPlist != nil
                 }
                 .sorting(by: \.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
                 .first // there can be only a single bundle identifier in the list for Identifiable

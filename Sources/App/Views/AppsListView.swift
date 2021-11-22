@@ -8,7 +8,6 @@ struct AppsListView : View {
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
-    @AppStorage("showPreReleases") private var showPreReleases = false
 
     var items: [AppInfo] {
         appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
