@@ -682,18 +682,23 @@ extension AppCatalogItem {
                     image
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
+                        .transition(.opacity)
                 case .failure(let error):
                     fallbackIcon()
                         .brightness(0.4)
                         .help(error.localizedDescription)
+                        .transition(.opacity)
                 case .empty:
                     fallbackIcon()
                         .grayscale(1.0)
+                        .transition(.opacity)
                 @unknown default:
                     fallbackIcon()
                         .grayscale(1.0)
+                        .transition(.opacity)
                 }
             }
+            .transition(.opacity)
         } else {
             fallbackIcon()
                 .grayscale(1.0)
