@@ -14,6 +14,18 @@
  */
 import FairApp
 
+@available(macOS 12.0, iOS 15.0, *)
+public struct ContentView: View {
+    @EnvironmentObject var store: Store
+
+    public var body: some View {
+        VStack {
+            Text("Welcome to Pan Opticon!").font(.largeTitle)
+            Text("(this app doesn't do anything, *yet*)").font(.headline)
+        }
+    }
+}
+
 // The entry point to creating your app is the `AppContainer` type,
 // which is a stateless enum declared in `AppMain.swift` and may not be changed.
 // 
@@ -40,18 +52,6 @@ public extension AppContainer {
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct ContentView: View {
-    @EnvironmentObject var store: Store
-
-    public var body: some View {
-        // A FairApp comes with built-in FairContentView behaviors.
-        // The `.placeholder` content will display some info about your app.
-        FairContentView(.placeholder)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
