@@ -409,6 +409,7 @@ struct CatalogItemView: View {
                 .disabled(isCatalogApp)
                 .hcenter()
         }
+        .symbolRenderingMode(.monochrome)
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle)
         .controlSize(.regular)
@@ -455,7 +456,7 @@ struct CatalogItemView: View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: true)
         //.keyboardShortcut(.delete)
             .disabled(!appInstalled)
-            .accentColor(.red)
+            //.accentColor(.red) // coflicts with the red background of the button
             .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
                 Text("Delete").button {
                     runTask(activity: .trash, confirm: true)
@@ -492,18 +493,18 @@ struct CatalogItemView: View {
         case reveal
         case launch
 
-        var info: (title: LocalizedStringKey, systemSymbol: String, tintColor: Color?, toolTip: LocalizedStringKey) {
+        var info: (title: Text, systemSymbol: String, tintColor: Color?, toolTip: Text) {
             switch self {
             case .install:
-                return ("Install", "square.and.arrow.down.fill", Color.blue, "Download and install the app.")
+                return (Text("Install"), "square.and.arrow.down.fill", Color.blue, Text("Download and install the app."))
             case .update:
-                return ("Update", "square.and.arrow.down.on.square", Color.orange, "Update to the latest version of the app.")
+                return (Text("Update"), "square.and.arrow.down.on.square", Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
             case .trash:
-                return ("Delete", "trash", Color.red, "Delete the app from your computer.")
+                return (Text("Delete"), "trash", Color.red, Text("Delete the app from your computer."))
             case .reveal:
-                return ("Reveal", "doc.text.fill.viewfinder", Color.indigo, "Displays the app install location in the Finder.")
+                return (Text("Reveal"), "doc.text.fill.viewfinder", Color.indigo, Text("Displays the app install location in the Finder."))
             case .launch:
-                return ("Launch", "checkmark.seal.fill", Color.green, "Launches the app.")
+                return (Text("Launch"), "checkmark.seal.fill", Color.green, Text("Launches the app."))
             }
         }
     }
@@ -569,7 +570,8 @@ struct CatalogItemView: View {
         }, label: {
             Label(title: {
                 HStack(spacing: 5) {
-                    Text(activity.info.title)
+                    activity.info.title
+                        .font(Font.headline.smallCaps())
                         .truncationMode(.middle)
                         .lineLimit(1)
                         .multilineTextAlignment(.center)
