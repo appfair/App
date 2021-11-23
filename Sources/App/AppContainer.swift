@@ -47,10 +47,11 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        // A FairApp comes with built-in FairContentView behaviors.
-        // The `.placeholder` content will display some info about your app.
-        Text("Welcome to my Art Project!").font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack {    
+            Text("Welcome to Neural Scry!").font(.largeTitle)
+            Text("(this app doesn't do anything yet)").font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
