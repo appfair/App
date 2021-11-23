@@ -19,13 +19,13 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.1</string>
+	<string>0.0.2</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>FairSymbol</key>
-	<string></string>
+	<string>eye</string>
 	<key>FairSymbol-FairComment</key>
 	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
 	<key>FairTint</key>
