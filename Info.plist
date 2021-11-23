@@ -2,110 +2,81 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!--
-        fair-ground apps are uniquely identified by the GitHub organization that
-        owns the fork of the fair-ground's /App.git base repository.
-        The organizations name, in the form of 'Some-Word', will cause the app
-        to be named "Some Word".
-        You should manually edit the CFBundleName and CFBundleIdentifier to match
-        your app's identifier, but if it is left as the default 'app.App-Name',
-        then the integration phase will swap in the correct
-        name for your organization, which will be included in the release build.
-    -->
-
-    <!-- the name of your app; must match your App-Name with a space for the hyphen -->
-    <key>CFBundleName</key>
-    <string>App Name</string>
-
-    <!-- the bundle ID, which must be: "app.App-Name" with your app org name -->
-    <key>CFBundleIdentifier</key>
-    <string>app.App-Name</string>
-
-    <!-- set the value to your app's category (e.g., games, music, developer-tools) -->
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.utilities</string>
-
-    <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
-    <!-- each fair-ground integration must increase this value -->
-    <key>CFBundleShortVersionString</key>
-    <string>0.0.1</string>
-
-    <!-- the monotonically non-decreasing build number -->
-    <!-- each fair-ground integration must increase this value -->
-    <key>CFBundleVersion</key>
-    <string>1</string>
-
-    <!-- a hex tint color to apply as the base of the generated icon -->
-    <key>FairTint</key>
-    <string></string>
-
-    <!-- a system symbol name to place in the icon instead of the app's monogram -->
-    <key>FairSymbol</key>
-    <string></string>
-
-    <!-- Each key in Sandbox.entitlements must have a corresponding explanation here -->
-    <key>FairUsage</key>
-    <dict>
-        <key>com.apple.security.files.user-selected.read-write</key>
-        <string>This app needs to read and write files in order to…</string>
-
-        <key>com.apple.security.network.client</key>
-        <string>This app needs to access the network in order to…</string>
-    </dict>
-
-    <!-- Free & Fair, Forever -->
-    <key>NSHumanReadableCopyright</key>
-    <string>GNU Affero General Public License</string>
-
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-
-    <key>UIDeviceFamily</key>
-    <integer>2</integer>
-
-    <!-- 0: normal mode; 5: hide everything -->
-    <key>LSUIPresentationMode</key>
-    <integer>0</integer>
-
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <!-- Don't block http:// URLs -->
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
-
-    <!-- Enables opening the original document from a file provider, rather than a copy of the document -->
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
-
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-
-    <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-
-    <key>LSMinimumSystemVersion</key>
-    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-
-
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-
-    <key>UILaunchScreen</key>
-    <dict/>
-
-    <key>UIApplicationSupportsIndirectInputEvents</key>
-    <true/>
-
-    <key>UIApplicationSceneManifest</key>
-    <dict>
-        <key>UIApplicationSupportsMultipleScenes</key>
-        <true/>
-    </dict>
+	<key>App Fair Info</key>
+	<string>This Info.plist file is the central metadata for the app, both at runtime and during the FAIR process. See https://www.appfair.net for documentation and examples. At a minimum, the Bundle name and Bundle identifier should be configured to match the app fork name.</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.App-Name</string>
+	<key>CFBundleIdentifier-FairComment</key>
+	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>App Name</string>
+	<key>CFBundleName-FairComment</key>
+	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.1.22</string>
+	<key>CFBundleShortVersionString-FairComment</key>
+	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
+	<key>CFBundleVersion</key>
+	<string>291</string>
+	<key>FairSymbol</key>
+	<string></string>
+	<key>FairSymbol-FairComment</key>
+	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
+	<key>FairTint</key>
+	<string></string>
+	<key>FairTint-FairComment</key>
+	<string>The FairTint property is a 6-character RBG hex string for the base color of the generated icon</string>
+	<key>FairUsage</key>
+	<dict>
+		<key>com.apple.security.files.user-selected.read-only</key>
+		<string>This app needs to read local files in order to load user-selected books</string>
+		<key>com.apple.security.files.user-selected.read-write</key>
+		<string>This app needs to read and write files in order to…</string>
+		<key>com.apple.security.network.client</key>
+		<string>This app needs to access the network in order to download books</string>
+	</dict>
+	<key>FairUsage-FairComment</key>
+	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSApplicationCategoryType-FairComment</key>
+	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>LSUIPresentationMode</key>
+	<integer>0</integer>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>GNU Affero General Public License</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIDeviceFamily</key>
+	<integer>2</integer>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 </dict>
 </plist>
