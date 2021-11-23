@@ -6,20 +6,28 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>app.Bon-Mot</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
+	<key>CFBundleIdentifier-FairComment</key>
+	<string>CFBundleIdentifier should be "app.Abc-Xyz", where "Abc" is the first word in the app name and "Xyz" is the second word.</string>
 	<key>CFBundleName</key>
 	<string>Bon Mot</string>
+	<key>CFBundleName-FairComment</key>
+	<string>CFBundleName should be "Abc Xyz", where "Abc" is the first word in the app name and "Xyz" is the second word of the app org.</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.16</string>
+	<string>1.1.18</string>
+	<key>CFBundleShortVersionString-FairComment</key>
+	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>289</string>
+	<string>290</string>
 	<key>FairSymbol</key>
 	<string>book</string>
+	<key>FairSymbol-FairComment</key>
+	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
 	<key>FairTint</key>
 	<string></string>
+	<key>FairTint-FairComment</key>
+	<string>The FairTint property is a 6-character RBG hex string for the base color of the generated icon</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
@@ -29,8 +37,12 @@
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
 	</dict>
+	<key>FairUsage-FairComment</key>
+	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
+	<string>public.app-category.reference</string>
+	<key>LSApplicationCategoryType-FairComment</key>
+	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -62,7 +74,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>otherkey</key>
-	<string>1.1.1</string>
 </dict>
 </plist>
