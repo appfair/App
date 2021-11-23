@@ -13,11 +13,11 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.155</string>
+	<string>0.8.156</string>
 	<key>CFBundleVersion</key>
-	<string>269</string>
+	<string>270</string>
 	<key>FairSymbol</key>
-	<string>lasso</string>
+	<string>burst</string>
 	<key>FairTint</key>
 	<string></string>
 	<key>FairUsage</key>
