@@ -7,23 +7,23 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.Cloud-Cuckoo</string>
+	<string>app.App-Name</string>
 	<key>CFBundleIdentifier-FairComment</key>
 	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Cloud Cuckoo</string>
+	<string>App Name</string>
 	<key>CFBundleName-FairComment</key>
 	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.18</string>
+	<string>0.8.19</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>273</string>
+	<string>274</string>
 	<key>FairSymbol</key>
 	<string>burst</string>
 	<key>FairSymbol-FairComment</key>
