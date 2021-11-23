@@ -21,8 +21,9 @@ public struct ContentView: View {
     public var body: some View {
         VStack {
             Text("Welcome to Pan Opticon!").font(.largeTitle)
-            Text("(this app doesn't do anything, *yet*)").font(.headline)
+            Text("(this app doesn't do anything, *yet*)").font(.body)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
