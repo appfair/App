@@ -7,23 +7,23 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.App-Name</string>
+	<string>app.Brew-Meister</string>
 	<key>CFBundleIdentifier-FairComment</key>
 	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>App Name</string>
+	<string>Brew Meister</string>
 	<key>CFBundleName-FairComment</key>
 	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.2</string>
+	<string>0.0.3</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>FairSymbol</key>
 	<string></string>
 	<key>FairSymbol-FairComment</key>
