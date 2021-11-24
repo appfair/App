@@ -14,7 +14,9 @@ struct MotionEffectView : UXViewRepresentable {
         view.animation = animation
         view.contentMode = .scaleAspectFit
         view.backgroundBehavior = .pauseAndRestore
+        #if os(macOS)
         view.autoresizingMask = [.width, .height]
+        #endif
         return view
     }
 
