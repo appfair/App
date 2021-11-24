@@ -19,13 +19,13 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.1</string>
+	<string>0.0.2</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>69</string>
 	<key>FairSymbol</key>
-	<string></string>
+	<string>hands.sparkles</string>
 	<key>FairSymbol-FairComment</key>
 	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
 	<key>FairTint</key>
@@ -34,12 +34,8 @@
 	<string>The FairTint property is a 6-character RBG hex string for the base color of the generated icon</string>
 	<key>FairUsage</key>
 	<dict>
-		<key>com.apple.security.files.user-selected.read-only</key>
-		<string>This app needs to read local files in order to load user-selected books</string>
 		<key>com.apple.security.files.user-selected.read-write</key>
-		<string>This app needs to read and write files in order to…</string>
-		<key>com.apple.security.network.client</key>
-		<string>This app needs to access the network in order to download books</string>
+		<string>Load and save user-selected Lottie files.</string>
 	</dict>
 	<key>FairUsage-FairComment</key>
 	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
