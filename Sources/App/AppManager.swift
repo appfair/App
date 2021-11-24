@@ -38,6 +38,9 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
+    /// Whether we are currently fetching apps
+    @Published var fetching: Bool = false
+
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
@@ -66,6 +69,8 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 extension AppManager {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         do {
+            self.fetching = true
+            defer { self.fetching = false }
             let start = CFAbsoluteTimeGetCurrent()
             let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
