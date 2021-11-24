@@ -63,6 +63,7 @@ public struct ContentView: View {
                     .button {
                         playing.toggle()
                     }
+                    .keyboardShortcut(KeyboardShortcut(.space))
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .help(playing ? Text("Pause the animation") : Text("Play the animation"))
@@ -79,6 +80,11 @@ public struct ContentView: View {
                 loopMode.textLabel
                     .font(.title)
                     .button {
+                        if self.loopMode == .playOnce {
+                            self.loopMode = .loop
+                        } else {
+                            self.loopMode = .playOnce
+                        }
                     }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
