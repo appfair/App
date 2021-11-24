@@ -13,7 +13,7 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher.git", .upToNextMajor(from: "7.1.1")),
     ],
     targets: [
-        .target(name: "App", dependencies: [ "Kingfisher", .product(name: "FairApp", package: "Fair") ], resources: [.process("Resources"), .copy("Bundle")]),
+        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair"), "Kingfisher" ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
