@@ -1,11 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Marc Prud'hommeaux on 11/24/21.
-//
-
-import Foundation
 import FairApp
 import Lottie
 
@@ -23,10 +15,6 @@ struct MotionEffectView : UXViewRepresentable {
         view.contentMode = .scaleAspectFit
         view.backgroundBehavior = .pauseAndRestore
         view.autoresizingMask = [.width, .height]
-
-//        view.observe(\.currentTime) {
-//
-//        }
         return view
     }
 
@@ -51,6 +39,7 @@ struct MotionEffectView : UXViewRepresentable {
     }
 
     class MotionCoordinator {
-
+        init() {
+        }
     }
 }

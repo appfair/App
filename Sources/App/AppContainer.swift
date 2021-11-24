@@ -47,16 +47,19 @@ public struct ContentView: View {
     @State var playing = true
     @State var loopMode = LottieLoopMode.playOnce
     @State var animationSpeed = 1.0
-    @State var animationTime: TimeInterval = 0
+    @State var animationTime: TimeInterval = 0 {
+        didSet {
+            playing = false
+        }
+    }
     @EnvironmentObject var store: Store
 
     public var body: some View {
         VStack {
-            MotionEffectView(animation: document.animation, playing: $playing, loopMode: $loopMode, animationSpeed: $animationSpeed, animationTime: $animationTime)
-            HStack {
-                Text("Play/Pause")
+            HStack(spacing: 20) {
+                (playing ? Text("Pause") : Text("Play"))
                     .label(image: playing ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
-                    .font(.largeTitle)
+                    .font(.title)
                     .button {
                         playing.toggle()
                     }
@@ -64,9 +67,38 @@ public struct ContentView: View {
                     .buttonStyle(.borderless)
                     .help(playing ? Text("Pause the animation") : Text("Play the animation"))
 
-                Slider(value: $animationTime, in: 0...document.animation.duration)
+                Slider(value: $animationTime, in: 0...document.animation.duration, label: {
+                }, minimumValueLabel: {
+                    Text(animationTime, format: .number.precision(.fractionLength(2)))
+                }, maximumValueLabel: {
+                    Text(document.animation.duration, format: .number.precision(.fractionLength(2)))
+                }, onEditingChanged: { changed in
+                    self.playing = false // pause when changing the slider
+                })
+
+                loopMode.textLabel
+                    .font(.title)
+                    .button {
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .help(playing ? Text("Pause the animation") : Text("Play the animation"))
+
             }
             .padding()
+            MotionEffectView(animation: document.animation, playing: $playing, loopMode: $loopMode, animationSpeed: $animationSpeed, animationTime: $animationTime)
+        }
+    }
+}
+
+extension LottieLoopMode {
+    @ViewBuilder var textLabel: some View {
+        switch self {
+        case .playOnce: Text("Play Once").label(image: FairSymbol.repeat_1.image)
+        case .loop: Text("Loop").label(image: FairSymbol.repeat.image)
+        case .autoReverse: Text("Auto-Reverse").label(image: FairSymbol.arrow_up_circle)
+        case .repeat(let count): Text("Repeat \(count)").label(image: FairSymbol.arrow_up_circle)
+        case .repeatBackwards(let count): Text("Reversed \(count)").label(image: FairSymbol.arrow_up_circle)
         }
     }
 }
