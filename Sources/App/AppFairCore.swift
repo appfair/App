@@ -341,6 +341,7 @@ struct GeneralSettingsView: View {
 //    @AppStorage("controlSize") private var controlSize = 3.0
     @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
     @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+    @AppStorage("iconBadge") private var iconBadge = true
 
     var body: some View {
         Form {
@@ -359,6 +360,12 @@ struct GeneralSettingsView: View {
                     .font(.body)
                     .frame(height: 150, alignment: .top)
             }
+
+            Toggle(isOn: $iconBadge) {
+                Text("Badge App Icon with update count")
+            }
+                .help(Text("Show the number of updates that are available to install."))
+
 
             Toggle(isOn: $showPreReleases) {
                 Text("Show Pre-Releases")
@@ -649,6 +656,7 @@ public struct NavigationRootView : View {
     @State var selection: AppInfo.ID? = nil
     @State var category: AppManager.SidebarItem? = .popular
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
+    @AppStorage("iconBadge") private var iconBadge = true
 
     public var body: some View {
         triptychView
@@ -671,7 +679,13 @@ public struct NavigationRootView : View {
                 await appManager.fetchApps()
             }
             .onChange(of: appManager.updateCount()) { updateCount in
-                UXApplication.shared.setBadge(updateCount)
+                if iconBadge == true {
+                    UXApplication.shared.setBadge(updateCount)
+                }
+            }
+            .onChange(of: iconBadge) { iconBadge in
+                // update the badge when the setting changes
+                UXApplication.shared.setBadge(iconBadge ? appManager.updateCount() : 0)
             }
             .onChange(of: selection) { newSelection in
                 dbg("selected:", newSelection)
