@@ -7,13 +7,13 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.App-Name</string>
+	<string>app.Lottie-Playground</string>
 	<key>CFBundleIdentifier-FairComment</key>
 	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>App Name</string>
+	<string>Lottie Playground</string>
 	<key>CFBundleName-FairComment</key>
 	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundlePackageType</key>
@@ -44,7 +44,7 @@
 	<key>FairUsage-FairComment</key>
 	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
+	<string>public.app-category.developer-tools</string>
 	<key>LSApplicationCategoryType-FairComment</key>
 	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
 	<key>LSMinimumSystemVersion</key>
