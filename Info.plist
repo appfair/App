@@ -7,23 +7,23 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.App-Name</string>
+	<string>app.Pan-Opticon</string>
 	<key>CFBundleIdentifier-FairComment</key>
 	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>App Name</string>
+	<string>Pan Opticon</string>
 	<key>CFBundleName-FairComment</key>
 	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.4</string>
+	<string>0.0.5</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>71</string>
+	<string>72</string>
 	<key>FairSymbol</key>
 	<string>eye</string>
 	<key>FairSymbol-FairComment</key>
