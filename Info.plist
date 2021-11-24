@@ -19,11 +19,11 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.5</string>
+	<string>0.0.6</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>73</string>
+	<string>74</string>
 	<key>FairSymbol</key>
 	<string></string>
 	<key>FairSymbol-FairComment</key>
@@ -44,7 +44,7 @@
 	<key>FairUsage-FairComment</key>
 	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
+	<string>public.app-category.reference</string>
 	<key>LSApplicationCategoryType-FairComment</key>
 	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
 	<key>LSMinimumSystemVersion</key>
