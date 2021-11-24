@@ -1023,9 +1023,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.17</string>
+	<string>0.1.18</string>
 	<key>CFBundleVersion</key>
-	<string>329</string>
+	<string>332</string>
 	<key>FairSymbol</key>
 	<string>doc.plaintext.fill</string>
 	<key>FairTint</key>
