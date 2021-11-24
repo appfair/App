@@ -13,7 +13,7 @@ let package = Package(
         //.package(url: "https://github.com/airbnb/lottie-ios.git", .branch("lottie/macos-spm")),
         //.package(url: "https://github.com/airbnb/lottie-ios.git", .upToNextMajor(from: "3.2.3")),
 
-        // This branch (https://github.com/airbnb/lottie-ios/pull/1391) allows Lottie to be used from both macOS and iOS
+        // This fork (https://github.com/airbnb/lottie-ios/pull/1391) allows Lottie to be used from both macOS and iOS
         .package(url: "https://github.com/msealand/lottie-ios.git", .branch("fix/multiplatform-spm")),
     ],
     targets: [

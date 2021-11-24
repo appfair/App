@@ -4,6 +4,33 @@
 <dict>
 	<key>App Fair Info</key>
 	<string>This Info.plist file is the central metadata for the app, both at runtime and during the FAIR process. See https://www.appfair.net for documentation and examples. At a minimum, the Bundle name and Bundle identifier should be configured to match the app fork name.</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>json</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>JSONIcon</string>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>application/json</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>After Effects Body Movin JSON</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>NSDocumentClass</key>
+			<string>$(PRODUCT_MODULE_NAME).Document</string>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -19,11 +46,11 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.2</string>
+	<string>0.0.3</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>69</string>
+	<string>70</string>
 	<key>FairSymbol</key>
 	<string>hands.sparkles</string>
 	<key>FairSymbol-FairComment</key>
