@@ -19,17 +19,17 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.3</string>
+	<string>0.0.4</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>3</string>
+	<string>4</string>
 	<key>FairSymbol</key>
-	<string></string>
+	<string>drop.triangle</string>
 	<key>FairSymbol-FairComment</key>
 	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
 	<key>FairTint</key>
-	<string></string>
+	<string>FFFF00</string>
 	<key>FairTint-FairComment</key>
 	<string>The FairTint property is a 6-character RBG hex string for the base color of the generated icon</string>
 	<key>FairUsage</key>
@@ -44,7 +44,7 @@
 	<key>FairUsage-FairComment</key>
 	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
+	<string>public.app-category.lifestyle</string>
 	<key>LSApplicationCategoryType-FairComment</key>
 	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
 	<key>LSMinimumSystemVersion</key>
