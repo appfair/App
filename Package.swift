@@ -10,6 +10,7 @@ let package = Package(
         // the Fair main branch must be the first dependency to pass integration
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
+        .package(url: "https://github.com/danielgindi/Charts.git", .upToNextMajor(from: "4.0.1")),
     ],
     targets: [
         .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair") ], resources: [.process("Resources"), .copy("Bundle")]),
