@@ -89,6 +89,7 @@ public struct ContentView: View {
             .padding()
 
             MotionEffectView(animation: document.animation, playing: $playing, loopMode: $loopMode, animationSpeed: $animationSpeed, animationTime: $animationTime)
+                .frame(minWidth: 0, minHeight: 0)
         }
     }
 }
