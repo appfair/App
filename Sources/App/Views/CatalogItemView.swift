@@ -175,7 +175,7 @@ struct CatalogItemView: View {
     }
 
     func detailsView() -> some View {
-        ScrollView(.horizontal, showsIndicators: true) {
+        ScrollView {
             Form {
                 linkTextField(Text("Discussions"), icon: "text.bubble", url: info.release.discussionsURL)
                     .help(Text("Opens link to the discussions page for this app at: \(info.release.discussionsURL.absoluteString)"))
@@ -240,7 +240,7 @@ struct CatalogItemView: View {
                     }
                     .frame(maxHeight: .infinity)
                 }
-                .frame(height: 200)
+                .frame(height: 150)
 
                 groupBox(title: Text("Version: ") + Text(verbatim: info.releasedVersion?.versionStringExtended ?? ""), trailing: Text(info.release.versionDate ?? .distantPast, format: .dateTime)) {
                     ScrollView {
@@ -255,7 +255,7 @@ struct CatalogItemView: View {
                 groupBox(title: Text("Details"), trailing: EmptyView()) {
                     detailsView()
                 }
-                .frame(height: 200)
+                .frame(height: 150)
 
                 groupBox(title: Text("Permissions: ") + item.riskLevel.textLabel().fontWeight(.regular), trailing: item.riskLevel.riskLabel()
                             .help(item.riskLevel.riskSummaryText())
