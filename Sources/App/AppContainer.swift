@@ -47,11 +47,7 @@ public struct ContentView: View {
     @State var playing = true
     @State var loopMode = LottieLoopMode.playOnce
     @State var animationSpeed = 1.0
-    @State var animationTime: TimeInterval = 0 {
-        didSet {
-            playing = false
-        }
-    }
+    @State var animationTime: TimeInterval = 0
     @EnvironmentObject var store: Store
 
     public var body: some View {
@@ -89,9 +85,9 @@ public struct ContentView: View {
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .help(playing ? Text("Pause the animation") : Text("Play the animation"))
-
             }
             .padding()
+
             MotionEffectView(animation: document.animation, playing: $playing, loopMode: $loopMode, animationSpeed: $animationSpeed, animationTime: $animationTime)
         }
     }
@@ -120,6 +116,26 @@ public extension AppContainer {
 //            ContentView().environmentObject(store)
 //        }
         .commands {
+            CommandGroup(after: .newItem) {
+                Menu {
+                    ForEach((Bundle.module.urls(forResourcesWithExtension: "json", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
+                        Text(url.deletingPathExtension().lastPathComponent)
+                            .button {
+                                #if os(macOS)
+                                NSDocumentController.shared.openDocument(withContentsOf: url, display: true) { doc, success, error in
+                                    dbg("opening sample:", url.lastPathComponent, "success:", success, "error:", error)
+                                }
+                                #endif
+
+                                #if os(iOS)
+                                // TODO
+                                #endif
+                            }
+                    }
+                } label: {
+                    Text("Open Example")
+                }
+            }
             TextEditingCommands()
             TextFormattingCommands() // Next Edit is a plain text editor, but we need this for font sizxe increase & decrease
         }
