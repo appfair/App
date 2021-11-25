@@ -76,10 +76,11 @@ public struct ContentView: View {
                 loopMode.textLabel
                     .font(.title)
                     .button {
-                        if self.loopMode == .playOnce {
-                            self.loopMode = .loop
-                        } else {
-                            self.loopMode = .playOnce
+                        switch self.loopMode {
+                        case .playOnce: self.loopMode = .loop
+                        case .loop: self.loopMode = .playOnce
+                        //case .autoReverse: self.loopMode = .playOnce
+                        case _: self.loopMode = .playOnce
                         }
                     }
                     .labelStyle(.iconOnly)

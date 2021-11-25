@@ -50,9 +50,11 @@ public struct MotionEffectView : UXViewRepresentable {
 
             self.displayLink = DisplayLink(update: { [weak self] in
                 if let self = self {
-                    assert(self.animationView.animation != nil)
-                    //dbg(self.animationView.realtimeAnimationFrame)
-                    update(self.animationView.currentTime) // FIXME: only seems to update at the start & end
+                    DispatchQueue.main.async { // called from background thread: CVDisplayLink (6)
+                        if let animation = self.animationView.animation, self.animationView.isAnimationPlaying {
+                            update(self.animationView.realtimeAnimationProgress * animation.duration)
+                        }
+                    }
                 }
             })
         }
