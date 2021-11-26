@@ -29,7 +29,7 @@ final class MotionFile: ReferenceFileDocument {
     @Published var sceneStore = SceneStore()
 
     static var readableContentTypes: [UTType] { [UTType.json] }
-    static var writableContentTypes: [UTType] { [UTType.json] }
+    static var writableContentTypes: [UTType] { [] }
 
     init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
@@ -69,17 +69,24 @@ public struct ContentView: View {
                 sceneStore.jumpTime = 0.0
             }
         }
+        .focusedSceneValue(\.sceneStore, sceneStore)
     }
 
     /// Play/pause progress video controls
     @ViewBuilder func controlStrip() -> some View {
         HStack(spacing: 20) {
-            sceneStore.playPauseCommand()
+            //PlayPauseCommand()
+
+            (sceneStore.playing == false ? Text("Pause") : Text("Play"))
+                .label(image: sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
+                .button {
+                    sceneStore.playing.toggle()
+                }
+                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
                 .font(.title)
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
-                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
 
             Slider(value: $animationTime, in: 0...document.animation.duration, label: {
             }, minimumValueLabel: {
@@ -127,13 +134,10 @@ extension LottieLoopMode {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct MotionScene : Scene {
-    @Environment(\.scenePhase) private var scenePhase
-
     var body: some Scene {
         DocumentGroup(viewing: MotionFile.self) { file in
             ContentView(document: file.document)
                 .environmentObject(file.document.sceneStore)
-                .focusedSceneValue(\.sceneStore, file.$document.sceneStore)
         }
         .commands {
             CommandGroup(after: .newItem) {
@@ -169,13 +173,10 @@ struct MotionScene : Scene {
 /// Broken in Monterey – cannot associated focused bindings:
 /// https://developer.apple.com/forums/thread/682503
 struct LottieCommandMenu : Commands {
-    @FocusedBinding(\.sceneStore) var sceneStore
-
     var body : some Commands {
         CommandMenu(Text("Lottie")) {
-            Button("TEST") {
-                dbg("SCENE:", sceneStore)
-            }
+            PlayPauseCommand()
+                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
 
 //                sceneStore.playPauseCommand()
 //                    .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
@@ -194,6 +195,7 @@ struct LottieCommandMenu : Commands {
 //
 //                // NavigationLink("Create Window", destination: Text("This opens in a new window!").padding())
         }
+
     }
 }
 
@@ -219,33 +221,50 @@ public extension AppContainer {
 
 extension FocusedValues {
     /// The store for the given scene
-    var sceneStore: Binding<SceneStore>? {
+    var sceneStore: SceneStore? {
         get { self[SceneStoreKey.self] }
         set { self[SceneStoreKey.self] = newValue }
     }
 
     private struct SceneStoreKey: FocusedValueKey {
-        typealias Value = Binding<SceneStore>
+        typealias Value = SceneStore
+    }
+}
+
+extension FocusedValues {
+    /// The store for the given scene
+    var document: ObservedObject<MotionFile>.Wrapper? {
+        get { self[MotionFileKey.self] }
+        set { self[MotionFileKey.self] = newValue }
+    }
+
+    private struct MotionFileKey: FocusedValueKey {
+        typealias Value = ObservedObject<MotionFile>.Wrapper
+    }
+}
+
+@available(*, deprecated, message: "@FocusedValue broken in Monterey (12.0.1)")
+struct PlayPauseCommand : View {
+    @FocusedValue(\.sceneStore) var sceneStore
+
+    var body: some View {
+        (sceneStore?.playing == false ? Text("Pause") : Text("Play"))
+            .label(image: sceneStore?.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
+            .button {
+                sceneStore?.playing.toggle()
+            }
+            .disabled(sceneStore == nil)
     }
 }
 
 /// The shared scene environment
 @available(macOS 12.0, iOS 15.0, *)
 final class SceneStore: ObservableObject {
-    @Published var playing = true
+    @Published var playing = false
     @Published var loopMode = LottieLoopMode.loop
     @Published var animationSpeed = 1.0
     @Published var jumpTime: TimeInterval = 0.0
     @Published var viewScale: Double = 1.0
-
-    /// The command to toggle play/pause
-    func playPauseCommand() -> some View {
-        (playing ? Text("Pause") : Text("Play"))
-            .label(image: playing ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
-            .button {
-                self.playing.toggle()
-            }
-    }
 
     /// The command to jump forward
     func jumpForwardCommand(_ amount: TimeInterval) -> Button<Label<Text, Image>> {
