@@ -11,6 +11,6 @@
       location = "group:../Fair">
    </FileRef>
    <FileRef
-      location = "group:../../marcprux/CodeEditor">
+      location = "group:../SyntaxEditor">
    </FileRef>
 </Workspace>

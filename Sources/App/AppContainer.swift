@@ -102,7 +102,7 @@ public struct ContentView: View {
     @Binding var document: TextFile
 
     public var body: some View {
-        CodeEditorView(text: $document.text)
+        SyntaxEditorView(text: $document.text)
             .font(wip(Font.largeTitle.monospacedDigit()))
     }
 }

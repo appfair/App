@@ -1,12 +1,12 @@
 import FairApp
-import CodeEditor
+import SyntaxEditor
 
 @available(macOS 12.0, iOS 15.0, *)
-struct CodeEditorView : View {
+struct SyntaxEditorView : View {
     @Binding var text: String
 
     var body: some View {
-        CodeEditor(text: $text)
+        SyntaxEditor(text: $text)
     }
 }
 
