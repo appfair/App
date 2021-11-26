@@ -25,7 +25,8 @@ import SwiftUI
 // other features of the app.
 
 final class MotionFile: ReferenceFileDocument {
-    var animation: Lottie.Animation
+    @Published var animation: Lottie.Animation
+    @Published var sceneStore = SceneStore()
 
     static var readableContentTypes: [UTType] { [UTType.json] }
     static var writableContentTypes: [UTType] { [UTType.json] }
@@ -78,6 +79,7 @@ public struct ContentView: View {
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
+                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
 
             Slider(value: $animationTime, in: 0...document.animation.duration, label: {
             }, minimumValueLabel: {
@@ -125,41 +127,19 @@ extension LottieLoopMode {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct MotionScene : Scene {
-    @StateObject var sceneStore = SceneStore()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         DocumentGroup(viewing: MotionFile.self) { file in
             ContentView(document: file.document)
-                .environmentObject(sceneStore)
-        }
-        .onChange(of: scenePhase) { newScenePhase in
-            if newScenePhase == .background {
-                sceneStore.playing = false
-            }
+                .environmentObject(file.document.sceneStore)
+                .focusedSceneValue(\.sceneStore, file.$document.sceneStore)
         }
         .commands {
             CommandGroup(after: .newItem) {
                 examplesMenu()
             }
-            CommandMenu(Text("Lottie")) {
-                sceneStore.playPauseCommand()
-                    .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
-                sceneStore.jumpForwardCommand(1.0)
-                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
-                sceneStore.jumpForwardCommand(0.1)
-                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: [.shift]))
-                sceneStore.jumpBackwardCommand(-1.0)
-                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
-                sceneStore.jumpBackwardCommand(-0.1)
-                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: [.shift]))
-                sceneStore.zoomCommand(0.05)
-                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("="), modifiers: [.command]))
-                sceneStore.zoomCommand(-0.05)
-                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("-"), modifiers: [.command]))
-
-                // NavigationLink("Create Window", destination: Text("This opens in a new window!").padding())
-            }
+            LottieCommandMenu()
         }
     }
 
@@ -186,6 +166,37 @@ struct MotionScene : Scene {
     }
 }
 
+/// Broken in Monterey – cannot associated focused bindings:
+/// https://developer.apple.com/forums/thread/682503
+struct LottieCommandMenu : Commands {
+    @FocusedBinding(\.sceneStore) var sceneStore
+
+    var body : some Commands {
+        CommandMenu(Text("Lottie")) {
+            Button("TEST") {
+                dbg("SCENE:", sceneStore)
+            }
+
+//                sceneStore.playPauseCommand()
+//                    .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
+//                sceneStore.jumpForwardCommand(1.0)
+//                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
+//                sceneStore.jumpForwardCommand(0.1)
+//                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: [.shift]))
+//                sceneStore.jumpBackwardCommand(-1.0)
+//                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
+//                sceneStore.jumpBackwardCommand(-0.1)
+//                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: [.shift]))
+//                sceneStore.zoomCommand(0.05)
+//                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("="), modifiers: [.command]))
+//                sceneStore.zoomCommand(-0.05)
+//                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("-"), modifiers: [.command]))
+//
+//                // NavigationLink("Create Window", destination: Text("This opens in a new window!").padding())
+        }
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
     /// The body of your scene is provided by `AppContainer.scene`
@@ -205,9 +216,22 @@ public extension AppContainer {
     @AppStorage("someToggle") public var someToggle = false
 }
 
+
+extension FocusedValues {
+    /// The store for the given scene
+    var sceneStore: Binding<SceneStore>? {
+        get { self[SceneStoreKey.self] }
+        set { self[SceneStoreKey.self] = newValue }
+    }
+
+    private struct SceneStoreKey: FocusedValueKey {
+        typealias Value = Binding<SceneStore>
+    }
+}
+
 /// The shared scene environment
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor final class SceneStore: ObservableObject {
+final class SceneStore: ObservableObject {
     @Published var playing = true
     @Published var loopMode = LottieLoopMode.loop
     @Published var animationSpeed = 1.0
