@@ -1,6 +1,7 @@
 import FairApp
 import Lottie
 
+/// A view that displays a Lottie Animation
 public struct MotionEffectView : UXViewRepresentable {
     public typealias UXViewType = UXView
     let animation: Lottie.Animation
@@ -8,6 +9,14 @@ public struct MotionEffectView : UXViewRepresentable {
     @Binding var loopMode: LottieLoopMode
     @Binding var animationSpeed: Double
     @Binding var animationTime: TimeInterval
+
+    public init(animation: Lottie.Animation, playing: Binding<Bool>, loopMode: Binding<LottieLoopMode>, animationSpeed: Binding<Double>, animationTime: Binding<TimeInterval>) {
+        self.animation = animation
+        self._playing = playing
+        self._loopMode = loopMode
+        self._animationSpeed = animationSpeed
+        self._animationTime = animationTime
+    }
 
     public func makeUXView(context: Context) -> UXViewType {
         context.coordinator.animationView
@@ -45,7 +54,7 @@ public struct MotionEffectView : UXViewRepresentable {
 
         public init(animation: Lottie.Animation, update: @escaping (TimeInterval) -> ()) {
             self.animationView = AnimationView(animation: animation)
-            animationView.contentMode = .scaleAspectFit
+            //animationView.contentMode = .scaleAspectFit
             animationView.backgroundBehavior = .pauseAndRestore
 
             self.displayLink = DisplayLink(update: { [weak self] in
