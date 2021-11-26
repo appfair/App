@@ -14,7 +14,7 @@
  */
 import FairApp
 import UniformTypeIdentifiers
-import Lottie
+import LottieUI
 import SwiftUI
 
 // The entry point to creating your app is the `AppContainer` type,
@@ -25,7 +25,7 @@ import SwiftUI
 // other features of the app.
 
 final class MotionFile: ReferenceFileDocument {
-    @Published var animation: Lottie.Animation
+    @Published var animation: LottieUI.Animation
     @Published var sceneStore = SceneStore()
 
     static var readableContentTypes: [UTType] { [UTType.json] }
@@ -35,7 +35,7 @@ final class MotionFile: ReferenceFileDocument {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        self.animation = try Lottie.Animation(json: data)
+        self.animation = try LottieUI.Animation(json: data)
     }
 
     func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
