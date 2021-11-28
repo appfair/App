@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.10</string>
+	<string>0.2.11</string>
 	<key>CFBundleVersion</key>
-	<string>106</string>
+	<string>108</string>
 	<key>FairSymbol</key>
 	<string>ear</string>
 	<key>FairTint</key>
@@ -25,8 +25,6 @@
 		<key>com.apple.security.device.microphone</key>
 		<string>The microphone is used to process and identify ambient sounds.</string>
 	</dict>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>The microphone is used to process and identify ambient sounds.</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.healthcare-fitness</string>
 	<key>LSMinimumSystemVersion</key>
@@ -42,6 +40,8 @@
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>GNU Affero General Public License</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The microphone is used to process and identify ambient sounds.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
