@@ -5,30 +5,30 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.Numeral-XVIXVX</string>
+	<string>app.Hear-Tell</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Numeral XVIXVX</string>
+	<string>Hear Tell</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.9</string>
+	<string>0.2.10</string>
 	<key>CFBundleVersion</key>
-	<string>105</string>
+	<string>106</string>
 	<key>FairSymbol</key>
-	<string>33.circle.fill</string>
+	<string>ear</string>
 	<key>FairTint</key>
 	<string></string>
 	<key>FairUsage</key>
 	<dict>
-		<key>com.apple.security.files.user-selected.read-write</key>
-		<string>This app needs to read and write files in order to…</string>
-		<key>com.apple.security.network.client</key>
-		<string>This app needs to access the network in order to…</string>
+		<key>com.apple.security.device.microphone</key>
+		<string>The microphone is used to process and identify ambient sounds.</string>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The microphone is used to process and identify ambient sounds.</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.lifestyle</string>
+	<string>public.app-category.healthcare-fitness</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
