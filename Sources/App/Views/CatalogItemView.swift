@@ -21,6 +21,7 @@ struct CatalogItemView: View {
 
     @EnvironmentObject var appManager: AppManager
     @Environment(\.openURL) var openURLAction
+    @Environment(\.colorScheme) var colorScheme
 
     @State var currentActivity: Activity? = nil
     @State var progress = Progress(totalUnitCount: 1)
@@ -591,7 +592,7 @@ struct CatalogItemView: View {
                 Image(systemName: activity.info.systemSymbol)
             })
         })
-            .buttonStyle(ActionButtonStyle(primary: true, highlighted: false))
+            .buttonStyle(ActionButtonStyle(progress: .constant(wip(1.0)), primary: true, highlighted: false))
             .accentColor(activity.info.tintColor)
             .disabled(doingStuff)
             .help(activity.info.toolTip)
@@ -617,7 +618,7 @@ struct CatalogItemView: View {
         return Image(systemName: category.symbolName.description)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(color: item.itemTintColor())
+            .fairTint(simple: false, color: item.itemTintColor(), scheme: colorScheme)
             .symbolVariant(.fill)
             .symbolRenderingMode(.hierarchical)
             .foregroundColor(.secondary)
@@ -763,7 +764,7 @@ struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(release: AppCatalogItem.sample))
             .environmentObject(AppManager.default)
-            .frame(width: 600)
+            .frame(width: 700)
             .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))
     }

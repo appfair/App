@@ -1,4 +1,5 @@
 import FairApp
+import SwiftUI
 
 struct AppInfo : Identifiable, Equatable {
     var release: AppCatalogItem
@@ -766,6 +767,7 @@ public struct AppDetailView : View {
 /// A label that tints its image
 @available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View {
+    @Environment(\.colorScheme) var colorScheme
     public let title: Text
     public let systemName: StaticString
     public let tint: Color?
@@ -774,7 +776,7 @@ public struct TintedLabel : View {
         Label(title: { title }) {
             if let tint = tint {
                 Image(systemName: systemName.description)
-                    .fairTint(color: tint)
+                    .fairTint(simple: false, color: tint, scheme: colorScheme)
             } else {
                 Image(systemName: systemName.description)
             }
@@ -785,15 +787,18 @@ public struct TintedLabel : View {
 extension View {
     /// The custom tinting style for the App Fair
     @available(macOS 12.0, iOS 15.0, *)
-    func fairTint(color: Color, offset: Color = Color.white) -> some View {
-        foregroundStyle(.linearGradient(colors: [color, color], startPoint: .top, endPoint: .bottom))
-            .opacity(0.8)
-
-//        foregroundStyle(
-//            .linearGradient(colors: [offset, color], startPoint: .top, endPoint: .bottom),
-//            .linearGradient(colors: [offset, .green], startPoint: .top, endPoint: .bottom),
-//            .linearGradient(colors: [offset, .blue], startPoint: .top, endPoint: .bottom)
-//        ).brightness(0.3) // brighten the image a bit
+    @ViewBuilder func fairTint(simple: Bool, color: Color, offset: Color = Color.white, scheme: ColorScheme) -> some View {
+        if simple {
+            foregroundStyle(.linearGradient(colors: [color, color], startPoint: .top, endPoint: .bottom))
+                .opacity(0.8)
+        } else {
+            foregroundStyle(
+                .linearGradient(colors: [offset, color], startPoint: .top, endPoint: .bottom),
+                .linearGradient(colors: [offset, .green], startPoint: .top, endPoint: .bottom),
+                .linearGradient(colors: [offset, .blue], startPoint: .top, endPoint: .bottom)
+            )
+                .brightness(scheme == .light ? -0.3 : 0.3) // brighten the image a bit
+        }
     }
 }
 
@@ -852,12 +857,6 @@ public extension AppCategory {
             }
         }
 
-
-        /// All the categories that belong to this grouping
-        @available(macOS 12.0, iOS 15.0, *)
-        public var tintedImage: some View {
-            Image(systemName: symbolName.description).fairTint(color: tintColor)
-        }
 
         @available(macOS 12.0, iOS 15.0, *)
         public var tintedLabel: TintedLabel {
