@@ -12,7 +12,7 @@ on:
 
 jobs:
   call-workflow:
-    uses: fair-ground/Fair/.github/workflows/fork_apply.yml@main
+    uses: fair-ground/Fair/.github/workflows/fair.yml@main
     with:
       fairground: appfair
       target_macos: true
@@ -22,7 +22,7 @@ jobs:
       target_tvos: false
       target_watchos: false
     secrets:
-      # Optional notarization secrets that can be configured in the fork's organization
+      # These optional secrets can be added for app notarization.
       NOTARY_TEAMID: ${{ secrets.NOTARY_TEAMID }}
       NOTARY_USERID: ${{ secrets.NOTARY_USERID }}
       NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
