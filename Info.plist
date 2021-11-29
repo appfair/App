@@ -5,19 +5,19 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.Numeral-MXMMXVI</string>
+	<string>app.Visi-Calc</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Numeral MXMMXVI</string>
+	<string>Visi Calc</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.13</string>
+	<string>0.0.14</string>
 	<key>CFBundleVersion</key>
-	<string>89</string>
+	<string>90</string>
 	<key>FairSymbol</key>
-	<string>24.square.fill</string>
+	<string>tablecells</string>
 	<key>FairTint</key>
 	<string></string>
 	<key>FairUsage</key>
