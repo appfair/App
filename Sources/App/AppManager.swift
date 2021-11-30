@@ -13,9 +13,6 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class AppManager: SceneManager {
-    /// The location where apps will be installed; the last component must match the catalog browser app itself, so a fair-ground named the "Games Arcade" would install into "/Applications/Games Arcade/" and the name of the catalog browser app itself would be "/Applications/Games Arcade.app"
-    static let installPath = "/Applications/" + Bundle.mainBundleName + "/"
-
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     /// The base domain of the provider for the hub
@@ -166,8 +163,10 @@ extension AppManager {
             || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
     }
 
+    /// The install folder is always the same-named peer of the app's location.
+    /// This allows it to run in `~/Downloads/` (which would place installed apps in `~/Downloads/App Fair`)
     static var installFolderURL: URL {
-        URL(fileURLWithPath: installPath)
+        Bundle.main.bundleURL.deletingPathExtension()
     }
 
     /// Register that an error occurred with the app manager

@@ -13,7 +13,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.6.241</string>
+	<string>0.6.243</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -28,7 +28,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>331</string>
+	<string>332</string>
 	<key>FairSymbol</key>
 	<string>gift.fill</string>
 	<key>FairTint</key>
@@ -70,7 +70,7 @@
 	<integer>2</integer>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>UISupportedInterfaceOrientations</key>
+	<key>UISupportedInterfaceOrientationsDISABLED</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
