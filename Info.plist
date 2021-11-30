@@ -1023,9 +1023,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.20</string>
+	<string>0.1.21</string>
 	<key>CFBundleVersion</key>
-	<string>334</string>
+	<string>337</string>
 	<key>FairSymbol</key>
 	<string>doc.plaintext.fill</string>
 	<key>FairTint</key>
@@ -1054,7 +1054,7 @@
 	<string>GNU Affero General Public License</string>
 	<key>UIDeviceFamily</key>
 	<integer>2</integer>
-	<key>UISupportedInterfaceOrientations</key>
+	<key>UISupportedInterfaceOrientationsDISABLED</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
