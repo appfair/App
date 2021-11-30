@@ -53,7 +53,7 @@ struct ActionButtonStyle: ButtonStyle {
 
         @ViewBuilder func background(isPressed: Bool) -> some View {
             Group {
-                if isEnabled {
+                if isEnabled || (progress != 1.0) {
                     ProgressView(value: progress, total: 1.0, label: {
                         // the button itself handles the label
                         EmptyView()

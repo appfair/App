@@ -787,17 +787,17 @@ public struct TintedLabel : View {
 extension View {
     /// The custom tinting style for the App Fair
     @available(macOS 12.0, iOS 15.0, *)
-    @ViewBuilder func fairTint(simple: Bool, color: Color, offset: Color = Color.white, scheme: ColorScheme) -> some View {
+    @ViewBuilder func fairTint(simple: Bool, color: Color, scheme: ColorScheme) -> some View {
         if simple {
             foregroundStyle(.linearGradient(colors: [color, color], startPoint: .top, endPoint: .bottom))
                 .opacity(0.8)
         } else {
             foregroundStyle(
-                .linearGradient(colors: [offset, color], startPoint: .top, endPoint: .bottom),
-                .linearGradient(colors: [offset, .green], startPoint: .top, endPoint: .bottom),
-                .linearGradient(colors: [offset, .blue], startPoint: .top, endPoint: .bottom)
+                .linearGradient(colors: [color.opacity(0.5), color], startPoint: .top, endPoint: .bottom),
+                .linearGradient(colors: [color.opacity(0.5), .green], startPoint: .top, endPoint: .bottom),
+                .linearGradient(colors: [color.opacity(0.5), .blue], startPoint: .top, endPoint: .bottom)
             )
-                .brightness(scheme == .light ? -0.3 : 0.3) // brighten the image a bit
+//                .brightness(scheme == .light ? -0.3 : 0.3) // brighten the image a bit
         }
     }
 }

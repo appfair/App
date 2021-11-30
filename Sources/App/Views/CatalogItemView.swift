@@ -24,7 +24,7 @@ struct CatalogItemView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State var currentActivity: Activity? = nil
-    @State var progress = Progress(totalUnitCount: 1)
+    @StateObject var progress = ObservableProgress(progress: Progress(totalUnitCount: 1))
     @State var confirmations: [Activity: Bool] = [:]
 
     #if os(macOS) // horizontalSizeClass unavailable on macOS
@@ -75,6 +75,7 @@ struct CatalogItemView: View {
             catalogHeader()
             Divider()
             catalogActionButtons()
+            ProgressView(wip(progress.progress))
             Divider()
         }
     }
@@ -592,7 +593,7 @@ struct CatalogItemView: View {
                 Image(systemName: activity.info.systemSymbol)
             })
         })
-            .buttonStyle(ActionButtonStyle(progress: .constant(wip(1.0)), primary: true, highlighted: false))
+            .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
             .accentColor(activity.info.tintColor)
             .disabled(doingStuff)
             .help(activity.info.toolTip)
@@ -640,7 +641,7 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         do {
-            try await appManager.install(item: item, progress: progress, update: false)
+            try await appManager.install(item: item, progress: progress.progress, update: false)
         } catch {
             appManager.reportError(error)
         }
@@ -654,7 +655,7 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         do {
-            try await appManager.install(item: item, progress: progress, update: true)
+            try await appManager.install(item: item, progress: progress.progress, update: true)
         } catch {
             appManager.reportError(error)
         }

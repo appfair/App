@@ -303,7 +303,31 @@ extension AppManager {
         }
     }
 
-    func install(item: AppCatalogItem, progress: Progress, update: Bool = true) async throws {
+    fileprivate func extractDownload(_ downloadedZip: URL, _ expandURL: URL, _ progress2: Progress) throws {
+        try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress2, handler: { url in
+#if macOS
+            // try to clear the quarantine flag
+            var url = url
+            var resourceValues = URLResourceValues()
+            resourceValues.quarantineProperties = nil // this should clear the quarantine flag
+            do {
+                try url.setResourceValues(resourceValues) // note: “Attempts to set a read-only resource property or to set a resource property not supported by the resource are ignored and are not considered errors. This method is currently applicable only to URLs for file system resources.”
+            } catch {
+                dbg("unable to clear quarantine flag for:", url.path)
+            }
+
+            // check to ensure we have cleared the props
+            let qtprops2 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
+            if !qtprops2.isEmpty {
+                dbg("found quarantine xattr for:", url.path, "keys:", qtprops2)
+                throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
+            }
+#endif
+            return true
+        })
+    }
+
+    func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
         }
@@ -311,10 +335,10 @@ extension AppManager {
         let t1 = CFAbsoluteTimeGetCurrent()
         let request = URLRequest(url: item.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
 
-        progress.kind = .file
-        progress.fileOperationKind = .downloading
+        parentProgress.kind = .file
+        parentProgress.fileOperationKind = .downloading
 
-        final class Delegate : NSObject, URLSessionDownloadDelegate {
+        final class DownloadDelegate : NSObject, URLSessionDownloadDelegate {
             let progress: Progress
 
             init(progress: Progress) {
@@ -336,10 +360,25 @@ extension AppManager {
             }
         }
 
-        let delegate: URLSessionDownloadDelegate = Delegate(progress: progress)
-        let (downloadedZip, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+        let progress1 = Progress(totalUnitCount: 2, parent: parentProgress, pendingUnitCount: 1)
+        let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: progress1)
+
+        let useDataDownload = wip(false)
+        let downloadedZip: URL
+        let response: URLResponse
+        if useDataDownload {
+            let (data, dataResponse) = try await URLSession.shared.data(for: request, delegate: delegate)
+            response = dataResponse
+            downloadedZip = URL(fileURLWithPath: UUID().uuidString, relativeTo: URL(fileURLWithPath: NSTemporaryDirectory()))
+            try data.write(to: downloadedZip)
+
+        } else {
+            (downloadedZip, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+        }
+
         let t2 = CFAbsoluteTimeGetCurrent()
-        dbg("downloaded:", downloadedZip, try? downloadedZip.fileSize()?.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
+        dbg("downloaded:", downloadedZip, try? downloadedZip.fileSize()?.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1, delegate
+        )
 
         // grab the hash of the download to compare against the fairseal
         let actualSha256 = try Data(contentsOf: downloadedZip, options: .mappedIfSafe).sha256().hex()
@@ -351,60 +390,10 @@ extension AppManager {
         let t3 = CFAbsoluteTimeGetCurrent()
         let expandURL = downloadedZip.appendingPathExtension("expanded")
 
+        let progress2 = Progress(totalUnitCount: 2, parent: parentProgress, pendingUnitCount: 0)
+        try extractDownload(downloadedZip, expandURL, progress2)
 
-        try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress, handler: { url in
-#if macOS
-            // attempt to clear quarantine flag so we can launch the app
-
-            // https://eclecticlight.co/2020/10/29/quarantine-and-the-quarantine-flag/
-            // let qtprops1 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
-
-            /*
-             Default properties look like:
-             /var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_o89pPj.tmp.expanded/Cloud Cuckoo.app/Contents/_CodeSignature/CodeResources flags: [__C.NSURLResourceKey(_rawValue: NSURLQuarantinePropertiesKey): {
-             LSQuarantineAgentName = "AppFair App";
-             LSQuarantineIsOwnedByCurrentUser = 1;
-             LSQuarantineTimeStamp = "2021-10-14 17:57:12 +0000";
-             LSQuarantineType = LSQuarantineTypeSandboxed;
-             }]
-             */
-
-            // try to just clear the quarantine
-            // let qprops: [String: Any] = [
-            //   kLSQuarantineAgentNameKey as String: "App Fair",
-            //   kLSQuarantineAgentBundleIdentifierKey as String: "app.App-Fair",
-            //   kLSQuarantineTypeKey as String: kLSQuarantineTypeWebDownload,
-            //   kLSQuarantineDataURLKey as String: downloadedZip,
-            //   kLSQuarantineOriginURLKey as String: item.downloadURL
-            //]
-
-            //try (url as NSURL).setResourceValues([URLResourceKey.quarantinePropertiesKey: qprops])
-
-            // try! (url as NSURL).setResourceValues([URLResourceKey.quarantinePropertiesKey: [] as NSArray])
-
-
-            // try to clear the quarantine flag; this will fail if the app is sandboxed
-            var url = url
-            var resourceValues = URLResourceValues()
-            resourceValues.quarantineProperties = nil // this should clear the quarantine flag
-            do {
-                try url.setResourceValues(resourceValues) // note: “Attempts to set a read-only resource property or to set a resource property not supported by the resource are ignored and are not considered errors. This method is currently applicable only to URLs for file system resources.”
-            } catch {
-                dbg("unable to clear quarantine flag for:", url.path)
-            }
-
-            // check to ensure we have cleared the props
-            let qtprops2 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
-            if !qtprops2.isEmpty {
-                dbg("found quarantine xattr for:", url.path, "keys:", qtprops2)
-                throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
-            }
-
-#endif
-            return true
-        })
-
-        // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/f8/91ygcnx16fb5yldgcmns99q00000gn/T/app.App-Fair/CFNetworkDownload_ZGu16E.tmp.expanded/Some App.app'
+        // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
         dbg("unzipped:", downloadedZip.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)
@@ -454,13 +443,6 @@ extension AppManager {
 
         // always re-scan after altering apps
         await scanInstalledApps()
-
-        // re-scan doesn't seem to pick up a newly-installed app; try to re-scan again a bit later
-        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
-            Task {
-                await self.scanInstalledApps()
-            }
-        }
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
