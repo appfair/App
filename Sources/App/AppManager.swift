@@ -163,10 +163,12 @@ extension AppManager {
             || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
     }
 
-    /// The install folder is always the same-named peer of the app's location.
-    /// This allows it to run in `~/Downloads/` (which would place installed apps in `~/Downloads/App Fair`)
     static var installFolderURL: URL {
-        Bundle.main.bundleURL.deletingPathExtension()
+
+        // we would like the install folder to always the same-named peer of the app's location, allowing it to run in `~/Downloads/` (which would place installed apps in `~/Downloads/App Fair`)
+        // however, app translocation prevents it from knowing its location on first launch, and so we can't rely on being able to install as a peer
+        // Bundle.main.bundleURL.deletingPathExtension()
+        URL(fileURLWithPath: Bundle.mainBundleName, relativeTo: try? FileManager.default.url(for: .applicationDirectory, in: .localDomainMask, appropriateFor: nil, create: true))
     }
 
     /// Register that an error occurred with the app manager

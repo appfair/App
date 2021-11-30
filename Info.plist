@@ -13,7 +13,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.6.245</string>
+	<string>0.6.246</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -28,7 +28,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>333</string>
+	<string>334</string>
 	<key>FairSymbol</key>
 	<string>gift.fill</string>
 	<key>FairTint</key>

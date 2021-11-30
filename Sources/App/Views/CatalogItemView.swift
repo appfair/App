@@ -75,7 +75,7 @@ struct CatalogItemView: View {
             catalogHeader()
             Divider()
             catalogActionButtons()
-            ProgressView(wip(progress.progress))
+            //ProgressView(wip(progress.progress))
             Divider()
         }
     }
