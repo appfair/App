@@ -11,9 +11,10 @@ let package = Package(
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
         .package(url: "https://github.com/danielgindi/Charts.git", .upToNextMajor(from: "4.0.1")),
+        .package(url: "https://github.com/CoreOffice/CoreXLSX.git", .upToNextMinor(from: "0.14.1")),
     ],
     targets: [
-        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair") ], resources: [.process("Resources"), .copy("Bundle")]),
+        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair"), "Charts", "CoreXLSX" ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
