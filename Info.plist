@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.32</string>
+	<string>0.0.33</string>
 	<key>CFBundleVersion</key>
-	<string>115</string>
+	<string>116</string>
 	<key>FairSymbol</key>
 	<string>waveform</string>
 	<key>FairTint</key>
@@ -45,7 +45,7 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
-	<key>LSUIPresentationMode</key>
+	<key>LSUIPresentationModeDISABLED</key>
 	<integer>0</integer>
 	<key>NSAppTransportSecurity</key>
 	<dict>
