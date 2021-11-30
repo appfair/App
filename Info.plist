@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.8.363</string>
+	<string>0.8.364</string>
 	<key>CFBundleVersion</key>
-	<string>390</string>
+	<string>391</string>
 	<key>FairSymbol</key>
 	<string>music.note</string>
 	<key>FairTint</key>
@@ -31,6 +31,8 @@
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>LSUIPresentationMode</key>
+	<integer>0</integer>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
