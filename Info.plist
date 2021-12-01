@@ -10,9 +10,10 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>json</string>
+				<string>lottie</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>JSONIcon</string>
+			<string>LottieIcon</string>
 			<key>CFBundleTypeMIMETypes</key>
 			<array>
 				<string>application/json</string>
@@ -22,7 +23,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
-			<string>Alternate</string>
+			<string>Default</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>public.json</string>
@@ -46,11 +47,11 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.21</string>
+	<string>0.0.22</string>
 	<key>CFBundleShortVersionString-FairComment</key>
 	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
 	<key>CFBundleVersion</key>
-	<string>89</string>
+	<string>90</string>
 	<key>FairSymbol</key>
 	<string>hands.sparkles</string>
 	<key>FairSymbol-FairComment</key>
