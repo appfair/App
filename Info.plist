@@ -5,19 +5,19 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.Numeral-VIXIV</string>
+	<string>app.Eternal-September</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Numeral VIXIV</string>
+	<string>Eternal September</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.11</string>
+	<string>0.0.12</string>
 	<key>CFBundleVersion</key>
-	<string>89</string>
+	<string>90</string>
 	<key>FairSymbol</key>
-	<string>41.circle</string>
+	<string>calendar.badge.exclamationmark</string>
 	<key>FairTint</key>
 	<string></string>
 	<key>FairUsage</key>
