@@ -1,4 +1,5 @@
 import FairApp
+import Dispatch
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]
@@ -46,9 +47,19 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 
     static let `default`: AppManager = AppManager()
 
+    private var fsobserver: FileSystemObserver!
+
     internal required init() {
         super.init()
-        
+
+        // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
+        self.fsobserver = FileSystemObserver(URL: Self.installFolderURL) {
+            dbg("changes detected in app folder:", Self.installFolderURL.path)
+            Task {
+                await self.scanInstalledApps()
+            }
+        }
+
         /// The gloal quick actions for the App Fair
         self.quickActions = [
             QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
@@ -304,7 +315,7 @@ extension AppManager {
         }
     }
 
-    fileprivate func extractDownload(_ downloadedZip: URL, _ expandURL: URL, _ progress2: Progress) throws {
+    @discardableResult fileprivate func extractDownload(_ downloadedZip: URL, _ expandURL: URL, _ progress2: Progress) throws -> [ZipArchive.Entry] {
         try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress2, handler: { url in
 #if macOS
             // try to clear the quarantine flag
@@ -328,6 +339,9 @@ extension AppManager {
         })
     }
 
+    static let progressUnitCount: Int64 = 4
+
+    /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
@@ -339,65 +353,71 @@ extension AppManager {
         parentProgress.kind = .file
         parentProgress.fileOperationKind = .downloading
 
-        final class DownloadDelegate : NSObject, URLSessionDownloadDelegate {
-            let progress: Progress
 
-            init(progress: Progress) {
-                self.progress = progress
+        // we would just to use a download task to save directly to a file and have callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
+        // let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
+        // (downloadedZip, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+
+        
+        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+        let length = response.expectedContentLength
+        let progress1 = Progress(totalUnitCount: length)
+        parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
+
+        var data = Data()
+        data.reserveCapacity(Int(length))
+
+        for try await byte in asyncBytes {
+            if parentProgress.isCancelled {
+                throw AppError("Cancelled", failureReason: "The download was cancelled.")
             }
-
-            func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-                progress.totalUnitCount = totalBytesExpectedToWrite
-                progress.completedUnitCount = totalBytesWritten
-                // TODO:
-                // progress.estimatedTimeRemaining = …
-                // progress.throughput = …
+            data.append(byte)
+            let dataCount = Int64(data.count)
+            if dataCount >= min(length, progress1.completedUnitCount + 512) {
+                progress1.completedUnitCount = dataCount
             }
-
-            func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-                // progress.completedUnitCount = progress.totalUnitCount
-                progress.totalUnitCount = 0
-                progress.completedUnitCount = 0
-            }
-        }
-
-        let progress1 = Progress(totalUnitCount: 2, parent: parentProgress, pendingUnitCount: 1)
-        let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: progress1)
-
-        let useDataDownload = wip(false)
-        let downloadedZip: URL
-        let response: URLResponse
-        if useDataDownload {
-            let (data, dataResponse) = try await URLSession.shared.data(for: request, delegate: delegate)
-            response = dataResponse
-            downloadedZip = URL(fileURLWithPath: UUID().uuidString, relativeTo: URL(fileURLWithPath: NSTemporaryDirectory()))
-            try data.write(to: downloadedZip)
-
-        } else {
-            (downloadedZip, response) = try await URLSession.shared.download(for: request, delegate: delegate)
         }
 
         let t2 = CFAbsoluteTimeGetCurrent()
-        dbg("downloaded:", downloadedZip, try? downloadedZip.fileSize()?.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1, delegate
-        )
+        dbg("downloaded:", length.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
 
         // grab the hash of the download to compare against the fairseal
-        let actualSha256 = try Data(contentsOf: downloadedZip, options: .mappedIfSafe).sha256().hex()
+        let actualSha256 = data.sha256().hex()
         dbg("comparing fairseal expected:", item.sha256, "with actual:", actualSha256)
         if item.sha256 != actualSha256 {
             throw AppError("Invalid fairseal", failureReason: "The app's fairseal was not valid.")
         }
 
+        let installPath = Self.appInstallPath(for: item)
+
+        // create a temporary zip file in the caches directory from which we will extract the data
+        let downloadedZip = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: installPath, create: true)
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("zip")
+
+        // make sure the file doesn't already exist
+        try? FileManager.default.removeItem(at: downloadedZip)
+
+        try data.write(to: downloadedZip, options: .atomic)
+
         let t3 = CFAbsoluteTimeGetCurrent()
         let expandURL = downloadedZip.appendingPathExtension("expanded")
 
-        let progress2 = Progress(totalUnitCount: 2, parent: parentProgress, pendingUnitCount: 0)
-        try extractDownload(downloadedZip, expandURL, progress2)
+        let progress2 = Progress(totalUnitCount: 1)
+        parentProgress.addChild(progress2, withPendingUnitCount: 1)
+
+//        try self.extractDownload(downloadedZip, expandURL, progress2)
+//        let _: [ZipArchive.Entry] = try await Task(priority: .userInitiated) {
+            try self.extractDownload(downloadedZip, expandURL, progress2)
+//        }.value
+
+        try FileManager.default.removeItem(at: downloadedZip)
 
         // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
         dbg("unzipped:", downloadedZip.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)
+
         if shallowFiles.count != 1 {
             throw Errors.tooManyInstallFiles(item.downloadURL)
         }
@@ -408,7 +428,7 @@ extension AppManager {
         // perform as much validation before we perform the install
         try self.validate(appPath: expandedAppPath, forItem: item)
 
-        let installFolder = Self.appInstallPath(for: item).deletingLastPathComponent()
+        let installFolder = installPath.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: installFolder, withIntermediateDirectories: true, attributes: nil)
 
         let destinationURL = installFolder.appendingPathComponent(expandedAppPath.lastPathComponent)
@@ -422,6 +442,7 @@ extension AppManager {
 
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
         try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
+        parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
 
         // if we are the catalog app ourselves, re-launch after updating
         if item.bundleIdentifier == Bundle.mainBundleID {
@@ -444,6 +465,7 @@ extension AppManager {
 
         // always re-scan after altering apps
         await scanInstalledApps()
+        parentProgress.completedUnitCount = parentProgress.totalUnitCount
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
@@ -532,3 +554,77 @@ extension AppManager.SidebarItem {
     }
 }
 
+/// A watcher for changes to the install folder
+private final class FileSystemObserver {
+    private let fileDescriptor: CInt
+    private let source: DispatchSourceProtocol
+
+    init(URL: URL, block: @escaping () -> Void) {
+        self.fileDescriptor = open(URL.path, O_EVTONLY)
+        self.source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: self.fileDescriptor, eventMask: .all, queue: DispatchQueue.global())
+        self.source.setEventHandler {
+            block()
+        }
+        self.source.resume()
+    }
+
+    deinit {
+        self.source.cancel()
+        close(fileDescriptor)
+    }
+}
+
+/// A DownloadDelegate that updates a progress.
+/// Note: note currently working, perhaps due to un-implemented async/await support: https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo
+@objc private final class DownloadDelegate : NSObject, URLSessionDelegate, URLSessionDownloadDelegate {
+    let progress: Progress
+
+    init(progress: Progress) {
+        self.progress = progress
+    }
+
+    @objc func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest) async -> URLRequest? {
+        // e.g.: https://github-releases.githubusercontent.com/420526657/7773060d-16b7-40b1-bdbe-03c0da4753f2?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20211201%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20211201T011008Z&X-Amz-Expires=300&X-Amz-Signature=5f1184f9fe71e5fb3724ea7bd96f2d8a3215056d4323afedf9fc56b4aa2a8114&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=420526657&response-content-disposition=attachment%3B%20filename%3DBon-Mot-macOS.zip&response-content-type=application%2Foctet-stream
+        dbg("willPerformHTTPRedirection:", request.description)
+        return request // allow all redirections
+    }
+
+    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        dbg("didWriteData:", bytesWritten, "total", totalBytesWritten, "/", totalBytesExpectedToWrite)
+        progress.totalUnitCount = totalBytesExpectedToWrite
+        progress.completedUnitCount = totalBytesWritten
+        // TODO:
+        // progress.estimatedTimeRemaining = …
+        // progress.throughput = …
+    }
+
+    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        // progress.completedUnitCount = progress.totalUnitCount
+        progress.totalUnitCount = 0
+        progress.completedUnitCount = 0
+    }
+
+    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        progress.totalUnitCount = 0
+        progress.completedUnitCount = 0
+    }
+
+    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
+        dbg(metrics)
+    }
+
+    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
+    }
+
+    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
+
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+
+    }
+}

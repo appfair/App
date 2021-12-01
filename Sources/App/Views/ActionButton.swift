@@ -53,7 +53,7 @@ struct ActionButtonStyle: ButtonStyle {
 
         @ViewBuilder func background(isPressed: Bool) -> some View {
             Group {
-                if isEnabled || (progress != 1.0) {
+                if isEnabled || (progress < 1.0) {
                     ProgressView(value: progress, total: 1.0, label: {
                         // the button itself handles the label
                         EmptyView()
@@ -72,25 +72,36 @@ struct ActionButtonStyle: ButtonStyle {
 
 struct CapsuleProgressViewStyle : ProgressViewStyle {
     func makeBody(configuration: Configuration) -> some View {
+        CapsuleProgressView(fractionCompleted: configuration.fractionCompleted ?? 1.0, label: configuration.label, currentValueLabel: configuration.currentValueLabel)
+    }
+}
+
+struct CapsuleProgressView<L1: View, L2: View> : View {
+    let fractionCompleted: Double
+    let label: L1
+    let currentValueLabel: L2
+
+    var body: some View {
         ZStack {
             Capsule()
                 .fill(Color.secondary)
             Capsule()
                 .fill(.linearGradient(stops: [
                     Gradient.Stop(color: Color.accentColor, location: 0.0),
-                    Gradient.Stop(color: Color.accentColor, location: configuration.fractionCompleted ?? 0.0),
-                    Gradient.Stop(color: Color.clear, location: configuration.fractionCompleted ?? 0.0),
+                    Gradient.Stop(color: Color.accentColor, location: fractionCompleted),
+                    Gradient.Stop(color: Color.clear, location: fractionCompleted),
                     Gradient.Stop(color: Color.clear, location: 1.0)
                 ], startPoint: UnitPoint(x: 0.0, y: 0.5), endPoint: UnitPoint(x: 1.0, y: 0.5)))
+                .animation(.easeInOut, value: fractionCompleted) // this animated the progress bar smoothly
             Capsule()
-                .stroke(Color.accentColor, lineWidth: 4)
+                .stroke(Color.accentColor, lineWidth: 2)
 
-            configuration.label
+            label
                 .font(Font.headline.smallCaps())
             VStack {
                 Spacer()
                 // if the progress has a current value, put in in the bottom
-                configuration.currentValueLabel
+                currentValueLabel
                     .font(Font.caption)
             }
         }

@@ -24,7 +24,7 @@ struct CatalogItemView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State var currentActivity: Activity? = nil
-    @StateObject var progress = ObservableProgress(progress: Progress(totalUnitCount: 1))
+    @StateObject var progress = ObservableProgress()
     @State var confirmations: [Activity: Bool] = [:]
 
     #if os(macOS) // horizontalSizeClass unavailable on macOS
@@ -75,7 +75,6 @@ struct CatalogItemView: View {
             catalogHeader()
             Divider()
             catalogActionButtons()
-            //ProgressView(wip(progress.progress))
             Divider()
         }
     }
@@ -438,6 +437,7 @@ struct CatalogItemView: View {
 
     func updateButton() -> some View {
         button(activity: .update)
+            //.disabled(wip(false))
             .disabled((!appInstalled || !info.appUpdated))
             .accentColor(.orange)
     }
@@ -559,7 +559,7 @@ struct CatalogItemView: View {
         } else {
             confirmations[activity] = false // we have confirmed
             currentActivity = activity
-            Task {
+            Task(priority: .userInitiated) {
                 await performAction(activity: activity)
                 currentActivity = nil
             }
@@ -641,6 +641,7 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         do {
+            progress.progress = Progress(totalUnitCount: AppManager.progressUnitCount)
             try await appManager.install(item: item, progress: progress.progress, update: false)
         } catch {
             appManager.reportError(error)
@@ -655,6 +656,7 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         do {
+            progress.progress = Progress(totalUnitCount: AppManager.progressUnitCount)
             try await appManager.install(item: item, progress: progress.progress, update: true)
         } catch {
             appManager.reportError(error)
