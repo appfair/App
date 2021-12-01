@@ -367,14 +367,19 @@ extension AppManager {
         var data = Data()
         data.reserveCapacity(Int(length))
 
+        var fastRunningProgress: Double = 0
+
         for try await byte in asyncBytes {
             if parentProgress.isCancelled {
                 throw AppError("Cancelled", failureReason: "The download was cancelled.")
             }
             data.append(byte)
             let dataCount = Int64(data.count)
-            if dataCount >= min(length, progress1.completedUnitCount + 512) {
+            let currentProgress = Double(data.count) / Double(length)
+            // only update once per percent
+            if Int(fastRunningProgress * 100) != Int(currentProgress * 100) {
                 progress1.completedUnitCount = dataCount
+                fastRunningProgress = currentProgress
             }
         }
 
