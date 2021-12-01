@@ -13,9 +13,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.12</string>
+	<string>0.0.13</string>
 	<key>CFBundleVersion</key>
-	<string>90</string>
+	<string>93</string>
 	<key>FairSymbol</key>
 	<string>calendar.badge.exclamationmark</string>
 	<key>FairTint</key>
