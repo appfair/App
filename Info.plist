@@ -2,36 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>App Fair Info</key>
-	<string>This Info.plist file is the central metadata for the app, both at runtime and during the FAIR process. See https://www.appfair.net for documentation and examples. At a minimum, the Bundle name and Bundle identifier should be configured to match the app fork name.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.App-Name</string>
-	<key>CFBundleIdentifier-FairComment</key>
-	<string>CFBundleIdentifier should be «app.Abc-Xyz» for the App fork name «Abc-Xyz»</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>App Name</string>
-	<key>CFBundleName-FairComment</key>
-	<string>CFBundleName should be «Abc Xyz» for the App fork name «Abc-Xyz»</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.1</string>
-	<key>CFBundleShortVersionString-FairComment</key>
-	<string>CFBundleShortVersionString should be a semantic version string that will match the tag name for the release of the app</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
-	<key>FairSymbol</key>
-	<string></string>
-	<key>FairSymbol-FairComment</key>
-	<string>FairSymbol can be set to a system symbol name for an image to be embossed onto the icon rather than the monogram of the app name</string>
-	<key>FairTint</key>
-	<string></string>
-	<key>FairTint-FairComment</key>
-	<string>The FairTint property is a 6-character RBG hex string for the base color of the generated icon</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
@@ -41,12 +25,8 @@
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
 	</dict>
-	<key>FairUsage-FairComment</key>
-	<string>FairUsage must contain descriptive values for each of the entitlement keys enabled in the app's Sandbox.entitlements file</string>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
-	<key>LSApplicationCategoryType-FairComment</key>
-	<string>LSApplicationCategoryType must contain a string public.app-category.TOPIC that matches the appfair-TOPIC for app fork</string>
+	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -67,8 +47,6 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIDeviceFamily</key>
-	<integer>2</integer>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
