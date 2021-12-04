@@ -1,27 +1,25 @@
-/**
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation, either version 3 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 import FairApp
 import UniformTypeIdentifiers
 
-// The entry point to creating your app is the `AppContainer` type,
-// which is a stateless enum declared in `AppMain.swift` and may not be changed.
-// 
-// App customization is done via extensions in `AppContainer.swift`,
-// which enables customization of the root scene, app settings, and
-// other features of the app.
+/// The main content view for the app.
+public struct ContentView: View {
+    @EnvironmentObject var store: Store
 
+    public var body: some View {
+        VStack {
+            Text("Welcome to **\(Bundle.main.bundleName!)**")
+                .font(.largeTitle)
+            Text("(it doesn't do anything _yet_)")
+                .font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// The shared app environment
+@MainActor public final class Store: SceneManager {
+    @AppStorage("someToggle") public var someToggle = false
+}
 
 //extension UTType {
 //    static var exampleText: UTType {
@@ -70,7 +68,6 @@ struct TextFile: FileDocument {
 
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
-    /// The body of your scene is provided by `AppContainer.scene`
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         DocumentGroup(newDocument: TextFile()) { file in
             ContentView(document: file.$document)
@@ -90,29 +87,13 @@ public extension AppContainer {
     }
 }
 
-/// The shared app environment
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct ContentView: View {
-    @EnvironmentObject var store: Store
-    @Binding var document: TextFile
-
-    public var body: some View {
-        SyntaxEditorView(text: $document.text)
-            .font(wip(Font.largeTitle.monospacedDigit()))
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        EmptyView()
+        Toggle(isOn: $store.someToggle) {
+            Text("Toggle")
+        }
+        .padding()
     }
 }
-
