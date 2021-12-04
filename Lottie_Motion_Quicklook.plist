@@ -30,12 +30,10 @@
 			<true/>
 			<key>QLSupportedContentTypes</key>
 			<array>
-				<string>$(PRODUCT_BUNDLE_IDENTIFIER).lottie-json</string>
+				<string>app.Lottie-Motion.lottie-json</string>
 			</array>
 			<key>QLSupportsSearchableItems</key>
 			<false/>
-			<key>QLThumbnailMinimumDimension</key>
-			<integer>0</integer>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.quicklook.preview</string>

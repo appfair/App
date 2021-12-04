@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4917BBFB275BF87C002FDF81 /* Lottie Motion Quicklook.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
+		4973D0E1275C1ADF00ED915A /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 4973D0E0275C1ADF00ED915A /* App */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4973D0E1275C1ADF00ED915A /* App in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -68,6 +70,7 @@
 				498E852827597DA100EE6F8C /* AppFairApp.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
+				4973D0DF275C1ADF00ED915A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -78,6 +81,13 @@
 				4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4973D0DF275C1ADF00ED915A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -96,6 +106,9 @@
 			dependencies = (
 			);
 			name = "Lottie Motion Quicklook";
+			packageProductDependencies = (
+				4973D0E0275C1ADF00ED915A /* App */,
+			);
 			productName = "Lottie Motion Quicklook";
 			productReference = 4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -466,6 +479,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4973D0E0275C1ADF00ED915A /* App */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = App;
+		};
 		498DD183268CDB4600B79D43 /* App */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = App;

@@ -17,8 +17,10 @@ import QuickLook
 class PreviewViewController: UXViewController, QLPreviewingController {
     
     override func loadView() {
-        super.loadView()
-        // Do any additional setup after loading the view.
+        print("### LottieQuickLook: loading preview controller view")
+        self.view = UXHostingView(rootView: Group {
+            Color.red
+        })
     }
 
     /*
@@ -34,7 +36,8 @@ class PreviewViewController: UXViewController, QLPreviewingController {
      */
     
     func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
-        
+        print("### LottieQuickLook: preparePreviewOfFile", url)
+
         // Add the supported content types to the QLSupportedContentTypes array in the Info.plist of the extension.
         
         // Perform any setup necessary in order to prepare the view.
