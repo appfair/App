@@ -5,10 +5,16 @@
 //  Created by Marc Prud'hommeaux on 12/4/21.
 //
 
-import Cocoa
-import Quartz
+import FairApp
 
-class PreviewViewController: NSViewController, QLPreviewingController {
+#if canImport(Quartz)
+import Quartz
+#endif
+#if canImport(QuickLook)
+import QuickLook
+#endif
+
+class PreviewViewController: UXViewController, QLPreviewingController {
     
     override func loadView() {
         super.loadView()

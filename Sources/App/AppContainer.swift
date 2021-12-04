@@ -49,8 +49,8 @@ public struct ContentView: View {
                 .frame(minWidth: 0, minHeight: 0)
             controlStrip()
                 .background(Material.ultraThinMaterial)
-                .focusable(true)
-                .searchable(text: $searchString) // attempt to work around broken focusedSceneValue as per https://developer.apple.com/forums/thread/693580
+                //.focusable(true)
+                //.searchable(text: $searchString) // attempt to work around broken focusedSceneValue as per https://developer.apple.com/forums/thread/693580
         }
         .onChange(of: sceneStore.jumpTime) { _ in
             // storing the animationTime directly in the SceneStore is too slow (since a complete view re-build will occur whenever it changes), so instead we just store intentions to jump forward or backward by an offset

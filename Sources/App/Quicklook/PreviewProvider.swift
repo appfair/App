@@ -5,8 +5,12 @@
 //  Created by Marc Prud'hommeaux on 12/4/21.
 //
 
-import Cocoa
+#if canImport(Quartz)
 import Quartz
+#endif
+#if canImport(QuickLook)
+import QuickLook
+#endif
 
 class PreviewProvider: QLPreviewProvider, QLPreviewingController {
     
