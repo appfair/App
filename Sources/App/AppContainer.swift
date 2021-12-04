@@ -33,22 +33,3 @@ public extension AppContainer {
     }
 }
 
-/// The shared app environment
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct ContentView: View {
-    @EnvironmentObject var store: Store
-
-    public var body: some View {
-        VStack {    
-            Text("Welcome to Neural Scry!").font(.largeTitle)
-            Text("(this app doesn't do anything yet)").font(.headline)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
