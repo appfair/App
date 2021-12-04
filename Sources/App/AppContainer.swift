@@ -129,7 +129,7 @@ struct MotionScene : Scene {
     /// For each example in the module's bundle, create a menu item that will open the file
     func examplesMenu() -> Menu<Text, ForEach<[URL], URL, Button<Text>>> {
         Menu {
-            ForEach((Bundle.module.urls(forResourcesWithExtension: "json", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
+            ForEach((Bundle.module.urls(forResourcesWithExtension: "lottiejson", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
                 Text(url.deletingPathExtension().lastPathComponent)
                     .button {
                         #if os(macOS)
