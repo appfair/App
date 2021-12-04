@@ -16,6 +16,7 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
 		<string>This app needs to read local files in order to load user-selected books</string>
