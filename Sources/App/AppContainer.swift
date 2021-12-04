@@ -1,23 +1,27 @@
-/**
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation, either version 3 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 import FairApp
 
-@available(macOS 12.0, iOS 15.0, *)
+/// The main content view for the app.
+public struct ContentView: View {
+    @EnvironmentObject var store: Store
+
+    public var body: some View {
+        VStack {
+            Text("Welcome to **\(Bundle.main.bundleName!)**")
+                .font(.largeTitle)
+            Text("(it doesn't do anything _yet_)")
+                .font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// The shared app environment
+@MainActor public final class Store: SceneManager {
+    @AppStorage("someToggle") public var someToggle = false
+}
+
 public extension AppContainer {
-    /// The body of your scene must exist in an extension of `IndieScene`
-    static func rootScene(store: Store) -> some Scene {
+    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView().environmentObject(store)
         }
@@ -27,11 +31,6 @@ public extension AppContainer {
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
         EmptyView()
     }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
 }
 
 @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
@@ -125,4 +124,3 @@ extension View {
         #endif
     }
 }
-
