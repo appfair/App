@@ -7,7 +7,7 @@ PRODUCT_NAME = Tune Out
 PRODUCT_BUNDLE_IDENTIFIER = app.Tune-Out
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.8.368
+MARKETING_VERSION = 0.8.369
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
