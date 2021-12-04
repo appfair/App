@@ -7,7 +7,7 @@ PRODUCT_NAME = App Fair
 PRODUCT_BUNDLE_IDENTIFIER = app.App-Fair
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.7.1
+MARKETING_VERSION = 0.7.2
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
@@ -19,7 +19,7 @@ APP_CATEGORY = public.app-category.utilities
 // ICON_TINT = FACC6A
 
 // The system symbol name to embed in the generated icon instead of the default monogram
-// ICON_SYMBOL = sparkles.rectangle.stack
+ICON_SYMBOL = app.gift
 
 // Controls which platforms to build
 SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
