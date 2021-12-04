@@ -5,21 +5,17 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.Neural-Scry</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Neural Scry</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.36</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>119</string>
-	<key>FairSymbol</key>
-	<string>waveform</string>
-	<key>FairTint</key>
-	<string>FF0000</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.cs.debugger</key>
@@ -40,7 +36,7 @@
 		<string>This enabled this permission for testing</string>
 	</dict>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.medical</string>
+	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -61,8 +57,6 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIDeviceFamily</key>
-	<integer>2</integer>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
