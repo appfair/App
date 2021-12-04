@@ -5,34 +5,17 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.App-Fair</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>App Fair</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.6.254</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>App Fair</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>appfair</string>
-			</array>
-		</dict>
-	</array>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>342</string>
-	<key>FairSymbol</key>
-	<string>gift.fill</string>
-	<key>FairTint</key>
-	<string></string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.executable</key>
@@ -47,7 +30,7 @@
 		<string>The App Fair uses the local file system to install apps</string>
 	</dict>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.productivity</string>
+	<string>$(APP_CATEGORY)</string>
 	<key>LSFileQuarantineEnabled</key>
 	<false/>
 	<key>LSMinimumSystemVersion</key>
@@ -68,8 +51,6 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIDeviceFamily</key>
-	<integer>2</integer>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientationsDISABLED</key>
@@ -78,6 +59,19 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>App Fair</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>appfair</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

@@ -12,9 +12,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4951B002270F547E00E3EC89 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		49555415268931C1003F1B5B /* App Name.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "App Name.app"; path = "AppFair App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* App Fair.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Fair.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		498E852827597DA100EE6F8C /* AppFairApp.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppFairApp.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,27 +29,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		49372E752689388E00100F18 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				4951B002270F547E00E3EC89 /* Accelerate.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
+				498E852827597DA100EE6F8C /* AppFairApp.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
-				49372E752689388E00100F18 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* App Name.app */,
+				49555415268931C1003F1B5B /* App Fair.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,7 +53,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "AppFairApp" */;
 			buildPhases = (
-				492F3047271A8070000A2363 /* Touch Info.plist */,
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
 				49555413268931C1003F1B5B /* Resources */,
@@ -75,7 +66,7 @@
 				498DD183268CDB4600B79D43 /* App */,
 			);
 			productName = App;
-			productReference = 49555415268931C1003F1B5B /* App Name.app */;
+			productReference = 49555415268931C1003F1B5B /* App Fair.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -122,27 +113,6 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		492F3047271A8070000A2363 /* Touch Info.plist */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Touch Info.plist";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# needed to force code re-signing and enable sandbox\nif [ \"${ENABLE_PREVIEWS}\" != \"YES\" ]; then\n    touch -c Info.plist\nfi\n";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		49555411268931C1003F1B5B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -156,8 +126,8 @@
 /* Begin XCBuildConfiguration section */
 		49555423268931C4003F1B5B /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 498E852827597DA100EE6F8C /* AppFairApp.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -187,7 +157,6 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -208,10 +177,13 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-adhoc_codesign",
+				);
 				SDKROOT = iphoneos;
 				"SDKROOT[sdk=iphoneos*]" = iphoneos;
 				"SDKROOT[sdk=macosx*]" = macosx;
-				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -223,8 +195,8 @@
 		};
 		49555424268931C4003F1B5B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 498E852827597DA100EE6F8C /* AppFairApp.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -254,7 +226,6 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -268,10 +239,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-adhoc_codesign",
+				);
 				SDKROOT = iphoneos;
 				"SDKROOT[sdk=iphoneos*]" = iphoneos;
 				"SDKROOT[sdk=macosx*]" = macosx;
-				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -288,11 +262,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "AppFair App";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				IOS_DEPLOYMENT_TARGET = 15.0;
@@ -303,10 +276,6 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				OTHER_CODE_SIGN_FLAGS = "--timestamp=none";
-				OTHER_LDFLAGS = "-Wl,-no_adhoc_codesign";
-				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Name";
-				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.5;
@@ -320,11 +289,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "AppFair App";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				IOS_DEPLOYMENT_TARGET = 15.0;
@@ -335,9 +303,6 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				OTHER_LDFLAGS = "-Wl,-no_adhoc_codesign";
-				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Name";
-				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SWIFT_VERSION = 5.5;
 			};
