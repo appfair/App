@@ -8,7 +8,7 @@ let package = Package(
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the *first* dependency
-        .package(name: "Fair", url: "https://github.com/fair-ground/Fair.git", .branch("main")),
+        .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
         .package(url: "https://github.com/Next-Edit/SyntaxEditor.git", .branch("main")),
     ],
@@ -35,7 +35,7 @@ let package = Package(
 precondition(package.name == "App", "Package.swift name must be 'App', but was: '\(package.name)'")
 precondition(!package.dependencies.isEmpty, "Package.swift must have at least one dependency")
 precondition(package.dependencies[0].name == "Fair", "first dependency name must be 'Fair', but was: '\(package.dependencies[0].name ?? "")'")
-precondition(package.dependencies[0].url == "https://github.com/fair-ground/Fair.git", "first Package.swift dependency must be 'https://github.com/fair-ground/Fair.git', but was: '\(package.dependencies[0].url)'")
+precondition(package.dependencies[0].url == "https://fair-ground.org/Fair.git", "first Package.swift dependency must be 'https://fair-ground.org/Fair.git', but was: '\(package.dependencies[0].url)'")
 
 precondition(package.products.count == 1, "Package.swift must have exactly one product")
 precondition(package.products[0].name == "App", "Package.swift product must be named 'App', but was: '\(package.products[0].name)'")
