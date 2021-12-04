@@ -8,7 +8,7 @@ let package = Package(
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the *first* dependency
-        .package(name: "Fair", url: "https://github.com/fair-ground/Fair.git", .branch("main")),
+        .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
     ],
     targets: [
