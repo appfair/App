@@ -40,6 +40,7 @@ public struct ContentView: View {
     @EnvironmentObject var appStore: Store
     @EnvironmentObject var sceneStore: SceneStore
     @State var animationTime: TimeInterval = 0
+    @State var searchString = ""
 
     public var body: some View {
         VStack {
@@ -48,6 +49,8 @@ public struct ContentView: View {
                 .frame(minWidth: 0, minHeight: 0)
             controlStrip()
                 .background(Material.ultraThinMaterial)
+                .focusable(true)
+                .searchable(text: $searchString) // attempt to work around broken focusedSceneValue as per https://developer.apple.com/forums/thread/693580
         }
         .onChange(of: sceneStore.jumpTime) { _ in
             // storing the animationTime directly in the SceneStore is too slow (since a complete view re-build will occur whenever it changes), so instead we just store intentions to jump forward or backward by an offset
@@ -138,7 +141,7 @@ struct MotionScene : Scene {
     /// For each example in the module's bundle, create a menu item that will open the file
     func examplesMenu() -> Menu<Text, ForEach<[URL], URL, Button<Text>>> {
         Menu {
-            ForEach((Bundle.module.urls(forResourcesWithExtension: "lottiejson", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
+            ForEach((Bundle.module.urls(forResourcesWithExtension: "lottie.json", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
                 Text(url.deletingPathExtension().lastPathComponent)
                     .button {
                         #if os(macOS)
