@@ -1,18 +1,14 @@
 import FairApp
 import UniformTypeIdentifiers
 
-/// The main content view for the app.
+@available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    @Binding var document: TextFile
 
     public var body: some View {
-        VStack {
-            Text("Welcome to **\(Bundle.main.bundleName!)**")
-                .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)")
-                .font(.headline)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SyntaxEditorView(text: $document.text)
+            .font(wip(Font.largeTitle.monospacedDigit()))
     }
 }
 
