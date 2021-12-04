@@ -33,3 +33,14 @@ public extension AppContainer {
     }
 }
 
+public struct AppSettingsView : View {
+    @EnvironmentObject var store: Store
+
+    public var body: some View {
+        Toggle(isOn: $store.someToggle) {
+            Text("Toggle")
+        }
+        .padding()
+    }
+}
+
