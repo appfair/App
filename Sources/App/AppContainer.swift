@@ -33,31 +33,6 @@ public extension AppContainer {
     }
 }
 
-<<<<<<< HEAD
-/// The shared app environment
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct ContentView: View {
-    @EnvironmentObject var store: Store
-
-    public var body: some View {
-        VStack {
-            Text("BUSINESS! BUSINESS! BUSINESS!").font(.largeTitle)
-            Text("NUMBERS! NUMBERS! NUMBERS!").font(.title)
-            Spacer()
-            Text("Is this working?").font(.caption)
-        }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-=======
->>>>>>> upstream/main
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
