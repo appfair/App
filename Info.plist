@@ -5,20 +5,56 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeIconFile</key>
-			<string>LottieIcon</string>
-			<key>CFBundleTypeName</key>
-			<string>After Effects Body Movin JSON</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>app.Lottie-Motion.lottie-json</string>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER).lottie-json</string>
 			</array>
-			<key>NSDocumentClass</key>
-			<string>$(PRODUCT_MODULE_NAME).Document</string>
+			<key>NSUbiquitousDocumentUserActivityType</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).lottie-json</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>JSON</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>json</string>
+                <string>JSON</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.json</string>
+            </array>
+        </dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Lottie JSON</string>
+			<key>UTTypeIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).lottie-json</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>lottie.json</string>
+					<string>lottiejson</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/vnd.$(PRODUCT_BUNDLE_IDENTIFIER).lottie-json</string>
+                </array>
+			</dict>
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
@@ -70,35 +106,6 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-				<string>public.composite-content</string>
-			</array>
-			<key>UTTypeDescription</key>
-			<string>After Effects Body Movin JSON</string>
-			<key>UTTypeIcons</key>
-			<dict/>
-			<key>UTTypeIdentifier</key>
-			<string>app.Lottie-Motion.lottie-json</string>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>lottiejson</string>
-					<string>lottie.json</string>
-					<string>lottie</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/vnd.app.Lottie-Motion.lottie-json</string>
-				</array>
-			</dict>
-		</dict>
 	</array>
 </dict>
 </plist>

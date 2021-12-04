@@ -3,11 +3,20 @@ import UniformTypeIdentifiers
 import LottieUI
 import SwiftUI
 
+extension UTType {
+    static var lottieJSON = UTType(importedAs: "app.Lottie-Motion.lottie-json")
+}
+
 final class MotionFile: ReferenceFileDocument {
     @Published var animation: LottieUI.Animation
     @Published var sceneStore = SceneStore()
 
-    static var readableContentTypes: [UTType] { [UTType.json] }
+    static var readableContentTypes: [UTType] {
+        [
+            UTType.lottieJSON,
+            UTType.json, // most lottie files are just ".json"
+        ]
+    }
     static var writableContentTypes: [UTType] { [] }
 
     init(configuration: ReadConfiguration) throws {
