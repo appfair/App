@@ -7,7 +7,7 @@ PRODUCT_NAME = Next Edit
 PRODUCT_BUNDLE_IDENTIFIER = app.Next-Edit
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.4.4
+MARKETING_VERSION = 0.4.5
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
