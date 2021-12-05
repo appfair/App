@@ -7,7 +7,7 @@ PRODUCT_NAME = Bon Mot
 PRODUCT_BUNDLE_IDENTIFIER = app.Bon-Mot
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.2.15
+MARKETING_VERSION = 0.2.16
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
