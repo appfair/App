@@ -7,7 +7,7 @@ PRODUCT_NAME = App Fair
 PRODUCT_BUNDLE_IDENTIFIER = app.App-Fair
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.7.5
+MARKETING_VERSION = 0.7.6
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
