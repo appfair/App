@@ -70,7 +70,6 @@
 				498E852827597DA100EE6F8C /* AppFairApp.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
-				4973D0DF275C1ADF00ED915A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -81,13 +80,6 @@
 				4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		4973D0DF275C1ADF00ED915A /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
