@@ -10,9 +10,11 @@ import QuickLook
 class PreviewViewController: UXViewController, QLPreviewingController {
     override func loadView() {
         print("### LottieQuickLook: loading preview controller view")
+        #if os(macOS)
         self.view = UXHostingView(rootView: Group {
             Color.red
         })
+        #endif
     }
 
     func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
