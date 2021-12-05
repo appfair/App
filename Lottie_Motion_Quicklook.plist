@@ -27,7 +27,7 @@
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>QLIsDataBasedPreview</key>
-			<true/>
+			<false/>
 			<key>QLSupportedContentTypes</key>
 			<array>
 				<string>app.Lottie-Motion.lottie-json</string>
