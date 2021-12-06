@@ -7,35 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4917BBFB275BF87C002FDF81 /* Lottie Motion Quicklook.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		4973D0E1275C1ADF00ED915A /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 4973D0E0275C1ADF00ED915A /* App */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		4917BBFC275BF87C002FDF81 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4955540D268931C1003F1B5B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4917BBE9275BF84A002FDF81;
-			remoteInfo = "Lottie Motion Quicklook";
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		4917BBFE275BF87C002FDF81 /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				4917BBFB275BF87C002FDF81 /* Lottie Motion Quicklook.appex in Embed App Extensions */,
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Lottie Motion Quicklook.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -112,12 +87,10 @@
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
 				49555413268931C1003F1B5B /* Resources */,
-				4917BBFE275BF87C002FDF81 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				4917BBFD275BF87C002FDF81 /* PBXTargetDependency */,
 			);
 			name = AppFairApp;
 			packageProductDependencies = (
@@ -198,14 +171,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		4917BBFD275BF87C002FDF81 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4917BBE9275BF84A002FDF81 /* Lottie Motion Quicklook */;
-			targetProxy = 4917BBFC275BF87C002FDF81 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4917BBF8275BF84B002FDF81 /* Debug */ = {
