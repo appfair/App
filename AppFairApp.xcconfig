@@ -7,7 +7,7 @@ PRODUCT_NAME = Hear Tell
 PRODUCT_BUNDLE_IDENTIFIER = app.Hear-Tell
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.3.19
+MARKETING_VERSION = 0.3.20
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
