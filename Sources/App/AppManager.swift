@@ -236,7 +236,7 @@ extension AppManager {
             let start = CFAbsoluteTimeGetCurrent()
 
             // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
-            try FileManager.default.createDirectory(at: Self.installFolderURL, withIntermediateDirectories: true, attributes: nil)
+            try? FileManager.default.createDirectory(at: Self.installFolderURL, withIntermediateDirectories: true, attributes: nil)
 
             var installPathContents = try FileManager.default.contentsOfDirectory(at: Self.installFolderURL, includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
             installPathContents.append(Self.catalogAppURL)
