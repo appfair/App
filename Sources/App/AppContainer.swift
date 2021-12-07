@@ -36,6 +36,7 @@ final class MotionFile: ReferenceFileDocument {
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
+    @Namespace var mainNamespace
     let document: MotionFile
     @EnvironmentObject var appStore: Store
     @EnvironmentObject var sceneStore: SceneStore
@@ -60,6 +61,8 @@ public struct ContentView: View {
                 sceneStore.jumpTime = 0.0
             }
         }
+        //.prefersDefaultFocus(in: mainNamespace)
+        //.focusScope(mainNamespace)
         .focusedSceneValue(\.sceneStore, sceneStore)
     }
 
@@ -67,6 +70,17 @@ public struct ContentView: View {
     @ViewBuilder func controlStrip() -> some View {
         HStack(spacing: 20) {
             //PlayPauseCommand()
+
+            Text("Back")
+                .label(image: FairSymbol.gobackward)
+                .button {
+                    sceneStore.jumpTime = -0.1
+                }
+                .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
+                .font(.title)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help(Text("Jump back"))
 
             (sceneStore.playing == false ? Text("Pause") : Text("Play"))
                 .label(image: sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
@@ -78,6 +92,17 @@ public struct ContentView: View {
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
+
+            Text("Forward")
+                .label(image: FairSymbol.goforward)
+                .button {
+                    sceneStore.jumpTime = +0.1
+                }
+                .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
+                .font(.title)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help(Text("Jump forward"))
 
             Slider(value: $animationTime, in: 0...document.animation.duration, label: {
             }, minimumValueLabel: {
