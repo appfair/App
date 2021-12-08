@@ -36,6 +36,7 @@ struct CatalogItemView: View {
 
 
     var body: some View {
+        // let _ = debuggingViewChanges() // e.g.: “CatalogItemView: @self, @identity, _appManager, _openURLAction, _colorScheme, _currentActivity, _progress, _confirmations changed.”
         catalogGrid()
         //catalogStack()
     }
