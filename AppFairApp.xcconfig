@@ -1,10 +1,10 @@
 // The configuration file for your App Fair App. See: https://www.appfair.net
 
 // PRODUCT_NAME is the app name, consisting of two words separated by a space
-PRODUCT_NAME = App Name
+PRODUCT_NAME = AppDemoXIXXI
 
 // PRODUCT_BUNDLE_IDENTIFIER must be in the form: "app.App-Name"
-PRODUCT_BUNDLE_IDENTIFIER = app.App-Name
+PRODUCT_BUNDLE_IDENTIFIER = app.AppDemoXIXXI
 
 // The semantic version for the app matching the git tag for the release
 MARKETING_VERSION = 0.0.1
