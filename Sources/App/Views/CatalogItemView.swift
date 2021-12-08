@@ -524,6 +524,7 @@ struct CatalogItemView: View {
     }
 
     /// Returns the URLs that are registered with the system `NSWorkspace` for handling the app's bundle
+    @available(*, deprecated, message: "unsuitable for use with bindings because NSWorkspace.shared.urlsForApplications sometimes has a delay")
     var appInstallURLs: [URL] {
         guard let plist = appPropertyList?.successValue else {
             return []
@@ -542,7 +543,8 @@ struct CatalogItemView: View {
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
-        return !appInstallURLs.isEmpty
+        appPropertyList?.successValue?.bundleID == info.id
+        //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
     }
 
     func confirmationBinding(_ activity: Activity) -> Binding<Bool> {

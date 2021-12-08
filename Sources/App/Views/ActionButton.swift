@@ -92,7 +92,7 @@ struct CapsuleProgressView<L1: View, L2: View> : View {
                     Gradient.Stop(color: Color.clear, location: fractionCompleted),
                     Gradient.Stop(color: Color.clear, location: 1.0)
                 ], startPoint: UnitPoint(x: 0.0, y: 0.5), endPoint: UnitPoint(x: 1.0, y: 0.5)))
-                .animation(.easeInOut, value: fractionCompleted) // this animated the progress bar smoothly
+                .animation(Animation.easeInOut, value: fractionCompleted) // this animates the progress bar smoothly
             Capsule()
                 .stroke(Color.accentColor, lineWidth: 2)
 
