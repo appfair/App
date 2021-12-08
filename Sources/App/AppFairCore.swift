@@ -219,27 +219,7 @@ extension AppManager {
     typealias Item = URL
 
     func activateFind() {
-        dbg("### ", #function) // TODO: is there a way to focus the search field?
-    }
-
-    func share(_ item: Item) {
-        dbg("### ", #function)
-    }
-
-    func markFavorite(_ item: Item) {
-        dbg("### ", #function)
-    }
-
-    func deleteItem(_ item: Item) {
-        dbg("### ", #function)
-    }
-
-    func submitCurrentSearchQuery() {
-        dbg("### ", #function)
-    }
-
-    func openFilters() {
-        dbg("### ", #function)
+        dbg("### ", #function) // TODO: is there a way to focus the search field in the toolbar?
     }
 
     func updateCount() -> Int {
