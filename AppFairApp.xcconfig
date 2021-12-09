@@ -21,8 +21,9 @@ APP_CATEGORY = public.app-category.reference
 // The system symbol name to embed in the generated icon instead of the default monogram
 ICON_SYMBOL = aqi.medium
 
-// Controls which platforms to build
-SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
+// Specify which platforms to build and release
+SUPPORTED_PLATFORMS = macosx
+// SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
