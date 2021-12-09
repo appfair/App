@@ -12,6 +12,7 @@ public struct ContentView: View {
                 .font(.headline)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.pink)
     }
 }
 
