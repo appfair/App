@@ -47,16 +47,22 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 
     static let `default`: AppManager = AppManager()
 
-    private var fsobserver: FileSystemObserver!
+    private var fsobserver: FileSystemObserver? = nil
 
     internal required init() {
         super.init()
 
+        if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
+            try? Self.createInstallFolder()
+        }
+
         // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
-        self.fsobserver = FileSystemObserver(URL: Self.installFolderURL) {
-            dbg("changes detected in app folder:", Self.installFolderURL.path)
-            Task {
-                await self.scanInstalledApps()
+        if FileManager.default.isDirectory(url: Self.installFolderURL) == true {
+            self.fsobserver = FileSystemObserver(URL: Self.installFolderURL) {
+                dbg("changes detected in app folder:", Self.installFolderURL.path)
+                Task {
+                    await self.scanInstalledApps()
+                }
             }
         }
 
@@ -230,14 +236,16 @@ extension AppManager {
         Set(installedApps.values.compactMap(\.successValue).compactMap(\.CFBundleIdentifier))
     }
 
+    static func createInstallFolder() throws {
+        // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
+        try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
+    }
+
     func scanInstalledApps() async {
         dbg()
         do {
             let start = CFAbsoluteTimeGetCurrent()
-
-            // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
-            try? FileManager.default.createDirectory(at: Self.installFolderURL, withIntermediateDirectories: true, attributes: nil)
-
+            try? Self.createInstallFolder()
             var installPathContents = try FileManager.default.contentsOfDirectory(at: Self.installFolderURL, includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
             installPathContents.append(Self.catalogAppURL)
 
@@ -560,7 +568,7 @@ extension AppManager.SidebarItem {
 }
 
 /// A watcher for changes to the install folder
-private final class FileSystemObserver {
+@MainActor private final class FileSystemObserver {
     private let fileDescriptor: CInt
     private let source: DispatchSourceProtocol
 
