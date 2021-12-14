@@ -46,6 +46,7 @@ public struct ContentView: View {
     public var body: some View {
         VStack {
             MotionEffectView(animation: document.animation, playing: $sceneStore.playing, loopMode: $sceneStore.loopMode, animationSpeed: $sceneStore.animationSpeed, animationTime: $animationTime)
+                .animation(.linear, value: animationTime) // ideally this would cause changes to the animationTime to animate through intervening values, but it seems to not work
                 .scaleEffect(sceneStore.viewScale)
                 .frame(minWidth: 0, minHeight: 0)
             controlStrip()
@@ -54,55 +55,25 @@ public struct ContentView: View {
                 //.searchable(text: $searchString) // attempt to work around broken focusedSceneValue as per https://developer.apple.com/forums/thread/693580
         }
         .onChange(of: sceneStore.jumpTime) { _ in
-            // storing the animationTime directly in the SceneStore is too slow (since a complete view re-build will occur whenever it changes), so instead we just store intentions to jump forward or backward by an offset
-            if sceneStore.jumpTime != 0.0 {
-                animationTime = max(min(animationTime + sceneStore.jumpTime, document.animation.duration), 0.0)
-                // re-set to zero
-                sceneStore.jumpTime = 0.0
+            // storing the animationTime directly in the SceneStore is too slow (since a complete view re-build will occur whenever it changes), so instead we just store the *intention* to jump forward or backward by an offset
+            let jt = sceneStore.jumpTime
+            if jt != 0.0 {
+                // withAnimation { // animating jumps seem to not work
+                    animationTime = max(min(animationTime + jt, document.animation.duration), 0.0)
+                    sceneStore.jumpTime = 0.0 // re-set to zero
+                // }
             }
         }
-        //.prefersDefaultFocus(in: mainNamespace)
-        //.focusScope(mainNamespace)
-        .focusedSceneValue(\.sceneStore, sceneStore)
     }
 
     /// Play/pause progress video controls
     @ViewBuilder func controlStrip() -> some View {
         HStack(spacing: 20) {
-            //PlayPauseCommand()
-
-            Text("Back")
-                .label(image: FairSymbol.gobackward)
-                .button {
-                    sceneStore.jumpTime = -0.1
-                }
-                .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
-                .font(.title)
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .help(Text("Jump back"))
-
-            (sceneStore.playing == false ? Text("Pause") : Text("Play"))
-                .label(image: sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
-                .button {
-                    sceneStore.playing.toggle()
-                }
-                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
+            PlayPauseCommand()
                 .font(.title)
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
-
-            Text("Forward")
-                .label(image: FairSymbol.goforward)
-                .button {
-                    sceneStore.jumpTime = +0.1
-                }
-                .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
-                .font(.title)
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .help(Text("Jump forward"))
 
             Slider(value: $animationTime, in: 0...document.animation.duration, label: {
             }, minimumValueLabel: {
@@ -125,7 +96,7 @@ public struct ContentView: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
+                .help(Text("Toggle playback looping"))
         }
         .padding()
     }
@@ -154,6 +125,7 @@ struct MotionScene : Scene {
         DocumentGroup(viewing: MotionFile.self) { file in
             ContentView(document: file.document)
                 .environmentObject(file.document.sceneStore)
+                .focusedSceneValue(\.sceneStore, file.document.sceneStore)
         }
         .commands {
             CommandGroup(after: .newItem) {
@@ -194,21 +166,20 @@ struct LottieCommandMenu : Commands {
             PlayPauseCommand()
                 .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
 
-//                sceneStore.playPauseCommand()
-//                    .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
-//                sceneStore.jumpForwardCommand(1.0)
-//                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
-//                sceneStore.jumpForwardCommand(0.1)
-//                    .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: [.shift]))
-//                sceneStore.jumpBackwardCommand(-1.0)
-//                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
-//                sceneStore.jumpBackwardCommand(-0.1)
-//                    .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: [.shift]))
-//                sceneStore.zoomCommand(0.05)
-//                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("="), modifiers: [.command]))
-//                sceneStore.zoomCommand(-0.05)
-//                    .keyboardShortcut(KeyboardShortcut(KeyEquivalent("-"), modifiers: [.command]))
-//
+            JumpCommand(amount: 1.0)
+                .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
+            JumpCommand(amount: 0.1)
+                .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: [.shift]))
+            JumpCommand(amount: -1.0)
+                .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: []))
+            JumpCommand(amount: -0.1)
+                .keyboardShortcut(KeyboardShortcut(.leftArrow, modifiers: [.shift]))
+
+            ZoomCommand(amount: 0.05)
+                .keyboardShortcut(KeyboardShortcut(KeyEquivalent("="), modifiers: [.command]))
+            ZoomCommand(amount: -0.05)
+                .keyboardShortcut(KeyboardShortcut(KeyEquivalent("-"), modifiers: [.command]))
+
 //                // NavigationLink("Create Window", destination: Text("This opens in a new window!").padding())
         }
 
@@ -258,15 +229,48 @@ extension FocusedValues {
     }
 }
 
-@available(*, deprecated, message: "@FocusedValue broken in Monterey (12.0.1)")
 struct PlayPauseCommand : View {
     @FocusedValue(\.sceneStore) var sceneStore
 
     var body: some View {
-        (sceneStore?.playing == false ? Text("Pause") : Text("Play"))
+        (sceneStore == nil ? Text("Play/Pause") : sceneStore?.playing == false ? Text("Pause") : Text("Play"))
             .label(image: sceneStore?.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
             .button {
                 sceneStore?.playing.toggle()
+            }
+            .disabled(sceneStore == nil)
+    }
+}
+
+struct ZoomCommand : View {
+    @FocusedValue(\.sceneStore) var sceneStore
+    let amount: Double
+
+    var body: some View {
+        ((amount > 0 ? Text("Zoom In: ") : Text("Zoom Out: ")) + Text(amount, format: .percent))
+            .label(image: amount > 0 ? FairSymbol.plus_magnifyingglass.image : FairSymbol.minus_magnifyingglass.image)
+            .button {
+                if let sceneStore = sceneStore {
+                    withAnimation {
+                        sceneStore.viewScale = max(0.01, sceneStore.viewScale + amount)
+                    }
+                }
+            }
+            .disabled(sceneStore == nil)
+    }
+}
+
+struct JumpCommand : View {
+    @FocusedValue(\.sceneStore) var sceneStore
+    let amount: Double
+
+    var body: some View {
+        ((amount > 0 ? Text("Jump Forward: ") : Text("Zoom Backward: ")) + Text(amount, format: .number))
+            .label(image: amount > 0 ? FairSymbol.forward_fill.image : FairSymbol.backward_fill.image)
+            .button {
+                if let sceneStore = sceneStore {
+                    sceneStore.jumpTime = amount
+                }
             }
             .disabled(sceneStore == nil)
     }
@@ -280,30 +284,6 @@ final class SceneStore: ObservableObject {
     @Published var animationSpeed = 1.0
     @Published var jumpTime: TimeInterval = 0.0
     @Published var viewScale: Double = 1.0
-
-    /// The command to jump forward
-    func jumpForwardCommand(_ amount: TimeInterval) -> Button<Label<Text, Image>> {
-        Text("Jump Forward: \(amount)")
-            .label(image: FairSymbol.forward_fill.image)
-            .button { self.jumpTime = amount }
-    }
-
-    /// The command to jump backward
-    func jumpBackwardCommand(_ amount: TimeInterval) -> Button<Label<Text, Image>> {
-        Text("Jump Backward: \(amount)")
-            .label(image: FairSymbol.backward_fill.image)
-            .button { self.jumpTime = amount }
-    }
-
-    /// The command to zoom
-    func zoomCommand(_ amount: Double) -> Button<Label<Text, Image>> {
-        ((amount > 0 ? Text("Zoom In: ") : Text("Zoom Out: ")) + Text(amount, format: .percent))
-            .label(image: amount > 0 ? FairSymbol.plus_magnifyingglass.image : FairSymbol.minus_magnifyingglass.image)
-            .button {
-                self.viewScale = max(0.01, self.viewScale + amount)
-            }
-    }
-
 }
 
 @available(macOS 12.0, iOS 15.0, *)
