@@ -42,6 +42,9 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
+    /// The item that should be prompted to quit before updating
+    // @Published var promptForAppQuit: AppCatalogItem? = nil
+
     /// The fetched readmes for the apps
     @Published private var readmes: [URL: Result<AttributedString, Error>] = [:]
 
@@ -351,9 +354,22 @@ extension AppManager {
 
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
+        let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
+
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
         }
+
+#if os(macOS)
+        // TODO: prompt the user to quit the app if it is already running
+        if update {
+            let isRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: item.bundleIdentifier).isEmpty
+            if isRunning && !isCatalogBrowserApp {
+                //self.promptForAppQuit = item
+                throw AppError("You must first quit “\(item.name)” before updating.")
+            }
+        }
+#endif
 
         let t1 = CFAbsoluteTimeGetCurrent()
         let request = URLRequest(url: item.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
@@ -458,18 +474,12 @@ extension AppManager {
         parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
 
         // if we are the catalog app ourselves, re-launch after updating
-        if item.bundleIdentifier == Bundle.mainBundleID {
+        if isCatalogBrowserApp {
             dbg("re-launching catalog app")
+            
 #if os(macOS)
-            //let proc = Process()
-            //proc.executableURL = destinationURL
-            //proc.launch()
-
-            let task = Process()
-            task.launchPath = "/usr/bin/open"
-            task.arguments = [destinationURL.path]
-            task.launch()
-
+            // re-launch the app after 1 second, which gives us time to quit
+            Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", "sleep 1 ; /usr/bin/open '\(destinationURL.path)'"])
             DispatchQueue.main.async {
                 NSApp.terminate(self)
             }
