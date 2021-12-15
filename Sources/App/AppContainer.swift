@@ -7,7 +7,7 @@ extension UTType {
     static var lottieJSON = UTType(importedAs: "app.Lottie-Motion.lottie-json")
 }
 
-final class MotionFile: ReferenceFileDocument {
+final class Document: ReferenceFileDocument {
     @Published var animation: LottieUI.Animation
     @Published var sceneStore = SceneStore()
 
@@ -37,7 +37,7 @@ final class MotionFile: ReferenceFileDocument {
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @Namespace var mainNamespace
-    let document: MotionFile
+    let document: Document
     @EnvironmentObject var appStore: Store
     @EnvironmentObject var sceneStore: SceneStore
     @State var animationTime: TimeInterval = 0
@@ -122,10 +122,10 @@ extension LottieLoopMode {
 @available(macOS 12.0, iOS 15.0, *)
 struct MotionScene : Scene {
     var body: some Scene {
-        DocumentGroup(viewing: MotionFile.self) { file in
+        DocumentGroup(viewing: Document.self) { file in
             ContentView(document: file.document)
+                .focusedSceneValue(\.document, file.document)
                 .environmentObject(file.document.sceneStore)
-                .focusedSceneValue(\.sceneStore, file.document.sceneStore)
         }
         .commands {
             CommandGroup(after: .newItem) {
@@ -135,11 +135,14 @@ struct MotionScene : Scene {
         }
     }
 
+    private static let exampleURLs = Bundle.module.urls(forResourcesWithExtension: "lottie.json", subdirectory: "Bundle")
+
     /// For each example in the module's bundle, create a menu item that will open the file
     func examplesMenu() -> Menu<Text, ForEach<[URL], URL, Button<Text>>> {
         Menu {
-            ForEach((Bundle.module.urls(forResourcesWithExtension: "lottie.json", subdirectory: "Bundle") ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
+            ForEach((Self.exampleURLs ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
                 Text(url.deletingPathExtension().lastPathComponent)
+                    // .label(image: Image(uxImage: NSWorkspace.shared.icon(forFile: url.path))) // doesn't work; label images aren't rendered on macOS
                     .button {
                         #if os(macOS)
                         NSDocumentController.shared.openDocument(withContentsOf: url, display: true) { doc, success, error in
@@ -207,72 +210,60 @@ public extension AppContainer {
 
 extension FocusedValues {
     /// The store for the given scene
-    var sceneStore: SceneStore? {
-        get { self[SceneStoreKey.self] }
-        set { self[SceneStoreKey.self] = newValue }
+    var document: Document? {
+        get { self[DocumentKey.self] }
+        set { self[DocumentKey.self] = newValue }
     }
 
-    private struct SceneStoreKey: FocusedValueKey {
-        typealias Value = SceneStore
-    }
-}
-
-extension FocusedValues {
-    /// The store for the given scene
-    var document: ObservedObject<MotionFile>.Wrapper? {
-        get { self[MotionFileKey.self] }
-        set { self[MotionFileKey.self] = newValue }
-    }
-
-    private struct MotionFileKey: FocusedValueKey {
-        typealias Value = ObservedObject<MotionFile>.Wrapper
+    private struct DocumentKey: FocusedValueKey {
+        typealias Value = Document
     }
 }
 
 struct PlayPauseCommand : View {
-    @FocusedValue(\.sceneStore) var sceneStore
+    @FocusedValue(\.document) var document
 
     var body: some View {
-        (sceneStore == nil ? Text("Play/Pause") : sceneStore?.playing == false ? Text("Pause") : Text("Play"))
-            .label(image: sceneStore?.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
+        (document?.sceneStore == nil ? Text("Play/Pause") : document?.sceneStore.playing == false ? Text("Pause") : Text("Play"))
+            .label(image: document?.sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
             .button {
-                sceneStore?.playing.toggle()
+                document?.sceneStore.playing.toggle()
             }
-            .disabled(sceneStore == nil)
+            .disabled(document?.sceneStore == nil)
     }
 }
 
 struct ZoomCommand : View {
-    @FocusedValue(\.sceneStore) var sceneStore
+    @FocusedValue(\.document) var document
     let amount: Double
 
     var body: some View {
         ((amount > 0 ? Text("Zoom In: ") : Text("Zoom Out: ")) + Text(amount, format: .percent))
             .label(image: amount > 0 ? FairSymbol.plus_magnifyingglass.image : FairSymbol.minus_magnifyingglass.image)
             .button {
-                if let sceneStore = sceneStore {
+                if let sceneStore = document?.sceneStore {
                     withAnimation {
                         sceneStore.viewScale = max(0.01, sceneStore.viewScale + amount)
                     }
                 }
             }
-            .disabled(sceneStore == nil)
+            .disabled(document?.sceneStore == nil)
     }
 }
 
 struct JumpCommand : View {
-    @FocusedValue(\.sceneStore) var sceneStore
+    @FocusedValue(\.document) var document
     let amount: Double
 
     var body: some View {
         ((amount > 0 ? Text("Jump Forward: ") : Text("Zoom Backward: ")) + Text(amount, format: .number))
             .label(image: amount > 0 ? FairSymbol.forward_fill.image : FairSymbol.backward_fill.image)
             .button {
-                if let sceneStore = sceneStore {
+                if let sceneStore = document?.sceneStore {
                     sceneStore.jumpTime = amount
                 }
             }
-            .disabled(sceneStore == nil)
+            .disabled(document?.sceneStore == nil)
     }
 }
 
