@@ -491,30 +491,36 @@ extension AppManager {
         try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
         parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
 
-        // if we are the catalog app ourselves, re-launch after updating
-        if isCatalogBrowserApp {
-            dbg("re-launching catalog app")
-            terminateAndRelaunch()
-        }
-
         // always re-scan after altering apps
         await scanInstalledApps()
         parentProgress.completedUnitCount = parentProgress.totalUnitCount
+
+        dbg("re-launching app:", item.bundleIdentifier)
+        terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
     }
 
-    private func terminateAndRelaunch() {
-        let path = Bundle.main.bundlePath
-        
+    /// Kills the process with the given `bundleID` and re-launches is
+    private func terminateAndRelaunch(bundleID: String, force: Bool) {
 #if os(macOS)
         // re-launch the current app once it has been killed
-        let pid = ProcessInfo.processInfo.processIdentifier
-        let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\(path)\") &"
-        Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", relaunch])
+        if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first, let path = runningApp.bundleURL {
+            dbg("runningApp:", runningApp)
+            // when the app is this process (i.e., the catalog browser), we need to re-start using a spawned shell script
+            let pid = runningApp.processIdentifier
+
+            // spawn a script that waits for the pid to die and then re-launches it
+            // we need to do this prior to attempting termination, since we may be terminating outself
+            let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\(path)\") &"
+            Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", relaunch])
+
+            // Note: “Sandboxed applications can’t use this method to terminate other applciations. This method returns false when called from a sandboxed application.”
+            let terminated = force ? runningApp.forceTerminate() : runningApp.terminate()
+            dbg(terminated ? "successful" : "unsuccessful", "termination")
+        } else {
+            dbg("no process identifier for:", bundleID)
+        }
 #endif // #if os(macOS)
 
-        DispatchQueue.main.async {
-            NSApp.terminate(self)
-        }
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
