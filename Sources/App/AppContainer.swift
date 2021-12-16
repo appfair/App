@@ -19,7 +19,7 @@ final class Document: ReferenceFileDocument {
     }
     static var writableContentTypes: [UTType] { [] }
 
-    init(configuration: ReadConfiguration) throws {
+    required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
@@ -31,6 +31,7 @@ final class Document: ReferenceFileDocument {
     }
 
     func snapshot(contentType: UTType) throws -> Void {
+        dbg("snapshot:", contentType)
     }
 }
 
