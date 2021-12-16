@@ -361,17 +361,6 @@ extension AppManager {
             throw Errors.appAlreadyInstalled(installPath)
         }
 
-#if os(macOS)
-        // TODO: prompt the user to quit the app if it is already running
-        if update {
-            let isRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: item.bundleIdentifier).isEmpty
-            if isRunning && !isCatalogBrowserApp {
-                //self.promptForAppQuit = item
-                throw AppError("You must first quit “\(item.name)” before updating.")
-            }
-        }
-#endif
-
         try Task.checkCancellation()
 
         let t1 = CFAbsoluteTimeGetCurrent()
