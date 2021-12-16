@@ -350,6 +350,7 @@ extension AppManager {
         })
     }
 
+    /// the number of progress segments for the download part; the remainder will be the zip decompression
     static let progressUnitCount: Int64 = 4
 
     /// Install or update the given catalog item.
@@ -371,6 +372,8 @@ extension AppManager {
         }
 #endif
 
+        try Task.checkCancellation()
+
         let t1 = CFAbsoluteTimeGetCurrent()
         let request = URLRequest(url: item.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
 
@@ -388,27 +391,32 @@ extension AppManager {
         let progress1 = Progress(totalUnitCount: length)
         parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
 
+        try Task.checkCancellation()
+
         var data = Data()
         data.reserveCapacity(Int(length))
 
-        var fastRunningProgress: Double = 0
+        var percentageProgress: Double = 0
 
         for try await byte in asyncBytes {
-            if parentProgress.isCancelled {
-                throw AppError("Cancelled", failureReason: "The download was cancelled.")
-            }
             data.append(byte)
             let dataCount = Int64(data.count)
             let currentProgress = Double(data.count) / Double(length)
             // only update once per percent
-            if Int(fastRunningProgress * 100) != Int(currentProgress * 100) {
+            if Int(percentageProgress * 100) != Int(currentProgress * 100) {
                 progress1.completedUnitCount = dataCount
-                fastRunningProgress = currentProgress
+                percentageProgress = currentProgress
+                try Task.checkCancellation()
+                if parentProgress.isCancelled {
+                    throw AppError("Cancelled", failureReason: "The download was cancelled.")
+                }
             }
         }
 
         let t2 = CFAbsoluteTimeGetCurrent()
         dbg("downloaded:", length.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
+
+        try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
         let actualSha256 = data.sha256().hex()
@@ -424,10 +432,14 @@ extension AppManager {
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("zip")
 
+        try Task.checkCancellation()
+
         // make sure the file doesn't already exist
         try? FileManager.default.removeItem(at: downloadedZip)
 
         try data.write(to: downloadedZip, options: .atomic)
+
+        try Task.checkCancellation()
 
         let t3 = CFAbsoluteTimeGetCurrent()
         let expandURL = downloadedZip.appendingPathExtension("expanded")
@@ -442,6 +454,8 @@ extension AppManager {
 
         try FileManager.default.removeItem(at: downloadedZip)
 
+        try Task.checkCancellation()
+
         // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
@@ -453,6 +467,8 @@ extension AppManager {
         guard let expandedAppPath = shallowFiles.first(where: { $0.pathExtension == "app" }) else {
             throw Errors.noAppContents(item.downloadURL)
         }
+
+        try Task.checkCancellation()
 
         // perform as much validation before we perform the install
         try self.validate(appPath: expandedAppPath, forItem: item)
@@ -468,6 +484,8 @@ extension AppManager {
             dbg("trashing:", destinationURL.path)
             try FileManager.default.trash(url: destinationURL)
         }
+
+        try Task.checkCancellation()
 
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
         try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
