@@ -494,19 +494,27 @@ extension AppManager {
         // if we are the catalog app ourselves, re-launch after updating
         if isCatalogBrowserApp {
             dbg("re-launching catalog app")
-            
-#if os(macOS)
-            // re-launch the app after 1 second, which gives us time to quit
-            Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", "sleep 1 ; /usr/bin/open '\(destinationURL.path)'"])
-            DispatchQueue.main.async {
-                NSApp.terminate(self)
-            }
-#endif // #if os(macOS)
+            terminateAndRelaunch()
         }
 
         // always re-scan after altering apps
         await scanInstalledApps()
         parentProgress.completedUnitCount = parentProgress.totalUnitCount
+    }
+
+    private func terminateAndRelaunch() {
+        let path = Bundle.main.bundlePath
+        
+#if os(macOS)
+        // re-launch the current app once it has been killed
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\(path)\") &"
+        Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", relaunch])
+#endif // #if os(macOS)
+
+        DispatchQueue.main.async {
+            NSApp.terminate(self)
+        }
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
