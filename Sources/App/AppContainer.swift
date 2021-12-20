@@ -1,6 +1,6 @@
 import FairApp
 import UniformTypeIdentifiers
-import LottieUI
+import Lottie
 import SwiftUI
 
 extension UTType {
@@ -8,7 +8,7 @@ extension UTType {
 }
 
 final class Document: ReferenceFileDocument {
-    @Published var animation: LottieUI.Animation
+    @Published var animation: Lottie.Animation
     @Published var sceneStore = SceneStore()
 
     static var readableContentTypes: [UTType] {
@@ -23,7 +23,7 @@ final class Document: ReferenceFileDocument {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        self.animation = try LottieUI.Animation(json: data)
+        self.animation = try Lottie.Animation(json: data)
     }
 
     func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
