@@ -397,19 +397,31 @@ struct CatalogItemView: View {
         let isCatalogApp = info.release.bundleIdentifier == "app.App-Fair"
 
         return HStack {
-            installButton()
-                .disabled(isCatalogApp)
-                .hcenter()
+            if isCatalogApp {
+                Spacer() // no button to install ourselves
+                    .hcenter()
+            } else {
+                installButton()
+                    .hcenter()
+            }
             updateButton()
                 .hcenter()
-            launchButton()
-                .disabled(isCatalogApp)
-                .hcenter()
+            if isCatalogApp {
+                Spacer() // no button to launch ourselves
+                    .hcenter()
+            } else {
+                launchButton()
+                    .hcenter()
+            }
             revealButton()
                 .hcenter()
-            trashButton()
-                .disabled(isCatalogApp)
-                .hcenter()
+            if isCatalogApp {
+                Spacer() // no button to delete ourselves
+                    .hcenter()
+            } else {
+                trashButton()
+                    .hcenter()
+            }
         }
         .symbolRenderingMode(.monochrome)
         .buttonStyle(.bordered)
