@@ -373,45 +373,17 @@ extension AppManager {
         let downloadedArtifact: URL
 
         // we would like to use a download task to save directly to a file and have progress callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
-        let downloadDelegateBroken = { true }()
+        let memoryBufferSize: Int? = 1024 // nil to use the DownloadDelegate
         let response: URLResponse
-
         let installPath = Self.appInstallPath(for: item)
 
-        let data: Data
-
-        if !downloadDelegateBroken {
-            let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
-            (downloadedArtifact, response) = try await URLSession.shared.download(for: request, delegate: delegate)
-            data = try Data(contentsOf: downloadedArtifact) // need to load all the data to check the SHA checksum
-        } else {
+        if let memoryBufferSize = memoryBufferSize {
             let (asyncBytes, asyncResponse) = try await URLSession.shared.bytes(for: request)
             let length = asyncResponse.expectedContentLength
             let progress1 = Progress(totalUnitCount: length)
             parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
 
             try Task.checkCancellation()
-
-            var bytes = Data()
-            bytes.reserveCapacity(Int(length))
-
-            var percentageProgress: Double = 0
-
-            for try await byte in asyncBytes {
-                bytes.append(byte)
-                let bytesCount = Int64(bytes.count)
-                let currentProgress = Double(bytes.count) / Double(length)
-                // only update once per percent
-                if Int(percentageProgress * 100) != Int(currentProgress * 100) {
-                    progress1.completedUnitCount = bytesCount
-                    percentageProgress = currentProgress
-                    try Task.checkCancellation()
-                    if parentProgress.isCancelled {
-                        throw AppError("Cancelled", failureReason: "The download was cancelled.")
-                    }
-                }
-            }
-
 
             // create a temporary zip file in the caches directory from which we will extract the data
             downloadedArtifact = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: installPath, create: true)
@@ -425,14 +397,49 @@ extension AppManager {
 
             try Task.checkCancellation()
 
-            // ensure the file doesn't already exist
-            try? FileManager.default.removeItem(at: downloadedArtifact)
+            // the file must exist before we can open the file handle
+            FileManager.default.createFile(atPath: downloadedArtifact.path, contents: nil, attributes: nil)
 
-            try bytes.write(to: downloadedArtifact, options: .atomic)
-            data = bytes
+            let fh = try FileHandle(forWritingTo: downloadedArtifact)
+            defer { try? fh.close() }
+
+            var bytes = Data()
+            bytes.reserveCapacity(memoryBufferSize)
+            var bytesCount: Int64 = 0
+
+            func flushBuffer() throws {
+                progress1.completedUnitCount = bytesCount
+                if parentProgress.isCancelled {
+                    throw AppError("Cancelled", failureReason: "The download was cancelled.")
+                }
+
+                try Task.checkCancellation()
+
+                try fh.write(contentsOf: bytes) // write out the buffer
+                bytes.removeAll() // clear the buffer
+            }
+
+            for try await byte in asyncBytes {
+                bytesCount += 1
+                bytes.append(byte)
+
+                // only update once per percent
+                if bytes.count > memoryBufferSize {
+                    try flushBuffer()
+                }
+            }
+            if !bytes.isEmpty {
+                try flushBuffer()
+            }
+
             response = asyncResponse
+
+        } else {
+            let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
+            (downloadedArtifact, response) = try await URLSession.shared.download(for: request, delegate: delegate)
         }
 
+        let data = try Data(contentsOf: downloadedArtifact, options: .alwaysMapped) // pointer to the data for the SHA checksum
         let t2 = CFAbsoluteTimeGetCurrent()
         dbg("downloaded:", data.count.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
 
