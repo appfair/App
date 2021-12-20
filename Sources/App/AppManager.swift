@@ -326,8 +326,8 @@ extension AppManager {
         }
     }
 
-    @discardableResult fileprivate func extractDownload(_ downloadedZip: URL, _ expandURL: URL, _ progress2: Progress) throws -> [ZipArchive.Entry] {
-        try FileManager.default.extractContents(from: downloadedZip, to: expandURL, progress: progress2, handler: { url in
+    @discardableResult fileprivate func extractDownload(_ downloadedArtifact: URL, _ expandURL: URL, _ progress2: Progress) throws -> [ZipArchive.Entry] {
+        try FileManager.default.extractContents(from: downloadedArtifact, to: expandURL, progress: progress2, handler: { url in
 #if macOS
             // try to clear the quarantine flag
             var url = url
@@ -355,7 +355,7 @@ extension AppManager {
 
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
-        let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
+        //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
 
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
@@ -370,40 +370,71 @@ extension AppManager {
         parentProgress.fileOperationKind = .downloading
 
 
-        // we would just to use a download task to save directly to a file and have callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
-        // let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
-        // (downloadedZip, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+        let downloadedArtifact: URL
 
-        
-        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
-        let length = response.expectedContentLength
-        let progress1 = Progress(totalUnitCount: length)
-        parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
+        // we would like to use a download task to save directly to a file and have progress callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
+        let downloadDelegateBroken = { true }()
+        let response: URLResponse
 
-        try Task.checkCancellation()
+        let installPath = Self.appInstallPath(for: item)
 
-        var data = Data()
-        data.reserveCapacity(Int(length))
+        let data: Data
 
-        var percentageProgress: Double = 0
+        if !downloadDelegateBroken {
+            let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
+            (downloadedArtifact, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+            data = try Data(contentsOf: downloadedArtifact) // need to load all the data to check the SHA checksum
+        } else {
+            let (asyncBytes, asyncResponse) = try await URLSession.shared.bytes(for: request)
+            let length = asyncResponse.expectedContentLength
+            let progress1 = Progress(totalUnitCount: length)
+            parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
 
-        for try await byte in asyncBytes {
-            data.append(byte)
-            let dataCount = Int64(data.count)
-            let currentProgress = Double(data.count) / Double(length)
-            // only update once per percent
-            if Int(percentageProgress * 100) != Int(currentProgress * 100) {
-                progress1.completedUnitCount = dataCount
-                percentageProgress = currentProgress
-                try Task.checkCancellation()
-                if parentProgress.isCancelled {
-                    throw AppError("Cancelled", failureReason: "The download was cancelled.")
+            try Task.checkCancellation()
+
+            var bytes = Data()
+            bytes.reserveCapacity(Int(length))
+
+            var percentageProgress: Double = 0
+
+            for try await byte in asyncBytes {
+                bytes.append(byte)
+                let bytesCount = Int64(bytes.count)
+                let currentProgress = Double(bytes.count) / Double(length)
+                // only update once per percent
+                if Int(percentageProgress * 100) != Int(currentProgress * 100) {
+                    progress1.completedUnitCount = bytesCount
+                    percentageProgress = currentProgress
+                    try Task.checkCancellation()
+                    if parentProgress.isCancelled {
+                        throw AppError("Cancelled", failureReason: "The download was cancelled.")
+                    }
                 }
             }
+
+
+            // create a temporary zip file in the caches directory from which we will extract the data
+            downloadedArtifact = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: installPath, create: true)
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathComponent(item.downloadURL.lastPathComponent)
+
+            dbg("downloading to temporary path:", downloadedArtifact.path)
+
+            // ensure parent path exists
+            try FileManager.default.createDirectory(at: downloadedArtifact.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
+            try Task.checkCancellation()
+
+            // ensure the file doesn't already exist
+            try? FileManager.default.removeItem(at: downloadedArtifact)
+
+            try bytes.write(to: downloadedArtifact, options: .atomic)
+            data = bytes
+            response = asyncResponse
         }
 
         let t2 = CFAbsoluteTimeGetCurrent()
-        dbg("downloaded:", length.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
+        dbg("downloaded:", data.count.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
 
         try Task.checkCancellation()
 
@@ -414,41 +445,27 @@ extension AppManager {
             throw AppError("Invalid fairseal", failureReason: "The app's fairseal was not valid.")
         }
 
-        let installPath = Self.appInstallPath(for: item)
-
-        // create a temporary zip file in the caches directory from which we will extract the data
-        let downloadedZip = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: installPath, create: true)
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("zip")
-
-        try Task.checkCancellation()
-
-        // make sure the file doesn't already exist
-        try? FileManager.default.removeItem(at: downloadedZip)
-
-        try data.write(to: downloadedZip, options: .atomic)
-
         try Task.checkCancellation()
 
         let t3 = CFAbsoluteTimeGetCurrent()
-        let expandURL = downloadedZip.appendingPathExtension("expanded")
+        let expandURL = downloadedArtifact.appendingPathExtension("expanded")
 
         let progress2 = Progress(totalUnitCount: 1)
         parentProgress.addChild(progress2, withPendingUnitCount: 1)
 
-//        try self.extractDownload(downloadedZip, expandURL, progress2)
+//        try self.extractDownload(downloadedArtifact, expandURL, progress2)
 //        let _: [ZipArchive.Entry] = try await Task(priority: .userInitiated) {
-            try self.extractDownload(downloadedZip, expandURL, progress2)
+            try self.extractDownload(downloadedArtifact, expandURL, progress2)
 //        }.value
 
-        try FileManager.default.removeItem(at: downloadedZip)
+        try FileManager.default.removeItem(at: downloadedArtifact)
 
         try Task.checkCancellation()
 
         // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
-        dbg("unzipped:", downloadedZip.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)
+        dbg("unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)
 
         if shallowFiles.count != 1 {
             throw Errors.tooManyInstallFiles(item.downloadURL)

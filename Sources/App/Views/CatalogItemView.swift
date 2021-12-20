@@ -351,17 +351,17 @@ struct CatalogItemView: View {
         }
     }
 
-    /// Show a histogram of where the given value lies in the context of other apps in the grouping
+    /// Show a histogram of where the given value lies in the context of other apps in the grouping (TODO)
     func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        FairSymbol.chart_bar_xaxis.image
-            .resizable()
+        EmptyView()
+        //FairSymbol.chart_bar_xaxis.image.resizable()
     }
 
     func summarySegment<V: View>(@ViewBuilder content: () -> V) -> some View {
         content()
             .lineLimit(1)
             .truncationMode(.middle)
-        //.textSelection(.enabled)
+            //.textSelection(.enabled)
             .hcenter()
     }
 
