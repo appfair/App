@@ -88,11 +88,8 @@ extension AppManager {
         do {
             self.fetching = true
             defer { self.fetching = false }
-            let start = CFAbsoluteTimeGetCurrent()
             let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
-            let end = CFAbsoluteTimeGetCurrent()
-            dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
         } catch {
             Task { // otherwise warnings about accessing off of the main thread
                 // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
