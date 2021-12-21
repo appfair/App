@@ -326,30 +326,6 @@ extension AppManager {
         }
     }
 
-    @discardableResult fileprivate func extractDownload(_ downloadedArtifact: URL, _ expandURL: URL, _ progress2: Progress) throws -> [ZipArchive.Entry] {
-        try FileManager.default.extractContents(from: downloadedArtifact, to: expandURL, progress: progress2, handler: { url in
-#if macOS
-            // try to clear the quarantine flag
-            var url = url
-            var resourceValues = URLResourceValues()
-            resourceValues.quarantineProperties = nil // this should clear the quarantine flag
-            do {
-                try url.setResourceValues(resourceValues) // note: “Attempts to set a read-only resource property or to set a resource property not supported by the resource are ignored and are not considered errors. This method is currently applicable only to URLs for file system resources.”
-            } catch {
-                dbg("unable to clear quarantine flag for:", url.path)
-            }
-
-            // check to ensure we have cleared the props
-            let qtprops2 = try (url as NSURL).resourceValues(forKeys: [URLResourceKey.quarantinePropertiesKey])
-            if !qtprops2.isEmpty {
-                dbg("found quarantine xattr for:", url.path, "keys:", qtprops2)
-                throw AppError("Quarantined App", failureReason: "The app was quarantined by the system and cannot be installed.")
-            }
-#endif
-            return true
-        })
-    }
-
     /// the number of progress segments for the download part; the remainder will be the zip decompression
     static let progressUnitCount: Int64 = 4
 
@@ -369,15 +345,18 @@ extension AppManager {
         parentProgress.kind = .file
         parentProgress.fileOperationKind = .downloading
 
-
+        let installPath = Self.appInstallPath(for: item)
         let downloadedArtifact: URL
 
         // we would like to use a download task to save directly to a file and have progress callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
-        let memoryBufferSize: Int? = 1024 // nil to use the DownloadDelegate
+        // However, an advantage of using streaming bytes is that we can maintain a running sha256 hash for the download without have to load the whole data chunk into memory after the download
+        let memoryBufferSize: Int? = 1024 * 64 // use nil to use the DownloadDelegate
         let response: URLResponse
-        let installPath = Self.appInstallPath(for: item)
 
-        if let memoryBufferSize = memoryBufferSize {
+        let sha256: String // the checksum of the download to compare against the fairseal
+        let downloadSize: Int
+
+        if let memoryBufferSize = memoryBufferSize { // use the streaming AsyncBytes method
             let (asyncBytes, asyncResponse) = try await URLSession.shared.bytes(for: request)
             let length = asyncResponse.expectedContentLength
             let progress1 = Progress(totalUnitCount: length)
@@ -407,7 +386,9 @@ extension AppManager {
             bytes.reserveCapacity(memoryBufferSize)
             var bytesCount: Int64 = 0
 
-            func flushBuffer() throws {
+            let hasher = SHA256Hasher()
+
+            @MainActor func flushBuffer() async throws {
                 progress1.completedUnitCount = bytesCount
                 if parentProgress.isCancelled {
                     throw AppError("Cancelled", failureReason: "The download was cancelled.")
@@ -416,39 +397,49 @@ extension AppManager {
                 try Task.checkCancellation()
 
                 try fh.write(contentsOf: bytes) // write out the buffer
-                bytes.removeAll() // clear the buffer
+                await hasher.update(data: bytes)
+                bytes.removeAll(keepingCapacity: true) // clear the buffer
             }
 
             for try await byte in asyncBytes {
                 bytesCount += 1
                 bytes.append(byte)
-
-                // only update once per percent
-                if bytes.count > memoryBufferSize {
-                    try flushBuffer()
+                if bytes.count == memoryBufferSize {
+                    try await flushBuffer()
                 }
             }
             if !bytes.isEmpty {
-                try flushBuffer()
+                try await flushBuffer()
             }
 
             response = asyncResponse
 
+            downloadSize = Int(bytesCount)
+            sha256 = await hasher.final().hex()
+
+            try fh.close()
+
+            // ensure the running hash matches the contents of the file
+            // let fileChecksum = try Data(contentsOf: downloadedArtifact).sha256().hex()
+            // assert(fileChecksum == sha256, "fileChecksum \(fileChecksum) != sha256 \(sha256)")
         } else {
+            let session = URLSession.shared
             let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
-            (downloadedArtifact, response) = try await URLSession.shared.download(for: request, delegate: delegate)
+            (downloadedArtifact, response) = try await session.download(for: request, delegate: delegate)
+
+            let data = try Data(contentsOf: downloadedArtifact, options: .alwaysMapped) // pointer to the data for the SHA checksum
+            downloadSize = data.count
+            sha256 = data.sha256().hex()
         }
 
-        let data = try Data(contentsOf: downloadedArtifact, options: .alwaysMapped) // pointer to the data for the SHA checksum
         let t2 = CFAbsoluteTimeGetCurrent()
-        dbg("downloaded:", data.count.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
+        dbg("downloaded:", downloadSize.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
 
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
-        let actualSha256 = data.sha256().hex()
-        dbg("comparing fairseal expected:", item.sha256, "with actual:", actualSha256)
-        if item.sha256 != actualSha256 {
+        dbg("comparing fairseal expected:", item.sha256, "with actual:", sha256)
+        if item.sha256 != sha256 {
             throw AppError("Invalid fairseal", failureReason: "The app's fairseal was not valid.")
         }
 
@@ -458,13 +449,10 @@ extension AppManager {
         let expandURL = downloadedArtifact.appendingPathExtension("expanded")
 
         let progress2 = Progress(totalUnitCount: 1)
-        parentProgress.addChild(progress2, withPendingUnitCount: 1)
+        parentProgress.addChild(progress2, withPendingUnitCount: 0)
 
-//        try self.extractDownload(downloadedArtifact, expandURL, progress2)
-//        let _: [ZipArchive.Entry] = try await Task(priority: .userInitiated) {
-            try self.extractDownload(downloadedArtifact, expandURL, progress2)
-//        }.value
-
+        try FileManager.default.unzipItem(at: downloadedArtifact, to: expandURL, skipCRC32: false, progress: progress2, preferredEncoding: .utf8)
+        try FileManager.default.clearQuarantine(at: expandURL)
         try FileManager.default.removeItem(at: downloadedArtifact)
 
         try Task.checkCancellation()
@@ -644,7 +632,7 @@ extension AppManager.SidebarItem {
 
 /// A DownloadDelegate that updates a progress.
 /// Note: note currently working, perhaps due to un-implemented async/await support: https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo
-@objc private final class DownloadDelegate : NSObject, URLSessionDelegate, URLSessionDownloadDelegate {
+@objc final class DownloadDelegate : NSObject, URLSessionDelegate, URLSessionDownloadDelegate {
     let progress: Progress
 
     init(progress: Progress) {
@@ -684,15 +672,15 @@ extension AppManager.SidebarItem {
     @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
     }
 
-    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+    @objc func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
 
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
+    @objc func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
 
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
 
     }
 }
