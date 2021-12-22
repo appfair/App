@@ -349,8 +349,8 @@ extension AppManager {
         let downloadedArtifact: URL
 
         // we would like to use a download task to save directly to a file and have progress callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
-        // However, an advantage of using streaming bytes is that we can maintain a running sha256 hash for the download without have to load the whole data chunk into memory after the download
-        let memoryBufferSize: Int? = 1024 * 64 // use nil to use the DownloadDelegate
+        // However, an advantage of using streaming bytes is that we can maintain a running sha256 hash for the download without have to load the whole data chunk into memory after the download has completed
+        let memoryBufferSize: Int? = 1024 * 64 // 64k is a nice round number
         let response: URLResponse
 
         let downloadSha256: Data // the checksum of the download to compare against the fairseal
@@ -394,11 +394,11 @@ extension AppManager {
                     throw AppError("Cancelled", failureReason: "The download was cancelled.")
                 }
 
-                progress1.completedUnitCount = bytesCount
-
                 try fh.write(contentsOf: bytes) // write out the buffer
-                await hasher.update(data: bytes) // update the hash
+                await hasher.update(data: bytes) // update the running hash
                 bytes.removeAll(keepingCapacity: true) // clear the buffer
+
+                progress1.completedUnitCount = bytesCount
             }
 
             for try await byte in asyncBytes {
