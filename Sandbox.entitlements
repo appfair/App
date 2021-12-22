@@ -12,5 +12,9 @@
     <!-- Low-risk entitlements can be enabled without explanation -->
     <key>com.apple.security.cs.allow-jit</key>
     <true/>
+
+    <!-- Needed to be able to load plug-ins -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
 </dict>
 </plist>
