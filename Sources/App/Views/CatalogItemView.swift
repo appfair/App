@@ -656,7 +656,7 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         do {
-            progress.progress = Progress(totalUnitCount: AppManager.progressUnitCount)
+            progress.progress = Progress(totalUnitCount: URLSession.progressUnitCount)
             try await appManager.install(item: item, progress: progress.progress, update: false)
         } catch {
             appManager.reportError(error)
@@ -671,7 +671,7 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         do {
-            progress.progress = Progress(totalUnitCount: AppManager.progressUnitCount)
+            progress.progress = Progress(totalUnitCount: URLSession.progressUnitCount)
             try await appManager.install(item: item, progress: progress.progress, update: true)
         } catch {
             appManager.reportError(error)

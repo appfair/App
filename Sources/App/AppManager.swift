@@ -326,9 +326,6 @@ extension AppManager {
         }
     }
 
-    /// the number of progress segments for the download part; the remainder will be the zip decompression
-    static let progressUnitCount: Int64 = 4
-
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
         //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
@@ -345,95 +342,13 @@ extension AppManager {
         parentProgress.kind = .file
         parentProgress.fileOperationKind = .downloading
 
-        let installPath = Self.appInstallPath(for: item)
-        let downloadedArtifact: URL
-
-        // we would like to use a download task to save directly to a file and have progress callbacks go through DownloadDelegate, but it is not working with async/await (see https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo)
-        // However, an advantage of using streaming bytes is that we can maintain a running sha256 hash for the download without have to load the whole data chunk into memory after the download has completed
-        let memoryBufferSize: Int? = 1024 * 64 // 64k is a nice round number
-        let response: URLResponse
-
-        let downloadSha256: Data // the checksum of the download to compare against the fairseal
-        let downloadSize: Int
-
-        if let memoryBufferSize = memoryBufferSize { // use the streaming AsyncBytes method
-            let (asyncBytes, asyncResponse) = try await URLSession.shared.bytes(for: request)
-            let length = asyncResponse.expectedContentLength
-            let progress1 = Progress(totalUnitCount: length)
-            parentProgress.addChild(progress1, withPendingUnitCount: Self.progressUnitCount - 1)
-
-            try Task.checkCancellation()
-
-            // create a temporary zip file in the caches directory from which we will extract the data
-            downloadedArtifact = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: installPath, create: true)
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathComponent(item.downloadURL.lastPathComponent)
-
-            dbg("downloading to temporary path:", downloadedArtifact.path)
-
-            // ensure parent path exists
-            try FileManager.default.createDirectory(at: downloadedArtifact.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-
-            try Task.checkCancellation()
-
-            // the file must exist before we can open the file handle
-            FileManager.default.createFile(atPath: downloadedArtifact.path, contents: nil, attributes: nil)
-
-            let fh = try FileHandle(forWritingTo: downloadedArtifact)
-            defer { try? fh.close() }
-
-            var bytes = Data()
-            bytes.reserveCapacity(memoryBufferSize)
-            var bytesCount: Int64 = 0
-
-            let hasher = SHA256Hasher()
-
-            @MainActor func flushBuffer() async throws {
-                try Task.checkCancellation()
-                if parentProgress.isCancelled {
-                    throw AppError("Cancelled", failureReason: "The download was cancelled.")
-                }
-
-                try fh.write(contentsOf: bytes) // write out the buffer
-                await hasher.update(data: bytes) // update the running hash
-                bytes.removeAll(keepingCapacity: true) // clear the buffer
-
-                progress1.completedUnitCount = bytesCount
-            }
-
-            for try await byte in asyncBytes {
-                bytesCount += 1
-                bytes.append(byte)
-                if bytes.count == memoryBufferSize {
-                    try await flushBuffer()
-                }
-            }
-            if !bytes.isEmpty {
-                try await flushBuffer()
-            }
-
-            response = asyncResponse
-
-            downloadSize = Int(bytesCount)
-            downloadSha256 = await hasher.final()
-
-            try fh.close()
-
-            // ensure the running hash matches the contents of the file
-            // let fileChecksum = try Data(contentsOf: downloadedArtifact).sha256().hex()
-            // assert(fileChecksum == sha256, "fileChecksum \(fileChecksum) != sha256 \(sha256)")
-        } else {
-            let session = URLSession.shared
-            let delegate: URLSessionDownloadDelegate = DownloadDelegate(progress: parentProgress)
-            (downloadedArtifact, response) = try await session.download(for: request, delegate: delegate)
-
-            let data = try Data(contentsOf: downloadedArtifact, options: .alwaysMapped) // pointer to the data for the SHA checksum
-            downloadSize = data.count
-            downloadSha256 = data.sha256()
-        }
+        let hasher = SHA256Hasher()
+        let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: hasher, parentProgress: parentProgress)
+        let downloadSha256 = await hasher.final()
 
         let t2 = CFAbsoluteTimeGetCurrent()
-        dbg("downloaded:", downloadSize.localizedByteCount(), "response:", (response as? HTTPURLResponse)?.statusCode, "in:", t2 - t1)
+
+        dbg("downloaded:", try? downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
 
         try Task.checkCancellation()
 
@@ -474,6 +389,7 @@ extension AppManager {
         // perform as much validation before we perform the install
         try self.validate(appPath: expandedAppPath, forItem: item)
 
+        let installPath = Self.appInstallPath(for: item)
         let installFolder = installPath.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: installFolder, withIntermediateDirectories: true, attributes: nil)
 
@@ -606,80 +522,5 @@ extension AppManager.SidebarItem {
         case .category(let category):
             return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
         }
-    }
-}
-
-/// A watcher for changes to the install folder
-@MainActor private final class FileSystemObserver {
-    private let fileDescriptor: CInt
-    private let source: DispatchSourceProtocol
-
-    init(URL: URL, block: @escaping () -> Void) {
-        self.fileDescriptor = open(URL.path, O_EVTONLY)
-        self.source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: self.fileDescriptor, eventMask: .all, queue: DispatchQueue.global())
-        self.source.setEventHandler {
-            block()
-        }
-        self.source.resume()
-    }
-
-    deinit {
-        self.source.cancel()
-        close(fileDescriptor)
-    }
-}
-
-/// A DownloadDelegate that updates a progress.
-/// Note: note currently working, perhaps due to un-implemented async/await support: https://stackoverflow.com/questions/68276940/how-to-get-the-download-progress-with-the-new-try-await-urlsession-shared-downlo
-@objc final class DownloadDelegate : NSObject, URLSessionDelegate, URLSessionDownloadDelegate {
-    let progress: Progress
-
-    init(progress: Progress) {
-        self.progress = progress
-    }
-
-    @objc func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest) async -> URLRequest? {
-        // e.g.: https://github-releases.githubusercontent.com/420526657/7773060d-16b7-40b1-bdbe-03c0da4753f2?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20211201%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20211201T011008Z&X-Amz-Expires=300&X-Amz-Signature=5f1184f9fe71e5fb3724ea7bd96f2d8a3215056d4323afedf9fc56b4aa2a8114&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=420526657&response-content-disposition=attachment%3B%20filename%3DBon-Mot-macOS.zip&response-content-type=application%2Foctet-stream
-        dbg("willPerformHTTPRedirection:", request.description)
-        return request // allow all redirections
-    }
-
-    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        dbg("didWriteData:", bytesWritten, "total", totalBytesWritten, "/", totalBytesExpectedToWrite)
-        progress.totalUnitCount = totalBytesExpectedToWrite
-        progress.completedUnitCount = totalBytesWritten
-        // TODO:
-        // progress.estimatedTimeRemaining = …
-        // progress.throughput = …
-    }
-
-    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        // progress.completedUnitCount = progress.totalUnitCount
-        progress.totalUnitCount = 0
-        progress.completedUnitCount = 0
-    }
-
-    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        progress.totalUnitCount = 0
-        progress.completedUnitCount = 0
-    }
-
-    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-        dbg(metrics)
-    }
-
-    @objc func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
-    }
-
-    @objc func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
-
-    }
-
-    @objc func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
-
-    }
-
-    @objc func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-
     }
 }
