@@ -367,8 +367,8 @@ extension AppManager {
         parentProgress.addChild(progress2, withPendingUnitCount: 0)
 
         try FileManager.default.unzipItem(at: downloadedArtifact, to: expandURL, skipCRC32: false, progress: progress2, preferredEncoding: .utf8)
-        try FileManager.default.clearQuarantine(at: expandURL)
         try FileManager.default.removeItem(at: downloadedArtifact)
+        try FileManager.default.clearQuarantine(at: expandURL)
 
         try Task.checkCancellation()
 
