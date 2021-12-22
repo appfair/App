@@ -353,7 +353,7 @@ extension AppManager {
         let memoryBufferSize: Int? = 1024 * 64 // use nil to use the DownloadDelegate
         let response: URLResponse
 
-        let sha256: String // the checksum of the download to compare against the fairseal
+        let downloadSha256: Data // the checksum of the download to compare against the fairseal
         let downloadSize: Int
 
         if let memoryBufferSize = memoryBufferSize { // use the streaming AsyncBytes method
@@ -389,15 +389,15 @@ extension AppManager {
             let hasher = SHA256Hasher()
 
             @MainActor func flushBuffer() async throws {
-                progress1.completedUnitCount = bytesCount
+                try Task.checkCancellation()
                 if parentProgress.isCancelled {
                     throw AppError("Cancelled", failureReason: "The download was cancelled.")
                 }
 
-                try Task.checkCancellation()
+                progress1.completedUnitCount = bytesCount
 
                 try fh.write(contentsOf: bytes) // write out the buffer
-                await hasher.update(data: bytes)
+                await hasher.update(data: bytes) // update the hash
                 bytes.removeAll(keepingCapacity: true) // clear the buffer
             }
 
@@ -415,7 +415,7 @@ extension AppManager {
             response = asyncResponse
 
             downloadSize = Int(bytesCount)
-            sha256 = await hasher.final().hex()
+            downloadSha256 = await hasher.final()
 
             try fh.close()
 
@@ -429,7 +429,7 @@ extension AppManager {
 
             let data = try Data(contentsOf: downloadedArtifact, options: .alwaysMapped) // pointer to the data for the SHA checksum
             downloadSize = data.count
-            sha256 = data.sha256().hex()
+            downloadSha256 = data.sha256()
         }
 
         let t2 = CFAbsoluteTimeGetCurrent()
@@ -438,8 +438,8 @@ extension AppManager {
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
-        dbg("comparing fairseal expected:", item.sha256, "with actual:", sha256)
-        if item.sha256 != sha256 {
+        dbg("comparing fairseal expected:", item.sha256, "with actual:", downloadSha256)
+        if item.sha256 != downloadSha256.hex() {
             throw AppError("Invalid fairseal", failureReason: "The app's fairseal was not valid.")
         }
 
@@ -500,7 +500,7 @@ extension AppManager {
         terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
     }
 
-    /// Kills the process with the given `bundleID` and re-launches is
+    /// Kills the process with the given `bundleID` and re-launches it.
     private func terminateAndRelaunch(bundleID: String, force: Bool) {
 #if os(macOS)
         // re-launch the current app once it has been killed
@@ -521,7 +521,6 @@ extension AppManager {
             dbg("no process identifier for:", bundleID)
         }
 #endif // #if os(macOS)
-
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {
