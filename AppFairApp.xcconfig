@@ -7,10 +7,10 @@ PRODUCT_NAME = Name Sense
 PRODUCT_BUNDLE_IDENTIFIER = app.Name-Sense
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.6
+MARKETING_VERSION = 0.0.7
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 82
+CURRENT_PROJECT_VERSION = 83
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.utilities
@@ -28,3 +28,4 @@ SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+DEVELOPMENT_TEAM = 2HFBY6N8ZN
