@@ -7,14 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		491763402773E08000FBB28B /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* AppMain.swift */; };
+		491763412773E08500FBB28B /* App in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		4973D0E1275C1ADF00ED915A /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 4973D0E0275C1ADF00ED915A /* App */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		491763422773E08500FBB28B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				491763412773E08500FBB28B /* App in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Lottie Motion Quicklook.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49555415268931C1003F1B5B /* Lottie Motion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lottie Motion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4917633F2773E08000FBB28B /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498E852827597DA100EE6F8C /* AppFairApp.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppFairApp.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -42,6 +59,7 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
+				4917633F2773E08000FBB28B /* AppMain.swift */,
 				498E852827597DA100EE6F8C /* AppFairApp.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
@@ -87,6 +105,7 @@
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
 				49555413268931C1003F1B5B /* Resources */,
+				491763422773E08500FBB28B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -167,6 +186,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				491763402773E08000FBB28B /* AppMain.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,6 +379,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -386,6 +407,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
