@@ -451,7 +451,7 @@ struct CatalogItemView: View {
     func updateButton() -> some View {
         button(activity: .update)
             //.disabled(wip(false))
-            .disabled((!appInstalled || !info.appUpdated))
+            .disabled((!appInstalled || !appUpdated))
             .accentColor(.orange)
     }
 
@@ -558,6 +558,11 @@ struct CatalogItemView: View {
     var appInstalled: Bool {
         appPropertyList?.successValue?.bundleID == info.id
         //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
+    }
+
+    /// Whether the given app is up-to-date or not
+    var appUpdated: Bool {
+        (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
     }
 
     func confirmationBinding(_ activity: Activity) -> Binding<Bool> {

@@ -271,6 +271,7 @@ extension AppManager {
                     installedApps[installPath] = .failure(error)
                 }
             }
+
             self.installedApps = installedApps
             let end = CFAbsoluteTimeGetCurrent()
             dbg("scanned", installedApps.count, "apps in:", end - start, installedBundleIDs)
