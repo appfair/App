@@ -1012,6 +1012,10 @@
 			<string>$(PRODUCT_MODULE_NAME).Document</string>
 		</dict>
 	</array>
+	<key>AppFairIconSymbol</key>
+	<string>$(ICON_SYMBOL)</string>
+	<key>AppFairIconTint</key>
+	<string>$(ICON_TINT)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

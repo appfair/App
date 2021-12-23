@@ -5,7 +5,7 @@ let package = Package(
     name: "App",
     defaultLocalization: "en",
     platforms: [ .macOS(.v12), .iOS(.v15) ],
-    products: [ .library(name: "App", targets: ["App"]) ],
+    products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the *first* dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
