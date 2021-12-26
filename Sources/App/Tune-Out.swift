@@ -29,6 +29,7 @@ public struct TuneOutView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
+        TriptychView(orient: <#T##Binding<TriptychOrient>#>, outline: <#T##() -> _#>, list: <#T##() -> _#>, table: <#T##() -> _#>, content: <#T##() -> _#>)
         NavigationView {
             Sidebar()
             if let frame = StationCatalog.stationsFrame {
@@ -194,7 +195,10 @@ struct StationList<Frame: DataSlice> : View {
         Group {
             if hideEmpty == false || !queryString.isEmpty {
                 List {
-                    ForEach(arrangedStations, id: \.stationID, content: stationElement(stationRow:))
+                    ForEach(arrangedStations, id: \.stationID) { station in
+                        stationElement(stationRow: station)
+                            .frame(height: 50)
+                    }
                 }
             } else {
                 Text("Station List").font(.largeTitle).foregroundColor(.secondary)
