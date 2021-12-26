@@ -1,5 +1,6 @@
 import FairApp
 import AVKit
+import TabularData
 
 // The entry point to creating your app is the `AppContainer` type,
 // which is a stateless enum declared in `AppMain.swift` and may not be changed.
@@ -136,6 +137,9 @@ struct ClockView: View {
     public var statusItem: NSStatusItem? = nil
     #endif
 
+    // @Published var queryString: String = ""
+    // @Published var stations: DataFrame? = wip(nil)
+
     internal required init() {
         super.init()
 
@@ -165,12 +169,14 @@ public struct ContentView: View {
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
+    @AppStorage("searchCount") var searchCount: Int = 250
 
     public var body: some View {
         Toggle(isOn: $store.someToggle) {
             Text("Toggle")
         }
         .padding()
+
     }
 }
 

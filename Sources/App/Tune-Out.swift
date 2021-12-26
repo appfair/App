@@ -27,86 +27,132 @@ import MediaPlayer
 @available(macOS 12.0, iOS 15.0, *)
 public struct TuneOutView: View {
     @EnvironmentObject var store: Store
+    @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
 
     public var body: some View {
-        TriptychView(orient: <#T##Binding<TriptychOrient>#>, outline: <#T##() -> _#>, list: <#T##() -> _#>, table: <#T##() -> _#>, content: <#T##() -> _#>)
-        NavigationView {
+        TriptychView(orient: $displayMode) {
             Sidebar()
+        } list: {
             if let frame = StationCatalog.stationsFrame {
                 StationList(title: Text("Stations"), frame: { frame }, hideEmpty: true)
             } else {
                 EmptyView()
             }
+        } table: {
             #if os(macOS)
+            if let frame = StationCatalog.stationsFrame {
+                StationsTableView(frame: frame)
+            } else {
+                EmptyView()
+            }
+            #endif
+        } content: {
             // needs a third placeholder view to get the three-column NavigationView behavior
             Text("Select Station")
                 .font(.largeTitle)
                 .foregroundColor(.secondary)
-            #endif
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .toolbar {
+            ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                DisplayModePicker(mode: $displayMode)
+            }
         }
         //.environmentObject(RadioTuner.shared) // having this at this high a level results in dreadful performance
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-struct StationCommands: Commands {
-    private struct MenuContent: View {
-        //@FocusedBinding(\.selectedStation) var selectedStation
-
-        var body: some View {
-            wip(EmptyView())
-        }
-    }
-
-    var body: some Commands {
-        SidebarCommands()
-    }
-}
-
-
-//@available(macOS 12.0, iOS 15.0, *)
-//extension FocusedValues {
-//    var selectedStation: Binding<Station>? {
-//        get { self[SelectedStationKey.self] }
-//        set { self[SelectedStationKey.self] = newValue }
-//    }
-//
-//    private struct SelectedStationKey: FocusedValueKey {
-//        typealias Value = Binding<Station>
-//    }
-//}
-
-//@available(macOS 12.0, iOS 15.0, *)
-//private struct TrackTitleKey: PreferenceKey {
-//    static var defaultValue: String? { nil }
-//    static func reduce(value: inout String?, nextValue: () -> String?) {
-//        nextValue() ?? value
-//    }
-//}
-
-//extension FocusedValues {
-//    var trackTitle: String? {
-//        get { self[TrackTitleKey.self] }
-//        set { self[TrackTitleKey.self] = newValue }
-//    }
-//
-//    private struct TrackTitleKey: FocusedValueKey {
-//        typealias Value = String
-//    }
-//}
-
-
-/// Making `DataFrame.Rows` implement `RandomAccessCollection` would allow
-/// us to use it directly in a `ForEach`, but the performance with
-/// large row sets is abyssmal
-//@available(macOS 12.0, iOS 15.0, *)
-//extension DataFrame.Rows : RandomAccessCollection { }
-
-@available(macOS 12.0, iOS 15.0, *)
 extension DataFrame.Row {
     var stationID: Station.UUIDString? {
         self[Station.stationuuidColumn]
     }
+}
+
+struct StationRowAccessor : Identifiable {
+    let row: DataFrame.Row
+
+    var id: String? { stationID}
+    var stationID: String? { row[Station.stationuuidColumn] }
+    var stationName: String? { row[Station.nameColumn] }
+
+    var changeuuid: String? { row[Station.changeuuidColumn] }
+    var stationuuid: String? { row[Station.stationuuidColumn] }
+    var name: String? { row[Station.nameColumn] }
+    var url: String? { row[Station.urlColumn] }
+    var url_resolved: String? { row[Station.url_resolvedColumn] }
+    var homepage: String? { row[Station.homepageColumn] }
+    var favicon: String? { row[Station.faviconColumn] }
+    var tags: String? { row[Station.tagsColumn] }
+    var country: String? { row[Station.countryColumn] }
+    var countrycode: String? { row[Station.countrycodeColumn] }
+    var iso_3166_2: String? { row[Station.iso_3166_2Column] }
+    var state: String? { row[Station.stateColumn] }
+    var language: String? { row[Station.languageColumn] }
+    var languagecodes: String? { row[Station.languagecodesColumn] }
+    //var votes: String? { row[Station.votesColumn] }
+    var lastchangetime: String? { row[Station.lastchangetimeColumn] }
+    var lastchangetime_iso8601: String? { row[Station.lastchangetime_iso8601Column] }
+    var codec: String? { row[Station.codecColumn] }
+    var bitrate: Double? { row[Station.bitrateColumn] }
+    var hls: String? { row[Station.hlsColumn] }
+    var lastcheckok: Int? { row[Station.lastcheckokColumn] }
+    //var lastchecktime: Int? { row[Station.lastchecktimeColumn] }
+    var lastchecktime_iso8601: String? { row[Station.lastchecktime_iso8601Column] }
+    //var lastcheckoktime: String? { row[Station.lastcheckoktimeColumn] }
+    var lastcheckoktime_iso8601: String? { row[Station.lastcheckoktime_iso8601Column] }
+    //var lastlocalchecktime: String? { row[Station.lastlocalchecktimeColumn] }
+    var lastlocalchecktime_iso8601: String? { row[Station.lastlocalchecktime_iso8601Column] }
+    //var clicktimestamp: String? { row[Station.clicktimestampColumn] }
+    var clicktimestamp_iso8601: String? { row[Station.clicktimestamp_iso8601Column] }
+    var clickcount: Int? { row[Station.clickcountColumn] }
+    var clicktrend: Int? { row[Station.clicktrendColumn] }
+    var ssl_error: String? { row[Station.ssl_errorColumn] }
+    var geo_lat: Double? { row[Station.geo_latColumn] }
+    var geo_long: Double? { row[Station.geo_longColumn] }
+    var has_extended_info: Bool? { row[Station.has_extended_infoColumn] }
+}
+
+
+
+#if os(macOS)
+@available(macOS 12.0, *)
+struct StationsTableView : View {
+    let frame: DataFrame
+    @State var selection: StationRowAccessor.ID? = nil
+    @State var sortOrder: [KeyPathComparator<StationRowAccessor>] = []
+
+    private static let stationNameKeypath = \StationRowAccessor.stationName[defaulting: ""]
+    private static let stationNameColumn = TableColumn("Station", value: stationNameKeypath, comparator: .localizedStandard)
+
+    var sortedFrame: DataFrame {
+        var df = self.frame
+        for order in sortOrder {
+            if order.keyPath == Self.stationNameKeypath {
+                df = df.sorted(on: Station.nameColumn, order: order.order == .forward ? .ascending : .descending)
+            }
+        }
+        return df
+    }
+
+    var body: some View {
+        Table(frame.rows.map({ StationRowAccessor(row: $0) }), selection: $selection, sortOrder: $sortOrder, columns: {
+            //TableColumn("ID", value: \.stationID[defaulting: ""])
+            Self.stationNameColumn
+
+//            TableColumn("Home", value: \.stationName[defaulting: ""]) { url in
+//                Link(destination: URL(string: url)!)
+//            }
+            TableColumn("Tags", value: \.tags[defaulting: ""])
+            TableColumn("Country", value: \.countrycode[defaulting: ""])
+            TableColumn("Languages", value: \.languagecodes[defaulting: ""])
+        })
+    }
+}
+#endif
+
+private extension Optional {
+    subscript(defaulting defaultValue: Wrapped) -> Wrapped { self ?? defaultValue }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -132,6 +178,8 @@ struct StationList<Frame: DataSlice> : View {
     //@FocusedValue(\.trackTitle) var trackTitle
 
     @AppStorage("pinned") var pinnedStations: Set<String> = []
+    @AppStorage("searchCount") var searchCount: Int = 250
+
     let frame: () -> Frame
     /// Whether to only display the table if there is a filter active
     let hideEmpty: Bool
@@ -145,15 +193,11 @@ struct StationList<Frame: DataSlice> : View {
         self.hideEmpty = hideEmpty
     }
 
-//    var sortComparators: [SortComparator] {
-//        wip([])
-//    }
-
     var queriedStations: DataFrame.Slice {
         if queryString.isEmpty {
             return frame().prefix(Int.max)
         } else {
-            return frame().filter(on: Station.nameColumn, matchesQueryString)
+            return frame().filter(on: Station.nameColumn, matchesQueryString).prefix(searchCount)
         }
     }
 
@@ -205,6 +249,12 @@ struct StationList<Frame: DataSlice> : View {
             }
         }
         .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
+        .onSubmit(of: .search) {
+            Task {
+                print("###")
+                //await viewModel.executeQuery()
+            }
+        }
         .toolbar(id: "navtoolbar") {
             ToolbarItem(id: "previous", placement: ToolbarItemPlacement.accessory(or: .navigation), showsByDefault: true) {
                 Button {
