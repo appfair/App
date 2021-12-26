@@ -61,11 +61,9 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 
         // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
         if FileManager.default.isDirectory(url: Self.installFolderURL) == true {
-            self.fsobserver = FileSystemObserver(URL: Self.installFolderURL) {
+            self.fsobserver = FileSystemObserver(URL: Self.installFolderURL, queue: .main) {
                 dbg("changes detected in app folder:", Self.installFolderURL.path)
-                Task {
-                    await self.scanInstalledApps()
-                }
+                self.scanInstalledApps()
             }
         }
 
@@ -244,7 +242,7 @@ extension AppManager {
         try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
     }
 
-    func scanInstalledApps() async {
+    func scanInstalledApps() {
         dbg()
         do {
             let start = CFAbsoluteTimeGetCurrent()
