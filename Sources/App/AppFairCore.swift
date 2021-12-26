@@ -1071,44 +1071,6 @@ extension FocusedValues {
     }
 }
 
-
-@available(macOS 12.0, iOS 15.0, *)
-struct DisplayModePicker: View {
-    @Binding var mode: TriptychOrient
-
-    var body: some View {
-        // only display the picker if there is more than one element (i.e., on macOS)
-        if TriptychOrient.allCases.count > 1 {
-            Picker(selection: $mode) {
-                ForEach(TriptychOrient.allCases) { viewMode in
-                    viewMode.label
-                }
-            } label: {
-                Text("Display Mode")
-            }
-            .pickerStyle(SegmentedPickerStyle())
-        }
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-extension TriptychOrient {
-    var labelContent: (name: LocalizedStringKey, systemImage: String) {
-        switch self {
-        case .list:
-            return ("List", "list.bullet.rectangle")
-        #if os(macOS)
-        case .table:
-            return ("Table", "tablecells")
-        #endif
-        }
-    }
-
-    var label: some View {
-        Label(labelContent.name, systemImage: labelContent.systemImage)
-    }
-}
-
 // MARK: Parochial (package-local) Utilities
 
 /// Returns the localized string for the current module.
