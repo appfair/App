@@ -1,13 +1,13 @@
 {
   "colors" : [
     {
-      "color-example-setting" : {
+      "color" : {
         "color-space" : "srgb",
         "components" : {
           "alpha" : "1.000",
-          "red" : "0xF9",
-          "green" : "0xC4",
-          "blue" : "0xA0"
+          "blue" : "1.000",
+          "green" : "0.035",
+          "red" : "0.628"
         }
       },
       "idiom" : "universal"
