@@ -15,6 +15,8 @@
 import Swift
 import XCTest
 @testable import App
+import FairApp
+import Media
 
 open class AppTests: XCTestCase {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
@@ -22,6 +24,12 @@ open class AppTests: XCTestCase {
         // awaiting Swift 5.5 final
         //let _ = AppContainer.rootScene
         //let _ = AppContainer.settingsView
+    }
+
+    func testMedia() throws {
+        let bundle = Bundle.mediaBundle
+        let resource = try bundle.loadResource(named: "Bundle/Sita_Sings_the_Blues.mp4", options: .alwaysMapped)
+        XCTAssertGreaterThan(resource.count, 1024)
     }
 }
 

@@ -1,4 +1,7 @@
 import FairApp
+import Media
+
+let mediaBundle = Bundle.mediaBundle
 
 /// The main content view for the app.
 public struct ContentView: View {
