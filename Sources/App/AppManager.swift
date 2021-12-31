@@ -302,7 +302,7 @@ extension AppManager {
         }
 
         // always re-scan after altering apps
-        await scanInstalledApps()
+        scanInstalledApps()
     }
 
     /// Reveals the local installed copy of this app using the finder
@@ -408,7 +408,7 @@ extension AppManager {
         parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
 
         // always re-scan after altering apps
-        await scanInstalledApps()
+        scanInstalledApps()
         parentProgress.completedUnitCount = parentProgress.totalUnitCount
 
         dbg("re-launching app:", item.bundleIdentifier)

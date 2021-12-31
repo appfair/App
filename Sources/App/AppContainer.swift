@@ -7,7 +7,7 @@ public extension AppContainer {
                 // .edgesIgnoringSafeArea(.all) // doesn't affect iPhone landscape catalog info header 
                 .environmentObject(appManager)
                 .preferredColorScheme(appManager.themeStyle.colorScheme)
-                .task({ await appManager.scanInstalledApps() })
+                .task({ appManager.scanInstalledApps() })
         }
         .commands {
             SidebarCommands()
