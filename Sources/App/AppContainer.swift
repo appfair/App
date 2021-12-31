@@ -1,17 +1,46 @@
 import FairApp
+import UniformTypeIdentifiers
 
-/// The main content view for the app.
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    let document: Document
 
     public var body: some View {
-        VStack {
-            Text("Welcome to **\(Bundle.main.bundleName!)**")
-                .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)")
-                .font(.headline)
+        NavigationView {
+            sidebarView()
+            canvasView()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    func sidebarView() -> some View {
+        List {
+            Section("Sections") {
+                Text("Hex")
+            }
+        }
+        .symbolRenderingMode(.multicolor)
+        .listStyle(.automatic)
+    }
+
+    func canvasView() -> some View {
+        Canvas(opaque: true, rendersAsynchronously: true) { context, size in
+            let data = document.data
+            let ratio = size.width / size.height
+            let columns = ceil(sqrt(.init(data.count) * ratio))
+            let span = size.width / columns
+
+            for i in data.indices {
+                let row = i / .init(columns)
+                let origin = CGPoint(x: (.init(i) * span) - (.init(row) * columns * span), y: .init(row) * span)
+                
+                let size = CGSize(width: span, height: span)
+                let rect = CGRect(origin: origin, size: size)
+                let color = Color(hue: Double(data[i]) / Double(UInt8.max), saturation: 0.75, brightness: 0.75)
+
+                context.fill(Path(rect), with: .color(color))
+            }
+        }
+        .drawingGroup()
     }
 }
 
@@ -22,9 +51,7 @@ public struct ContentView: View {
 
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        WindowGroup {
-            ContentView().environmentObject(store)
-        }
+        HexScene()
     }
 
     /// The app-wide settings view
@@ -41,5 +68,64 @@ public struct AppSettingsView : View {
             Text("Toggle")
         }
         .padding()
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct HexScene : Scene {
+    var body: some Scene {
+        DocumentGroup(viewing: Document.self) { file in
+            ContentView(document: file.document)
+            //.focusedSceneValue(\.document, file.document)
+            //.environmentObject(file.document.sceneStore)
+        }
+        .commands {
+            HexCommandMenu()
+        }
+    }
+}
+
+struct HexCommandMenu : Commands {
+    var body : some Commands {
+        CommandMenu(Text("Hex")) {
+            InfoCommand()
+                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
+        }
+    }
+}
+
+struct InfoCommand : View {
+    //    @FocusedValue(\.document) var document
+    //
+    //    var body: some View {
+    //    }
+
+    var body: some View {
+        Text("Info")
+            .button {
+                dbg(wip("InfoCommand"))
+            }
+    }
+}
+
+struct Document: FileDocument {
+    var data: Data
+
+    static var readableContentTypes: [UTType] {
+        [
+            UTType.data,
+        ]
+    }
+    static var writableContentTypes: [UTType] { [] }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        self.data = data
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }

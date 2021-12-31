@@ -6,6 +6,59 @@
 	<string>$(ICON_SYMBOL)</string>
 	<key>AppFairIconTint</key>
 	<string>$(ICON_TINT)</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER).data</string>
+			</array>
+			<key>NSUbiquitousDocumentUserActivityType</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).data</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Data</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>data</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.data</string>
+            </array>
+        </dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Data</string>
+			<key>UTTypeIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).data</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>data</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>public/data</string>
+                </array>
+			</dict>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,7 +76,7 @@
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
-		<string>This app needs to read local files in order to load user-selected books</string>
+		<string>Hex examination requires the file read capability</string>
 		<key>com.apple.security.files.user-selected.read-write</key>
 		<string>This app needs to read and write files in order to…</string>
 		<key>com.apple.security.network.client</key>
