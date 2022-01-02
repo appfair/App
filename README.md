@@ -1,10 +1,12 @@
 
 ## Description
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in catalog browser applications.
+This app contains a video player with the 2008 movie _Sita Sings the Blues_, which is in the public domain.
 
-It supports **basic** formatting, but not images, lists, or links.
+**PLOT**: Sita is a goddess separated from her beloved Lord and husband Rama. Nina is an animator whose husband moves to India, then dumps her by email. Three hilarious shadow puppets narrate both ancient tragedy and modern comedy in this beautifully animated interpretation of the Indian epic Ramayana. Set to the 1920's jazz vocals of Annette Hanshaw, _Sita Sings the Blues_ earns its tagline as "the Greatest Break-Up Story Ever Told."
+
+_Sita Sings the Blues_ is a 2008 animated film written, directed, produced and animated entirely by American artist Nina Paley (with the exception of some fight animation by Jake Friedman in the "Battle of Lanka" scene), primarily using 2D computer graphics and Flash Animation.
+It intersperses events from the Ramayana, light-hearted but knowledgeable discussion of historical background by a trio of Indian shadow play, musical interludes voiced with tracks by Annette Hanshaw and scenes from the artist's own life. The ancient mythological and modern biographical plot are parallel tales, sharing numerous themes.
 
 ## Installation
 
