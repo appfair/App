@@ -16,7 +16,8 @@ let package = Package(
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
             "Media",
-        ], resources: [.process("Resources"), .copy("Bundle")]),
+        ], resources: [.process("Resources"), .copy("Bundle")],
+        linkerSettings: [.linkedFramework("AVKit")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
