@@ -11,6 +11,10 @@ public struct ContentView: View {
 }
 
 public struct PlayerView: View {
+    static let mediaResource = Result {
+        try Bundle.mediaBundle.url(forResource: "Bundle/Sita_Sings_the_Blues.mp4.parts", withExtension: "")?.assemblePartsCache()
+    }
+
     @EnvironmentObject var store: Store
     @EnvironmentObject var manager: MediaManager
 
@@ -20,7 +24,13 @@ public struct PlayerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            manager.stream(url: Bundle.mediaBundle.url(forResource: "Bundle/Sita_Sings_the_Blues", withExtension: "mp4"))
+            switch Self.mediaResource {
+            case .success(let url):
+                manager.stream(url: url)
+            case .failure(let error):
+                dbg("error loading embedded media:", error)
+                store.errors.append(error)
+            }
         }
     }
 }
@@ -28,6 +38,8 @@ public struct PlayerView: View {
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
+
+    @Published public var errors: [Error] = []
 }
 
 public extension AppContainer {
