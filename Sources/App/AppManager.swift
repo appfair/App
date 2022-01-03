@@ -36,6 +36,9 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
+    /// The current activities that are taking place
+    @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
+
     /// Whether we are currently fetching apps
     @Published var fetching: Bool = false
 
@@ -80,6 +83,26 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     }
 }
 
+/// An activity and progress
+class CatalogOperation {
+    let activity: CatalogActivity
+    var progress: Progress
+
+    init(activity: CatalogActivity, progress: Progress = Progress()) {
+        self.activity = activity
+        self.progress = progress
+    }
+}
+
+enum CatalogActivity : CaseIterable, Equatable {
+    case install
+    case update
+    case trash
+    case reveal
+    case launch
+}
+
+
 @available(macOS 12.0, iOS 15.0, *)
 extension AppManager {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
@@ -110,11 +133,11 @@ extension AppManager {
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
     /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
     func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
-        let installedApps: [String?: [Plist]] = Dictionary(grouping: self.installedApps.values.compactMap(\.successValue), by: \.CFBundleIdentifier)
+        let installedApps: [BundleIdentifier?: [Plist]] = Dictionary(grouping: self.installedApps.values.compactMap(\.successValue), by: { $0.CFBundleIdentifier.flatMap(BundleIdentifier.init(rawValue:)) })
 
         // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
         // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [String: [AppInfo]] = catalog
+        let bundleAppInfoMap: [BundleIdentifier: [AppInfo]] = catalog
             .map { item in
                 AppInfo(release: item, installedPlist: installedApps[item.bundleIdentifier]?.first)
             }
@@ -326,7 +349,7 @@ extension AppManager {
     }
 
     /// Install or update the given catalog item.
-    func install(item: AppCatalogItem, progress parentProgress: Progress, update: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
         //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
 
         if update == false, let installPath = Self.installedPath(for: item) {
@@ -338,8 +361,8 @@ extension AppManager {
         let t1 = CFAbsoluteTimeGetCurrent()
         let request = URLRequest(url: item.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
 
-        parentProgress.kind = .file
-        parentProgress.fileOperationKind = .downloading
+        parentProgress?.kind = .file
+        parentProgress?.fileOperationKind = .downloading
 
         let hasher = SHA256Hasher()
         let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: hasher, parentProgress: parentProgress)
@@ -363,7 +386,7 @@ extension AppManager {
         let expandURL = downloadedArtifact.appendingPathExtension("expanded")
 
         let progress2 = Progress(totalUnitCount: 1)
-        parentProgress.addChild(progress2, withPendingUnitCount: 0)
+        parentProgress?.addChild(progress2, withPendingUnitCount: 0)
 
         try FileManager.default.unzipItem(at: downloadedArtifact, to: expandURL, skipCRC32: false, progress: progress2, preferredEncoding: .utf8)
         try FileManager.default.removeItem(at: downloadedArtifact)
@@ -405,21 +428,26 @@ extension AppManager {
 
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
         try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
-        parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
+        if let parentProgress = parentProgress {
+            parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
+        }
 
         // always re-scan after altering apps
         scanInstalledApps()
-        parentProgress.completedUnitCount = parentProgress.totalUnitCount
+
+        if let parentProgress = parentProgress {
+            parentProgress.completedUnitCount = parentProgress.totalUnitCount
+        }
 
         dbg("re-launching app:", item.bundleIdentifier)
         terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
     }
 
     /// Kills the process with the given `bundleID` and re-launches it.
-    private func terminateAndRelaunch(bundleID: String, force: Bool) {
+    private func terminateAndRelaunch(bundleID: BundleIdentifier, force: Bool) {
 #if os(macOS)
         // re-launch the current app once it has been killed
-        if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first, let path = runningApp.bundleURL {
+        if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID.rawValue).first, let path = runningApp.bundleURL {
             dbg("runningApp:", runningApp)
             // when the app is this process (i.e., the catalog browser), we need to re-start using a spawned shell script
             let pid = runningApp.processIdentifier

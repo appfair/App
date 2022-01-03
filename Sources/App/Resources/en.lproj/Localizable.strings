@@ -8,10 +8,15 @@
 "No Selection" = "No Selection";
 
 "Install" = "Install";
+"Installing" = "Installing";
 "Update" = "Update";
+"Updating" = "Updating";
 "Reveal" = "Reveal";
+"Revealing" = "Revealing";
 "Launch" = "Launch";
+"Launching" = "Launching";
 "Delete" = "Delete";
+"Deleting" = "Deleting";
 
 "version %@" = "version %@";
 "Version" = "Version";

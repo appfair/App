@@ -23,9 +23,28 @@ struct CatalogItemView: View {
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
-    @State var currentActivity: Activity? = nil
+    private var currentOperation: CatalogOperation? {
+        get {
+            appManager.operations[info.release.bundleIdentifier]
+        }
+
+        nonmutating set {
+            appManager.operations[info.release.bundleIdentifier] = newValue
+        }
+    }
+
+    private var currentActivity: CatalogActivity? {
+        get {
+            currentOperation?.activity
+        }
+
+        nonmutating set {
+            currentOperation = newValue.flatMap({ CatalogOperation(activity: $0) })
+        }
+    }
+
     @StateObject var progress = ObservableProgress()
-    @State var confirmations: [Activity: Bool] = [:]
+    @State var confirmations: [CatalogActivity: Bool] = [:]
 
     #if os(macOS) // horizontalSizeClass unavailable on macOS
     func horizontalCompact() -> Bool { false }
@@ -36,6 +55,10 @@ struct CatalogItemView: View {
 
     var body: some View {
         catalogGrid()
+            .onAppear {
+                // transfer the progress so we can watch the operation
+                progress.progress = currentOperation?.progress ?? progress.progress
+            }
     }
 
     func headerView() -> some View {
@@ -319,7 +342,11 @@ struct CatalogItemView: View {
     func previewView() -> some View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
-                URLImage(sync: false, url: url, resizable: .fit, showProgress: false)
+                URLImage(url: url, resizable: .fit)
+                    .button {
+                        dbg(wip("open screenshot"))
+                    }
+                    .buttonStyle(.plain)
             }
         }
     }
@@ -390,7 +417,7 @@ struct CatalogItemView: View {
     }
 
     func catalogActionButtons() -> some View {
-        let isCatalogApp = info.release.bundleIdentifier == Bundle.main.bundleID
+        let isCatalogApp = info.release.bundleIdentifier.rawValue == Bundle.main.bundleID
 
         return HStack {
             if isCatalogApp {
@@ -427,6 +454,7 @@ struct CatalogItemView: View {
 
     func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: true)
+            .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
             .disabled(appInstalled)
             .confirmationDialog(Text("Install \(info.release.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
                 Text("Download & Install \(info.release.name)").button {
@@ -446,26 +474,28 @@ struct CatalogItemView: View {
 
     func updateButton() -> some View {
         button(activity: .update)
-            //.disabled(wip(false))
+            .keyboardShortcut(currentActivity == .update ? .cancelAction : .defaultAction)
             .disabled((!appInstalled || !appUpdated))
             .accentColor(.orange)
     }
 
     func launchButton() -> some View {
         button(activity: .launch)
+            .keyboardShortcut(KeyboardShortcut(KeyEquivalent.return, modifiers: .command))
             .disabled(!appInstalled)
             .accentColor(.green)
     }
 
     func revealButton() -> some View {
         button(activity: .reveal)
+            .keyboardShortcut(KeyboardShortcut(KeyEquivalent("i"), modifiers: .command)) // CMD-I
             .disabled(!appInstalled)
             .accentColor(.teal)
     }
 
     func trashButton() -> some View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: true)
-        //.keyboardShortcut(.delete)
+            .keyboardShortcut(.delete, modifiers: [])
             .disabled(!appInstalled)
             //.accentColor(.red) // coflicts with the red background of the button
             .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
@@ -491,33 +521,6 @@ struct CatalogItemView: View {
 
     var item: AppCatalogItem {
         info.release
-    }
-
-    var doingStuff: Bool {
-        currentActivity != nil
-    }
-
-    enum Activity : CaseIterable, Equatable {
-        case install
-        case update
-        case trash
-        case reveal
-        case launch
-
-        var info: (title: Text, systemSymbol: String, tintColor: Color?, toolTip: Text) {
-            switch self {
-            case .install:
-                return (Text("Install"), "square.and.arrow.down.fill", Color.blue, Text("Download and install the app."))
-            case .update:
-                return (Text("Update"), "square.and.arrow.down.on.square", Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
-            case .trash:
-                return (Text("Delete"), "trash", Color.red, Text("Delete the app from your computer."))
-            case .reveal:
-                return (Text("Reveal"), "doc.text.fill.viewfinder", Color.indigo, Text("Displays the app install location in the Finder."))
-            case .launch:
-                return (Text("Launch"), "checkmark.seal.fill", Color.green, Text("Launches the app."))
-            }
-        }
     }
 
     /// The plist for the given installed app
@@ -552,7 +555,7 @@ struct CatalogItemView: View {
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
-        appPropertyList?.successValue?.bundleID == info.id
+        appPropertyList?.successValue?.bundleID == info.id.rawValue
         //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
     }
 
@@ -561,7 +564,7 @@ struct CatalogItemView: View {
         (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
     }
 
-    func confirmationBinding(_ activity: Activity) -> Binding<Bool> {
+    func confirmationBinding(_ activity: CatalogActivity) -> Binding<Bool> {
         Binding {
             confirmations[activity] ?? false
         } set: { newValue in
@@ -569,7 +572,14 @@ struct CatalogItemView: View {
         }
     }
 
-    func runTask(activity: Activity, confirm confirmed: Bool) {
+    func cancelTask(activity: CatalogActivity) {
+        if currentOperation?.activity == activity {
+            currentOperation?.progress.cancel()
+            currentOperation = nil
+        }
+    }
+
+    func runTask(activity: CatalogActivity, confirm confirmed: Bool) {
         if !confirmed {
             confirmations[activity] = true
         } else {
@@ -582,9 +592,14 @@ struct CatalogItemView: View {
         }
     }
 
-    func button(activity: Activity, role: ButtonRole? = .none, needsConfirm: Bool = false) -> some View {
+    func button(activity: CatalogActivity, role: ButtonRole? = .none, needsConfirm: Bool = false) -> some View {
         Button(role: role, action: {
-            runTask(activity: activity, confirm: !needsConfirm)
+            if currentActivity == activity {
+                // clicking the button while the operation is being performed will cancel it
+                cancelTask(activity: activity)
+            } else {
+                runTask(activity: activity, confirm: !needsConfirm)
+            }
         }, label: {
             Label(title: {
                 HStack(spacing: 5) {
@@ -611,11 +626,11 @@ struct CatalogItemView: View {
         })
             .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
             .accentColor(activity.info.tintColor)
-            .disabled(doingStuff)
+            .disabled(currentActivity != nil && currentActivity != activity)
             .help(activity.info.toolTip)
     }
 
-    func performAction(activity: Activity) async {
+    func performAction(activity: CatalogActivity) async {
         switch activity {
         case .install: await installButtonTapped()
         case .update: await updateButtonTapped()
@@ -654,11 +669,16 @@ struct CatalogItemView: View {
         .foregroundColor(.secondary)
     }
 
+    func startProgress() -> Progress {
+        progress.progress = Progress(totalUnitCount: URLSession.progressUnitCount)
+        currentOperation?.progress = progress.progress
+        return progress.progress
+    }
+
     func installButtonTapped() async {
         dbg("installButtonTapped")
         do {
-            progress.progress = Progress(totalUnitCount: URLSession.progressUnitCount)
-            try await appManager.install(item: item, progress: progress.progress, update: false)
+            try await appManager.install(item: item, progress: startProgress(), update: false)
         } catch {
             appManager.reportError(error)
         }
@@ -672,8 +692,7 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         do {
-            progress.progress = Progress(totalUnitCount: URLSession.progressUnitCount)
-            try await appManager.install(item: item, progress: progress.progress, update: true)
+            try await appManager.install(item: item, progress: startProgress(), update: true)
         } catch {
             appManager.reportError(error)
         }
@@ -687,6 +706,23 @@ struct CatalogItemView: View {
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
         await appManager.trash(item: item)
+    }
+}
+
+private extension CatalogActivity {
+    var info: (title: Text, systemSymbol: String, tintColor: Color?, toolTip: Text) {
+        switch self {
+        case .install:
+            return (Text("Install"), "square.and.arrow.down.fill", Color.blue, Text("Download and install the app."))
+        case .update:
+            return (Text("Update"), "square.and.arrow.down.on.square", Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
+        case .trash:
+            return (Text("Delete"), "trash", Color.red, Text("Delete the app from your computer."))
+        case .reveal:
+            return (Text("Reveal"), "doc.text.fill.viewfinder", Color.indigo, Text("Displays the app install location in the Finder."))
+        case .launch:
+            return (Text("Launch"), "checkmark.seal.fill", Color.green, Text("Launches the app."))
+        }
     }
 }
 

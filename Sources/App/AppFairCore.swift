@@ -55,7 +55,7 @@ extension Plist {
 
 
 extension AppCatalogItem : Identifiable {
-    public var id: String { bundleIdentifier }
+    public var id: BundleIdentifier { bundleIdentifier }
 
     /// The hyphenated form of this app's name
     var appNameHyphenated: String {
@@ -687,8 +687,10 @@ public struct NavigationRootView : View {
                     let appName = url.lastPathComponent
                     // prefix the app-id with the app name
                     let appID = appName.hasPrefix("app.") ? appName : ("app." + appName)
-                    self.selection = appID
-                    dbg("selected app ID", self.selection)
+                    let bundleID = BundleIdentifier(appID)
+
+                    self.selection = bundleID
+                    dbg("selected app ID", wip(self.selection)) // TODO: if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
                 }
             }
     }

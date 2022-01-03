@@ -70,44 +70,6 @@ struct ActionButtonStyle: ButtonStyle {
     }
 }
 
-struct CapsuleProgressViewStyle : ProgressViewStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        CapsuleProgressView(fractionCompleted: configuration.fractionCompleted ?? 1.0, label: configuration.label, currentValueLabel: configuration.currentValueLabel)
-    }
-}
-
-struct CapsuleProgressView<L1: View, L2: View> : View {
-    let fractionCompleted: Double
-    let label: L1
-    let currentValueLabel: L2
-
-    var body: some View {
-        ZStack {
-            Capsule()
-                .fill(Color.secondary)
-            Capsule()
-                .fill(.linearGradient(stops: [
-                    Gradient.Stop(color: Color.accentColor, location: 0.0),
-                    Gradient.Stop(color: Color.accentColor, location: fractionCompleted),
-                    Gradient.Stop(color: Color.clear, location: fractionCompleted),
-                    Gradient.Stop(color: Color.clear, location: 1.0)
-                ], startPoint: UnitPoint(x: 0.0, y: 0.5), endPoint: UnitPoint(x: 1.0, y: 0.5)))
-                .animation(Animation.easeInOut, value: fractionCompleted) // this animates the progress bar smoothly
-            Capsule()
-                .stroke(Color.accentColor, lineWidth: 2)
-
-            label
-                .font(Font.headline.smallCaps())
-            VStack {
-                Spacer()
-                // if the progress has a current value, put in in the bottom
-                currentValueLabel
-                    .font(Font.caption)
-            }
-        }
-    }
-}
-
 struct ActionButtonStyle_Previews: PreviewProvider {
     static var previews: some View {
         ProgressView(value: Double.random(in: 0.0...10.0), total: 10.0, label: {

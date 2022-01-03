@@ -28,8 +28,16 @@ struct AppsListView : View {
 
     func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
-            item.release.iconImage()
-                .frame(width: 40, height: 40)
+            ZStack {
+                item.release.iconImage()
+                if let progress = appManager.operations[item.id]?.progress {
+                    FairProgressView(progress)
+                        .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
+                        .foregroundStyle(Color.secondary)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)) // make sure the progress doesn't extend pask the icon bounds
+                }
+            }
+            .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: item.release.name)
