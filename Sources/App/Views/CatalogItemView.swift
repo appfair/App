@@ -34,17 +34,13 @@ struct CatalogItemView: View {
     func horizontalCompact() -> Bool { horizontalSizeClass == .compact }
     #endif
 
-
     var body: some View {
-        // let _ = debuggingViewChanges() // e.g.: “CatalogItemView: @self, @identity, _appManager, _openURLAction, _colorScheme, _currentActivity, _progress, _confirmations changed.”
         catalogGrid()
-        //catalogStack()
     }
 
     func headerView() -> some View {
         pinnedHeaderView()
             .padding(.top)
-            //.background(item.tintColor())
             .background(Material.ultraThinMaterial)
     }
 
@@ -394,7 +390,7 @@ struct CatalogItemView: View {
     }
 
     func catalogActionButtons() -> some View {
-        let isCatalogApp = info.release.bundleIdentifier == "app.App-Fair"
+        let isCatalogApp = info.release.bundleIdentifier == Bundle.main.bundleID
 
         return HStack {
             if isCatalogApp {
