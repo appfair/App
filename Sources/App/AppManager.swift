@@ -347,7 +347,7 @@ extension AppManager {
 
         let t2 = CFAbsoluteTimeGetCurrent()
 
-        dbg("downloaded:", try? downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
+        dbg("downloaded:", downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
 
         try Task.checkCancellation()
 
