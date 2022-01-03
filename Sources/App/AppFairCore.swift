@@ -59,7 +59,7 @@ extension AppCatalogItem : Identifiable {
 
     /// The hyphenated form of this app's name
     var appNameHyphenated: String {
-        self.name.replacingOccurrences(of: " ", with: "-")
+        self.name.rehyphenated()
     }
 
     /// Returns the URL to this app's home page
