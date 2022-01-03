@@ -23,7 +23,7 @@ ICON_SYMBOL = M 239.875000 77.031250 C 238.701863 76.953016 237.496994 77.042498
 
 // Specify which platforms to build and release
 // SUPPORTED_PLATFORMS = macosx
-/SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
+SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
