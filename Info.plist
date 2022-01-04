@@ -27,6 +27,8 @@
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to…</string>
 	</dict>
+ 	<key>ITSAppUsesNonExemptEncryption</key>
+ 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>
