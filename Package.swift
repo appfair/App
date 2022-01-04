@@ -15,6 +15,7 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
+            "SwiftyJSON",
         ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
