@@ -48,6 +48,8 @@ struct CatalogItemView: View {
     @StateObject var progress = ObservableProgress()
     @State var confirmations: [CatalogActivity: Bool] = [:]
 
+    @Namespace private var namespace
+
     #if os(macOS) // horizontalSizeClass unavailable on macOS
     func horizontalCompact() -> Bool { false }
     #else
@@ -341,10 +343,16 @@ struct CatalogItemView: View {
         }
     }
 
+    func previewImage(_ url: URL) -> some View {
+        URLImage(url: url, resizable: .fit)
+            // .matchedGeometryEffect(id: url, in: namespace, properties: .frame) // doesn't work: makes the source image disappear (and ever re-appear) when it is tapped
+
+    }
+
     func previewView() -> some View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
-                URLImage(url: url, resizable: .fit)
+                previewImage(url)
                     .button {
                         dbg("open screenshot:", url.relativePath)
                         self.previewScreenshot = url
@@ -374,21 +382,26 @@ struct CatalogItemView: View {
                         .buttonStyle(.borderless)
                         .keyboardShortcut(.cancelAction)
                 }
-                TabView(selection: $previewScreenshot) {
-                    ForEach(item.screenshotURLs ?? [], id: \.self) { url in
-                        URLImage(url: url, resizable: .fit)
+
+                GroupBox {
+                    if let previewScreenshot = previewScreenshot {
+                        previewImage(previewScreenshot)
                     }
                 }
-                .tabViewStyle(PagesTabViewStyle())
+
+                //TabView(selection: $previewScreenshot) {
+                //    ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+                //        URLImage(url: url, resizable: .fit)
+                //            .id(url)
+                //    }
+                //}
+                //.tabViewStyle(.paginated)
             }
             .padding()
         }
         .frame(idealWidth: 800, idealHeight: 600)
         .edgesIgnoringSafeArea(.all)
     }
-
-    /// TODO
-    typealias PagesTabViewStyle = DefaultTabViewStyle
 
     func catalogAuthorRow() -> some View {
         Group {
@@ -836,6 +849,28 @@ extension AppCatalogItem {
         return nil
     }
 }
+
+#if os(macOS)
+/// Repliction of iOS's `PageTabViewStyle` for macOS
+typealias PaginatedTabViewStyle = DefaultTabViewStyle
+
+//struct PaginatedTabViewStyle : TabViewStyle {
+//    static func _makeView<SelectionValue>(value: _GraphValue<_TabViewValue<PaginatedTabViewStyle, SelectionValue>>, inputs: _ViewInputs) -> _ViewOutputs where SelectionValue : Hashable {
+//        //_ViewOutputs(value)
+//        // inputs.outputs
+//    }
+//
+//    static func _makeViewList<SelectionValue>(value: _GraphValue<_TabViewValue<PaginatedTabViewStyle, SelectionValue>>, inputs: _ViewListInputs) -> _ViewListOutputs where SelectionValue : Hashable {
+//        // inputs
+//    }
+//}
+
+extension TabViewStyle where Self == PaginatedTabViewStyle {
+
+    /// The page `TabView` style.
+    static var paginated: PaginatedTabViewStyle { PaginatedTabViewStyle() }
+}
+#endif
 
 extension LabelStyle where Self == TitleAndIconFlippedLabelStyle {
     /// The same as `titleAndIcon` with the icon at the end
