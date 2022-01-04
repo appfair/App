@@ -1,5 +1,6 @@
 import FairApp
 import Dispatch
+import Security
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]
@@ -10,6 +11,7 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
 let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 #endif
+
 
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
@@ -262,7 +264,9 @@ extension AppManager {
 
     static func createInstallFolder() throws {
         // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
-        try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
+        try withPermission(installFolderURL.deletingLastPathComponent()) { _ in
+            try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
+        }
     }
 
     func scanInstalledApps() {
@@ -315,10 +319,7 @@ extension AppManager {
                 throw Errors.appNotInstalled(item)
             }
 
-            // TODO: quit the app if it is running
-            let trashedURL = try FileManager.default.trash(url: installPath)
-            dbg("trashed:", item.name, "to:", trashedURL?.path)
-
+            try trash(installPath)
         } catch {
             dbg("error performing trash for:", item.name, "error:", error)
             self.reportError(error)
@@ -412,22 +413,24 @@ extension AppManager {
         try self.validate(appPath: expandedAppPath, forItem: item)
 
         let installPath = Self.appInstallPath(for: item)
-        let installFolder = installPath.deletingLastPathComponent()
-        try FileManager.default.createDirectory(at: installFolder, withIntermediateDirectories: true, attributes: nil)
+        let installFolderURL = installPath.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
 
-        let destinationURL = installFolder.appendingPathComponent(expandedAppPath.lastPathComponent)
+        let destinationURL = installFolderURL.appendingPathComponent(expandedAppPath.lastPathComponent)
 
         // if we permit updates and it is already installed, trash the previous version
         if update && FileManager.default.isDirectory(url: destinationURL) == true {
             // TODO: first rename based on the old version number
             dbg("trashing:", destinationURL.path)
-            try FileManager.default.trash(url: destinationURL)
+            try trash(destinationURL)
         }
 
         try Task.checkCancellation()
 
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
-        try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
+        try Self.withPermission(installFolderURL) { installFolderURL in
+            try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
+        }
         if let parentProgress = parentProgress {
             parentProgress.completedUnitCount = parentProgress.totalUnitCount - 1
         }
@@ -443,10 +446,19 @@ extension AppManager {
         terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
     }
 
+    private func trash(_ fileURL: URL) throws {
+        // perform privilege escalation if needed
+        let trashedURL = try Self.withPermission(fileURL) { fileURL in
+            try FileManager.default.trash(url: fileURL)
+        }
+        dbg("trashed:", fileURL.path, "to:", trashedURL?.path)
+    }
+
     /// Kills the process with the given `bundleID` and re-launches it.
     private func terminateAndRelaunch(bundleID: BundleIdentifier, force: Bool) {
 #if os(macOS)
         // re-launch the current app once it has been killed
+        // note that NSRunningApplication cannot be used from a sandboxed app
         if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID.rawValue).first, let path = runningApp.bundleURL {
             dbg("runningApp:", runningApp)
             // when the app is this process (i.e., the catalog browser), we need to re-start using a spawned shell script
@@ -464,6 +476,59 @@ extension AppManager {
             dbg("no process identifier for:", bundleID)
         }
 #endif // #if os(macOS)
+    }
+
+    /// Performs the given operation, and if it fails, try again after attempting a privileged operation to change the owner of the file to the current user.
+    private static func withPermission<T>(_ fileURL: URL, recursive: Bool = false, block: (URL) throws -> T) throws -> T {
+        do {
+            // attempt the operation without any privilege escalation first
+            return try block(fileURL)
+        } catch {
+            #if os(macOS)
+            func reauthorize(_ error: Error) throws -> T {
+                // we have a few options here:
+                // 1. [SMJobBless](https://developer.apple.com/documentation/servicemanagement/1431078-smjobbless) and an XPC helper; cumbersome, and has inherent security flaws as discussed at: [](https://blog.obdev.at/what-we-have-learned-from-a-vulnerability/)
+                // 2. [AuthorizationExecuteWithPrivileges](https://developer.apple.com/documentation/security/1540038-authorizationexecutewithprivileg) deprecated and un-available in swift (although the symbol can be manually coerced)
+                // 3. NSAppleScript using "with administrator privileges"
+
+                let cmd = "do shell script \"/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'\" with administrator privileges" // note that we don't seem to need recursive in order to trash or rename files, so skip it…
+
+                dbg("attempting to grant permission to current user with script", cmd)
+                guard let script = NSAppleScript(source: cmd) else {
+                    throw error
+                }
+
+                var errorDict: NSDictionary?
+                let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
+
+                if errorDict != nil {
+                    dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
+
+                    // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
+                    throw error
+                } else {
+                    dbg("successfully executed script:", output.stringValue)
+                    // now try-try the operation with the file's permissions corrected
+                    return try block(fileURL)
+                }
+            }
+
+            if let error = error as? CocoaError {
+                if error.code == .fileReadNoPermission
+                    || error.code == .fileWriteNoPermission {
+                    // e.g.: withPermission: file permission error: CocoaError(_nsError: Error Domain=NSCocoaErrorDomain Code=513 "“Pan Opticon.app” couldn’t be moved to the trash because you don’t have permission to access it." UserInfo={NSURL=./Pan%20Opticon.app/ -- file:///Applications/App%20Fair/, NSUserStringVariant=(Trash), NSUnderlyingError=0x600001535680 {Error Domain=NSOSStatusErrorDomain Code=-5000 "afpAccessDenied: Insufficient access privileges for operation "}})
+                    dbg("file permission error: \(error)")
+                    return try reauthorize(error)
+                } else {
+                    dbg("non-file permission error: \(error)")
+                    // should we reauth for any error? E.g., `.fileWriteFileExists`? For now, be conservative and only attempt to change the permissions when we are sure the failure was due to a system file read/write error
+                    // return try reauthorize(error)
+                    throw error
+                }
+            }
+            #endif
+            throw error
+        }
     }
 
     func validate(appPath: URL, forItem release: AppCatalogItem) throws {

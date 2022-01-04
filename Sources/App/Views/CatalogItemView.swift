@@ -23,6 +23,8 @@ struct CatalogItemView: View {
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
+    @State private var previewScreenshot: URL? = nil
+
     private var currentOperation: CatalogOperation? {
         get {
             appManager.operations[info.release.bundleIdentifier]
@@ -344,13 +346,50 @@ struct CatalogItemView: View {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
                 URLImage(url: url, resizable: .fit)
                     .button {
-                        dbg(wip("open screenshot"))
+                        dbg("open screenshot:", url.relativePath)
+                        self.previewScreenshot = url
                     }
                     .buttonStyle(.plain)
             }
         }
+        .sheet(isPresented: nullifyingBoolBinding($previewScreenshot)) {
+            dbg("dismissed")
+        } content: {
+            screenshotPreview()
+        }
+
     }
-    
+
+    func screenshotPreview() -> some View {
+        Group {
+            VStack {
+                HStack {
+                    Spacer()
+                    Text("Close")
+                        .label(image: FairSymbol.xmark)
+                        .labelsHidden()
+                        .button {
+                            self.previewScreenshot = nil // closes the sheet
+                        }
+                        .buttonStyle(.borderless)
+                        .keyboardShortcut(.cancelAction)
+                }
+                TabView(selection: $previewScreenshot) {
+                    ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+                        URLImage(url: url, resizable: .fit)
+                    }
+                }
+                .tabViewStyle(PagesTabViewStyle())
+            }
+            .padding()
+        }
+        .frame(idealWidth: 800, idealHeight: 600)
+        .edgesIgnoringSafeArea(.all)
+    }
+
+    /// TODO
+    typealias PagesTabViewStyle = DefaultTabViewStyle
+
     func catalogAuthorRow() -> some View {
         Group {
             if info.release.developerName.isEmpty {
