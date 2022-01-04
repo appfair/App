@@ -1,17 +1,15 @@
 
 ## Description
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in catalog browser applications.
-
-It supports **basic** formatting, but not images, lists, or links.
+A simple offline recipe browser to uses the recipe sources from
+[based.cooking](https://github.com/LukeSmithxyz/based.cooking).
 
 ## Installation
 
 ### App Fair Installation
 
 This app can be installed with the [App Fair.app](https://www.appfair.net)
-by launching: [appfair://app/App-Name](appfair://app/App-Name)
+by launching: [appfair://app/Main-Course](appfair://app/Main-Course)
 
 ### Homebrew Installation
 
@@ -19,7 +17,7 @@ by launching: [appfair://app/App-Name](appfair://app/App-Name)
 install this app directly with the command:
 
 ```shell
-$ brew install appfair/app/app-name
+$ brew install appfair/app/main-course
 ```
 
 The app will be installed in the `/Applications/App Fair/` folder.
