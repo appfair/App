@@ -343,10 +343,10 @@ struct CatalogItemView: View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
                 URLImage(url: url, resizable: .fit)
-//                    .button {
-//                        dbg(wip("open screenshot"))
-//                    }
-//                    .buttonStyle(.plain)
+                    .button {
+                        dbg(wip("open screenshot"))
+                    }
+                    .buttonStyle(.plain)
             }
         }
     }
