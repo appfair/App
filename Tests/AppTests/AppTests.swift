@@ -26,22 +26,21 @@ import FairCore
         // let (_, _) = (scene, settings)
     }
 
-//    func testHubAPI() throws {
-//        let hub = FairManager().hub
-//        hub.requestAsync(Fair)
-//    }
-
-    @available(macOS 12.0, *)
-    @available(iOS, unavailable)
-    @available(tvOS, unavailable)
-    @available(watchOS, unavailable)
-    func testAppIcon() throws {
-
+    func testCaskList() async throws {
+        let caskManager = CaskManager()
+        XCTAssertEqual(caskManager.casks.count, 0)
+        try await caskManager.fetchCasks()
+        let casks = caskManager.casks
+        XCTAssertGreaterThan(casks.count, 1000)
     }
-}
 
-struct AppIcon {
-    var size = CGSize(width: 500, height: 500)
-
+    func testCaskStats() async throws {
+        let caskManager = CaskManager()
+        XCTAssertNil(caskManager.stats)
+        try await caskManager.fetchStats()
+        let stats = try XCTUnwrap(caskManager.stats)
+        XCTAssertGreaterThan(stats.total_count, 1000) // e.g.: 894812
+        XCTAssertGreaterThan(stats.formulae.values.joined().count, 1000) // e.g.: 6190
+    }
 }
 
