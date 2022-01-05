@@ -80,6 +80,8 @@
 		<key>com.apple.security.files.user-selected.read-write</key>
 		<string>Load and save user-selected Lottie files.</string>
 	</dict>
+ 	<key>ITSAppUsesNonExemptEncryption</key>
+ 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>
