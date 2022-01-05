@@ -42,5 +42,12 @@ import FairCore
         XCTAssertGreaterThan(stats.total_count, 1000) // e.g.: 894812
         XCTAssertGreaterThan(stats.formulae.values.joined().count, 1000) // e.g.: 6190
     }
+
+    func testInstalledApps() throws {
+        let caskManager = CaskManager()
+        XCTAssertEqual(0, caskManager.installed.count)
+        try caskManager.refreshInstalledApps()
+        XCTAssertNotEqual(0, caskManager.installed.count, "assuming homebrew is installed, there should have been more than one installation")
+    }
 }
 

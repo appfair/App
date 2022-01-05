@@ -1,6 +1,93 @@
 import FairApp
 import SwiftUI
 
+@available(macOS 12.0, iOS 15.0, *)
+@MainActor public final class FairManager: SceneManager {
+    /// The appManager, which should be extracted as a separate `EnvironmentObject`
+    let appManager = AppManager()
+    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
+    let caskManager = CaskManager()
+
+    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
+
+    /// The base domain of the provider for the hub
+    @AppStorage("hubProvider") public var hubProvider = "github.com"
+    /// The organization name of the hub
+    @AppStorage("hubOrg") public var hubOrg = appfairName
+    /// The name of the base repository for the provider
+    @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
+
+    /// An optional authorization token for direct API usagefor the organization must
+    ///
+    @AppStorage("hubToken") public var hubToken = ""
+
+    required internal init() {
+        super.init()
+
+        /// The gloal quick actions for the App Fair
+        self.quickActions = [
+            QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
+                dbg("refresh-action")
+                Task {
+                    //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                    completion(true)
+                }
+            }
+        ]
+    }
+}
+
+/// The source of the apps
+public enum AppSource: String, CaseIterable {
+    #if DEBUG
+    case homebrew
+    #endif
+    case fairapps
+}
+
+extension AppSource : Identifiable {
+    public var id: Self { self }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+public extension AppSource {
+    var label: Label<Text, EmptyView> {
+        switch self {
+        #if DEBUG
+        case .homebrew:
+            return Label { Text("Homebrew") } icon: { }
+        #endif
+        case .fairapps:
+            return Label { Text("Fairground") } icon: { }
+        }
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+public struct AppSourcePicker: View {
+    @Binding var source: AppSource
+
+    public init(source: Binding<AppSource>) {
+        self._source = source
+    }
+
+    public var body: some View {
+        // only display the picker if there is more than one element (i.e., on macOS)
+        if AppSource.allCases.count > 1 {
+            Picker(selection: $source) {
+                ForEach(AppSource.allCases) { viewMode in
+                    viewMode.label.labelStyle(.titleOnly)
+                        //.badge(appUpdatedCount())
+                }
+            } label: {
+                Text("App Source")
+            }
+            .pickerStyle(SegmentedPickerStyle())
+        }
+    }
+}
+
+
 struct AppInfo : Identifiable, Equatable {
     var release: AppCatalogItem
     var installedPlist: Plist? = nil
@@ -431,7 +518,9 @@ struct AppRiskPicker: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var caskManager: CaskManager
 
     func checkButton(_ parts: String...) -> some View {
         EmptyView()
@@ -445,19 +534,19 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 HStack {
-                    TextField("Hub", text: appManager.$hubProvider)
-                    checkButton(appManager.hubProvider)
+                    TextField("Hub", text: fairManager.$hubProvider)
+                    checkButton(fairManager.hubProvider)
                 }
                 HStack {
-                    TextField("Organization", text: appManager.$hubOrg)
-                    checkButton(appManager.hubProvider, appManager.hubOrg)
+                    TextField("Organization", text: fairManager.$hubOrg)
+                    checkButton(fairManager.hubProvider, fairManager.hubOrg)
                 }
                 HStack {
-                    TextField("Repository", text: appManager.$hubRepo)
-                    checkButton(appManager.hubProvider, appManager.hubOrg, appManager.hubRepo)
+                    TextField("Repository", text: fairManager.$hubRepo)
+                    checkButton(fairManager.hubProvider, fairManager.hubOrg, fairManager.hubRepo)
                 }
                 HStack {
-                    SecureField("Token", text: appManager.$hubToken)
+                    SecureField("Token", text: fairManager.$hubToken)
                 }
 
                 Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
@@ -636,17 +725,38 @@ extension View {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-public struct NavigationRootView : View {
+public struct RootView : View {
+    let fairManager: FairManager
+
+    public var body: some View {
+        NavigationRootView()
+            .environmentObject(fairManager)
+            .environmentObject(fairManager.appManager)
+            .environmentObject(fairManager.caskManager)
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct NavigationRootView : View {
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var caskManager: CaskManager
+
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
     @State var category: AppManager.SidebarItem? = .popular
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
+    @SceneStorage("source") var source: AppSource = AppSource.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
 
     public var body: some View {
         triptychView
             .displayingFirstAlert($appManager.errors)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    AppSourcePicker(source: $source)
+                }
+            }
             .toolbar(id: "NavToolbar") {
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
                     Text("Reload")
@@ -660,9 +770,23 @@ public struct NavigationRootView : View {
                     DisplayModePicker(mode: $displayMode)
                 }
             }
-            .task {
+            .task(priority: .high) {
+                dbg("scanning installed apps")
+                appManager.scanInstalledApps()
+            }
+            .task(priority: .medium) {
                 dbg("fetching app catalog")
                 await appManager.fetchApps()
+            }
+            .task(priority: .low) {
+                #if DEBUG
+                do {
+                    dbg("fetching installed casks")
+                    try await caskManager.refreshAll()
+                } catch {
+                    dbg("error refreshing casks:", error)
+                }
+                #endif
             }
             .onChange(of: appManager.updateCount()) { updateCount in
                 if iconBadge == true {
@@ -697,9 +821,9 @@ public struct NavigationRootView : View {
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
-            SidebarView(selection: $selection, category: $category, displayMode: $displayMode)
+            SidebarView(source: $source, selection: $selection, category: $category, displayMode: $displayMode)
         } list: {
-            AppsListView(selection: $selection, category: $category)
+            AppsListView(source: $source, selection: $selection, category: $category)
         } table: {
             #if os(macOS)
             AppsTableView(selection: $selection, category: $category)
@@ -947,7 +1071,10 @@ public extension AppCategory {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
+    @Binding var source: AppSource
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var caskManager: CaskManager
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
     @Binding var displayMode: TriptychOrient
@@ -1010,14 +1137,25 @@ struct SidebarView: View {
                 .navigationTitle(category?.label.title ?? Text("Apps"))
         }, label: {
             item.label
-                .badge(appManager.badgeCount(for: item))
+                .badge(badgeCount(for: item))
         })
+    }
+
+    func badgeCount(for item: AppManager.SidebarItem) -> Text? {
+        switch source {
+        #if DEBUG
+        case .homebrew:
+            return caskManager.badgeCount(for: item)
+        #endif
+        case .fairapps:
+            return appManager.badgeCount(for: item)
+        }
     }
 
     @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
         switch displayMode {
         case .list:
-            AppsListView(selection: $selection, category: $category)
+            AppsListView(source: $source, selection: $selection, category: $category)
         #if os(macOS)
         case .table:
             AppTableDetailSplitView(selection: $selection, category: $category)

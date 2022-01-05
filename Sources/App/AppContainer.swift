@@ -1,18 +1,17 @@
 import FairApp
 
 public extension AppContainer {
-    @SceneBuilder static func rootScene(store appManager: AppManager) -> some SwiftUI.Scene {
+    @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
-            NavigationRootView()
-                // .edgesIgnoringSafeArea(.all) // doesn't affect iPhone landscape catalog info header 
-                .environmentObject(appManager)
-                .preferredColorScheme(appManager.themeStyle.colorScheme)
-                .task({ appManager.scanInstalledApps() })
+            RootView(fairManager: fairManager)
+                .preferredColorScheme(fairManager.themeStyle.colorScheme)
+        }
+        .commands {
+            AppFairCommands(appManager: fairManager.appManager)
         }
         .commands {
             SidebarCommands()
             SearchCommands()
-            AppFairCommands(appManager: appManager)
             ToolbarCommands()
         }
         .commands {
@@ -23,9 +22,9 @@ public extension AppContainer {
     }
 
     /// The app-wide settings view
-    @ViewBuilder static func settingsView(store appManager: AppManager) -> some SwiftUI.View {
+    @ViewBuilder static func settingsView(store fairManager: FairManager) -> some SwiftUI.View {
         AppSettingsView()
-            .environmentObject(appManager)
-            .preferredColorScheme(appManager.themeStyle.colorScheme)
+            .environmentObject(fairManager)
+            .preferredColorScheme(fairManager.themeStyle.colorScheme)
     }
 }

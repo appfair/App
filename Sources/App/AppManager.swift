@@ -12,37 +12,14 @@ let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 #endif
 
-
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class AppManager: SceneManager {
-    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
-
-    /// The base domain of the provider for the hub
-    @AppStorage("hubProvider") public var hubProvider = "github.com"
-    /// The organization name of the hub
-    @AppStorage("hubOrg") public var hubOrg = appfairName
-    /// The name of the base repository for the provider
-    @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
-
-    /// An optional authorization token for direct API usagefor the organization must
-    ///
-    @AppStorage("hubToken") public var hubToken = ""
-
-    @AppStorage("showPreReleases") var showPreReleases = false
-
-    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
-
-    @Published public var errors: [AppError] = []
-
+@MainActor public final class AppManager: ObservableObject {
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
     /// The current activities that are taking place
     @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
-
-    /// Whether we are currently fetching apps
-    @Published var fetching: Bool = false
 
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
@@ -53,13 +30,23 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     /// The fetched readmes for the apps
     @Published private var readmes: [URL: Result<AttributedString, Error>] = [:]
 
+    @AppStorage("showPreReleases") var showPreReleases = false
+
+    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+
+
+    @Published public var errors: [AppError] = []
+
+    /// Register that an error occurred with the app manager
+    func reportError(_ error: Error) {
+        errors.append(AppError(error))
+    }
+
     static let `default`: AppManager = AppManager()
 
     private var fsobserver: FileSystemObserver? = nil
 
-    internal required init() {
-        super.init()
-
+    internal init() {
         if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
             try? Self.createInstallFolder()
         }
@@ -71,17 +58,6 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
                 self.scanInstalledApps()
             }
         }
-
-        /// The gloal quick actions for the App Fair
-        self.quickActions = [
-            QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
-                dbg("refresh-action")
-                Task {
-                    await self.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                    completion(true)
-                }
-            }
-        ]
     }
 }
 
@@ -109,8 +85,6 @@ enum CatalogActivity : CaseIterable, Equatable {
 extension AppManager {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         do {
-            self.fetching = true
-            defer { self.fetching = false }
             let start = CFAbsoluteTimeGetCurrent()
             let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
@@ -212,11 +186,6 @@ extension AppManager {
         // however, app translocation prevents it from knowing its location on first launch, and so we can't rely on being able to install as a peer without nagging the user to first move the app somewhere (thereby exhausting translocation)
         // Bundle.main.bundleURL.deletingPathExtension()
         URL(fileURLWithPath: Bundle.mainBundleName, relativeTo: (try? FileManager.default.url(for: .applicationDirectory, in: .localDomainMask, appropriateFor: nil, create: true)) ?? URL(fileURLWithPath: "/Applications"))
-    }
-
-    /// Register that an error occurred with the app manager
-    func reportError(_ error: Error) {
-        errors.append(AppError(error))
     }
 
     /// Launch the local installed copy of this app
@@ -344,7 +313,7 @@ extension AppManager {
 #endif
 
         } catch {
-            dbg("error performing trash for:", item.name, "error:", error)
+            dbg("error performing reveal for:", item.name, "error:", error)
             self.reportError(error)
         }
     }
@@ -491,26 +460,10 @@ extension AppManager {
                 // 2. [AuthorizationExecuteWithPrivileges](https://developer.apple.com/documentation/security/1540038-authorizationexecutewithprivileg) deprecated and un-available in swift (although the symbol can be manually coerced)
                 // 3. NSAppleScript using "with administrator privileges"
 
-                let cmd = "do shell script \"/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'\" with administrator privileges" // note that we don't seem to need recursive in order to trash or rename files, so skip it…
-
-                dbg("attempting to grant permission to current user with script", cmd)
-                guard let script = NSAppleScript(source: cmd) else {
-                    throw error
-                }
-
-                var errorDict: NSDictionary?
-                let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
-
-                if errorDict != nil {
-                    dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
-
-                    // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
-                    throw error
-                } else {
-                    dbg("successfully executed script:", output.stringValue)
-                    // now try-try the operation with the file's permissions corrected
-                    return try block(fileURL)
-                }
+                let output = try NSAppleScript.fork(command: "/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'", admin: true)
+                dbg("successfully executed script:", output)
+                // now try-try the operation with the file's permissions corrected
+                return try block(fileURL)
             }
 
             if let error = error as? CocoaError {
@@ -616,3 +569,31 @@ extension AppManager.SidebarItem {
         }
     }
 }
+
+#if os(macOS)
+extension NSAppleScript {
+    /// Performs the given shell command and returns the output via an `NSAppleScript` operation
+    public static func fork(command: String, admin: Bool = false) throws -> String? {
+        let withAdmin = admin ? " with administrator privileges" : ""
+
+        let cmd = "do shell script \"\(command)\"" + withAdmin
+
+        guard let script = NSAppleScript(source: cmd) else {
+            throw CocoaError(.coderReadCorrupt)
+        }
+
+        var errorDict: NSDictionary?
+        let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
+
+        if errorDict != nil {
+            dbg("script execution error:", command, "dict:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
+
+            // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
+            throw NSError(domain: "", code: 0, userInfo: errorDict as? [String: Any])
+        } else {
+            dbg("successfully executed script:", command)
+            return output.stringValue
+        }
+    }
+}
+#endif

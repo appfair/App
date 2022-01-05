@@ -3,14 +3,28 @@ import FairApp
 /// List version of the `AppsTableView` for list browsing mode.
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView : View {
+    @Binding var source: AppSource
+    @EnvironmentObject var fairManager: FairManager
+    @EnvironmentObject var caskManager: CaskManager
     @EnvironmentObject var appManager: AppManager
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
 
+    func arrangedItems(source: AppSource, category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        switch source {
+        #if DEBUG
+        case .homebrew:
+            return caskManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        #endif
+        case .fairapps:
+            return appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        }
+    }
+
     var items: [AppInfo] {
-        appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        arrangedItems(source: source, category: category, sortOrder: sortOrder, searchText: searchText)
     }
 
     var body : some View {
@@ -30,7 +44,7 @@ struct AppsListView : View {
         return HStack(alignment: .center) {
             ZStack {
                 item.release.iconImage()
-                if let progress = appManager.operations[item.id]?.progress {
+                if let progress = fairManager.appManager.operations[item.id]?.progress {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
                         .foregroundStyle(Color.secondary)

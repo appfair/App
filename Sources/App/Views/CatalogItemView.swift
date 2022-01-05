@@ -19,7 +19,9 @@ import SwiftUI
 struct CatalogItemView: View {
     let info: AppInfo
 
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var caskManager: CaskManager
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
@@ -892,7 +894,7 @@ public struct TitleAndIconFlippedLabelStyle : LabelStyle {
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(release: AppCatalogItem.sample))
-            .environmentObject(AppManager.default)
+            .environmentObject(AppManager())
             .frame(width: 700)
             .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))

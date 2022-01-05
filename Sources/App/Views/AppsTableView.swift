@@ -8,7 +8,9 @@ import FairApp
 @available(watchOS, unavailable)
 struct AppsTableView : View, ItemTableView {
     typealias TableRowValue = AppInfo
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var caskManager: CaskManager
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
@@ -138,7 +140,8 @@ struct AppsTableView : View, ItemTableView {
 @available(macOS 12.0, *)
 struct AppsTableView_Previews: PreviewProvider {
     static var previews: some View {
-        AppManager.default.catalog = [
+        let manager = AppManager()
+        manager.catalog = [
             AppCatalogItem.sample,
             //AppCatalogItem.sample,
             //AppCatalogItem.sample,
@@ -148,13 +151,13 @@ struct AppsTableView_Previews: PreviewProvider {
 
         //AppManager.default.catalog += AppManager.default.catalog
 
-        assert(AppManager.default.catalog.count > 0)
+        //assert(AppManager.default.catalog.count > 0)
 
         return VStack {
             Text("App Catalog Table")
                 .font(.largeTitle)
             AppsTableView(selection: .constant(AppCatalogItem.sample.id), category: .constant(.popular))
-                .environmentObject(AppManager.default)
+                .environmentObject(manager)
         }
     }
 }
