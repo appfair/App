@@ -21,7 +21,9 @@ struct CatalogItemView: View {
 
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
+    #endif
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 

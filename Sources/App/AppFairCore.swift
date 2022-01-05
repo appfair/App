@@ -5,8 +5,10 @@ import SwiftUI
 @MainActor public final class FairManager: SceneManager {
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
     let appManager = AppManager()
+    #if CASK_SUPPORT
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`
     let caskManager = CaskManager()
+    #endif
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
@@ -39,7 +41,7 @@ import SwiftUI
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
-    #if DEBUG
+    #if CASK_SUPPORT
     case homebrew
     #endif
     case fairapps
@@ -53,12 +55,12 @@ extension AppSource : Identifiable {
 public extension AppSource {
     var label: Label<Text, EmptyView> {
         switch self {
-        #if DEBUG
+        case .fairapps:
+            return Label { Text("Fairground") } icon: { }
+        #if CASK_SUPPORT
         case .homebrew:
             return Label { Text("Homebrew") } icon: { }
         #endif
-        case .fairapps:
-            return Label { Text("Fairground") } icon: { }
         }
     }
 }
@@ -98,13 +100,13 @@ struct AppInfo : Identifiable, Equatable {
     }
 
     /// The released version of this app
-    @available(*, deprecated, message: "homebrew cask versions do not conform")
+    /// TODO: @available(*, deprecated, message: "homebrew cask versions do not conform")
     var releasedVersion: AppVersion? {
         release.version.flatMap({ AppVersion(string: $0, prerelease: release.beta == true) })
     }
 
     /// The installed version of this app, which will always be indicated as a non-prerelease
-    @available(*, deprecated, message: "homebrew cask versions do not conform")
+    /// TODO: @available(*, deprecated, message: "homebrew cask versions do not conform")
     var installedVersion: AppVersion? {
         installedVersionString.flatMap({ AppVersion(string: $0, prerelease: false) })
     }
@@ -281,7 +283,7 @@ struct AppFairCommands: Commands {
             Text("Reload Apps")
                 .button {
                     await fairManager.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                    #if DEBUG
+                    #if CASK_SUPPORT
                     try? await fairManager.caskManager.refreshAll()
                     #endif
 //                    guard let cmd = reloadCommand else {
@@ -526,7 +528,6 @@ struct AppRiskPicker: View {
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
 
     func checkButton(_ parts: String...) -> some View {
         EmptyView()
@@ -738,7 +739,9 @@ public struct RootView : View {
         NavigationRootView()
             .environmentObject(fairManager)
             .environmentObject(fairManager.appManager)
+#if CASK_SUPPORT
             .environmentObject(fairManager.caskManager)
+#endif
     }
 }
 
@@ -746,7 +749,9 @@ public struct RootView : View {
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
+    #endif
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
@@ -785,7 +790,7 @@ struct NavigationRootView : View {
                 await appManager.fetchApps()
             }
             .task(priority: .low) {
-                #if DEBUG
+                #if CASK_SUPPORT
                 do {
                     dbg("fetching installed casks")
                     try await caskManager.refreshAll()
@@ -1073,7 +1078,6 @@ public extension AppCategory {
         case .music: return [.game]
         }
     }
-
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -1081,7 +1085,9 @@ struct SidebarView: View {
     @Binding var source: AppSource
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
+    #endif
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
     @Binding var displayMode: TriptychOrient
@@ -1150,12 +1156,12 @@ struct SidebarView: View {
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {
         switch source {
-        #if DEBUG
+        case .fairapps:
+            return appManager.badgeCount(for: item)
+        #if CASK_SUPPORT
         case .homebrew:
             return caskManager.badgeCount(for: item)
         #endif
-        case .fairapps:
-            return appManager.badgeCount(for: item)
         }
     }
 

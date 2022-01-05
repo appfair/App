@@ -14,7 +14,10 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
-        ], resources: [.process("Resources"), .copy("Bundle")]),
+        ], resources: [.process("Resources"), .copy("Bundle")],
+        swiftSettings: [
+            //.define("CASK_SUPPORT") // un-comment to develop Homebrew Cask support
+        ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )

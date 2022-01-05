@@ -10,7 +10,9 @@ struct AppsTableView : View, ItemTableView {
     typealias TableRowValue = AppInfo
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
+    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
+    #endif
     @Binding var source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
@@ -19,7 +21,7 @@ struct AppsTableView : View, ItemTableView {
 
     var items: [AppInfo] {
         switch source {
-        #if DEBUG
+        #if CASK_SUPPORT
         case .homebrew:
             return caskManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
         #endif

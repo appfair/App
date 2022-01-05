@@ -1,5 +1,6 @@
 import FairApp
 
+#if CASK_SUPPORT // declared in Package.swift
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
@@ -37,13 +38,27 @@ import FairApp
     static let `default`: CaskManager = CaskManager()
 
     /// The current catalog of casks
-    @Published var casks: [CaskItem] = []
+    @Published var casks: [CaskItem] = [] {
+        didSet {
+            updateAppInfo()
+        }
+    }
 
     /// The installed casks
-    @Published var installed: [CaskItem] = []
+    @Published var installed: [CaskItem] = [] {
+        didSet {
+            updateAppInfo()
+        }
+    }
 
     /// The latest statistics about the apps
-    @Published var stats: CaskStats?
+    @Published var stats: CaskStats? {
+        didSet {
+            updateAppInfo()
+        }
+    }
+
+    @Published var appInfos: [AppInfo] = []
 
     func refreshAll() async throws {
         async let a1: Void = fetchCasks()
@@ -108,7 +123,9 @@ import FairApp
 }
 
 extension CaskManager {
-    func arrangedItems(category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    /// Re-builds the AppInfo collection.
+    private func updateAppInfo() {
+
         let installMap = installed.grouping(by: \.full_token)
         let analyticsMap = stats?.formulae ?? [:]
 
@@ -136,8 +153,14 @@ extension CaskManager {
             }
         }
 
-        return infos
-            .sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)])
+        if self.appInfos != infos {
+            self.appInfos = infos
+        }
+    }
+
+    func arrangedItems(category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        return appInfos
+            .sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
     }
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {
@@ -346,4 +369,6 @@ struct CaskItem : Equatable, Decodable {
     // let container": null,
 
 }
+
+#endif
 
