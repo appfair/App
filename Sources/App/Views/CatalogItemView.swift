@@ -204,16 +204,26 @@ struct CatalogItemView: View {
     func detailsView() -> some View {
         ScrollView {
             Form {
-                linkTextField(Text("Discussions"), icon: "text.bubble", url: info.release.discussionsURL)
-                    .help(Text("Opens link to the discussions page for this app at: \(info.release.discussionsURL.absoluteString)"))
-                linkTextField(Text("Issues"), icon: "checklist", url: info.release.issuesURL)
-                    .help(Text("Opens link to the issues page for this app at: \(info.release.issuesURL.absoluteString)"))
-                linkTextField(Text("Source"), icon: "chevron.left.forwardslash.chevron.right", url: info.release.sourceURL)
-                    .help(Text("Opens link to source code repository for this app at: \(info.release.sourceURL.absoluteString)"))
-                linkTextField(Text("Fairseal"), icon: "rosette", url: info.release.fairsealURL, linkText: String(info.release.sha256 ?? ""))
-                    .help(Text("Lookup fairseal at: \(info.release.fairsealURL)"))
-                linkTextField(Text("Developer"), icon: "person", url: info.release.developerURL, linkText: item.developerName)
-                    .help(Text("Searches for this developer at: \(info.release.developerURL)"))
+                if let discussionsURL = info.release.discussionsURL {
+                    linkTextField(Text("Discussions"), icon: "text.bubble", url: discussionsURL)
+                        .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
+                }
+                if let issuesURL = info.release.issuesURL {
+                    linkTextField(Text("Issues"), icon: "checklist", url: issuesURL)
+                        .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)"))
+                }
+                if let sourceURL = info.release.sourceURL {
+                    linkTextField(Text("Source"), icon: "chevron.left.forwardslash.chevron.right", url: sourceURL)
+                        .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)"))
+                }
+                if let fairsealURL = info.release.fairsealURL {
+                    linkTextField(Text("Fairseal"), icon: "rosette", url: fairsealURL, linkText: String(info.release.sha256 ?? ""))
+                        .help(Text("Lookup fairseal at: \(info.release.fairsealURL?.absoluteString ?? "")"))
+                }
+                if let developerURL = info.release.developerURL {
+                    linkTextField(Text("Developer"), icon: "person", url: developerURL, linkText: item.developerName)
+                        .help(Text("Searches for this developer at: \(info.release.developerURL?.absoluteString ?? "")"))
+                }
             }
             .symbolRenderingMode(SymbolRenderingMode.multicolor)
             .font(Font.body.monospaced())
@@ -514,14 +524,16 @@ struct CatalogItemView: View {
                 Text("Download & Install \(info.release.name)").button {
                     runTask(activity: .install, confirm: true)
                 }
-                Text("Visit Community Forum").button {
-                    openURLAction(info.release.discussionsURL)
+                if let discussionsURL = info.release.discussionsURL {
+                    Text("Visit Community Forum").button {
+                        openURLAction(discussionsURL)
+                    }
                 }
                 // TODO: only show if there are any open issues
                 // Text("Visit App Issues Page").button {
                 //    openURLAction(info.release.issuesURL)
                 // }
-                .help(Text("Opens your web browsers and visits the developer site at \(info.release.baseURL.absoluteString)")) // sadly, tooltips on confirmationDialog buttons don't seem to work
+                //.help(Text("Opens your web browsers and visits the developer site")) // sadly, tooltips on confirmationDialog buttons don't seem to work
             }, message: installMessage)
             .tint(.green)
     }
@@ -565,7 +577,7 @@ struct CatalogItemView: View {
         Text(atx: """
             This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
 
-            \(info.release.sourceURL.absoluteString)
+            \(info.release.sourceURL?.absoluteString ?? "")
 
             This app has not undergone any formal review, so you will be installing and running it at your own risk.
 

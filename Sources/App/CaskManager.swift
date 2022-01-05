@@ -48,7 +48,7 @@ import FairApp
     func refreshAll() async throws {
         async let a1: Void = fetchCasks()
         async let a2: Void = fetchStats()
-        async let a3: Void = refreshInstalledApps()
+        async let a3 = Task { try await refreshInstalledApps() }
         let (_, _, _) = try await (a1, a2, a3) // execute at the same time
     }
 
@@ -109,7 +109,35 @@ import FairApp
 
 extension CaskManager {
     func arrangedItems(category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        wip([]) // TODO: synthesize a compatible AppInfo array
+        let installMap = installed.grouping(by: \.full_token)
+        let analyticsMap = stats?.formulae ?? [:]
+
+        // dbg("casks:", caskMap.keys.sorted())
+
+        var infos: [AppInfo] = []
+        for cask in casks {
+
+            if let downloadURL = cask.url.flatMap(URL.init(string:)) {
+                let id = cask.full_token
+                let downloads = analyticsMap[id]?.first?.installCount
+                let name = cask.name.first ?? id
+                // dbg("downloads for:", name, downloads)
+                let installed = installMap[cask.full_token]?.first // TODO: convert installed into a Plist?
+
+                let versionDate: Date? = wip(nil)
+                let item = AppCatalogItem(name: name, bundleIdentifier: BundleIdentifier(id), subtitle: cask.desc ?? "", developerName: cask.homepage ?? "", localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: wip(nil), screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: wip(false), sourceIdentifier: wip(id), categories: wip([]), downloadCount: downloads, starCount: wip(nil), watcherCount: wip(nil), issueCount: wip(nil), sourceSize: wip(nil), coreSize: wip(nil), sha256: cask.sha256, permissions: wip(nil), metadataURL: wip(nil), readmeURL: wip(nil))
+
+                var plist: Plist? = nil
+                if let installed = installed {
+                    plist = Plist(rawValue: [InfoPlistKey.CFBundleVersion.rawValue: installed])
+                }
+                let info = AppInfo(release: item, installedPlist: plist)
+                infos.append(info)
+            }
+        }
+
+        return infos
+            .sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)])
     }
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {

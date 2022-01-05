@@ -11,13 +11,21 @@ struct AppsTableView : View, ItemTableView {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var caskManager: CaskManager
+    @Binding var source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
 
     var items: [AppInfo] {
-        appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        switch source {
+        #if DEBUG
+        case .homebrew:
+            return caskManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        #endif
+        case .fairapps:
+            return appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+        }
     }
 
     var tableRowBody: some TableRowContent {
@@ -74,10 +82,10 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group {
-                let versionColumn = oversionColumn(named: "Version", path: \AppInfo.releasedVersion)
+                let versionColumn = ostrColumn(named: "Version", path: \AppInfo.release.version)
                 versionColumn.width(ideal: 60)
 
-                let installedColumn = oversionColumn(named: "Installed", path: \AppInfo.installedVersion)
+                let installedColumn = ostrColumn(named: "Installed", path: \AppInfo.installedVersionString)
                 installedColumn.width(ideal: 60)
 
                 let sizeColumn = TableColumn("Size", value: \AppInfo.release.size) { item in
@@ -156,7 +164,7 @@ struct AppsTableView_Previews: PreviewProvider {
         return VStack {
             Text("App Catalog Table")
                 .font(.largeTitle)
-            AppsTableView(selection: .constant(AppCatalogItem.sample.id), category: .constant(.popular))
+            AppsTableView(source: .constant(.fairapps), selection: .constant(AppCatalogItem.sample.id), category: .constant(.popular))
                 .environmentObject(manager)
         }
     }

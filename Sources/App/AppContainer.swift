@@ -7,7 +7,7 @@ public extension AppContainer {
                 .preferredColorScheme(fairManager.themeStyle.colorScheme)
         }
         .commands {
-            AppFairCommands(appManager: fairManager.appManager)
+            AppFairCommands(fairManager: fairManager)
         }
         .commands {
             SidebarCommands()

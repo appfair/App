@@ -98,11 +98,13 @@ struct AppInfo : Identifiable, Equatable {
     }
 
     /// The released version of this app
+    @available(*, deprecated, message: "homebrew cask versions do not conform")
     var releasedVersion: AppVersion? {
         release.version.flatMap({ AppVersion(string: $0, prerelease: release.beta == true) })
     }
 
     /// The installed version of this app, which will always be indicated as a non-prerelease
+    @available(*, deprecated, message: "homebrew cask versions do not conform")
     var installedVersion: AppVersion? {
         installedVersionString.flatMap({ AppVersion(string: $0, prerelease: false) })
     }
@@ -114,7 +116,8 @@ struct AppInfo : Identifiable, Equatable {
 
     /// The app is updated if its installed version is less than the released version
     var appUpdated: Bool {
-        installedVersion != nil && (installedVersion ?? .max) < (releasedVersion ?? .min)
+        //installedVersion != nil && (installedVersion ?? .max) < (releasedVersion ?? .min)
+        installedVersionString != nil && installedVersionString != release.version
     }
 }
 
@@ -150,7 +153,7 @@ extension AppCatalogItem : Identifiable {
     }
 
     /// Returns the URL to this app's home page
-    var baseURL: URL! {
+    var baseURL: URL? {
         URL(string: "https://github.com/\(appNameHyphenated)/App")
     }
 
@@ -160,23 +163,23 @@ extension AppCatalogItem : Identifiable {
     }
 
     /// Returns the URL to this app's home page
-    var sourceURL: URL! {
-        baseURL!.appendingPathExtension("git")
+    var sourceURL: URL? {
+        baseURL?.appendingPathExtension("git")
     }
 
-    var issuesURL: URL! {
-        baseURL!.appendingPathComponent("issues")
+    var issuesURL: URL? {
+        baseURL?.appendingPathComponent("issues")
     }
 
-    var discussionsURL: URL! {
-        baseURL!.appendingPathComponent("discussions")
+    var discussionsURL: URL? {
+        baseURL?.appendingPathComponent("discussions")
     }
 
-    var developerURL: URL! {
+    var developerURL: URL? {
         queryURL(type: "users", term: developerEmail)
     }
 
-    var fairsealURL: URL! {
+    var fairsealURL: URL? {
         queryURL(type: "issues", term: sha256 ?? "")
     }
 
@@ -252,7 +255,7 @@ struct SearchCommands: Commands {
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
 //    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
-    var appManager: AppManager
+    var fairManager: FairManager
 
     var body: some Commands {
 
@@ -277,7 +280,10 @@ struct AppFairCommands: Commands {
         CommandMenu(Text("Fair")) {
             Text("Reload Apps")
                 .button {
-                    await appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                    await fairManager.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                    #if DEBUG
+                    try? await fairManager.caskManager.refreshAll()
+                    #endif
 //                    guard let cmd = reloadCommand else {
 //                        dbg("no reload command")
 //                        return
@@ -826,7 +832,7 @@ struct NavigationRootView : View {
             AppsListView(source: $source, selection: $selection, category: $category)
         } table: {
             #if os(macOS)
-            AppsTableView(selection: $selection, category: $category)
+            AppsTableView(source: $source, selection: $selection, category: $category)
             #endif
         } content: {
             AppDetailView()
@@ -841,12 +847,13 @@ struct NavigationRootView : View {
 #if os(macOS)
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
+    @Binding var source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var category: AppManager.SidebarItem?
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(selection: $selection, category: $category)
+            AppsTableView(source: $source, selection: $selection, category: $category)
                 .frame(minHeight: 150)
             AppDetailView()
                 .layoutPriority(1.0)
@@ -1158,7 +1165,7 @@ struct SidebarView: View {
             AppsListView(source: $source, selection: $selection, category: $category)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(selection: $selection, category: $category)
+            AppTableDetailSplitView(source: $source, selection: $selection, category: $category)
         #endif
         }
     }

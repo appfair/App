@@ -149,7 +149,7 @@ extension AppManager {
         case .none:
             return []
         case .popular:
-            return [KeyPathComparator(\AppInfo.release.starCount, order: .reverse), KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
         case .recent:
             return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
         case .updated:
@@ -521,9 +521,10 @@ extension AppManager {
                 }
 
                 // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
-                let baseURL = release.baseURL.appendingPathComponent("blob/main/")
-                self.readmes[readmeURL] = Result {
-                    try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+                if let baseURL = release.baseURL?.appendingPathComponent("blob/main/") {
+                    self.readmes[readmeURL] = Result {
+                        try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+                    }
                 }
             } catch {
                 dbg("error handling README:", error)
@@ -586,7 +587,7 @@ extension NSAppleScript {
         let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
 
         if errorDict != nil {
-            dbg("script execution error:", command, "dict:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
+            dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
 
             // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
             throw NSError(domain: "", code: 0, userInfo: errorDict as? [String: Any])
