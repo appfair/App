@@ -1,5 +1,14 @@
 // swift-tools-version:5.5
 import PackageDescription
+import Darwin
+import class Foundation.ProcessInfo
+
+/// When running from within Xcode, enable cask support
+let caskSupport = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
+
+// print("#### ENV")
+// print(ProcessInfo.processInfo.environment)
+// print("#### DONE ENV")
 
 let package = Package(
     name: "App",
@@ -15,9 +24,9 @@ let package = Package(
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
         ], resources: [.process("Resources"), .copy("Bundle")],
-        swiftSettings: [
-            //.define("CASK_SUPPORT") // un-comment to develop Homebrew Cask support
-        ]),
+        swiftSettings:
+            caskSupport ? [ .define("CASK_SUPPORT") ] : []
+        ),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
