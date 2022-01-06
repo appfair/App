@@ -88,9 +88,11 @@ struct CatalogItemView: View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(pinnedViews: [.sectionHeaders]) {
                 Section {
-                    catalogSummaryCards()
-                    Divider()
-                    catalogOverview()
+                    if item.isCask == false {
+                        catalogSummaryCards()
+                        Divider()
+                        catalogOverview()
+                    }
                 } header: {
                     headerView()
                 }
@@ -436,7 +438,7 @@ struct CatalogItemView: View {
                 return Text(value, format: .number)
             }
         } else {
-            return SwiftUI.Text(FairSymbol.questionmark_square.image)
+            return Text(FairSymbol.questionmark_square.image)
         }
     }
 

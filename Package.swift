@@ -3,8 +3,11 @@ import PackageDescription
 import Darwin
 import class Foundation.ProcessInfo
 
+/// true when we are running from Xcode; false for a fair-ground release
+let runningInXcode = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
+
 /// When running from within Xcode, enable cask support
-let caskSupport = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
+let caskSupport = runningInXcode
 
 // print("#### ENV")
 // print(ProcessInfo.processInfo.environment)

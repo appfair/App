@@ -113,7 +113,7 @@ struct AppsTableView : View, ItemTableView {
 
             }
 
-            Group {
+            Group { // ideally, we'd guard for whether we are using Homebrew casks, but table builders don't support conditional statements: “Closure containing control flow statement cannot be used with result builder 'TableColumnBuilder'”
                 let starCount = onumColumn(named: "Stars", path: \AppInfo.release.starCount)
                 starCount.width(ideal: 40)
 

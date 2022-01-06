@@ -1,44 +1,6 @@
 import FairApp
 import SwiftUI
 
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class FairManager: SceneManager {
-    /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    let appManager = AppManager()
-    #if CASK_SUPPORT
-    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    let caskManager = CaskManager()
-    #endif
-
-    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
-
-    /// The base domain of the provider for the hub
-    @AppStorage("hubProvider") public var hubProvider = "github.com"
-    /// The organization name of the hub
-    @AppStorage("hubOrg") public var hubOrg = appfairName
-    /// The name of the base repository for the provider
-    @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
-
-    /// An optional authorization token for direct API usagefor the organization must
-    ///
-    @AppStorage("hubToken") public var hubToken = ""
-
-    required internal init() {
-        super.init()
-
-        /// The gloal quick actions for the App Fair
-        self.quickActions = [
-            QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
-                dbg("refresh-action")
-                Task {
-                    //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                    completion(true)
-                }
-            }
-        ]
-    }
-}
-
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
     #if CASK_SUPPORT
@@ -281,24 +243,17 @@ struct AppFairCommands: Commands {
 
         CommandMenu(Text("Fair")) {
             Text("Reload Apps")
-                .button {
-                    await fairManager.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                    #if CASK_SUPPORT
-                    try? await fairManager.caskManager.refreshAll()
-                    #endif
-//                    guard let cmd = reloadCommand else {
-//                        dbg("no reload command")
-//                        return
-//                    }
-//                    let start = CFAbsoluteTimeGetCurrent()
-//                    Task {
-//                        await cmd()
-//                        let end = CFAbsoluteTimeGetCurrent()
-//                        dbg("reloaded:", end - start)
-//                    }
-                }
+                .button(action: reloadAll)
                 .keyboardShortcut("R")
 //                .disabled(reloadCommand == nil)
+        }
+    }
+
+    func reloadAll() {
+        Task {
+            await fairManager.trying {
+                try await fairManager.refresh()
+            }
         }
     }
 }
@@ -783,21 +738,9 @@ struct NavigationRootView : View {
             }
             .task(priority: .high) {
                 dbg("scanning installed apps")
-                appManager.scanInstalledApps()
-            }
-            .task(priority: .medium) {
-                dbg("fetching app catalog")
-                await appManager.fetchApps()
-            }
-            .task(priority: .low) {
-                #if CASK_SUPPORT
-                do {
-                    dbg("fetching installed casks")
-                    try await caskManager.refreshAll()
-                } catch {
-                    dbg("error refreshing casks:", error)
+                await fairManager.trying {
+                    try await fairManager.refresh()
                 }
-                #endif
             }
             .onChange(of: appManager.updateCount()) { updateCount in
                 if iconBadge == true {
@@ -1111,9 +1054,11 @@ struct SidebarView: View {
                 item(.updated).keyboardShortcut("4")
             }
 
-            Section("Categories") {
-                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
-                    item(.category(grouping)).keyboardShortcut(shortCut(for: grouping, offset: 5))
+            if source == .fairapps { // homebrew casks do not have categories"Stars
+                Section("Categories") {
+                    ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
+                        item(.category(grouping)).keyboardShortcut(shortCut(for: grouping, offset: 5))
+                    }
                 }
             }
 

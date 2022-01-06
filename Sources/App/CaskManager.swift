@@ -1,5 +1,13 @@
 import FairApp
 
+
+extension AppCatalogItem {
+    /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
+    var isCask: Bool {
+        starCount == nil && forkCount == nil && versionDate == nil
+    }
+}
+
 #if CASK_SUPPORT // declared in Package.swift
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
@@ -69,6 +77,7 @@ import FairApp
 
     /// Fetches the cask list and populates it in the `casks` property
     func fetchCasks() async throws {
+        dbg("loading cask list")
         let url = Self.caskList
         let data = try await URLRequest(url: url).fetch()
         dbg("loaded cask list", data.count.localizedByteCount(), "from url:", url)
@@ -77,6 +86,7 @@ import FairApp
 
     /// Fetches the cask stats and populates it in the `stats` property
     func fetchStats(statsURL: URL? = nil) async throws {
+        dbg("loading cask stats")
         let url = statsURL ?? Self.caskStats30
         let data = try await URLRequest(url: url).fetch()
 
@@ -86,8 +96,19 @@ import FairApp
 
     /// Processes the installed apps
     func refreshInstalledApps() throws {
+        dbg("loading installed casks")
         // outputs the installed apps list
-        let cmd = Self.localBrewCommand + " info --quiet --cask --installed --json=v2"
+
+        // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
+
+        // TODO: instead we could perhaps manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
+        // /opt/homebrew/Caskroom/bon-mot/0.2.25/Bon Mot.app
+        // /opt/homebrew/Caskroom/cloud-cuckoo-prerelease/0.8.150/Cloud Cuckoo.app
+        // /opt/homebrew/Caskroom/discord/0.0.264/Discord.app
+        // /opt/homebrew/Caskroom/figma/104.1.0/Figma.app
+        // /opt/homebrew/Caskroom/firefox/94.0.1/Firefox.app
+
+        let cmd = Self.localBrewCommand + " info --quiet --installed --json=v2 --casks"
         guard let json = try NSAppleScript.fork(command: cmd) else {
             throw AppError("No output from brew command")
         }
@@ -135,14 +156,26 @@ extension CaskManager {
         for cask in casks {
 
             if let downloadURL = cask.url.flatMap(URL.init(string:)) {
-                let id = cask.full_token
+                let id = cask.full_token // TODO: prefix homebrew taps with `homebrew/cask` to match `appfair/app`
                 let downloads = analyticsMap[id]?.first?.installCount
                 let name = cask.name.first ?? id
                 // dbg("downloads for:", name, downloads)
-                let installed = installMap[cask.full_token]?.first // TODO: convert installed into a Plist?
+                let installed = installMap[id]?.first // TODO: convert installed into a Plist?
 
-                let versionDate: Date? = wip(nil)
-                let item = AppCatalogItem(name: name, bundleIdentifier: BundleIdentifier(id), subtitle: cask.desc ?? "", developerName: cask.homepage ?? "", localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: wip(nil), screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: wip(false), sourceIdentifier: wip(id), categories: wip([]), downloadCount: downloads, starCount: wip(nil), watcherCount: wip(nil), issueCount: wip(nil), sourceSize: wip(nil), coreSize: wip(nil), sha256: cask.sha256, permissions: wip(nil), metadataURL: wip(nil), readmeURL: wip(nil))
+                let homepage = cask.homepage.flatMap(URL.init(string:))
+                guard let homepage = homepage else {
+                    dbg("skipping cask with no home page:", cask.homepage)
+                    continue
+                }
+
+                // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
+                let iconURL = URL(string: "/favicon.ico", relativeTo: homepage)
+
+                let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
+
+                let categories: [String]? = nil // sadly, casks are un-categorized
+
+                let item = AppCatalogItem(name: name, bundleIdentifier: BundleIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.sha256, permissions: nil, metadataURL: nil, readmeURL: nil)
 
                 var plist: Plist? = nil
                 if let installed = installed {
@@ -371,4 +404,3 @@ struct CaskItem : Equatable, Decodable {
 }
 
 #endif
-

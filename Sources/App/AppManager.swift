@@ -85,6 +85,7 @@ enum CatalogActivity : CaseIterable, Equatable {
 extension AppManager {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         do {
+            dbg("loading catalog")
             let start = CFAbsoluteTimeGetCurrent()
             let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
@@ -235,6 +236,15 @@ extension AppManager {
         // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
         try withPermission(installFolderURL.deletingLastPathComponent()) { _ in
             try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
+        }
+    }
+
+    /// Attempts to perform the given action and adds any errors to the error list if they fail.
+    func trying(block: () async throws -> ()) async {
+        do {
+            try await block()
+        } catch {
+            errors.append(error as? AppError ?? AppError(error))
         }
     }
 
