@@ -407,7 +407,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             return nil
         }
 
-        for appURL in try versionDir.fileChildren(deep: false, skipHidden: true) {
+        let children = try versionDir.fileChildren(deep: false, skipHidden: true)
+        for appURL in children {
             dbg("checking install child:", appURL.path)
             if appURL.pathExtension == "app"
                 && FileManager.default.isExecutableFile(atPath: appURL.path) {
@@ -423,6 +424,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
+        dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
         return nil
     }
 
@@ -432,6 +434,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
             dbg("revealing:", installPath.path)
             NSWorkspace.shared.activateFileViewerSelecting([installPath])
+        } else {
+            throw AppError("Could not find install path for “\(item.name)”")
         }
     }
 
@@ -445,6 +449,15 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cfg.activates = true
 
             try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
+        } else {
+            // only packages that contain dmg/zips of .app files are linked to the /Applications/Name.app; applications installed using package installers don't reference their target app installation, except possibly in the delete stanza of the my-app.rb file. E.g.:
+            // pkg "My App.pkg"
+            // uninstall pkgutil: "app.MyApp.plist",
+            //           delete:  "/Applications/My App.app"
+            //
+            // how should we try to identify the app to launch? we don't want to have to try to parse the
+
+            throw AppError("Could not find install path for “\(item.name)”")
         }
 
     }

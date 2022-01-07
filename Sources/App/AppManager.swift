@@ -48,7 +48,7 @@ protocol InstallationManager where Self : ObservableObject {
 
     /// Register that an error occurred with the app manager
     func reportError(_ error: Error) {
-        errors.append(AppError(error))
+        errors.append(error as? AppError ?? AppError(error))
     }
 
     static let `default`: AppManager = AppManager()
@@ -254,7 +254,8 @@ extension AppManager {
         do {
             try await block()
         } catch {
-            errors.append(error as? AppError ?? AppError(error))
+            reportError(error)
+            //errors.append(error as? AppError ?? AppError(error))
         }
     }
 

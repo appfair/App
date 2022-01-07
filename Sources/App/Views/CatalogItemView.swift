@@ -711,6 +711,9 @@ struct CatalogItemView: View {
         }
     }
 
+    /// The height of the accessory for the buttons
+    let accessoryHeight = 18.0
+
     func button(activity: CatalogActivity, role: ButtonRole? = .none, needsConfirm: Bool = false) -> some View {
         Button(role: role, action: {
             if currentActivity == activity {
@@ -729,18 +732,25 @@ struct CatalogItemView: View {
                         .multilineTextAlignment(.center)
                     Group {
                         if currentActivity == activity {
-                            ProgressView()
-                                .progressViewStyle(.circular) // spinner
-                                .controlSize(.small) // needs to be small to fit in the button
-                                .opacity(currentActivity == activity ? 1 : 0)
+                            FairSymbol.x_circle.hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut)//.symbolRenderingMode(.hierarchical)
                         } else {
                             FairSymbol.circle
                         }
                     }
-                    .frame(width: 20, height: 15)
+                    .frame(width: 20, height: accessoryHeight)
                 }
             }, icon: {
-                Image(systemName: activity.info.systemSymbol)
+                Group {
+                    if currentActivity == activity {
+                        ProgressView()
+                            .progressViewStyle(.circular) // spinner
+                            .controlSize(.mini) // needs to be small to fit in the button
+                            .opacity(currentActivity == activity ? 1 : 0)
+                    } else {
+                        Image(systemName: activity.info.systemSymbol)
+                    }
+                }
+                .frame(width: 20, height: accessoryHeight)
             })
         })
             .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
@@ -810,15 +820,13 @@ struct CatalogItemView: View {
 
     func installButtonTapped() async {
         dbg("installButtonTapped")
-        do {
+        await appManager.trying {
             #if CASK_SUPPORT
             if item.isCask == true {
                 return try await caskManager.install(item: item, progress: startProgress(), update: false)
             }
             #endif
             try await appManager.install(item: item, progress: startProgress(), update: false)
-        } catch {
-            appManager.reportError(error)
         }
     }
 
@@ -836,15 +844,13 @@ struct CatalogItemView: View {
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
-        do {
+        await appManager.trying {
             #if CASK_SUPPORT
             if item.isCask == true {
                 return try await caskManager.install(item: item, progress: startProgress(), update: true)
             }
             #endif
             try await appManager.install(item: item, progress: startProgress(), update: true)
-        } catch {
-            appManager.reportError(error)
         }
     }
 
