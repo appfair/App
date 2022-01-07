@@ -189,7 +189,7 @@ extension CaskIdentifier {
         self.installedCasks = tokenVersions
     }
 
-    func run(command: String, withAskpass: Bool = true) throws -> String {
+    func run(command: String, toolName: String, askPassAppInfo: AppCatalogItem? = nil) throws -> String {
         // without SUDO_ASKPASS, priviedged operations can fail with: sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
         // sudo: a password is required
         // Error: Failure while executing; `/usr/bin/sudo -E -- /bin/rm -f -- /Library/LaunchDaemons/com.microsoft.autoupdate.helper.plist` exited with 1. Here's the output:
@@ -199,16 +199,25 @@ extension CaskIdentifier {
 
         var cmd = command
         var scpt: URL? = nil
-        if withAskpass {
-            let title = "Password"
-            let prompt = "Homebrew needs an administrator password to perform the operation"
+
+        if let askPassAppName = askPassAppInfo?.name {
+            let title = "Administrator Password Required (Homebrew)"
+            let prompt = """
+            The Homebrew \(toolName) for the “\(askPassAppName)” package needs an administrator password to complete the requested operation:
+
+              \(command)
+
+            Enter the password only if you trust this application to perform system-level installation operations.
+
+            Alternatively, you can manually run the command in a Terminal.app shell.
+            """
 
             let askPassScript = """
 #!/usr/bin/osascript
 return text returned of (display dialog "\(prompt)" with title "\(title)" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
 """
             let scriptFile = URL.tmpdir
-                .appendingPathComponent("askpass-" + UUID().uuidString)
+                .appendingPathComponent("askpass-" + cmd.utf8Data.sha256().hex())
                 .appendingPathExtension("scpt")
             scpt = scriptFile
             try askPassScript.write(to: scriptFile, atomically: true, encoding: .utf8)
@@ -224,11 +233,19 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
-        guard let result = try NSAppleScript.fork(command: cmd) else {
-            throw AppError("No output from brew command")
-        }
+        dbg("performing command:", cmd)
+        do {
+            guard let result = try NSAppleScript.fork(command: cmd) else {
+                throw AppError("No output from brew command")
+            }
 
-        return result
+            dbg("command output:", result)
+
+            return result
+        } catch {
+            dbg("error performing command:", cmd, error)
+            throw error
+        }
     }
 
     /// Processes the installed apps (too slow)
@@ -239,7 +256,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
         let cmd = Self.localBrewCommand + " info --quiet --installed --json=v2 --casks"
-        let json = try run(command: cmd)
+        let json = try run(command: cmd, toolName: .init("refresher"))
 
         struct BrewInstallOutput : Decodable {
             // var formulae: [Formulae] // unused but seems to always be included
@@ -305,7 +322,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         if verbose { cmd += " --verbose" }
         if quarantine { cmd += " --quarantine" }
         cmd += " --casks " + item.id.rawValue
-        let result = try run(command: cmd)
+        let result = try run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
         dbg("result:", result)
     }
 
@@ -318,7 +335,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         if verbose { cmd += " --verbose" }
         if zap { cmd += " --zap" }
         cmd += " --casks " + item.id.rawValue
-        let result = try run(command: cmd)
+        let result = try run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: item)
         dbg("result:", result)
     }
 
@@ -480,9 +497,16 @@ extension CaskManager {
     }
 
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        return appInfos
+        let infos = appInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
+
+        if sidebarSelection?.item == .installed || sidebarSelection?.item == .updated {
+            // installed and updated apps are sorted by name
+            return infos.sorted(using: [KeyPathComparator(\AppInfo.release.name, order: .forward)])
+        } else {
+            return infos
+        }
         //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
     }
 
