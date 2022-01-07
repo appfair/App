@@ -756,7 +756,7 @@ struct CatalogItemView: View {
             .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
-            .help(activity.info.toolTip)
+            .help(currentActivity == activity ? (Text("Cancel ") + activity.info.title) : activity.info.toolTip)
     }
 
     func performAction(activity: CatalogActivity) async {
