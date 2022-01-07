@@ -15,9 +15,16 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 /// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
 let minimumSearchLength = wip(1)
 
+
+protocol InstallationManager where Self : ObservableObject {
+    // Static method 'installedPath(for:)' isolated to global actor 'MainActor' can not satisfy corresponding requirement from protocol 'InstallationManager'
+    // static func installedPath(for item: AppCatalogItem) -> URL?
+
+}
+
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class AppManager: ObservableObject {
+@MainActor public final class AppManager: ObservableObject, InstallationManager {
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
@@ -331,6 +338,7 @@ extension AppManager {
         }
     }
 
+
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
         //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
@@ -340,21 +348,7 @@ extension AppManager {
         }
 
         try Task.checkCancellation()
-
-        let t1 = CFAbsoluteTimeGetCurrent()
-        let request = URLRequest(url: item.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
-
-        parentProgress?.kind = .file
-        parentProgress?.fileOperationKind = .downloading
-
-        let hasher = SHA256Hasher()
-        let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: hasher, parentProgress: parentProgress)
-        let downloadSha256 = await hasher.final()
-
-        let t2 = CFAbsoluteTimeGetCurrent()
-
-        dbg("downloaded:", downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
-
+        let (downloadedArtifact, downloadSha256) = try await item.downloadArtifact(progress: parentProgress)
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
@@ -365,7 +359,7 @@ extension AppManager {
 
         try Task.checkCancellation()
 
-        let t3 = CFAbsoluteTimeGetCurrent()
+        let t1 = CFAbsoluteTimeGetCurrent()
         let expandURL = downloadedArtifact.appendingPathExtension("expanded")
 
         let progress2 = Progress(totalUnitCount: 1)
@@ -377,10 +371,12 @@ extension AppManager {
 
         try Task.checkCancellation()
 
+        let t2 = CFAbsoluteTimeGetCurrent()
+
         // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
-        dbg("unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t3 - t2)
+        dbg("unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t2 - t1)
 
         if shallowFiles.count != 1 {
             throw Errors.tooManyInstallFiles(item.downloadURL)
@@ -566,6 +562,24 @@ extension AppManager {
     }
 }
 
+extension AppCatalogItem {
+    func downloadArtifact(progress parentProgress: Progress?) async throws -> (downloadedArtifact: URL, sha256: Data) {
+        let t1 = CFAbsoluteTimeGetCurrent()
+        let request = URLRequest(url: self.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
+
+        parentProgress?.kind = .file
+        parentProgress?.fileOperationKind = .downloading
+
+        let hasher = SHA256Hasher()
+        let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: hasher, parentProgress: parentProgress)
+        let downloadSha256 = await hasher.final()
+
+        let t2 = CFAbsoluteTimeGetCurrent()
+
+        dbg("downloaded:", downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
+        return (downloadedArtifact, downloadSha256)
+    }
+}
 
 @available(macOS 12.0, iOS 15.0, *)
 extension AppManager {
@@ -698,7 +712,7 @@ extension NSAppleScript {
             // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
             errorDict[NSLocalizedFailureReasonErrorKey] = errorDict["NSAppleScriptErrorMessage"]
             errorDict[NSLocalizedDescriptionKey] = errorDict["NSAppleScriptErrorBriefMessage"]
-            
+
             throw NSError(domain: "", code: 0, userInfo: errorDict)
         } else {
             dbg("successfully executed script:", command)

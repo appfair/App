@@ -9,6 +9,15 @@ extension AppCatalogItem {
         bundleIdentifier.isCaskApp
         //starCount == nil && forkCount == nil && versionDate == nil
     }
+
+    /// The basename of the local cache file for this item's download URL
+    fileprivate var cacheBasePath: String {
+        let url = self.downloadURL
+        let urlHash = url.absoluteString.utf8Data.sha256().hex()
+        let baseName = url.lastPathComponent
+        let cachePath = urlHash + "--" + baseName
+        return cachePath
+    }
 }
 
 
@@ -34,7 +43,7 @@ extension CaskIdentifier {
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class CaskManager: ObservableObject {
+@MainActor public final class CaskManager: ObservableObject, InstallationManager {
     /// The arranged list of app info items
     @Published private(set) var appInfos: [AppInfo] = []
 
@@ -55,7 +64,7 @@ extension CaskIdentifier {
     private static let checkBrewCommand = #"brew --prefix"#
 
     /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
-    private static let brewInstallRoot = URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
+    static let brewInstallRoot = URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
@@ -173,10 +182,30 @@ extension CaskIdentifier {
         self.installedCasks = tokenVersions
     }
 
-    func run(command cmd: String) throws -> String {
+    func run(command: String, withAskpass: Bool = true) throws -> String {
+        // without SUDO_ASKPASS, priviedged operations can fail with: sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+        // sudo: a password is required
+        // Error: Failure while executing; `/usr/bin/sudo -E -- /bin/rm -f -- /Library/LaunchDaemons/com.microsoft.autoupdate.helper.plist` exited with 1. Here's the output:
+        // sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+
+        // from https://github.com/Homebrew/homebrew-cask/issues/77258#issuecomment-588552316
+
+        var cmd = command
+        if withAskpass {
+            let askPassScript = """
+#!/usr/bin/osascript
+return text returned of (display dialog "Insert your password" with title "Administrator password needed" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
+"""
+            let scriptFile = URL.tmpdir.appendingPathComponent("askpass-" + UUID().uuidString)
+            try askPassScript.write(to: scriptFile, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: scriptFile.path) // set the executable bit
+            cmd = "SUDO_ASKPASS=" + scriptFile.path + " " + cmd
+        }
+
         guard let result = try NSAppleScript.fork(command: cmd) else {
             throw AppError("No output from brew command")
         }
+
         return result
     }
 
@@ -199,8 +228,53 @@ extension CaskIdentifier {
         // self.installed = output.casks
     }
 
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, downloadManually: Bool = true, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
         dbg(item.id)
+
+
+        /**
+         When we download maually, we fetch the artifact with a cancellable progress and validate the SHA256 hash
+         then we store it in the cache that homebrew checks for install artifacts:
+
+         HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"
+
+         If all goes well, the cached download will be used by homebrew like so:
+
+         ```
+         2022-01-07 01:04:17.410937-0500 App Fair[95350:5086973] CaskManager:221 install: moved: ~/Library/Caches/46E58C89-3E59-4EEC-B0A5-8DA962DFFA17/iTerm2-3_4_15.zip to: ~/Library/Caches/Homebrew/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip
+         2022-01-07 01:04:19.556840-0500 App Fair[95350:5086973] AppManager:718 fork: successfully executed script: /opt/homebrew/bin/brew reinstall --force --verbose --quarantine --casks homebrew/cask/iterm2
+         2022-01-07 01:04:19.556906-0500 App Fair[95350:5086973] CaskManager:238 install: result: ==> Downloading https://iterm2.com/downloads/stable/iTerm2-3_4_15.zip
+         Already downloaded: ~/Library/Caches/Homebrew/downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip
+         ==> Verifying checksum for cask 'iterm2'
+         ==> Installing Cask iterm2
+         ==> Moving App 'iTerm.app' to '/Applications/iTerm.app'
+         🍺  iterm2 was successfully installed!
+         ```
+         */
+
+        if downloadManually {
+            try Task.checkCancellation()
+            // iterate through all the user cache directories (I've never seen more than one, but maybe it's possible)
+            for cachePath in FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask) {
+                dbg("checking cache:", cachePath.path)
+                let cacheDir = URL(fileURLWithPath: "Homebrew/downloads", relativeTo: cachePath)
+
+                guard FileManager.default.isDirectory(url: cacheDir) == true else {
+                    continue
+                }
+
+                let targetURL = URL(fileURLWithPath: item.cacheBasePath, relativeTo: cacheDir)
+
+                dbg("downloading to cache target:", targetURL.path)
+                let (downloadedArtifact, _) = try await item.downloadArtifact(progress: parentProgress)
+                // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
+                // overwrite any previous cached version
+                let _ = try? FileManager.default.trash(url: targetURL)
+                try FileManager.default.moveItem(at: downloadedArtifact, to: targetURL)
+                dbg("moved:", downloadedArtifact.path, "to:", targetURL.path)
+                try Task.checkCancellation()
+            }
+        }
 
         var cmd = Self.localBrewCommand
         let op = update ? "upgrade" : "reinstall"
@@ -209,10 +283,7 @@ extension CaskIdentifier {
         if verbose { cmd += " --verbose" }
         if quarantine { cmd += " --quarantine" }
         cmd += " --casks " + item.id.rawValue
-        guard let result = try NSAppleScript.fork(command: cmd) else {
-            throw AppError("No output from brew command")
-        }
-
+        let result = try run(command: cmd)
         dbg("result:", result)
     }
 
@@ -225,12 +296,17 @@ extension CaskIdentifier {
         if verbose { cmd += " --verbose" }
         if zap { cmd += " --zap" }
         cmd += " --casks " + item.id.rawValue
-
-        guard let result = try NSAppleScript.fork(command: cmd) else {
-            throw AppError("No output from brew command")
-        }
-
+        let result = try run(command: cmd)
         dbg("result:", result)
+    }
+
+    func icon(for item: AppCatalogItem) -> Image? {
+        if let path = try? self.installPath(for: item) {
+            // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
+            let icon = NSWorkspace.shared.icon(forFile: path.path)
+            return Image(uxImage: icon)
+        }
+        return nil
     }
 
     func installPath(for item: AppCatalogItem) throws -> URL? {
@@ -283,40 +359,6 @@ extension CaskIdentifier {
 
     }
 
-    private func upgrade(cask token: String, force: Bool = true) throws {
-        /** e.g.:
-         ```
-         Homebrew % brew install --force --require-sha --quarantine --casks homebrew/cask/firefox
-         ==> Downloading https://download-installer.cdn.mozilla.net/pub/firefox/releases/
-         ######################################################################## 100.0%
-         ==> Installing Cask firefox
-         Warning: It seems there is already an App at '/Applications/Firefox.app'; overwriting.
-         ==> Removing App '/Applications/Firefox.app'
-         ==> Moving App 'Firefox.app' to '/Applications/Firefox.app'
-         🍺  firefox was successfully installed!
-
-
-         Homebrew % brew upgrade homebrew/cask/figma
-         ==> Upgrading 1 outdated package:
-         figma 104.1.0 -> 107.1.0
-         ==> Upgrading figma
-         ==> Downloading https://desktop.figma.com/mac-arm/Figma-107.1.0.zip
-         ######################################################################## 100.0%
-         ==> Backing App 'Figma.app' up to '/opt/homebrew/Caskroom/figma/104.1.0/Figma.ap
-         ==> Removing App '/Applications/Figma.app'
-         ==> Moving App 'Figma.app' to '/Applications/Figma.app'
-         ==> Purging files for version 104.1.0 of Cask figma
-         🍺  figma was successfully upgraded!
-         */
-
-//        let cmd = Self.localBrewCommand + " info upgrade homebrew/cask/" + token
-//
-//        guard let result = try NSAppleScript.fork(command: cmd) else {
-//            throw AppError("No output from brew command")
-//        }
-
-    }
-
     // NOTE: the docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”
     @available(*, deprecated, message: "not yet implemented")
     static func installBrew(at rootURL: URL) async throws {
@@ -364,7 +406,7 @@ extension CaskManager {
             let name = cask.name.first ?? id
 
             //if let _ = installed {
-                // dbg("found installed cask:", id, name, cask.version)
+            // dbg("found installed cask:", id, name, cask.version)
             //}
 
             // dbg("downloads for:", name, downloads)
@@ -377,6 +419,9 @@ extension CaskManager {
 
             // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
             let iconURL = URL(string: "/favicon.ico", relativeTo: homepage)
+
+            // TODO: for installed apps, we could try to use the system icon for the app via `NSWorkspace.shared.icon(forFile: appPath)`, but the icon is an image rather than a file
+
 
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
@@ -406,16 +451,16 @@ extension CaskManager {
             }
         }
 
-//        if self.sortOrder != sortOrder {
-//            self.sortOrder = sortOrder
-//        }
+        //        if self.sortOrder != sortOrder {
+        //            self.sortOrder = sortOrder
+        //        }
     }
 
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         return appInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
+        //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
     }
 
     func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
@@ -432,10 +477,10 @@ extension CaskManager {
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return txt.count < minimumSearchLength
-            || item.release.name.localizedCaseInsensitiveContains(txt) == true
-            || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
-            || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
-            || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
+        || item.release.name.localizedCaseInsensitiveContains(txt) == true
+        || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
+        || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
+        || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
     }
 
     func updateCount() -> Int {
@@ -547,49 +592,49 @@ struct CaskStats : Equatable, Decodable {
 /*
  ```
  {
-   "token": "alfred",
-   "full_token": "alfred",
-   "tap": "homebrew/cask",
-   "name": [
-     "Alfred"
-   ],
-   "desc": "Application launcher and productivity software",
-   "homepage": "https://www.alfredapp.com/",
-   "url": "https://cachefly.alfredapp.com/Alfred_4.6.1_1274.dmg",
-   "appcast": null,
-   "version": "4.6.1,1274",
-   "versions": {},
-   "installed": null,
-   "outdated": false,
-   "sha256": "2851a6da00e8ad85bb000931a1d9dbda00d27402d4e3b7c8fbd77d8956b009b3",
-   "artifacts": [
-     {
-       "quit": "com.runningwithcrayons.Alfred",
-       "signal": {}
-     },
-     [
-       "Alfred 4.app"
-     ],
-     {
-       "trash": [
-         "~/Library/Application Support/Alfred",
-         "~/Library/Caches/com.runningwithcrayons.Alfred",
-         "~/Library/Cookies/com.runningwithcrayons.Alfred.binarycookies",
-         "~/Library/Preferences/com.runningwithcrayons.Alfred.plist",
-         "~/Library/Preferences/com.runningwithcrayons.Alfred-Preferences.plist",
-         "~/Library/Saved Application State/com.runningwithcrayons.Alfred-Preferences.savedState"
-       ],
-       "signal": {}
-     }
-   ],
-   "caveats": null,
-   "depends_on": {},
-   "conflicts_with": null,
-   "container": null,
-   "auto_updates": true
+ "token": "alfred",
+ "full_token": "alfred",
+ "tap": "homebrew/cask",
+ "name": [
+ "Alfred"
+ ],
+ "desc": "Application launcher and productivity software",
+ "homepage": "https://www.alfredapp.com/",
+ "url": "https://cachefly.alfredapp.com/Alfred_4.6.1_1274.dmg",
+ "appcast": null,
+ "version": "4.6.1,1274",
+ "versions": {},
+ "installed": null,
+ "outdated": false,
+ "sha256": "2851a6da00e8ad85bb000931a1d9dbda00d27402d4e3b7c8fbd77d8956b009b3",
+ "artifacts": [
+ {
+ "quit": "com.runningwithcrayons.Alfred",
+ "signal": {}
+ },
+ [
+ "Alfred 4.app"
+ ],
+ {
+ "trash": [
+ "~/Library/Application Support/Alfred",
+ "~/Library/Caches/com.runningwithcrayons.Alfred",
+ "~/Library/Cookies/com.runningwithcrayons.Alfred.binarycookies",
+ "~/Library/Preferences/com.runningwithcrayons.Alfred.plist",
+ "~/Library/Preferences/com.runningwithcrayons.Alfred-Preferences.plist",
+ "~/Library/Saved Application State/com.runningwithcrayons.Alfred-Preferences.savedState"
+ ],
+ "signal": {}
+ }
+ ],
+ "caveats": null,
+ "depends_on": {},
+ "conflicts_with": null,
+ "container": null,
+ "auto_updates": true
  }
  ```
-*/
+ */
 struct CaskItem : Equatable, Decodable {
     /// The token of the cask. E.g., `alfred`
     let token: String

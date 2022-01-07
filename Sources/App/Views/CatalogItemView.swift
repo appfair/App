@@ -739,8 +739,21 @@ struct CatalogItemView: View {
         }
     }
 
-    func iconView() -> some View {
+    @ViewBuilder func iconView() -> some View {
+        // if NSWorkspace.shared.icon(forFile: appPath)
+
+        #if CASK_SUPPORT
+        // check for installed caches
+        /* // this is called on every body update, so we should cache it in the caskManager 
+        if item.isCask == true, let img = caskManager.icon(for: item) {
+            img.resizable().aspectRatio(contentMode: .fit)
+        } else {
+            item.iconImage()
+        }
+         */
+        #else
         item.iconImage()
+        #endif
     }
 
     func categorySymbol() -> some View {

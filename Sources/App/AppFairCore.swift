@@ -3,10 +3,10 @@ import SwiftUI
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
+    case fairapps
     #if CASK_SUPPORT
     case homebrew
     #endif
-    case fairapps
 }
 
 extension AppSource : Identifiable {
@@ -293,6 +293,7 @@ struct GeneralSettingsView: View {
     @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
     @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
     @AppStorage("iconBadge") private var iconBadge = true
+    @AppStorage("includeCasks") private var includeCasks = false
 
     var body: some View {
         Form {
@@ -317,6 +318,13 @@ struct GeneralSettingsView: View {
             }
                 .help(Text("Show the number of updates that are available to install."))
 
+            #if CASK_SUPPORT
+            Toggle(isOn: $includeCasks) {
+                Text("Include Homebrew Casks (requires `brew` installation)")
+            }
+            .disabled(includeCasks != true && FileManager.default.isDirectory(url: CaskManager.brewInstallRoot) != true)
+                .help(Text("Adds homebrew Casks to the list of available apps."))
+            #endif
 
             Toggle(isOn: $showPreReleases) {
                 Text("Show Pre-Releases")
@@ -971,6 +979,7 @@ struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
     #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
+    @AppStorage("includeCasks") private var includeCasks = false
     #endif
     @Binding var selection: AppInfo.ID?
     @Binding var sidebarSelection: SidebarSelection?
@@ -988,21 +997,23 @@ struct SidebarView: View {
 
     var body: some View {
         List {
-            #if CASK_SUPPORT
-            Section("Homebrew") {
-                item(.homebrew, .popular).keyboardShortcut("1")
-                // item(.homebrew, .recent) // casks don't have a last-updated date
-                item(.homebrew, .installed).keyboardShortcut("2")
-                item(.homebrew, .updated).keyboardShortcut("3")
-            }
-            #endif
-
             Section("Fairground") {
                 item(.fairapps, .popular).keyboardShortcut("4")
                 item(.fairapps, .recent).keyboardShortcut("5")
                 item(.fairapps, .installed).keyboardShortcut("6")
                 item(.fairapps, .updated).keyboardShortcut("7")
             }
+
+            #if CASK_SUPPORT
+            if includeCasks {
+                Section("Homebrew") {
+                    item(.homebrew, .popular).keyboardShortcut("1")
+                    // item(.homebrew, .recent) // casks don't have a last-updated date
+                    item(.homebrew, .installed).keyboardShortcut("2")
+                    item(.homebrew, .updated).keyboardShortcut("3")
+                }
+            }
+            #endif
 
 //            Section("Categories") {
 //                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
