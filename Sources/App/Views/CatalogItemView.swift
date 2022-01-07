@@ -543,9 +543,17 @@ struct CatalogItemView: View {
                 Text("Download & Install \(info.release.name)").button {
                     runTask(activity: .install, confirm: true)
                 }
-                if let discussionsURL = info.release.discussionsURL {
-                    Text("Visit Community Forum").button {
-                        openURLAction(discussionsURL)
+                if info.release.isCask {
+                    if let homepage = info.release.caskHomepage {
+                        (Text("Visit Homepage: ") + Text(homepage.host ?? "")).button {
+                            openURLAction(homepage)
+                        }
+                    }
+                } else {
+                    if let discussionsURL = info.release.discussionsURL {
+                        Text("Visit Community Forum").button {
+                            openURLAction(discussionsURL)
+                        }
                     }
                 }
                 // TODO: only show if there are any open issues
@@ -593,15 +601,27 @@ struct CatalogItemView: View {
     }
 
     func installMessage() -> some View {
-        Text(atx: """
-            This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
+        if info.release.isCask {
+            return Text(atx: """
+                This will use Homebrew to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
 
-            \(info.release.sourceURL?.absoluteString ?? "")
+                [\(info.release.downloadURL.absoluteString)](\(info.release.downloadURL.absoluteString))
 
-            This app has not undergone any formal review, so you will be installing and running it at your own risk.
+                This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
-            Before installing, you should first review the Discussions, Issues, and Documentation pages to learn more about the app.
-            """)
+                Before installing, you should first review the home page for the app to learn more about it.
+                """)
+        } else {
+            return Text(atx: """
+                This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
+
+                \(info.release.sourceURL?.absoluteString ?? "")
+
+                This app has not undergone any formal review, so you will be installing and running it at your own risk.
+
+                Before installing, you should first review the Discussions, Issues, and Documentation pages to learn more about the app.
+                """)
+        }
     }
 
     private var item: AppCatalogItem {
@@ -751,6 +771,7 @@ struct CatalogItemView: View {
             item.iconImage()
         }
          */
+        item.iconImage()
         #else
         item.iconImage()
         #endif

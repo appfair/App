@@ -10,6 +10,13 @@ extension AppCatalogItem {
         //starCount == nil && forkCount == nil && versionDate == nil
     }
 
+    /// The home page for this cask
+    var caskHomepage: URL? {
+        guard isCask else { return nil }
+        // developerName is overloaded as the URL
+        return URL(string: developerName)
+    }
+
     /// The basename of the local cache file for this item's download URL
     fileprivate var cacheBasePath: String {
         let url = self.downloadURL
@@ -191,15 +198,30 @@ extension CaskIdentifier {
         // from https://github.com/Homebrew/homebrew-cask/issues/77258#issuecomment-588552316
 
         var cmd = command
+        var scpt: URL? = nil
         if withAskpass {
+            let title = "Password"
+            let prompt = "Homebrew needs an administrator password to perform the operation"
+
             let askPassScript = """
 #!/usr/bin/osascript
-return text returned of (display dialog "Insert your password" with title "Administrator password needed" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
+return text returned of (display dialog "\(prompt)" with title "\(title)" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
 """
-            let scriptFile = URL.tmpdir.appendingPathComponent("askpass-" + UUID().uuidString)
+            let scriptFile = URL.tmpdir
+                .appendingPathComponent("askpass-" + UUID().uuidString)
+                .appendingPathExtension("scpt")
+            scpt = scriptFile
             try askPassScript.write(to: scriptFile, atomically: true, encoding: .utf8)
             try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: scriptFile.path) // set the executable bit
             cmd = "SUDO_ASKPASS=" + scriptFile.path + " " + cmd
+        }
+
+        defer {
+            // clean up any askpass script we may have generated
+            if let scpt = scpt, FileManager.default.isWritableFile(atPath: scpt.path) {
+                //dbg("cleaning up:", scpt.path)
+                try? FileManager.default.removeItem(at: scpt)
+            }
         }
 
         guard let result = try NSAppleScript.fork(command: cmd) else {
@@ -320,7 +342,8 @@ return text returned of (display dialog "Insert your password" with title "Admin
 
         for appURL in try versionDir.fileChildren(deep: false, skipHidden: true) {
             dbg("checking install child:", appURL.path)
-            if FileManager.default.isExecutableFile(atPath: appURL.path) {
+            if appURL.pathExtension == "app"
+                && FileManager.default.isExecutableFile(atPath: appURL.path) {
                 // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
                 let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
                 dbg("executable:", appURL.path, linkPath)

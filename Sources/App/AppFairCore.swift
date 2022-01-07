@@ -318,23 +318,31 @@ struct GeneralSettingsView: View {
             }
                 .help(Text("Show the number of updates that are available to install."))
 
-            #if CASK_SUPPORT
-            Toggle(isOn: $includeCasks) {
-                Text("Include Homebrew Casks (requires `brew` installation)")
-            }
-            .disabled(includeCasks != true && FileManager.default.isDirectory(url: CaskManager.brewInstallRoot) != true)
-                .help(Text("Adds homebrew Casks to the list of available apps."))
-            #endif
-
             Toggle(isOn: $showPreReleases) {
                 Text("Show Pre-Releases")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
 
-            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
+//            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
+//                .font(.body)
+//                .multilineTextAlignment(.leading)
+//                .frame(height: 200, alignment: .top)
+
+            #if CASK_SUPPORT
+            Toggle(isOn: $includeCasks) {
+                Text(atx: "Include Casks (requires [`Homebrew`](https://brew.sh/))")
+            }
+            .disabled(includeCasks != true && FileManager.default.isDirectory(url: CaskManager.brewInstallRoot) != true)
+                .help(Text("Adds homebrew Casks to the list of available apps."))
+
+
+            Text("Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.")
                 .font(.body)
                 .multilineTextAlignment(.leading)
                 .frame(height: 200, alignment: .top)
+
+            #endif
+
 
         }
         .padding(20)
