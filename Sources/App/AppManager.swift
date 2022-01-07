@@ -12,6 +12,9 @@ let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 #endif
 
+/// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
+let minimumSearchLength = wip(1)
+
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class AppManager: ObservableObject {
@@ -33,7 +36,6 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
     @AppStorage("showPreReleases") var showPreReleases = false
 
     @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
-
 
     @Published public var errors: [AppError] = []
 
@@ -135,14 +137,14 @@ extension AppManager {
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(category: SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
             .appInfoItems(includePrereleases: showPreReleases)
-            .filter({ matchesFilterText(item: $0) })
-            .filter({ category == .installed || category == .updated || matchesRiskFilter(item: $0) })
+            .filter({ matchesExtension(item: $0) })
+            .filter({ sidebarSelection?.item == .installed || sidebarSelection?.item == .updated || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .filter({ categoryFilter(category: category, item: $0) })
-            .sorted(using: sortOrder + categorySortOrder(category: category))
+            .filter({ categoryFilter(sidebarSelection: sidebarSelection, item: $0) })
+            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
 
     func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
@@ -162,11 +164,11 @@ extension AppManager {
         }
     }
 
-    func categoryFilter(category: SidebarItem?, item: AppInfo) -> Bool {
-        category?.matches(item: item) != false
+    func categoryFilter(sidebarSelection: SidebarSelection?, item: AppInfo) -> Bool {
+        sidebarSelection?.item.matches(item: item) != false
     }
 
-    func matchesFilterText(item: AppInfo) -> Bool {
+    func matchesExtension(item: AppInfo) -> Bool {
         displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
     }
 
@@ -175,7 +177,8 @@ extension AppManager {
     }
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
-        (searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (txt.count < minimumSearchLength
             || item.release.name.localizedCaseInsensitiveContains(searchText) == true
             || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
             || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
@@ -563,6 +566,97 @@ extension AppManager {
     }
 }
 
+
+@available(macOS 12.0, iOS 15.0, *)
+extension AppManager {
+    typealias Item = URL
+
+    func activateFind() {
+        dbg("### ", #function) // TODO: is there a way to focus the search field in the toolbar?
+    }
+
+    func updateCount() -> Int {
+        appInfoItems(includePrereleases: showPreReleases).filter { item in
+            item.appUpdated
+        }
+        .count
+    }
+
+    func badgeCount(for item: SidebarItem) -> Text? {
+        switch item {
+        case .popular:
+            return nil // Text(123.localizedNumber(style: .decimal))
+        case .recent:
+            return nil // Text(11.localizedNumber(style: .decimal))
+        case .updated:
+            return Text(updateCount(), format: .number)
+        case .installed:
+            return Text(installedBundleIDs.count, format: .number)
+        case .category:
+            if pretendMode {
+                let pretendCount = item.id.utf8Data.sha256().first ?? 0 // 0-256
+                return Text(pretendCount.localizedNumber(style: .decimal))
+            } else {
+                return nil
+            }
+        }
+    }
+
+    enum SidebarItem : Hashable {
+        case popular
+        case updated
+        case installed
+        case recent
+        case category(_ group: AppCategory.Grouping)
+
+        /// The persistent identifier for this grouping
+        var id: String {
+            switch self {
+            case .popular:
+                return "popular"
+            case .updated:
+                return "updated"
+            case .installed:
+                return "installed"
+            case .recent:
+                return "recent"
+            case .category(let grouping):
+                return "category:" + grouping.rawValue
+            }
+        }
+
+        var text: Text {
+            switch self {
+            case .popular:
+                return Text("Apps", bundle:. module)
+            case .updated:
+                return Text("Updated", bundle:. module)
+            case .installed:
+                return Text("Installed", bundle:. module)
+            case .recent:
+                return Text("Recent", bundle:. module)
+            case .category(let grouping):
+                return grouping.text
+            }
+        }
+
+        var label: TintedLabel {
+            switch self {
+            case .popular:
+                return TintedLabel(title: self.text, systemName: "star", tint: Color.red, mode: .multicolor)
+            case .updated:
+                return TintedLabel(title: self.text, systemName: "pin", tint: Color.red, mode: .multicolor)
+            case .installed:
+                return TintedLabel(title: self.text, systemName: "externaldrive.badge.checkmark", tint: Color.orange, mode: .multicolor)
+            case .recent:
+                return TintedLabel(title: self.text, systemName: "clock", tint: Color.green, mode: .multicolor)
+            case .category(let grouping):
+                return grouping.tintedLabel
+            }
+        }
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 extension AppManager.SidebarItem {
     func matches(item: AppInfo) -> Bool {
@@ -596,11 +690,16 @@ extension NSAppleScript {
         var errorDict: NSDictionary?
         let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
 
-        if errorDict != nil {
+        if var errorDict = errorDict as? [String: Any] {
             dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
 
+            // also: ["NSAppleScriptErrorMessage": User canceled., "NSAppleScriptErrorAppName": App Fair, "NSAppleScriptErrorNumber": -128, "NSAppleScriptErrorBriefMessage": User canceled., "NSAppleScriptErrorRange": NSRange: {0, 115}]
+
             // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
-            throw NSError(domain: "", code: 0, userInfo: errorDict as? [String: Any])
+            errorDict[NSLocalizedFailureReasonErrorKey] = errorDict["NSAppleScriptErrorMessage"]
+            errorDict[NSLocalizedDescriptionKey] = errorDict["NSAppleScriptErrorBriefMessage"]
+            
+            throw NSError(domain: "", code: 0, userInfo: errorDict)
         } else {
             dbg("successfully executed script:", command)
             return output.stringValue

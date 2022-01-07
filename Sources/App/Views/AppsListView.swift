@@ -3,30 +3,30 @@ import FairApp
 /// List version of the `AppsTableView` for list browsing mode.
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView : View {
-    @Binding var source: AppSource
+    let source: AppSource
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
     #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
     #endif
     @Binding var selection: AppInfo.ID?
-    @Binding var category: AppManager.SidebarItem?
+    var sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
 
-    func arrangedItems(source: AppSource, category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         switch source {
         #if CASK_SUPPORT
         case .homebrew:
-            return caskManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+            return caskManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         #endif
         case .fairapps:
-            return appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+            return appManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
     var items: [AppInfo] {
-        arrangedItems(source: source, category: category, sortOrder: sortOrder, searchText: searchText)
+        arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
     }
 
     var body : some View {
@@ -35,6 +35,7 @@ struct AppsListView : View {
                 NavigationLink(tag: item.id, selection: $selection, destination: {
                     CatalogItemView(info: item)
                 }, label: {
+                    //Text(wip(item.release.name))
                     label(for: item)
                 })
             }
@@ -71,18 +72,26 @@ struct AppsListView : View {
                         .lineLimit(1)
                 }
                 HStack {
-                    item.release.riskLevel.riskLabel()
-                        .help(item.release.riskLevel.riskSummaryText())
-                        .labelStyle(.iconOnly)
-                        .frame(width: 20)
-                    Text(verbatim: item.releasedVersion?.versionStringExtended ?? "")
+                    if item.release.permissions != nil {
+                        item.release.riskLevel.riskLabel()
+                            .help(item.release.riskLevel.riskSummaryText())
+                            .labelStyle(.iconOnly)
+                            .frame(width: 20)
+                    }
+
+                    Text(verbatim: item.release.version ?? "")
                         .font(.subheadline)
-                    Text(item.release.versionDate ?? .distantPast, format: .relative(presentation: .numeric, unitsStyle: .narrow))
+
+                    if let versionDate = item.release.versionDate {
+                        Text(versionDate, format: .relative(presentation: .numeric, unitsStyle: .narrow))
+                    }
+
                 }
                 .lineLimit(1)
             }
             .allowsTightening(true)
         }
+        .frame(height: 50)
     }
 }
 

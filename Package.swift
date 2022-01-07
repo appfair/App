@@ -7,11 +7,7 @@ import class Foundation.ProcessInfo
 let runningInXcode = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
 
 /// When running from within Xcode, enable cask support
-let caskSupport = runningInXcode
-
-// print("#### ENV")
-// print(ProcessInfo.processInfo.environment)
-// print("#### DONE ENV")
+let caskSupport = true // runningInXcode
 
 let package = Package(
     name: "App",

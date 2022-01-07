@@ -1,10 +1,32 @@
 import FairApp
 
 
+
 extension AppCatalogItem {
+
     /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
     var isCask: Bool {
-        starCount == nil && forkCount == nil && versionDate == nil
+        bundleIdentifier.isCaskApp
+        //starCount == nil && forkCount == nil && versionDate == nil
+    }
+}
+
+
+/// A unique identifier for a bundle. Note that this overloads the "BundleIdentifier" concept, which may make more sense
+typealias CaskIdentifier = BundleIdentifier
+
+extension CaskIdentifier {
+    /// Returns true if this is a homebrew cask (vs. a fairapp)
+    var isCaskApp: Bool {
+        rawValue.hasPrefix("homebrew/cask/")
+    }
+
+    var caskToken: String? {
+        if rawValue.hasPrefix("homebrew/cask/") {
+            return String(rawValue.dropFirst(14))
+        } else {
+            return nil
+        }
     }
 }
 
@@ -13,14 +35,19 @@ extension AppCatalogItem {
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject {
-    private static let endpoint = URL(string: "https://formulae.brew.sh/api/")!
+    /// The arranged list of app info items
+    @Published private(set) var appInfos: [AppInfo] = []
 
-    private static let formulaList = URL(string: "formula.json", relativeTo: endpoint)!
-    private static let caskList = URL(string: "cask.json", relativeTo: endpoint)!
+    /// The current catalog of casks
+    @Published private var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
 
-    private static let caskStats30 = URL(string: "analytics/cask-install/homebrew-cask/30d.json", relativeTo: endpoint)!
-    private static let caskStats90 = URL(string: "analytics/cask-install/homebrew-cask/90d.json", relativeTo: endpoint)!
-    private static let caskStats365 = URL(string: "analytics/cask-install/homebrew-cask/365d.json", relativeTo: endpoint)!
+    /// Map of installed apps from `[token: [versions]]`
+    @Published private(set) var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
+
+    /// The latest statistics about the apps
+    @Published private var stats: CaskStats? { didSet { updateAppInfo() } }
+
+    @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
     // private static let installCommand = #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"#
 
@@ -33,6 +60,16 @@ extension AppCatalogItem {
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
 
+
+    private static let endpoint = URL(string: "https://formulae.brew.sh/api/")!
+
+    private static let formulaList = URL(string: "formula.json", relativeTo: endpoint)!
+    private static let caskList = URL(string: "cask.json", relativeTo: endpoint)!
+
+    private static let caskStats30 = URL(string: "analytics/cask-install/homebrew-cask/30d.json", relativeTo: endpoint)!
+    private static let caskStats90 = URL(string: "analytics/cask-install/homebrew-cask/90d.json", relativeTo: endpoint)!
+    private static let caskStats365 = URL(string: "analytics/cask-install/homebrew-cask/365d.json", relativeTo: endpoint)!
+
     /// The source to the cask ruby definition file
     private static func caskSource(name: String) -> URL? {
         URL(string: "cask-source/\(name).rb", relativeTo: endpoint)!
@@ -43,36 +80,38 @@ extension AppCatalogItem {
         URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot).path
     }
 
+    /// The path where cask metadata and links are stored
+    static var localCaskroom: URL {
+        URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
+    }
+
     static let `default`: CaskManager = CaskManager()
 
-    /// The current catalog of casks
-    @Published var casks: [CaskItem] = [] {
-        didSet {
-            updateAppInfo()
-        }
-    }
+    private var fsobserver: FileSystemObserver? = nil
 
-    /// The installed casks
-    @Published var installed: [CaskItem] = [] {
-        didSet {
-            updateAppInfo()
+    internal init() {
+        if FileManager.default.isDirectory(url: Self.localCaskroom) == true {
+            // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
+            if FileManager.default.isDirectory(url: Self.localCaskroom) == true {
+                self.fsobserver = FileSystemObserver(URL: Self.localCaskroom, queue: .main) {
+                    dbg("changes detected in cask folder:", Self.localCaskroom.path)
+                    // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
+                    for delay in [0, 1, 5] {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
+                            try? self.scanInstalledCasks()
+                        }
+                    }
+                }
+            }
         }
-    }
 
-    /// The latest statistics about the apps
-    @Published var stats: CaskStats? {
-        didSet {
-            updateAppInfo()
-        }
     }
-
-    @Published var appInfos: [AppInfo] = []
 
     func refreshAll() async throws {
         async let a1: Void = fetchCasks()
         async let a2: Void = fetchStats()
-        async let a3 = Task { try await refreshInstalledApps() }
-        let (_, _, _) = try await (a1, a2, a3) // execute at the same time
+        async let a3 = Task { try await scanInstalledCasks() }
+        let (_, _, _) = try await (a1, a2, a3) // execute them all at the same time
     }
 
     /// Fetches the cask list and populates it in the `casks` property
@@ -86,40 +125,196 @@ extension AppCatalogItem {
 
     /// Fetches the cask stats and populates it in the `stats` property
     func fetchStats(statsURL: URL? = nil) async throws {
-        dbg("loading cask stats")
-        let url = statsURL ?? Self.caskStats30
+        let url = statsURL ?? Self.caskStats90
+        dbg("loading cask stats:", url.absoluteString)
         let data = try await URLRequest(url: url).fetch()
 
         dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
         try self.stats = CaskStats(json: data)
     }
 
-    /// Processes the installed apps
-    func refreshInstalledApps() throws {
-        dbg("loading installed casks")
-        // outputs the installed apps list
-
-        // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
-
-        // TODO: instead we could perhaps manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
+    func scanInstalledCasks() throws {
+        // manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
         // /opt/homebrew/Caskroom/bon-mot/0.2.25/Bon Mot.app
         // /opt/homebrew/Caskroom/cloud-cuckoo-prerelease/0.8.150/Cloud Cuckoo.app
         // /opt/homebrew/Caskroom/discord/0.0.264/Discord.app
         // /opt/homebrew/Caskroom/figma/104.1.0/Figma.app
         // /opt/homebrew/Caskroom/firefox/94.0.1/Firefox.app
 
-        let cmd = Self.localBrewCommand + " info --quiet --installed --json=v2 --casks"
-        guard let json = try NSAppleScript.fork(command: cmd) else {
-            throw AppError("No output from brew command")
+        let fm = FileManager.default
+
+        // E.g.: ["firefox": ["94.0.1", "95.0.2"]]
+        // ["telegram": Set(["8.4.1,225774"]), "app-fair": Set(["0.7.31"]), "visual-studio-code": Set(["1.62.2"]), "discord": Set(["0.0.264"]), "sita-sings-the-blues": Set(["0.0.24"]), "tune-out": Set(["0.8.349"]), "app-fair-prerelease": Set(["0.6.216"]), "slack": Set(["4.22.0"]), "transmission": Set(["3.00"]), "bon-mot-prerelease": Set(["1.1.16"]), "firefox": Set(["94.0.1", "95.0.2"]), "tune-out-prerelease": Set(["0.8.352"]), "minecraft": Set(["973,1"]), "microsoft-auto-update": Set(["4.40.21101001"]), "bon-mot": Set(["0.2.25"]), "vlc": Set(["3.0.16"]), "figma": Set(["107.1.0"]), "microsoft-edge": Set(["95.0.1020.44"]), "next-edit-prerelease": Set(["0.1.10"]), "cloud-cuckoo-prerelease": Set(["0.8.150"]), "zoom": Set(["5.8.3.2240"])]
+
+        var tokenVersions: [CaskItem.ID: Set<String>] = [:]
+
+        let dir = Self.localCaskroom
+        if fm.isDirectory(url: dir) == true {
+            for caskFolder in try dir.fileChildren(deep: false, skipHidden: true) {
+                let dirName = caskFolder.lastPathComponent // the name of the file is the token
+
+                // get the list of child versions. E.g.:
+                // /opt/homebrew/Caskroom/firefox/.metadata/
+                // /opt/homebrew/Caskroom/firefox/94.0.1/
+                // /opt/homebrew/Caskroom/firefox/95.0.2/
+
+                let subfiles = try caskFolder.fileChildren(deep: false, skipHidden: false)
+                    .filter { fm.isDirectory(url: $0) == true }
+                var names = Set(subfiles.map(\.lastPathComponent)) // e.g.: .metadata, 94.0.1, 95.0.2
+                if names.remove(".metadata") != nil { // only handle folders with a metadata dir
+                    // TODO: how to handle non-homebrew (e.g., appfair/app) casks? All the taps seem to go into /opt/homebrew/Caskroom/, so there doesn't seem to be a way to distinguish between cask sources?
+                    let token = "homebrew/cask/" + dirName
+                    tokenVersions[token] = names
+                }
+            }
         }
 
+        dbg("scanned installed casks:", tokenVersions)
+        self.installedCasks = tokenVersions
+    }
+
+    func run(command cmd: String) throws -> String {
+        guard let result = try NSAppleScript.fork(command: cmd) else {
+            throw AppError("No output from brew command")
+        }
+        return result
+    }
+
+    /// Processes the installed apps (too slow)
+    @available(*, deprecated, message: "")
+    func refreshInstalledApps() throws {
+        dbg("loading installed casks")
+        // outputs the installed apps list
+
+        // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
+        let cmd = Self.localBrewCommand + " info --quiet --installed --json=v2 --casks"
+        let json = try run(command: cmd)
+
         struct BrewInstallOutput : Decodable {
-            // var formulae: [Formulae] // unused
+            // var formulae: [Formulae] // unused but seems to always be included
             var casks: [CaskItem]
         }
 
-        let output = try BrewInstallOutput(json: json.utf8Data)
-        self.installed = output.casks
+        let _ = try BrewInstallOutput(json: json.utf8Data)
+        // self.installed = output.casks
+    }
+
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
+        dbg(item.id)
+
+        var cmd = Self.localBrewCommand
+        let op = update ? "upgrade" : "reinstall"
+        cmd += " " + op
+        if force { cmd += " --force" }
+        if verbose { cmd += " --verbose" }
+        if quarantine { cmd += " --quarantine" }
+        cmd += " --casks " + item.id.rawValue
+        guard let result = try NSAppleScript.fork(command: cmd) else {
+            throw AppError("No output from brew command")
+        }
+
+        dbg("result:", result)
+    }
+
+    func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = true, verbose: Bool = true) async throws {
+        dbg(item.id)
+        var cmd = Self.localBrewCommand
+        let op = "remove"
+        cmd += " " + op
+        if force { cmd += " --force" }
+        if verbose { cmd += " --verbose" }
+        if zap { cmd += " --zap" }
+        cmd += " --casks " + item.id.rawValue
+
+        guard let result = try NSAppleScript.fork(command: cmd) else {
+            throw AppError("No output from brew command")
+        }
+
+        dbg("result:", result)
+    }
+
+    func installPath(for item: AppCatalogItem) throws -> URL? {
+        let token = item.bundleIdentifier.caskToken ?? ""
+        let caskDir = URL(fileURLWithPath: token, relativeTo: Self.localCaskroom)
+        let versionDir = URL(fileURLWithPath: item.version ?? "", relativeTo: caskDir)
+        if FileManager.default.isDirectory(url: versionDir) != true {
+            dbg("not a folder:", versionDir)
+            return nil
+        }
+
+        for appURL in try versionDir.fileChildren(deep: false, skipHidden: true) {
+            dbg("checking install child:", appURL.path)
+            if FileManager.default.isExecutableFile(atPath: appURL.path) {
+                // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
+                let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
+                dbg("executable:", appURL.path, linkPath)
+
+                if let linkPath = linkPath {
+                    return URL(fileURLWithPath: linkPath)
+                } else {
+                    return appURL
+                }
+            }
+        }
+
+        return nil
+    }
+
+    func reveal(item: AppCatalogItem) async throws {
+        let installPath = try self.installPath(for: item)
+        dbg(item.id, installPath?.path)
+        if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
+            dbg("revealing:", installPath.path)
+            NSWorkspace.shared.activateFileViewerSelecting([installPath])
+        }
+    }
+
+    func launch(item: AppCatalogItem) async throws {
+        let installPath = try self.installPath(for: item)
+        dbg(item.id, installPath?.path)
+        if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
+            dbg("launching:", installPath.path)
+
+            let cfg = NSWorkspace.OpenConfiguration()
+            cfg.activates = true
+
+            try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
+        }
+
+    }
+
+    private func upgrade(cask token: String, force: Bool = true) throws {
+        /** e.g.:
+         ```
+         Homebrew % brew install --force --require-sha --quarantine --casks homebrew/cask/firefox
+         ==> Downloading https://download-installer.cdn.mozilla.net/pub/firefox/releases/
+         ######################################################################## 100.0%
+         ==> Installing Cask firefox
+         Warning: It seems there is already an App at '/Applications/Firefox.app'; overwriting.
+         ==> Removing App '/Applications/Firefox.app'
+         ==> Moving App 'Firefox.app' to '/Applications/Firefox.app'
+         🍺  firefox was successfully installed!
+
+
+         Homebrew % brew upgrade homebrew/cask/figma
+         ==> Upgrading 1 outdated package:
+         figma 104.1.0 -> 107.1.0
+         ==> Upgrading figma
+         ==> Downloading https://desktop.figma.com/mac-arm/Figma-107.1.0.zip
+         ######################################################################## 100.0%
+         ==> Backing App 'Figma.app' up to '/opt/homebrew/Caskroom/figma/104.1.0/Figma.ap
+         ==> Removing App '/Applications/Figma.app'
+         ==> Moving App 'Figma.app' to '/Applications/Figma.app'
+         ==> Purging files for version 104.1.0 of Cask figma
+         🍺  figma was successfully upgraded!
+         */
+
+//        let cmd = Self.localBrewCommand + " info upgrade homebrew/cask/" + token
+//
+//        guard let result = try NSAppleScript.fork(command: cmd) else {
+//            throw AppError("No output from brew command")
+//        }
+
     }
 
     // NOTE: the docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”
@@ -146,58 +341,127 @@ extension AppCatalogItem {
 extension CaskManager {
     /// Re-builds the AppInfo collection.
     private func updateAppInfo() {
-
-        let installMap = installed.grouping(by: \.full_token)
         let analyticsMap = stats?.formulae ?? [:]
 
         // dbg("casks:", caskMap.keys.sorted())
 
         var infos: [AppInfo] = []
-        for cask in casks {
 
-            if let downloadURL = cask.url.flatMap(URL.init(string:)) {
-                let id = cask.full_token // TODO: prefix homebrew taps with `homebrew/cask` to match `appfair/app`
-                let downloads = analyticsMap[id]?.first?.installCount
-                let name = cask.name.first ?? id
-                // dbg("downloads for:", name, downloads)
-                let installed = installMap[id]?.first // TODO: convert installed into a Plist?
+        //dbg("checking installed casks:", installedCasks.keys.sorted())
+        //dbg("checking all casks:", casks.map(\.id).sorted())
 
-                let homepage = cask.homepage.flatMap(URL.init(string:))
-                guard let homepage = homepage else {
-                    dbg("skipping cask with no home page:", cask.homepage)
-                    continue
-                }
+        for cask in self.casks {
+            guard let downloadURL = cask.url.flatMap(URL.init(string:)) else {
+                continue
+            }
+            let id = cask.id
+            let installed = installedCasks[id]?.first
+            // TODO: extract installed Plist and check bundle identifier?
 
-                // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
-                let iconURL = URL(string: "/favicon.ico", relativeTo: homepage)
+            // analytics are keyed on the un-expanded name
+            let downloads = analyticsMap[cask.full_token]?.first?.installCount
 
-                let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
+            let name = cask.name.first ?? id
 
-                let categories: [String]? = nil // sadly, casks are un-categorized
+            //if let _ = installed {
+                // dbg("found installed cask:", id, name, cask.version)
+            //}
 
-                let item = AppCatalogItem(name: name, bundleIdentifier: BundleIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.sha256, permissions: nil, metadataURL: nil, readmeURL: nil)
+            // dbg("downloads for:", name, downloads)
 
-                var plist: Plist? = nil
-                if let installed = installed {
-                    plist = Plist(rawValue: [InfoPlistKey.CFBundleVersion.rawValue: installed])
-                }
-                let info = AppInfo(release: item, installedPlist: plist)
-                infos.append(info)
+            let homepage = cask.homepage.flatMap(URL.init(string:))
+            guard let homepage = homepage else {
+                dbg("skipping cask with no home page:", cask.homepage)
+                continue
+            }
+
+            // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
+            let iconURL = URL(string: "/favicon.ico", relativeTo: homepage)
+
+            let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
+
+            let categories: [String]? = nil // sadly, casks are un-categorized
+
+            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.sha256, permissions: nil, metadataURL: nil, readmeURL: nil)
+
+            var plist: Plist? = nil
+            if let installed = installed {
+                plist = Plist(rawValue: [
+                    InfoPlistKey.CFBundleIdentifier.rawValue: id, // not really a bundle ID!
+                    InfoPlistKey.CFBundleShortVersionString.rawValue: installed,
+                ])
+            }
+            let info = AppInfo(release: item, installedPlist: plist)
+            infos.append(info)
+        }
+
+        
+        let sortedInfos = infos.sorted(using: self.sortOrder)
+        //dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
+
+        // avoid triggering unnecessary changes
+        if self.appInfos != sortedInfos {
+            withAnimation {
+                self.appInfos = sortedInfos
             }
         }
 
-        if self.appInfos != infos {
-            self.appInfos = infos
+//        if self.sortOrder != sortOrder {
+//            self.sortOrder = sortOrder
+//        }
+    }
+
+    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        return appInfos
+            .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
+            .filter({ matchesSearch(item: $0, searchText: searchText) })
+            //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
+    }
+
+    func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
+        switch sidebarSelection?.item {
+        case .installed:
+            return item.installedVersionString != nil
+        case .updated:
+            return item.appUpdated
+        default:
+            return true
         }
     }
 
-    func arrangedItems(category: AppManager.SidebarItem?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        return appInfos
-            .sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
+    func matchesSearch(item: AppInfo, searchText: String) -> Bool {
+        let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return txt.count < minimumSearchLength
+            || item.release.name.localizedCaseInsensitiveContains(txt) == true
+            || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
+            || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
+            || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
+    }
+
+    func updateCount() -> Int {
+        casks.filter {
+            if let installedVersions = installedCasks[$0.id] {
+                return !installedVersions.contains($0.version)
+            } else {
+                return false
+            }
+        }
+        .count
     }
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {
-        wip(nil)
+        switch item {
+        case .popular:
+            return nil
+        case .updated:
+            return Text(updateCount(), format: .number)
+        case .installed:
+            return Text(installedCasks.count, format: .number)
+        case .recent:
+            return nil
+        case .category(_):
+            return nil
+        }
     }
 }
 
@@ -400,7 +664,21 @@ struct CaskItem : Equatable, Decodable {
     
     /// E.g.: `"container":"{:type=>:zip}"`
     // let container": null,
+}
 
+extension CaskItem : Identifiable {
+
+    /// The ID of a `CaskItem` is the `tapToken`
+    var id: String { tapToken }
+
+    /// Returns the fully-qualified token. E.g., `homebrew/cask/iterm2`
+    var tapToken: String {
+        if full_token.contains("/") {
+            return full_token
+        } else {
+            return (tap ?? "") + "/" + full_token
+        }
+    }
 }
 
 #endif

@@ -13,9 +13,9 @@ struct AppsTableView : View, ItemTableView {
     #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
     #endif
-    @Binding var source: AppSource
+    let source: AppSource
     @Binding var selection: AppInfo.ID?
-    @Binding var category: AppManager.SidebarItem?
+    let sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
 
@@ -23,10 +23,10 @@ struct AppsTableView : View, ItemTableView {
         switch source {
         #if CASK_SUPPORT
         case .homebrew:
-            return caskManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+            return caskManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         #endif
         case .fairapps:
-            return appManager.arrangedItems(category: category, sortOrder: sortOrder, searchText: searchText)
+            return appManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
@@ -55,7 +55,7 @@ struct AppsTableView : View, ItemTableView {
     var body: some View {
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: true))
-            .id(category) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
+            .id(sidebarSelection) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
             .font(Font.body.monospacedDigit())
             .focusedSceneValue(\.selection, .constant(itemSelection))
             .searchable(text: $searchText)
@@ -166,7 +166,7 @@ struct AppsTableView_Previews: PreviewProvider {
         return VStack {
             Text("App Catalog Table")
                 .font(.largeTitle)
-            AppsTableView(source: .constant(.fairapps), selection: .constant(AppCatalogItem.sample.id), category: .constant(.popular))
+            AppsTableView(source: .fairapps, selection: .constant(AppCatalogItem.sample.id), sidebarSelection: .init(item: .popular, source: .fairapps))
                 .environmentObject(manager)
         }
     }

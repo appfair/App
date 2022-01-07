@@ -56,5 +56,15 @@ import FairApp
             appManager.errors.append(error as? AppError ?? AppError(error))
         }
     }
+
+    func updateCount() -> Int {
+        let appUpdates = appManager.updateCount()
+        #if CASK_SUPPORT
+        return appUpdates + caskManager.updateCount()
+        #else
+        return appUpdates
+        #endif
+
+    }
 }
 

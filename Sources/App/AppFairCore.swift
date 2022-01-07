@@ -27,34 +27,34 @@ public extension AppSource {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
-public struct AppSourcePicker: View {
-    @Binding var source: AppSource
-
-    public init(source: Binding<AppSource>) {
-        self._source = source
-    }
-
-    public var body: some View {
-        // only display the picker if there is more than one element (i.e., on macOS)
-        if AppSource.allCases.count > 1 {
-            Picker(selection: $source) {
-                ForEach(AppSource.allCases) { viewMode in
-                    viewMode.label.labelStyle(.titleOnly)
-                        //.badge(appUpdatedCount())
-                }
-            } label: {
-                Text("App Source")
-            }
-            .pickerStyle(SegmentedPickerStyle())
-        }
-    }
-}
+//@available(macOS 12.0, iOS 15.0, *)
+//public struct AppSourcePicker: View {
+//    @Binding var source: AppSource
+//
+//    public init(source: Binding<AppSource>) {
+//        self._source = source
+//    }
+//
+//    public var body: some View {
+//        // only display the picker if there is more than one element (i.e., on macOS)
+//        if AppSource.allCases.count > 1 {
+//            Picker(selection: $source) {
+//                ForEach(AppSource.allCases) { viewMode in
+//                    viewMode.label.labelStyle(.titleOnly)
+//                        //.badge(appUpdatedCount())
+//                }
+//            } label: {
+//                Text("App Source")
+//            }
+//            .pickerStyle(SegmentedPickerStyle())
+//        }
+//    }
+//}
 
 
 struct AppInfo : Identifiable, Equatable {
     var release: AppCatalogItem
-    var installedPlist: Plist? = nil
+    var installedPlist: Plist?
 
     /// The bundle ID of the selected app (e.g., "app.App-Name")
     var id: AppCatalogItem.ID {
@@ -108,8 +108,13 @@ extension Plist {
 }
 
 
+public typealias AppIdentifier = BundleIdentifier
+
+// TODO: potentially separate these into separate types
+// typealias AppIdentifier = XOr<BundleIdentifier>.Or<CaskIdentifier>
+
 extension AppCatalogItem : Identifiable {
-    public var id: BundleIdentifier { bundleIdentifier }
+    public var id: AppIdentifier { bundleIdentifier }
 
     /// The hyphenated form of this app's name
     var appNameHyphenated: String {
@@ -265,96 +270,6 @@ public enum AppFailure {
     var failureReason: LocalizedStringKey? {
         switch self {
         case .reloadFailed: return "Reload Failed"
-        }
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-extension AppManager {
-    typealias Item = URL
-
-    func activateFind() {
-        dbg("### ", #function) // TODO: is there a way to focus the search field in the toolbar?
-    }
-
-    func updateCount() -> Int {
-        appInfoItems(includePrereleases: showPreReleases).filter { item in
-            item.appUpdated
-        }
-        .count
-    }
-
-    func badgeCount(for item: SidebarItem) -> Text? {
-        switch item {
-        case .popular:
-            return nil // Text(123.localizedNumber(style: .decimal))
-        case .recent:
-            return nil // Text(11.localizedNumber(style: .decimal))
-        case .updated:
-            return Text(updateCount().localizedNumber(style: .decimal))
-        case .installed:
-            return Text(installedBundleIDs.count.localizedNumber(style: .decimal))
-        case .category:
-            if pretendMode {
-                let pretendCount = item.id.utf8Data.sha256().first ?? 0 // 0-256
-                return Text(pretendCount.localizedNumber(style: .decimal))
-            } else {
-                return nil
-            }
-        }
-    }
-
-    enum SidebarItem : Hashable {
-        case popular
-        case updated
-        case installed
-        case recent
-        case category(_ group: AppCategory.Grouping)
-
-        /// The persistent identifier for this grouping
-        var id: String {
-            switch self {
-            case .popular:
-                return "popular"
-            case .updated:
-                return "updated"
-            case .installed:
-                return "installed"
-            case .recent:
-                return "recent"
-            case .category(let grouping):
-                return "category:" + grouping.rawValue
-            }
-        }
-
-        var text: Text {
-            switch self {
-            case .popular:
-                return Text("Popular", bundle:. module)
-            case .updated:
-                return Text("Updated", bundle:. module)
-            case .installed:
-                return Text("Installed", bundle:. module)
-            case .recent:
-                return Text("Recent", bundle:. module)
-            case .category(let grouping):
-                return grouping.text
-            }
-        }
-
-        var label: TintedLabel {
-            switch self {
-            case .popular:
-                return TintedLabel(title: self.text, systemName: "star", tint: Color.red)
-            case .updated:
-                return TintedLabel(title: self.text, systemName: "pin", tint: Color.red)
-            case .installed:
-                return TintedLabel(title: self.text, systemName: "internaldrive", tint: Color.green)
-            case .recent:
-                return TintedLabel(title: self.text, systemName: "clock", tint: Color.blue)
-            case .category(let grouping):
-                return grouping.tintedLabel
-            }
         }
     }
 }
@@ -629,6 +544,19 @@ extension View {
         }
     }
 
+    /// Centers this view in an `VStack` with spacers.
+    /// - Parameters:
+    ///   - alignment: the alignment to apply to the stack
+    ///   - minLength: the minimum size of the spacers
+    /// - Returns: the view centered in an `VStack` surrounded by `Spacer` views
+    public func vcenter(alignment: HorizontalAlignment = .center, minLength: CoreGraphics.CGFloat? = nil) -> some View {
+        VStack(alignment: alignment) {
+            Spacer(minLength: minLength)
+            self
+            Spacer(minLength: minLength)
+        }
+    }
+
 }
 
 public extension View {
@@ -700,6 +628,13 @@ public struct RootView : View {
     }
 }
 
+//typealias SidebarSelection = AppManager.SidebarItem
+
+struct SidebarSelection : Hashable {
+    let item: AppManager.SidebarItem
+    let source: AppSource
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
@@ -710,19 +645,14 @@ struct NavigationRootView : View {
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
-    @State var category: AppManager.SidebarItem? = .popular
+    @State var sidebarSelection: SidebarSelection? = SidebarSelection(item: .popular, source: .allCases[0])
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
-    @SceneStorage("source") var source: AppSource = AppSource.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
+    //@SceneStorage("source") var source: AppSource = AppSource.allCases.first!
 
     public var body: some View {
         triptychView
             .displayingFirstAlert($appManager.errors)
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    AppSourcePicker(source: $source)
-                }
-            }
             .toolbar(id: "NavToolbar") {
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
                     Text("Reload")
@@ -742,14 +672,14 @@ struct NavigationRootView : View {
                     try await fairManager.refresh()
                 }
             }
-            .onChange(of: appManager.updateCount()) { updateCount in
+            .onChange(of: fairManager.updateCount()) { updateCount in
                 if iconBadge == true {
                     UXApplication.shared.setBadge(updateCount)
                 }
             }
             .onChange(of: iconBadge) { iconBadge in
                 // update the badge when the setting changes
-                UXApplication.shared.setBadge(iconBadge ? appManager.updateCount() : 0)
+                UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
             .onChange(of: selection) { newSelection in
                 dbg("selected:", newSelection)
@@ -773,14 +703,19 @@ struct NavigationRootView : View {
             }
     }
 
+    /// The currently selected source for the sidebar
+    var sidebarSource: AppSource {
+        return sidebarSelection?.source ?? .fairapps
+    }
+
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
-            SidebarView(source: $source, selection: $selection, category: $category, displayMode: $displayMode)
+            SidebarView(selection: $selection, sidebarSelection: $sidebarSelection, displayMode: $displayMode)
         } list: {
-            AppsListView(source: $source, selection: $selection, category: $category)
+            AppsListView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection)
         } table: {
             #if os(macOS)
-            AppsTableView(source: $source, selection: $selection, category: $category)
+            AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection)
             #endif
         } content: {
             AppDetailView()
@@ -795,13 +730,13 @@ struct NavigationRootView : View {
 #if os(macOS)
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
-    @Binding var source: AppSource
+    let source: AppSource
     @Binding var selection: AppInfo.ID?
-    @Binding var category: AppManager.SidebarItem?
+    let sidebarSelection: SidebarSelection?
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(source: $source, selection: $selection, category: $category)
+            AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection)
                 .frame(minHeight: 150)
             AppDetailView()
                 .layoutPriority(1.0)
@@ -836,13 +771,20 @@ public struct TintedLabel : View {
     @Environment(\.colorScheme) var colorScheme
     public let title: Text
     public let systemName: StaticString
-    public let tint: Color?
+    public var tint: Color? = nil
+    public var mode: SymbolRenderingMode? = nil
 
     public var body: some View {
         Label(title: { title }) {
             if let tint = tint {
-                Image(systemName: systemName.description)
-                    .fairTint(simple: false, color: tint, scheme: colorScheme)
+                if let mode = mode {
+                    Image(systemName: systemName.description)
+                        .symbolRenderingMode(mode)
+                        .foregroundStyle(tint)
+                } else {
+                    Image(systemName: systemName.description)
+                        .fairTint(simple: false, color: tint, scheme: colorScheme)
+                }
             } else {
                 Image(systemName: systemName.description)
             }
@@ -1025,14 +967,13 @@ public extension AppCategory {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
-    @Binding var source: AppSource
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
     #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
     #endif
     @Binding var selection: AppInfo.ID?
-    @Binding var category: AppManager.SidebarItem?
+    @Binding var sidebarSelection: SidebarSelection?
     @Binding var displayMode: TriptychOrient
 
     func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
@@ -1047,20 +988,28 @@ struct SidebarView: View {
 
     var body: some View {
         List {
-            Section("Apps") {
-                item(.popular).keyboardShortcut("1")
-                item(.recent).keyboardShortcut("2")
-                item(.installed).keyboardShortcut("3")
-                item(.updated).keyboardShortcut("4")
+            #if CASK_SUPPORT
+            Section("Homebrew") {
+                item(.homebrew, .popular).keyboardShortcut("1")
+                // item(.homebrew, .recent) // casks don't have a last-updated date
+                item(.homebrew, .installed).keyboardShortcut("2")
+                item(.homebrew, .updated).keyboardShortcut("3")
+            }
+            #endif
+
+            Section("Fairground") {
+                item(.fairapps, .popular).keyboardShortcut("4")
+                item(.fairapps, .recent).keyboardShortcut("5")
+                item(.fairapps, .installed).keyboardShortcut("6")
+                item(.fairapps, .updated).keyboardShortcut("7")
             }
 
-            if source == .fairapps { // homebrew casks do not have categories"Stars
-                Section("Categories") {
-                    ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
-                        item(.category(grouping)).keyboardShortcut(shortCut(for: grouping, offset: 5))
-                    }
-                }
-            }
+//            Section("Categories") {
+//                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
+//                    item(.fairapps, .category(grouping))
+//                        .keyboardShortcut(shortCut(for: grouping, offset: 5))
+//                }
+//            }
 
 //            Section("Searches") {
 //                item(.search("Search 1"))
@@ -1089,34 +1038,53 @@ struct SidebarView: View {
         }
     }
 
-    func item(_ item: AppManager.SidebarItem) -> some View {
-        NavigationLink(tag: item, selection: $category, destination: {
-            navigationDestinationView(item: item)
-                .navigationTitle(category?.label.title ?? Text("Apps"))
+    func item(_ source: AppSource, _ item: AppManager.SidebarItem) -> some View {
+        let selection = SidebarSelection(item: item, source: source)
+        var label = selection.item.label
+        #if CASK_SUPPORT
+        if source == .homebrew {
+            switch item {
+            case .popular:
+                label = TintedLabel(title: Text("Casks"), systemName: "ticket", tint: .teal, mode: .multicolor)
+            case .installed:
+                label = TintedLabel(title: Text("Installed"), systemName: "externaldrive", tint: .orange, mode: .multicolor)
+            case .updated:
+                label = TintedLabel(title: Text("Updated"), systemName: "calendar", tint: .yellow, mode: .multicolor)
+
+            case .recent:
+                break
+            case .category(_):
+                break
+            }
+        }
+        #endif
+
+        return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
+            navigationDestinationView(item: selection)
+                .navigationTitle(label.title)
         }, label: {
-            item.label
-                .badge(badgeCount(for: item))
+            label.badge(badgeCount(for: selection))
         })
     }
 
-    func badgeCount(for item: AppManager.SidebarItem) -> Text? {
-        switch source {
+    func badgeCount(for item: SidebarSelection) -> Text? {
+        switch item.source {
         case .fairapps:
-            return appManager.badgeCount(for: item)
+            return appManager.badgeCount(for: item.item)
         #if CASK_SUPPORT
         case .homebrew:
-            return caskManager.badgeCount(for: item)
+            return caskManager.badgeCount(for: item.item)
         #endif
         }
     }
 
-    @ViewBuilder func navigationDestinationView(item: AppManager.SidebarItem) -> some View {
+    @ViewBuilder func navigationDestinationView(item: SidebarSelection) -> some View {
         switch displayMode {
         case .list:
-            AppsListView(source: $source, selection: $selection, category: $category)
+            AppsListView(source: item.source, selection: $selection, sidebarSelection: sidebarSelection)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(source: $source, selection: $selection, category: $category)
+            AppTableDetailSplitView(source: item.source, selection: $selection, sidebarSelection: sidebarSelection)
         #endif
         }
     }

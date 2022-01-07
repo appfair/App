@@ -62,11 +62,28 @@ struct CatalogItemView: View {
     #endif
 
     var body: some View {
-        catalogGrid()
-            .onAppear {
-                // transfer the progress so we can watch the operation
-                progress.progress = currentOperation?.progress ?? progress.progress
+        if item.isCask == true {
+            // we don't have much useful information about casks, so just show a preview of the web page
+            VStack {
+                headerView()
+
+                Text("No Preview Available")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+                    .vcenter()
+
+                // crashes!
+                //if let authorPage = item.developerURL {
+                    //FairBrowser(url: .constant(authorPage))
+                //}
             }
+        } else {
+            catalogGrid()
+                .onAppear {
+                    // transfer the progress so we can watch the operation
+                    progress.progress = currentOperation?.progress ?? progress.progress
+                }
+        }
     }
 
     func headerView() -> some View {
@@ -88,11 +105,9 @@ struct CatalogItemView: View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(pinnedViews: [.sectionHeaders]) {
                 Section {
-                    if item.isCask == false {
-                        catalogSummaryCards()
-                        Divider()
-                        catalogOverview()
-                    }
+                    catalogSummaryCards()
+                    Divider()
+                    catalogOverview()
                 } header: {
                     headerView()
                 }
@@ -589,7 +604,7 @@ struct CatalogItemView: View {
             """)
     }
 
-    var item: AppCatalogItem {
+    private var item: AppCatalogItem {
         info.release
     }
 
@@ -625,13 +640,27 @@ struct CatalogItemView: View {
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
-        appPropertyList?.successValue?.bundleID == info.id.rawValue
+        // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
+        #if CASK_SUPPORT
+        if info.release.isCask {
+            return caskManager.installedCasks[info.id.rawValue]?.isEmpty == false
+        }
+        #endif
+
+        return appPropertyList?.successValue?.bundleID == info.id.rawValue
         //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
     }
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
-        (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
+        #if CASK_SUPPORT
+        if info.release.isCask {
+            let versions = caskManager.installedCasks[info.id.rawValue] ?? []
+            return info.release.version.flatMap(versions.contains) != true
+        }
+        #endif
+
+        return (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
     }
 
     func confirmationBinding(_ activity: CatalogActivity) -> Binding<Bool> {
@@ -748,6 +777,11 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         do {
+            #if CASK_SUPPORT
+            if item.isCask == true {
+                return try await caskManager.install(item: item, progress: startProgress(), update: false)
+            }
+            #endif
             try await appManager.install(item: item, progress: startProgress(), update: false)
         } catch {
             appManager.reportError(error)
@@ -756,12 +790,24 @@ struct CatalogItemView: View {
 
     func launchButtonTapped() async {
         dbg("launchButtonTapped")
+        #if CASK_SUPPORT
+        if item.isCask == true {
+            return await fairManager.trying {
+                try await caskManager.launch(item: item)
+            }
+        }
+        #endif
         await appManager.launch(item: item)
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         do {
+            #if CASK_SUPPORT
+            if item.isCask == true {
+                return try await caskManager.install(item: item, progress: startProgress(), update: true)
+            }
+            #endif
             try await appManager.install(item: item, progress: startProgress(), update: true)
         } catch {
             appManager.reportError(error)
@@ -770,11 +816,25 @@ struct CatalogItemView: View {
 
     func revealButtonTapped() async {
         dbg("revealButtonTapped")
+        #if CASK_SUPPORT
+        if item.isCask == true {
+            return await fairManager.trying {
+                try await caskManager.reveal(item: item)
+            }
+        }
+        #endif
         await appManager.reveal(item: item)
     }
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
+        #if CASK_SUPPORT
+        if item.isCask == true {
+            return await fairManager.trying {
+                try await caskManager.delete(item: item)
+            }
+        }
+        #endif
         await appManager.trash(item: item)
     }
 }
