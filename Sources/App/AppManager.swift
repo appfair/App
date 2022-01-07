@@ -148,7 +148,7 @@ extension AppManager {
         self
             .appInfoItems(includePrereleases: showPreReleases)
             .filter({ matchesExtension(item: $0) })
-            .filter({ sidebarSelection?.item == .installed || sidebarSelection?.item == .updated || matchesRiskFilter(item: $0) })
+            .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ categoryFilter(sidebarSelection: sidebarSelection, item: $0) })
             .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
@@ -666,6 +666,22 @@ extension AppManager {
                 return TintedLabel(title: self.text, systemName: "clock", tint: Color.green, mode: .multicolor)
             case .category(let grouping):
                 return grouping.tintedLabel
+            }
+        }
+
+        /// True indicates that this sidebar specifies to filter for locally-installed packages
+        var isLocalFilter: Bool {
+            switch self {
+            case .updated:
+                return true
+            case .installed:
+                return true
+            case .popular:
+                return false
+            case .recent:
+                return false
+            case .category:
+                return false
             }
         }
     }

@@ -48,6 +48,27 @@ extension CaskIdentifier {
 
 #if CASK_SUPPORT // declared in Package.swift
 
+/// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
+extension InstallationManager where Self : CaskManager {
+
+    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
+    ///
+    /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
+    static var brewInstallRoot: URL { URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local") }
+
+    /// The path to the `homebrew` command
+    static var localBrewCommand: URL {
+        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+    }
+
+    /// Installation is check simply by seeing if the brew install root exists.
+    /// This will be used as the seed for the `includeCasks` app preference so we default to having it enabled if homebrew is seen as being installed
+    static var isHomebrewInstalled: Bool {
+        FileManager.default.isExecutableFile(atPath: localBrewCommand.path)
+    }
+
+}
+
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject, InstallationManager {
@@ -70,9 +91,6 @@ extension CaskIdentifier {
     /// Command that is expected to return `/usr/local` for macOS Intel and `/opt/homebrew` for Apple Silicon
     private static let checkBrewCommand = #"brew --prefix"#
 
-    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
-    static let brewInstallRoot = URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
-
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
 
@@ -91,11 +109,6 @@ extension CaskIdentifier {
         URL(string: "cask-source/\(name).rb", relativeTo: endpoint)!
     }
 
-    /// The path to the `homebrew` command
-    static var localBrewCommand: String {
-        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot).path
-    }
-
     /// The path where cask metadata and links are stored
     static var localCaskroom: URL {
         URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
@@ -106,16 +119,15 @@ extension CaskIdentifier {
     private var fsobserver: FileSystemObserver? = nil
 
     internal init() {
-        if FileManager.default.isDirectory(url: Self.localCaskroom) == true {
+        if Self.isHomebrewInstalled == true &&
+            FileManager.default.isDirectory(url: Self.localCaskroom) == true {
             // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
-            if FileManager.default.isDirectory(url: Self.localCaskroom) == true {
-                self.fsobserver = FileSystemObserver(URL: Self.localCaskroom, queue: .main) {
-                    dbg("changes detected in cask folder:", Self.localCaskroom.path)
-                    // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
-                    for delay in [0, 1, 5] {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
-                            try? self.scanInstalledCasks()
-                        }
+            self.fsobserver = FileSystemObserver(URL: Self.localCaskroom, queue: .main) {
+                dbg("changes detected in cask folder:", Self.localCaskroom.path)
+                // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
+                for delay in [0, 1, 5] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
+                        try? self.scanInstalledCasks()
                     }
                 }
             }
@@ -255,7 +267,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         // outputs the installed apps list
 
         // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
-        let cmd = Self.localBrewCommand + " info --quiet --installed --json=v2 --casks"
+        let cmd = Self.localBrewCommand.path + " info --quiet --installed --json=v2 --casks"
         let json = try run(command: cmd, toolName: .init("refresher"))
 
         struct BrewInstallOutput : Decodable {
@@ -315,7 +327,45 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
-        var cmd = Self.localBrewCommand
+        /**
+         Installers and updaters may sometimes require a password, but we don't want to run every brew command as an administrator (via AppleScript's `with administrator privileges`), since most installations should not require root (see: https://docs.brew.sh/FAQ#why-does-homebrew-say-sudo-is-bad)
+
+         ```
+         2022-01-07 10:22:31.254389-0500 App Fair[28885:5516809] CaskManager:326 install: result: ==> Downloading https://devimages-cdn.apple.com/design/resources/download/SF-Symbols-3.2.dmg
+         Already downloaded: ~/Library/Caches/Homebrew/downloads/6a782fb8dbad8adc8ce3d9328e4f15d0881b35e387792777f9add877c4d50946--SF-Symbols-3.2.dmg
+         ==> Verifying checksum for cask 'sf-symbols'
+         ==> Installing Cask sf-symbols
+         ==> Running installer for sf-symbols; your password may be necessary.
+         Package installers may write to any location; options such as `--appdir` are ignored.
+         installer: Package name is SF Symbols
+         installer: Installing at base path /
+         installer:PHASE:Preparing for installation…
+         installer:PHASE:Preparing the disk…
+         installer:PHASE:Preparing SF Symbols…
+         installer:PHASE:Waiting for other installations to complete…
+         installer:PHASE:Configuring the installation…
+         installer:STATUS:
+         installer:%12.114101
+         installer:PHASE:Writing files…
+         installer:%30.627893
+         installer:PHASE:Writing files…
+         installer:%43.445133
+         installer:PHASE:Writing files…
+         installer:%79.244900
+         installer:PHASE:Registering updated components…
+         installer:PHASE:Validating packages…
+         installer:%97.750000
+         installer:STATUS:Running installer actions…
+         installer:STATUS:
+         installer:PHASE:Finishing the Installation…
+         installer:STATUS:
+         installer:%100.000000
+         installer:PHASE:The software was successfully installed.
+         installer: The install was successful.
+         🍺  sf-symbols was successfully installed!
+         ```
+         */
+        var cmd = Self.localBrewCommand.path
         let op = update ? "upgrade" : "reinstall"
         cmd += " " + op
         if force { cmd += " --force" }
@@ -328,7 +378,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
     func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = true, verbose: Bool = true) async throws {
         dbg(item.id)
-        var cmd = Self.localBrewCommand
+        var cmd = Self.localBrewCommand.path
         let op = "remove"
         cmd += " " + op
         if force { cmd += " --force" }
@@ -501,24 +551,13 @@ extension CaskManager {
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
 
-        if sidebarSelection?.item == .installed || sidebarSelection?.item == .updated {
+        if sidebarSelection?.item.isLocalFilter == true {
             // installed and updated apps are sorted by name
             return infos.sorted(using: [KeyPathComparator(\AppInfo.release.name, order: .forward)])
         } else {
             return infos
         }
         //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
-    }
-
-    func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
-        switch sidebarSelection?.item {
-        case .installed:
-            return item.installedVersionString != nil
-        case .updated:
-            return item.appUpdated
-        default:
-            return true
-        }
     }
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
@@ -530,15 +569,35 @@ extension CaskManager {
         || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
     }
 
-    func updateCount() -> Int {
-        casks.filter {
-            if let installedVersions = installedCasks[$0.id] {
-                return !installedVersions.contains($0.version)
+    func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
+        switch sidebarSelection?.item {
+        case .installed:
+            return item.installedVersionString != nil
+        case .updated:
+            if let releaseVersion = item.release.version,
+               let installedVersions = installedCasks[item.release.id.rawValue] {
+                // dbg(item.release.id, "releaseVersion:", releaseVersion, "installedVersions:", installedVersions)
+                return installedVersions.contains(releaseVersion) == false
             } else {
                 return false
             }
+        default:
+            return true
         }
-        .count
+    }
+
+    func versionNotInstalled(cask: CaskItem) -> Bool {
+        if let installedVersions = installedCasks[cask.id] {
+            return !installedVersions.contains(cask.version)
+        } else {
+            return false
+        }
+    }
+
+    func updateCount() -> Int {
+        return casks.filter({
+            self.versionNotInstalled(cask: $0)
+        }).count
     }
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {

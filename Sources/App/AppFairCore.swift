@@ -796,7 +796,7 @@ struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
     #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
-    @AppStorage("includeCasks") private var includeCasks = false
+    @AppStorage("includeCasks") private var includeCasks = CaskManager.isHomebrewInstalled
     #endif
     @Binding var selection: AppInfo.ID?
     @Binding var sidebarSelection: SidebarSelection?

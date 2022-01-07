@@ -33,7 +33,7 @@ struct GeneralSettingsView: View {
     @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
     @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
     @AppStorage("iconBadge") private var iconBadge = true
-    @AppStorage("includeCasks") private var includeCasks = false
+    @AppStorage("includeCasks") private var includeCasks = CaskManager.isHomebrewInstalled
 
     var body: some View {
         Form {
@@ -72,7 +72,7 @@ struct GeneralSettingsView: View {
             Toggle(isOn: $includeCasks) {
                 Text(atx: "Include Casks (requires [`Homebrew`](https://brew.sh/))")
             }
-            .disabled(includeCasks != true && FileManager.default.isDirectory(url: CaskManager.brewInstallRoot) != true)
+            .disabled(includeCasks != true && CaskManager.isHomebrewInstalled == false)
                 .help(Text("Adds homebrew Casks to the list of available apps."))
 
 
