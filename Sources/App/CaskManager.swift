@@ -279,9 +279,18 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         // self.installed = output.casks
     }
 
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, downloadManually: Bool = true, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
+    /// Installs the given `AppCatalogItem` using the `brew` command. The release must be a valid Homebrew release.
+    ///
+    /// - Parameters:
+    ///   - item: the catalog item to install
+    ///   - parentProgress: optional progress for reporting download progress
+    ///   - preCache: use the in-process downloader (which provides progress reporting and cancellation) rather than brew's downloader (which uses a `curl` command). This works by figuring out the cache file to which homebrew would have downloaded the file and placting it there. SHA-256 checksums will be validated both by the in-process downloader and then again by the brew command.
+    ///   - update: whether the action should be an update or an initial install
+    ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
+    ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
+    ///   - verbose: whether to verbosely report progress
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, preCache: Bool = true, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
         dbg(item.id)
-
 
         /**
          When we download maually, we fetch the artifact with a cancellable progress and validate the SHA256 hash
@@ -303,28 +312,47 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
          ```
          */
 
-        if downloadManually {
+        // default config is to use: HOMEBREW_CACHE=$HOME/Library/Caches/Homebrew
+        // TODO: should be have our own separate caches folder? That would allow us to avoid interfering with simultaneous non-App-Fair `brew` commands, but OTOH it would mean that the two behaviors of the tool would not be kept in sync with regards to caching
+        let cachePaths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        let cacheDir = cachePaths
+            .map {
+                URL(fileURLWithPath: "Homebrew/downloads", relativeTo: $0)
+            }
+            .first {
+                FileManager.default.isDirectory(url: $0) == true
+            }
+
+        if preCache == true, let cacheDir = cacheDir {
             try Task.checkCancellation()
             // iterate through all the user cache directories (I've never seen more than one, but maybe it's possible)
-            for cachePath in FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask) {
-                dbg("checking cache:", cachePath.path)
-                let cacheDir = URL(fileURLWithPath: "Homebrew/downloads", relativeTo: cachePath)
+            dbg("checking cache:", cacheDir.path)
 
-                guard FileManager.default.isDirectory(url: cacheDir) == true else {
-                    continue
-                }
+            /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
+            let targetURL = URL(fileURLWithPath: item.cacheBasePath, relativeTo: cacheDir)
 
-                let targetURL = URL(fileURLWithPath: item.cacheBasePath, relativeTo: cacheDir)
+            // TODO: should we try to replicate Homebrew's curl command? It looks something like:
+            // /opt/homebrew/Library/Homebrew/shims/shared/curl --disable --cookie /dev/null --globoff --show-error --user-agent 'Homebrew/3.3.9 (Macintosh; arm64 Mac OS X 12.1) curl/7.77.0' --header 'Accept-Language: en' --fail --silent --retry 3 --location --remote-time --output ~/Library/Caches/Homebrew/downloads/'2eea097118f44268d2fe62d69e2a7fb1d8d4d7f29c2da0ec262061199b600525--Wireshark 3.6.1 Arm 64.dmg.incomplete' 'https://2.na.dl.wireshark.org/osx/Wireshark 3.6.1 Arm 64.dmg'
 
-                dbg("downloading to cache target:", targetURL.path)
-                let (downloadedArtifact, _) = try await item.downloadArtifact(progress: parentProgress)
-                // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
-                // overwrite any previous cached version
-                let _ = try? FileManager.default.trash(url: targetURL)
-                try FileManager.default.moveItem(at: downloadedArtifact, to: targetURL)
-                dbg("moved:", downloadedArtifact.path, "to:", targetURL.path)
-                try Task.checkCancellation()
-            }
+            let headers: [String: String] = [
+                :
+                //"User-Agent" : "Homebrew/3.3.9 (Macintosh; arm64 Mac OS X 12.1) curl/7.77.0",
+            ]
+
+            let downloadURL = item.downloadURL
+            dbg("downloading:", downloadURL.absoluteString, "to cache target:", targetURL.path)
+
+            //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
+            //dbg("fetchExpectedContentLength:", size)
+
+            let (downloadedArtifact, _) = try await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
+
+            // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
+            // overwrite any previous cached version
+            let _ = try? FileManager.default.trash(url: targetURL)
+            try FileManager.default.moveItem(at: downloadedArtifact, to: targetURL)
+            dbg("moved:", downloadedArtifact.path, "to:", targetURL.path)
+            try Task.checkCancellation()
         }
 
         /**

@@ -1,6 +1,7 @@
 import FairApp
 import Dispatch
 import Security
+import Foundation
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]
@@ -349,7 +350,7 @@ extension AppManager {
         }
 
         try Task.checkCancellation()
-        let (downloadedArtifact, downloadSha256) = try await item.downloadArtifact(progress: parentProgress)
+        let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: item.downloadURL, progress: parentProgress)
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
@@ -563,10 +564,16 @@ extension AppManager {
     }
 }
 
-extension AppCatalogItem {
-    func downloadArtifact(progress parentProgress: Progress?) async throws -> (downloadedArtifact: URL, sha256: Data) {
+extension InstallationManager {
+
+    /// Downloads the artifact for the given catalog item.
+    func downloadArtifact(url: URL, cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy, timeoutInterval: TimeInterval = 60.0, headers: [String: String] = [:], progress parentProgress: Progress?) async throws -> (downloadedArtifact: URL, sha256: Data) {
         let t1 = CFAbsoluteTimeGetCurrent()
-        let request = URLRequest(url: self.downloadURL) // , cachePolicy: T##URLRequest.CachePolicy, timeoutInterval: T##TimeInterval)
+        var request = URLRequest(url: url, cachePolicy: cachePolicy, timeoutInterval: timeoutInterval)
+
+        for (key, value) in headers {
+            request.addValue(value, forHTTPHeaderField: key)
+        }
 
         parentProgress?.kind = .file
         parentProgress?.fileOperationKind = .downloading
