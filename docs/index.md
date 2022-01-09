@@ -37,7 +37,14 @@ Latest Release Assets:
 
 <!-- render the platform screenshots -->
 
-{% assign assetnames = site.github.latest_release.assets | map: "name" %}
+{% assign assetnames = site.github.latest_release.assets | map: 'name' %}
+
+## Asset Names:
+
+{% for assetname in assetnames %}
+- {{ assetname }}
+{% endfor %}
+
 
 {% assign platforms = 'mac,ios' | split: ',' %}
 
