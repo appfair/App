@@ -39,9 +39,7 @@ Latest Release Assets:
 
 {% assign assetnames = site.github.latest_release.assets | map: "name" %}
 
-Tidal-Zone-macOS.zip (2412684)
-
-{% assign platforms = 'mac,ios' | split: ',' ] %}
+{% assign platforms = 'mac,ios' | split: ',' %}
 
 {% assign macname = appname | append '-macOS.zip' %}
 {% assign macrelease = assetnames contains macname %}
