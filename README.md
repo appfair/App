@@ -1,10 +1,7 @@
 
 ## Description
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in catalog browser applications.
-
-It supports **basic** formatting, but not images, lists, or links.
+Owner: {{ site.github.owner_name }}
 
 ## Installation
 
