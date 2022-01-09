@@ -35,8 +35,7 @@ Latest Release Assets:
 <!-- render all the screenshots -->
 {% assign my_variable = false %}
 
-{% assign platforms = [ "mac", "ios" ] %}
-
+{% assign platforms = 'mac,ios' | split: ',' ] %}
 
 {% for platform in platforms %}
 
