@@ -65,10 +65,16 @@ source: {{ site.github.source }}
  path: {{ site.github.source.path }}
 ```
 
-Latest Release:
+## Latest Release:
 
 ```
 {{ site.github.latest_release | jsonify }}
+```
+
+## All `site.github`:
+
+```
+{{ site.github | jsonify }}
 ```
 
 
