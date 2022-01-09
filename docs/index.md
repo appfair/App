@@ -1,14 +1,13 @@
 
 
-### This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
-
-<img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
 
 # Tidal Zone
 
-Tidal Zone is an app that show the current tide near you.
+<img height="50" src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" /> Tidal Zone is an app that show the current tide near you.
 
+
+This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
 Installation:
 
