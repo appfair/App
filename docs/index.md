@@ -38,11 +38,7 @@ Latest Release Assets:
 
 {% assign assetnames = site.github.latest_release.assets | map: 'name' | uniq %}
 
-## Asset Names:
-
-{% for assetname in assetnames %}
-- {{ assetname }}
-{% endfor %}
+## Asset Names: {{ assetnames }}
 
 
 {% assign platforms = 'mac,ios' | split: ',' %}
