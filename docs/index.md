@@ -2,6 +2,9 @@
 layout: page
 ---
 
+{% assign appname = site.github.owner_name %}
+
+
 <img height="50" width="50" src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" /> Tidal Zone is an app that show the current tide near you.
 
 ## Links:
@@ -13,7 +16,7 @@ This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
 Installation:
 
-  1. Launch [appfair://app/{{ site.github.owner_name }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
+  1. Launch [appfair://app/{{ appname }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
   2. Run: `brew install appfair/app/{{ site.github.owner_name | slugify }}`
   3.  Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
 
@@ -32,10 +35,21 @@ Latest Release Assets:
 {% endfor %}
 
 
-<!-- render all the screenshots -->
-{% assign my_variable = false %}
+<!-- render the platform screenshots -->
+
+{% assign assetnames = site.github.latest_release.assets | map: "name" %}
+
+Tidal-Zone-macOS.zip (2412684)
 
 {% assign platforms = 'mac,ios' | split: ',' ] %}
+
+{% assign macname = appname | append '-macOS.zip' %}
+{% assign macrelease = assetnames contains macname %}
+{% assign iosname = appname | append '-iOS.ipa' %}
+{% assign iosrelease = assetnames contains iosname %}
+
+## Platform iOS: {{ iosrelease }} {{ iosname }}
+## Platform macOS: {{ macrelease }} {{ macname }}
 
 {% for platform in platforms %}
 
@@ -45,8 +59,10 @@ Latest Release Assets:
 {% if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" %}
 <img src="{{ asset.browser_download_url }}" />
 {% endif %}
-{% endfor %}
-{% endfor %}
+
+{% endfor %} <!-- asset -->
+
+{% endfor %} <!-- platforms -->
 
 ## Variables:
 
