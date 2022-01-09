@@ -14,19 +14,14 @@ layout: page
 
 This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
-Installation:
+### Installation:
 
   1. Launch [appfair://app/{{ appname }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
   2. Run: `brew install appfair/app/{{ site.github.owner_name | slugify }}`
   3.  Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
 
 
-iOS Builds:
-
-Download: [{{ site.github.owner_name }}-iOS.ipa]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-iOS.ipa)
-
-
-Latest Release Assets:
+### Latest Release assets:
 
 {% for asset in site.github.latest_release.assets %}
   * [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
@@ -42,7 +37,7 @@ Latest Release Assets:
 
 <!-- { % assign assetnames = site.github.latest_release.assets | map: 'name' | uniq % } -->
 
-## Asset Names: {{ assetnames }}
+### Asset Names: {{ assetnames }}
 
 {% for assetname in assetnames %}
 - {{ assetname }}
@@ -56,13 +51,8 @@ Latest Release Assets:
 {% assign iosname = appname | append: '-iOS.ipa' %}
 {% assign iosrelease = assetnames contains iosname %}
 
-## Platform iOS: {{ iosrelease }} {{ iosname }}
-## Platform macOS: {{ macrelease }} {{ macname }}
-
-
-AltStore Installation:
-
-<a href="altstore://install?url={{ asset.browser_download_url }}">
+### Platform iOS: {{ iosrelease }} {{ iosname }}
+### Platform macOS: {{ macrelease }} {{ macname }}
 
 
 {% for platform in platforms %}
@@ -77,8 +67,12 @@ AltStore Installation:
 <img src="{{ asset.browser_download_url }}" />
 {% endif %}
 
-{% if asset.name contains "-macOS.zip" or asset.name contains "-iOS.ipa" %}
-  - [asset.name]({{ asset.browser_download_url }})
+{% if asset.name contains "-macOS.zip" %}
+  - [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
+{% endif %}
+
+{% if asset.name contains "-iOS.ipa" %}
+  - [{{ asset.name }} ({{ asset.size }})](altstore://install?url={{ asset.browser_download_url }})
 {% endif %}
 
 {% endfor %} <!-- asset -->
