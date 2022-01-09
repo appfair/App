@@ -8,9 +8,16 @@ Tidal Zone is an app that show the current tide near you.
 
 ICON: <img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
 
-Install: `brew install appfair/app/{{ site.github.owner_name | downcase }}`
 
-Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
+Installation:
+
+  1. Launch [appfair://app/{{ owner_name }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
+  2. Run: `brew install appfair/app/{{ site.github.owner_name | downcase }}`
+  3.  Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
+
+
+iOS Builds:
+
 Download: [{{ site.github.owner_name }}-iOS.ipa]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-iOS.ipa)
 
 
