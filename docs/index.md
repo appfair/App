@@ -5,7 +5,11 @@
 
 Tidal Zone is an app that show the current tide near you.
 
-Download: (https://github.com/${{ owner.login }}/App/release/latest/${{ owner.login }}-macOS.zip)
+
+https://github.com/Tidal-Zone/App/releases/latest/download/Tidal-Zone-macOS.zip
+
+
+Download: [{{ owner.login }}-macOS.zip](https://github.com/{{ owner.login }}/App/releases/latest/downlod/{{ owner.login }}-macOS.zip)
 
 
 
