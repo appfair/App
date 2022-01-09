@@ -38,8 +38,6 @@ Latest Release Assets:
 
 {% assign assetnames = site.github.latest_release.assets | map: 'name' | uniq %}
 
-## Asset Names: {{ assetnames }}
-
 
 {% assign platforms = 'mac,ios' | split: ',' %}
 
@@ -56,9 +54,9 @@ Latest Release Assets:
 ## Platform: {{ platform }}
 
 {% for asset in site.github.latest_release.assets %}
-{% if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" %}
-<img src="{{ asset.browser_download_url }}" />
-{% endif %}
+<!-- { % if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" % } -->
+<!-- <img src="{{ asset.browser_download_url }}" /> -->
+<!-- { % endif % } -->
 
 {% endfor %} <!-- asset -->
 
