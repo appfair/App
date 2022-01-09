@@ -79,6 +79,9 @@ This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
 {% endfor %} <!-- platforms -->
 
+
+<!-- 
+
 ## Variables:
 
 ```
@@ -123,11 +126,20 @@ source: {{ site.github.source }}
  path: {{ site.github.source.path }}
 ```
 
+-->
+
+<!--
+
 ## Latest Release:
 
 ```
 {{ site.github.latest_release | jsonify }}
 ```
+
+-->
+
+
+<!-- 
 
 E.g.:
 
@@ -285,13 +297,7 @@ E.g.:
   "body": "Release 0.0.2"
 }
 ```
-
-
-## All `site.github`:
-
-```
-{{ site.github | jsonify }}
-```
+-->
 
 
 
