@@ -32,6 +32,11 @@ Latest Release Assets:
 {% endfor %}
 
 
+{% for asset in site.github.latest_release.assets %}
+{% if asset.name contains "screenshot-" %}
+<img src="{{ asset.browser_download_url }}" />
+{% endif %}
+{% endfor %}
 
 
 ## Variables:
