@@ -40,6 +40,7 @@ Latest Release Assets:
 {% assign authors = site.posts | map: 'authors' | uniq %}
 
 
+{% assign assetnames = authors %}
 
 <!-- { % assign assetnames = site.github.latest_release.assets | map: 'name' | uniq % } -->
 
