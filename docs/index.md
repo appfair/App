@@ -5,9 +5,13 @@
 
 Tidal Zone is an app that show the current tide near you.
 
+
 ICON: <img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
 
+Install: `brew install appfair/app/{{ site.github.owner_name | downcase }}`
+
 Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
+Download: [{{ site.github.owner_name }}-iOS.ipa]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-iOS.ipa)
 
 
 
