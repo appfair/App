@@ -1,17 +1,14 @@
 
-## DATE: {{ page.date }}
+<img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
 
 # Tidal Zone
 
 Tidal Zone is an app that show the current tide near you.
 
 
-ICON: <img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
-
-
 Installation:
 
-  1. Launch [appfair://app/{{ owner_name }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
+  1. Launch [appfair://app/{{ site.github.owner_name }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
   2. Run: `brew install appfair/app/{{ site.github.owner_name | downcase }}`
   3.  Download: [{{ site.github.owner_name }}-macOS.zip]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-macOS.zip)
 
@@ -21,12 +18,7 @@ iOS Builds:
 Download: [{{ site.github.owner_name }}-iOS.ipa]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-iOS.ipa)
 
 
-
-
-{{ page.my_variable }}
-
-https://github.com/Tidal-Zone/App/zipball/main
-{{ site.github.zip_url }}
+## Variables:
 
 ```
 api_url: {{ site.github.api_url }}

@@ -1,7 +1,7 @@
 
 ## Description
 
-Owner: {{ site.github.owner_name }}
+App for showing the current tide.
 
 ## Installation
 
