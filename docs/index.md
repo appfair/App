@@ -34,10 +34,9 @@ Latest Release Assets:
   This app does not yet have any releases.
 {% endfor %}
 
-
 <!-- render the platform screenshots -->
 
-{% assign assetnames = site.github.latest_release.assets | map: 'name' %}
+{% assign assetnames = site.github.latest_release.assets | map: 'name' | uniq %}
 
 ## Asset Names:
 
