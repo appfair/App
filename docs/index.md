@@ -11,8 +11,6 @@ layout: page
   * [Discussions: {{ site.github.repository_url }}/discussions]({{ site.github.repository_url }}/discussions)
   * [Issues: {{ site.github.repository_url }}/issues]({{ site.github.repository_url }}/issues)
 
-This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
-
 ### Installation:
 
   1. Launch [appfair://app/{{ appname }}](appfair://app/{{ site.github.owner_name }}) using the [App Fair](https://www.app-fair.app).
@@ -50,28 +48,28 @@ This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 {% assign iosname = appname | append: '-iOS.ipa' %}
 {% assign iosrelease = assetnames contains iosname %}
 
-### Platform iOS: {{ iosrelease }} {{ iosname }}
-### Platform macOS: {{ macrelease }} {{ macname }}
-
-
 {% for platform in platforms %}
 
 ## Platform: {{ platform }}
 
 {% for asset in site.github.latest_release.assets %}
 
-{% assign screenpre = "screenshot-" | append: platform %}
-
-{% if asset.name contains screenpre %}
-<img src="{{ asset.browser_download_url }}" />
-{% endif %}
-
-{% if asset.name contains "-macOS.zip" %}
+{% if asset.name == macname %}
   - [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
 {% endif %}
 
-{% if asset.name contains "-iOS.ipa" %}
+{% if asset.name == iosname %}
   - [{{ asset.name }} ({{ asset.size }})](altstore://install?url={{ asset.browser_download_url }})
+{% endif %}
+
+{% endfor %} <!-- asset -->
+
+
+<!-- screenshots follow assets -->
+{% for asset in site.github.latest_release.assets %}
+{% assign screenpre = "screenshot-" | append: platform %}
+{% if asset.name contains screenpre %}
+<img src="{{ asset.browser_download_url }}" />
 {% endif %}
 
 {% endfor %} <!-- asset -->
@@ -298,5 +296,7 @@ E.g.:
 ```
 -->
 
+
+This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
 
 
