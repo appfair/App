@@ -1,13 +1,20 @@
 
+## DATE: {{ page.date }}
+
 # Tidal Zone
 
 Tidal Zone is an app that show the current tide near you.
+
+Download: (https://github.com/${{ owner.login }}/App/release/latest/${{ owner.login }}-macOS.zip)
+
+
 
 {{ page.my_variable }}
 
 https://github.com/Tidal-Zone/App/zipball/main
 {{ site.github.zip_url }}
 
+```
 api_url: {{ site.github.api_url }}
 help_url: {{ site.github.help_url }}
 environment: {{ site.github.environment }}
@@ -47,6 +54,7 @@ license: {{ site.github.license }}
 source: {{ site.github.source }}
  branch: {{ site.github.source.branch }}
  path: {{ site.github.source.path }}
+```
 
 
 
