@@ -32,12 +32,22 @@ Latest Release Assets:
 {% endfor %}
 
 
+<!-- render all the screenshots -->
+{% assign my_variable = false %}
+
+{% assign platforms = [ "mac", "ios" ] %}
+
+
+{% for platform in platforms %}
+
+## Platform: {{ platform }}
+
 {% for asset in site.github.latest_release.assets %}
-{% if asset.name contains "screenshot-" %}
+{% if asset.name contains "screenshot-" and asset.name contains ".png" %}
 <img src="{{ asset.browser_download_url }}" />
 {% endif %}
 {% endfor %}
-
+{% endfor %}
 
 ## Variables:
 
