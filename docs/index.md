@@ -1,4 +1,8 @@
 
+
+### This page was last updated at {{ "now" | date: "%Y-%m-%d %H:%M" }}.
+
+
 <img src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" />
 
 # Tidal Zone
