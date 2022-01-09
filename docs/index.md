@@ -4,8 +4,7 @@ layout: page
 
 {% assign appname = site.github.owner_name %}
 
-
-<img height="50" width="50" src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" /> {{ appname }} is an app.
+<img height="50" width="50" src="{{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}.png" /> **{{ appname }}**: {{ site.description | escape }}
 
 ## Links:
 
