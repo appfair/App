@@ -23,6 +23,14 @@ iOS Builds:
 Download: [{{ site.github.owner_name }}-iOS.ipa]({{ site.github.repository_url }}/releases/latest/download/{{ site.github.owner_name }}-iOS.ipa)
 
 
+Latest Release Assets:
+
+{% for asset in site.github.latest_release.assets %}
+  * [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
+{% endfor %}
+
+
+
 ## Variables:
 
 ```
