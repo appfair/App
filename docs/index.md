@@ -27,6 +27,8 @@ Latest Release Assets:
 
 {% for asset in site.github.latest_release.assets %}
   * [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
+{% else %}
+  This app does not yet have any releases.
 {% endfor %}
 
 
