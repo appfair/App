@@ -42,7 +42,7 @@ Latest Release Assets:
 ## Platform: {{ platform }}
 
 {% for asset in site.github.latest_release.assets %}
-{% if asset.name contains "screenshot-" and asset.name contains ".png" %}
+{% if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" %}
 <img src="{{ asset.browser_download_url }}" />
 {% endif %}
 {% endfor %}
