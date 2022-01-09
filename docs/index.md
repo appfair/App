@@ -36,7 +36,18 @@ Latest Release Assets:
 
 <!-- render the platform screenshots -->
 
-{% assign assetnames = site.github.latest_release.assets | map: 'name' | uniq %}
+
+{% assign authors = site.posts | map: 'authors' | uniq %}
+
+
+
+<!-- { % assign assetnames = site.github.latest_release.assets | map: 'name' | uniq % } -->
+
+## Asset Names: {{ assetnames }}
+
+{% for assetname in assetnames %}
+- {{ assetname }}
+{% endfor %}
 
 
 {% assign platforms = 'mac,ios' | split: ',' %}
@@ -54,9 +65,9 @@ Latest Release Assets:
 ## Platform: {{ platform }}
 
 {% for asset in site.github.latest_release.assets %}
-<!-- { % if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" % } -->
-<!-- <img src="{{ asset.browser_download_url }}" /> -->
-<!-- { % endif % } -->
+{% if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" %}
+<img src="{{ asset.browser_download_url }}" />
+{% endif %}
 
 {% endfor %} <!-- asset -->
 
