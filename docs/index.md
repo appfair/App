@@ -59,13 +59,26 @@ Latest Release Assets:
 ## Platform iOS: {{ iosrelease }} {{ iosname }}
 ## Platform macOS: {{ macrelease }} {{ macname }}
 
+
+AltStore Installation:
+
+<a href="altstore://install?url={{ asset.browser_download_url }}">
+
+
 {% for platform in platforms %}
 
 ## Platform: {{ platform }}
 
 {% for asset in site.github.latest_release.assets %}
-{% if asset.name contains "screenshot-{{ platform }}-" and asset.name contains ".png" %}
+
+{% assign screenpre = "screenshot-" | append: platform %}
+
+{% if asset.name contains screenpre %}
 <img src="{{ asset.browser_download_url }}" />
+{% endif %}
+
+{% if asset.name contains "-macOS.zip" or asset.name contains "-iOS.ipa" %}
+  - [asset.name]({{ asset.browser_download_url }})
 {% endif %}
 
 {% endfor %} <!-- asset -->
