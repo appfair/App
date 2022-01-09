@@ -43,10 +43,10 @@ layout: page
 
 {% assign platforms = 'mac,ios' | split: ',' %}
 
-{% assign macname = appname | append: '-macOS.zip' %}
-{% assign macrelease = assetnames contains macname %}
-{% assign iosname = appname | append: '-iOS.ipa' %}
-{% assign iosrelease = assetnames contains iosname %}
+{% assign maczip = appname | append: '-macOS.zip' %}
+{% assign macrelease = assetnames contains maczip %}
+{% assign iosipa = appname | append: '-iOS.ipa' %}
+{% assign iosrelease = assetnames contains iosipa %}
 
 {% for platform in platforms %}
 
@@ -54,12 +54,12 @@ layout: page
 
 {% for asset in site.github.latest_release.assets %}
 
-{% if asset.name == macname %}
+{% if asset.name == maczip %}
   - [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }})
 {% endif %}
 
-{% if asset.name == iosname %}
-  - [{{ asset.name }} ({{ asset.size }})](altstore://install?url={{ asset.browser_download_url }})
+{% if asset.name == iosipa %}
+  - [{{ asset.name }} ({{ asset.size }})]({{ asset.browser_download_url }}) ([AltStore sideload](altstore://install?url={{ asset.browser_download_url }}))
 {% endif %}
 
 {% endfor %} <!-- asset -->
