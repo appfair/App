@@ -33,6 +33,8 @@
 		<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
 		<string>The App Fair uses the local file system to install apps</string>
 	</dict>
+ 	<key>ITSAppUsesNonExemptEncryption</key>
+ 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
 	<key>LSFileQuarantineEnabled</key>
