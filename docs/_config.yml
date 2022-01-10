@@ -1,7 +1,0 @@
-# theme: jekyll-theme-slate
-# theme: jekyll-theme-minimal
-# theme: minima
-# remote_theme: jekyll/minima
-remote_theme: appfair/fairapp-theme
-
-show_downloads: true
