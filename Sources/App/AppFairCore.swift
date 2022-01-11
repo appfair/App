@@ -522,8 +522,12 @@ struct NavigationRootView : View {
                     let appID = appName.hasPrefix("app.") ? appName : ("app." + appName)
                     let bundleID = BundleIdentifier(appID)
 
-                    self.selection = bundleID
-                    dbg("selected app ID", wip(self.selection)) // TODO: if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+                    // random crashes seem to happen without this
+                    DispatchQueue.main.async {
+                        self.selection = bundleID
+                        // self.fairManager.scrollToSelection = true
+                        dbg("selected app ID", wip(self.selection)) // TODO: if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+                    }
                 }
             }
     }
