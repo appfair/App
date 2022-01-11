@@ -52,8 +52,8 @@ import FairApp
     }
 
     func updateCount() -> Int {
-        return caskManager.updateCount()
-            + (caskManager.includeCasks ? caskManager.updateCount() : 0)
+        return appManager.updateCount()
+            + (caskManager.enableHomebrew ? caskManager.updateCount() : 0)
     }
 }
 

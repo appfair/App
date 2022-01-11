@@ -823,7 +823,7 @@ struct SidebarView: View {
                 item(.fairapps, .updated).keyboardShortcut("7")
             }
 
-            if caskManager.includeCasks {
+            if caskManager.enableHomebrew {
                 Section("Homebrew") {
                     item(.homebrew, .popular).keyboardShortcut("1")
                     // item(.homebrew, .recent) // casks don't have a last-updated date

@@ -56,11 +56,11 @@ struct HomebrewSettingsView: View {
 
     var body: some View {
         Form {
-            Toggle(isOn: $caskManager.includeCasks) {
+            Toggle(isOn: $caskManager.enableHomebrew) {
                 Text(atx: "Homebrew Casks:")
             }
             .toggleStyle(.switch)
-            .disabled(caskManager.includeCasks != true && CaskManager.isHomebrewInstalled == false)
+            .disabled(caskManager.enableHomebrew != true && CaskManager.isHomebrewInstalled == false)
                 .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Toggle(isOn: $caskManager.quarantineCasks) {

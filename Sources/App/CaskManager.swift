@@ -60,7 +60,7 @@ extension InstallationManager where Self : CaskManager {
     }
 
     /// Installation is check simply by seeing if the brew install root exists.
-    /// This will be used as the seed for the `includeCasks` app preference so we default to having it enabled if homebrew is seen as being installed
+    /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
     static var isHomebrewInstalled: Bool {
         FileManager.default.isExecutableFile(atPath: localBrewCommand.path)
     }
@@ -70,22 +70,8 @@ extension InstallationManager where Self : CaskManager {
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject, InstallationManager {
-    /// The arranged list of app info items
-    @Published private(set) var appInfos: [AppInfo] = []
-
-    /// The current catalog of casks
-    @Published private var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
-
-    /// Map of installed apps from `[token: [versions]]`
-    @Published private(set) var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
-
-    /// The latest statistics about the apps
-    @Published private var stats: CaskStats? { didSet { updateAppInfo() } }
-
-    @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
-
     /// Whether to allow Homebrew Cask installation
-    @AppStorage("includeCasks") var includeCasks = CaskManager.isHomebrewInstalled
+    @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled
 
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
@@ -95,6 +81,20 @@ extension InstallationManager where Self : CaskManager {
 
     /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
     @AppStorage("preCacheCasks") var preCacheCasks = true
+
+    /// The arranged list of app info items
+    @Published private(set) var appInfos: [AppInfo] = []
+
+    /// The current catalog of casks
+    @Published private(set) var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+
+    /// Map of installed apps from `[token: [versions]]`
+    @Published private(set) var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
+
+    /// The latest statistics about the apps
+    @Published private(set) var stats: CaskStats? { didSet { updateAppInfo() } }
+
+    @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
     // private static let installCommand = #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"#
 
