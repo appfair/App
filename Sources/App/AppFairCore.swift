@@ -506,9 +506,9 @@ struct NavigationRootView : View {
                 // update the badge when the setting changes
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
-            .onChange(of: selection) { newSelection in
-                dbg("selected:", newSelection)
-            }
+//            .onChange(of: selection) { newSelection in
+//                dbg("selected:", newSelection)
+//            }
             .onOpenURL { url in
                 let components = url.pathComponents
                 dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
@@ -595,7 +595,7 @@ public struct AppDetailView : View {
 public struct TintedLabel : View {
     @Environment(\.colorScheme) var colorScheme
     public let title: Text
-    public let systemName: StaticString
+    public let systemName: String
     public var tint: Color? = nil
     public var mode: SymbolRenderingMode? = nil
 
@@ -664,15 +664,15 @@ public extension AppCategory {
         case work
 
         /// All the categories that belong to this grouping
-        public var symbolName: StaticString {
+        public var symbolName: String {
             switch self {
-            case .create: return "puzzlepiece"
-            case .research: return "book"
-            case .communicate: return "envelope"
-            case .entertain: return "sparkles.tv"
-            case .live: return "house"
-            case .game: return "circle.hexagongrid"
-            case .work: return "briefcase"
+            case .create: return FairSymbol.puzzlepiece.symbolName
+            case .research: return FairSymbol.book.symbolName
+            case .communicate: return FairSymbol.envelope.symbolName
+            case .entertain: return FairSymbol.sparkles_tv.symbolName
+            case .live: return FairSymbol.house.symbolName
+            case .game: return FairSymbol.circle_hexagongrid.symbolName
+            case .work: return FairSymbol.briefcase.symbolName
             }
         }
 
@@ -873,11 +873,11 @@ struct SidebarView: View {
         if source == .homebrew {
             switch item {
             case .popular:
-                label = TintedLabel(title: Text("Casks"), systemName: "ticket", tint: .teal, mode: .multicolor)
+                label = TintedLabel(title: Text("Casks"), systemName: FairSymbol.shippingbox_fill.symbolName, tint: .teal, mode: .multicolor)
             case .installed:
-                label = TintedLabel(title: Text("Installed"), systemName: "externaldrive", tint: .orange, mode: .multicolor)
+                label = TintedLabel(title: Text("Installed"), systemName: FairSymbol.opticaldiscdrive.symbolName, tint: .orange, mode: .multicolor)
             case .updated:
-                label = TintedLabel(title: Text("Updated"), systemName: "calendar", tint: .yellow, mode: .multicolor)
+                label = TintedLabel(title: Text("Updated"), systemName: FairSymbol.calendar.symbolName, tint: .yellow, mode: .multicolor)
 
             case .recent:
                 break

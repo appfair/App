@@ -3,20 +3,43 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView: View {
     public enum Tabs: Hashable {
-        case general, advanced
+        case general
+        case fairapps
+        case homebrew
+        case advanced
     }
 
     public var body: some View {
         TabView {
             GeneralSettingsView()
+                .padding(20)
                 .tabItem {
-                    Label("General", systemImage: "gear")
+                    Text("General")
+                        .label(image: FairSymbol.switch_2)
+                        .symbolVariant(.fill)
+                }
+                .tag(Tabs.general)
+            FairAppsSettingsView()
+                .padding(20)
+                .tabItem {
+                    Text("Fairapps")
+                        .label(image: FairSymbol.star)
+                        .symbolVariant(.fill)
+                }
+                .tag(Tabs.general)
+            HomebrewSettingsView()
+                .padding(20)
+                .tabItem {
+                    Text("Homebrew")
+                        .label(image: FairSymbol.shippingbox_fill)
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.general)
             AdvancedSettingsView()
+                .padding(20)
                 .tabItem {
-                    Label("Advanced", systemImage: "star")
+                    Text("Advanced")
+                        .label(image: FairSymbol.gearshape_2)
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.advanced)
@@ -27,24 +50,55 @@ public struct AppSettingsView: View {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-struct GeneralSettingsView: View {
-    @AppStorage("showPreReleases") private var showPreReleases = false
-//    @AppStorage("controlSize") private var controlSize = 3.0
-    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
-    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
-    @AppStorage("iconBadge") private var iconBadge = true
+struct HomebrewSettingsView: View {
     @AppStorage("includeCasks") private var includeCasks = CaskManager.isHomebrewInstalled
+    @AppStorage("quarantineCasks") private var quarantineCasks = true
+    @AppStorage("forceInstallCasks") private var forceInstallCasks = true
+    @AppStorage("preCacheCasks") private var preCacheCasks = true
 
     var body: some View {
         Form {
-            ThemeStylePicker(style: $themeStyle)
+            #if CASK_SUPPORT
+            
+            Toggle(isOn: $includeCasks) {
+                Text(atx: "Homebrew Casks:")
+            }
+            .toggleStyle(.switch)
+            .disabled(includeCasks != true && CaskManager.isHomebrewInstalled == false)
+                .help(Text("Adds homebrew Casks to the sources of available apps."))
 
-//            Slider(value: $controlSize, in: 1...5, step: 1) {
-//                Text("Interface Scale:")
-//            }
+            Toggle(isOn: $quarantineCasks) {
+                Text(atx: "Quarantine apps installed from casks")
+            }
+                .help(Text("Marks cask-installed apps as being _quarantined_, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-            Divider()
+            Toggle(isOn: $forceInstallCasks) {
+                Text(atx: "Install/update overwrites pre-existing Cask apps")
+            }
+                .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
+
+            Text("""
+                Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+
+                Read more at [`https://brew.sh`](https://brew.sh/)
+                """)
+                .font(.body)
+                .multilineTextAlignment(.leading)
+                .frame(minHeight: 90, alignment: .top)
+
+            #endif
+        }
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct FairAppsSettingsView: View {
+    @AppStorage("showPreReleases") private var showPreReleases = false
+    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+
+    var body: some View {
+        Form {
             HStack(alignment: .firstTextBaseline) {
                 AppRiskPicker(risk: $riskFilter)
                 riskFilter.riskSummaryText(bold: true)
@@ -53,39 +107,38 @@ struct GeneralSettingsView: View {
                     .frame(height: 150, alignment: .top)
             }
 
-            Toggle(isOn: $iconBadge) {
-                Text("Badge App Icon with update count")
-            }
-                .help(Text("Show the number of updates that are available to install."))
-
             Toggle(isOn: $showPreReleases) {
                 Text("Show Pre-Releases")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
 
-//            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
-//                .font(.body)
-//                .multilineTextAlignment(.leading)
-//                .frame(height: 200, alignment: .top)
-
-            #if CASK_SUPPORT
-            Toggle(isOn: $includeCasks) {
-                Text(atx: "Include Casks (requires [`Homebrew`](https://brew.sh/))")
-            }
-            .disabled(includeCasks != true && CaskManager.isHomebrewInstalled == false)
-                .help(Text("Adds homebrew Casks to the list of available apps."))
-
-
-            Text("Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.")
+            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
                 .font(.body)
                 .multilineTextAlignment(.leading)
-                .frame(height: 200, alignment: .top)
-
-            #endif
-
+                .frame(minHeight: 90, alignment: .top)
 
         }
-        .padding(20)
+    }
+}
+
+
+
+@available(macOS 12.0, iOS 15.0, *)
+struct GeneralSettingsView: View {
+    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
+    @AppStorage("iconBadge") private var iconBadge = true
+
+    var body: some View {
+        Form {
+            ThemeStylePicker(style: $themeStyle)
+
+            Divider()
+
+            Toggle(isOn: $iconBadge) {
+                Text("Badge App Icon with update count")
+            }
+                .help(Text("Show the number of updates that are available to install."))
+        }
     }
 }
 

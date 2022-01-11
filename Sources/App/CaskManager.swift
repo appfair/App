@@ -86,6 +86,10 @@ extension InstallationManager where Self : CaskManager {
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
+    @AppStorage("quarantineCasks") private var quarantineCasks = true
+    @AppStorage("forceInstallCasks") private var forceInstallCasks = true
+    @AppStorage("preCacheCasks") private var preCacheCasks = true
+
     // private static let installCommand = #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"#
 
     /// Command that is expected to return `/usr/local` for macOS Intel and `/opt/homebrew` for Apple Silicon
@@ -289,8 +293,12 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
     ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
     ///   - verbose: whether to verbosely report progress
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, preCache: Bool = true, update: Bool = true, quarantine: Bool = true, force: Bool = true, verbose: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, preCache: Bool? = nil, update: Bool = true, quarantine: Bool? = nil, force: Bool? = nil, verbose: Bool = true) async throws {
         dbg(item.id)
+
+        let quarantine = quarantine ?? self.quarantineCasks
+        let force = force ?? self.forceInstallCasks
+        let preCache = preCache ?? self.preCacheCasks
 
         /**
          When we download maually, we fetch the artifact with a cancellable progress and validate the SHA256 hash
@@ -398,7 +406,11 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         cmd += " " + op
         if force { cmd += " --force" }
         if verbose { cmd += " --verbose" }
-        if quarantine { cmd += " --quarantine" }
+        if quarantine {
+            cmd += " --quarantine"
+        } else {
+            cmd += " --no-quarantine"
+        }
         cmd += " --casks " + item.id.rawValue
         let result = try run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
         dbg("result:", result)

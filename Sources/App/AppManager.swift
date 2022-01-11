@@ -665,13 +665,13 @@ extension AppManager {
         var label: TintedLabel {
             switch self {
             case .popular:
-                return TintedLabel(title: self.text, systemName: "star", tint: Color.red, mode: .multicolor)
+                return TintedLabel(title: self.text, systemName: FairSymbol.star.symbolName, tint: Color.red, mode: .multicolor)
             case .updated:
-                return TintedLabel(title: self.text, systemName: "pin", tint: Color.red, mode: .multicolor)
+                return TintedLabel(title: self.text, systemName: FairSymbol.arrow_up_and_down_square_fill.symbolName, tint: Color.red, mode: .multicolor)
             case .installed:
-                return TintedLabel(title: self.text, systemName: "externaldrive.badge.checkmark", tint: Color.orange, mode: .multicolor)
+                return TintedLabel(title: self.text, systemName: FairSymbol.externaldrive.symbolName, tint: Color.orange, mode: .multicolor)
             case .recent:
-                return TintedLabel(title: self.text, systemName: "clock", tint: Color.green, mode: .multicolor)
+                return TintedLabel(title: self.text, systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .multicolor)
             case .category(let grouping):
                 return grouping.tintedLabel
             }
