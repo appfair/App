@@ -6,9 +6,7 @@ struct AppsListView : View {
     let source: AppSource
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
-    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
-    #endif
     @Binding var selection: AppInfo.ID?
     var sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
@@ -16,10 +14,8 @@ struct AppsListView : View {
 
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         switch source {
-        #if CASK_SUPPORT
         case .homebrew:
             return caskManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        #endif
         case .fairapps:
             return appManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }

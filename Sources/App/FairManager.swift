@@ -4,10 +4,8 @@ import FairApp
 @MainActor public final class FairManager: SceneManager {
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
     let appManager = AppManager()
-    #if CASK_SUPPORT
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`
     let caskManager = CaskManager()
-    #endif
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
@@ -40,12 +38,8 @@ import FairApp
     func refresh() async throws {
         async let v0: () = appManager.scanInstalledApps()
         async let v1: () = appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        #if CASK_SUPPORT
         async let v2: () = caskManager.refreshAll()
         let _ = try await (v0, v1, v2) // perform the two refreshes in tandem
-        #else
-        let _ = try await (v0, v1)
-        #endif
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.
@@ -58,13 +52,8 @@ import FairApp
     }
 
     func updateCount() -> Int {
-        let appUpdates = appManager.updateCount()
-        #if CASK_SUPPORT
-        return appUpdates + caskManager.updateCount()
-        #else
-        return appUpdates
-        #endif
-
+        return caskManager.updateCount()
+            + (caskManager.includeCasks ? caskManager.updateCount() : 0)
     }
 }
 

@@ -21,9 +21,7 @@ struct CatalogItemView: View {
 
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
-    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
-    #endif
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
@@ -661,11 +659,9 @@ struct CatalogItemView: View {
     /// Whether the app is successfully installed
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
-        #if CASK_SUPPORT
         if info.release.isCask {
             return caskManager.installedCasks[info.id.rawValue]?.isEmpty == false
         }
-        #endif
 
         return appPropertyList?.successValue?.bundleID == info.id.rawValue
         //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
@@ -673,12 +669,10 @@ struct CatalogItemView: View {
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
-        #if CASK_SUPPORT
         if info.release.isCask {
             let versions = caskManager.installedCasks[info.id.rawValue] ?? []
             return info.release.version.flatMap(versions.contains) != true
         }
-        #endif
 
         return (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
     }
@@ -772,7 +766,6 @@ struct CatalogItemView: View {
     @ViewBuilder func iconView() -> some View {
         // if NSWorkspace.shared.icon(forFile: appPath)
 
-        #if CASK_SUPPORT
         // check for installed caches
         /* // this is called on every body update, so we should cache it in the caskManager 
         if item.isCask == true, let img = caskManager.icon(for: item) {
@@ -782,9 +775,6 @@ struct CatalogItemView: View {
         }
          */
         item.iconImage()
-        #else
-        item.iconImage()
-        #endif
     }
 
     func categorySymbol() -> some View {
@@ -821,61 +811,56 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         await appManager.trying {
-            #if CASK_SUPPORT
             if item.isCask == true {
-                return try await caskManager.install(item: item, progress: startProgress(), update: false)
+                try await caskManager.install(item: item, progress: startProgress(), update: false)
+            } else {
+                try await appManager.install(item: item, progress: startProgress(), update: false)
             }
-            #endif
-            try await appManager.install(item: item, progress: startProgress(), update: false)
         }
     }
 
     func launchButtonTapped() async {
         dbg("launchButtonTapped")
-        #if CASK_SUPPORT
         if item.isCask == true {
-            return await fairManager.trying {
+            await fairManager.trying {
                 try await caskManager.launch(item: item)
             }
+        } else {
+            await appManager.launch(item: item)
         }
-        #endif
-        await appManager.launch(item: item)
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         await appManager.trying {
-            #if CASK_SUPPORT
             if item.isCask == true {
-                return try await caskManager.install(item: item, progress: startProgress(), update: true)
+                try await caskManager.install(item: item, progress: startProgress(), update: true)
+            } else {
+                try await appManager.install(item: item, progress: startProgress(), update: true)
             }
-            #endif
-            try await appManager.install(item: item, progress: startProgress(), update: true)
         }
     }
 
     func revealButtonTapped() async {
         dbg("revealButtonTapped")
-        #if CASK_SUPPORT
         if item.isCask == true {
-            return await fairManager.trying {
+            await fairManager.trying {
                 try await caskManager.reveal(item: item)
             }
+        } else {
+            await appManager.reveal(item: item)
         }
-        #endif
-        await appManager.reveal(item: item)
     }
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
-        #if CASK_SUPPORT
         if item.isCask == true {
             return await fairManager.trying {
                 try await caskManager.delete(item: item)
             }
+        } else {
+            await appManager.trash(item: item)
         }
-        #endif
-        await appManager.trash(item: item)
     }
 }
 

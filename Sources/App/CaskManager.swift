@@ -46,8 +46,6 @@ extension CaskIdentifier {
     }
 }
 
-#if CASK_SUPPORT // declared in Package.swift
-
 /// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
 extension InstallationManager where Self : CaskManager {
 
@@ -86,14 +84,19 @@ extension InstallationManager where Self : CaskManager {
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
-    @AppStorage("quarantineCasks") private var quarantineCasks = true
-    @AppStorage("forceInstallCasks") private var forceInstallCasks = true
-    @AppStorage("preCacheCasks") private var preCacheCasks = true
+    /// Whether to allow Homebrew Cask installation
+    @AppStorage("includeCasks") var includeCasks = CaskManager.isHomebrewInstalled
+
+    /// Whether the quarantine flag should be applied to newly-installed casks
+    @AppStorage("quarantineCasks") var quarantineCasks = true
+
+    /// Whether to force overwrite other installations
+    @AppStorage("forceInstallCasks") var forceInstallCasks = false
+
+    /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
+    @AppStorage("preCacheCasks") var preCacheCasks = true
 
     // private static let installCommand = #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"#
-
-    /// Command that is expected to return `/usr/local` for macOS Intel and `/opt/homebrew` for Apple Silicon
-    private static let checkBrewCommand = #"brew --prefix"#
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
@@ -884,5 +887,3 @@ extension CaskItem : Identifiable {
         }
     }
 }
-
-#endif

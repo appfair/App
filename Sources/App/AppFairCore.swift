@@ -4,9 +4,7 @@ import SwiftUI
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
     case fairapps
-    #if CASK_SUPPORT
     case homebrew
-    #endif
 }
 
 extension AppSource : Identifiable {
@@ -15,14 +13,21 @@ extension AppSource : Identifiable {
 
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppSource {
-    var label: Label<Text, EmptyView> {
+    var label: Label<Text, Image> {
         switch self {
         case .fairapps:
-            return Label { Text("Fairground") } icon: { }
-        #if CASK_SUPPORT
+            return Label { Text("Fairground") } icon: { symbol.image }
         case .homebrew:
-            return Label { Text("Homebrew") } icon: { }
-        #endif
+            return Label { Text("Homebrew") } icon: { symbol.image }
+        }
+    }
+
+    var symbol: FairSymbol {
+        switch self {
+        case .fairapps:
+            return .ticket_fill
+        case .homebrew:
+            return .shippingbox
         }
     }
 }
@@ -447,9 +452,7 @@ public struct RootView : View {
         NavigationRootView()
             .environmentObject(fairManager)
             .environmentObject(fairManager.appManager)
-#if CASK_SUPPORT
             .environmentObject(fairManager.caskManager)
-#endif
     }
 }
 
@@ -464,9 +467,7 @@ struct SidebarSelection : Hashable {
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
-    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
-    #endif
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     @State var selection: AppInfo.ID? = nil
@@ -798,10 +799,7 @@ public extension AppCategory {
 struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var appManager: AppManager
-    #if CASK_SUPPORT
     @EnvironmentObject var caskManager: CaskManager
-    @AppStorage("includeCasks") private var includeCasks = CaskManager.isHomebrewInstalled
-    #endif
     @Binding var selection: AppInfo.ID?
     @Binding var sidebarSelection: SidebarSelection?
     @Binding var displayMode: TriptychOrient
@@ -825,8 +823,7 @@ struct SidebarView: View {
                 item(.fairapps, .updated).keyboardShortcut("7")
             }
 
-            #if CASK_SUPPORT
-            if includeCasks {
+            if caskManager.includeCasks {
                 Section("Homebrew") {
                     item(.homebrew, .popular).keyboardShortcut("1")
                     // item(.homebrew, .recent) // casks don't have a last-updated date
@@ -834,7 +831,6 @@ struct SidebarView: View {
                     item(.homebrew, .updated).keyboardShortcut("3")
                 }
             }
-            #endif
 
 //            Section("Categories") {
 //                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
@@ -850,10 +846,10 @@ struct SidebarView: View {
 //            }
         }
         //.symbolVariant(.none)
-        //.symbolRenderingMode(.hierarchical)
+        .symbolRenderingMode(.hierarchical)
         //.symbolVariant(.circle) // note that these can be stacked
-        .symbolVariant(.fill)
-        .symbolRenderingMode(.multicolor)
+        //.symbolVariant(.fill)
+        //.symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
         .toolbar(id: "SidebarView") {
             tool(.popular)
@@ -872,25 +868,7 @@ struct SidebarView: View {
 
     func item(_ source: AppSource, _ item: AppManager.SidebarItem) -> some View {
         let selection = SidebarSelection(item: item, source: source)
-        var label = selection.item.label
-        #if CASK_SUPPORT
-        if source == .homebrew {
-            switch item {
-            case .popular:
-                label = TintedLabel(title: Text("Casks"), systemName: FairSymbol.shippingbox_fill.symbolName, tint: .teal, mode: .multicolor)
-            case .installed:
-                label = TintedLabel(title: Text("Installed"), systemName: FairSymbol.opticaldiscdrive.symbolName, tint: .orange, mode: .multicolor)
-            case .updated:
-                label = TintedLabel(title: Text("Updated"), systemName: FairSymbol.calendar.symbolName, tint: .yellow, mode: .multicolor)
-
-            case .recent:
-                break
-            case .category(_):
-                break
-            }
-        }
-        #endif
-
+        let label = selection.item.label(for: source)
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
                 .navigationTitle(label.title)
@@ -903,10 +881,8 @@ struct SidebarView: View {
         switch item.source {
         case .fairapps:
             return appManager.badgeCount(for: item.item)
-        #if CASK_SUPPORT
         case .homebrew:
             return caskManager.badgeCount(for: item.item)
-        #endif
         }
     }
 
@@ -921,14 +897,14 @@ struct SidebarView: View {
         }
     }
 
-    func tool(_ item: AppManager.SidebarItem) -> some CustomizableToolbarContent {
+    func tool(source: AppSource = .fairapps, _ item: AppManager.SidebarItem) -> some CustomizableToolbarContent {
         ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
             }, label: {
-                item.label
+                item.label(for: source)
                     //.symbolVariant(.fill)
-                    .symbolRenderingMode(.multicolor)
+//                    .symbolRenderingMode(.multicolor)
             })
         }
     }

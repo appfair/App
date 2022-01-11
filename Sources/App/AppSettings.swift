@@ -1,4 +1,5 @@
 import FairApp
+import SwiftUI
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView: View {
@@ -23,7 +24,7 @@ public struct AppSettingsView: View {
                 .padding(20)
                 .tabItem {
                     Text("Fairapps")
-                        .label(image: FairSymbol.star)
+                        .label(image: AppSource.fairapps.symbol)
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.general)
@@ -31,7 +32,7 @@ public struct AppSettingsView: View {
                 .padding(20)
                 .tabItem {
                     Text("Homebrew")
-                        .label(image: FairSymbol.shippingbox_fill)
+                        .label(image: AppSource.homebrew.symbol)
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.general)
@@ -39,7 +40,7 @@ public struct AppSettingsView: View {
                 .padding(20)
                 .tabItem {
                     Text("Advanced")
-                        .label(image: FairSymbol.gearshape_2)
+                        .label(image: FairSymbol.gearshape)
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.advanced)
@@ -51,29 +52,24 @@ public struct AppSettingsView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct HomebrewSettingsView: View {
-    @AppStorage("includeCasks") private var includeCasks = CaskManager.isHomebrewInstalled
-    @AppStorage("quarantineCasks") private var quarantineCasks = true
-    @AppStorage("forceInstallCasks") private var forceInstallCasks = true
-    @AppStorage("preCacheCasks") private var preCacheCasks = true
+    @EnvironmentObject var caskManager: CaskManager
 
     var body: some View {
         Form {
-            #if CASK_SUPPORT
-            
-            Toggle(isOn: $includeCasks) {
+            Toggle(isOn: $caskManager.includeCasks) {
                 Text(atx: "Homebrew Casks:")
             }
             .toggleStyle(.switch)
-            .disabled(includeCasks != true && CaskManager.isHomebrewInstalled == false)
+            .disabled(caskManager.includeCasks != true && CaskManager.isHomebrewInstalled == false)
                 .help(Text("Adds homebrew Casks to the sources of available apps."))
 
-            Toggle(isOn: $quarantineCasks) {
-                Text(atx: "Quarantine apps installed from casks")
+            Toggle(isOn: $caskManager.quarantineCasks) {
+                Text(atx: "Quarantine apps")
             }
-                .help(Text("Marks cask-installed apps as being _quarantined_, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+                .help(Text("Marks apps installed with homebrew cask as being _quarantined_, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-            Toggle(isOn: $forceInstallCasks) {
-                Text(atx: "Install/update overwrites pre-existing Cask apps")
+            Toggle(isOn: $caskManager.forceInstallCasks) {
+                Text(atx: "Install overwrites pre-existing Cask apps")
             }
                 .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
@@ -86,8 +82,6 @@ struct HomebrewSettingsView: View {
                 .font(.body)
                 .multilineTextAlignment(.leading)
                 .frame(minHeight: 90, alignment: .top)
-
-            #endif
         }
     }
 }

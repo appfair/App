@@ -27,33 +27,27 @@ import FairCore
     }
 
     func testCaskList() async throws {
-        #if CASK_SUPPORT
         let caskManager = CaskManager()
         XCTAssertEqual(caskManager.casks.count, 0)
         try await caskManager.fetchCasks()
         let casks = caskManager.casks
         XCTAssertGreaterThan(casks.count, 1000)
-        #endif
     }
 
     func testCaskStats() async throws {
-        #if CASK_SUPPORT
         let caskManager = CaskManager()
         XCTAssertNil(caskManager.stats)
         try await caskManager.fetchStats()
         let stats = try XCTUnwrap(caskManager.stats)
         XCTAssertGreaterThan(stats.total_count, 1000) // e.g.: 894812
         XCTAssertGreaterThan(stats.formulae.values.joined().count, 1000) // e.g.: 6190
-        #endif
     }
 
     func testInstalledApps() throws {
-        #if CASK_SUPPORT
         let caskManager = CaskManager()
         XCTAssertEqual(0, caskManager.installed.count)
         try caskManager.refreshInstalledApps()
         XCTAssertNotEqual(0, caskManager.installed.count, "assuming homebrew is installed, there should have been more than one installation")
-        #endif
     }
 }
 

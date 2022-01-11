@@ -647,34 +647,36 @@ extension AppManager {
             }
         }
 
-        var text: Text {
-            switch self {
-            case .popular:
-                return Text("Apps", bundle:. module)
-            case .updated:
-                return Text("Updated", bundle:. module)
-            case .installed:
-                return Text("Installed", bundle:. module)
-            case .recent:
-                return Text("Recent", bundle:. module)
-            case .category(let grouping):
-                return grouping.text
+        func label(for source: AppSource) -> TintedLabel {
+            switch source {
+            case .fairapps:
+                switch self {
+                case .popular:
+                    return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
+                case .recent:
+                    return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
+                case .installed:
+                    return TintedLabel(title: Text("Installed"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
+                case .updated:
+                    return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
+                case .category(let grouping):
+                    return grouping.tintedLabel
+                }
+            case .homebrew:
+                switch self {
+                case .popular:
+                    return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
+                case .installed:
+                    return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
+                case .recent: // not supported with casks
+                    return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
+                case .category(let grouping):
+                    return grouping.tintedLabel
+                case .updated:
+                    return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
+                }
             }
-        }
 
-        var label: TintedLabel {
-            switch self {
-            case .popular:
-                return TintedLabel(title: self.text, systemName: FairSymbol.star.symbolName, tint: Color.red, mode: .multicolor)
-            case .updated:
-                return TintedLabel(title: self.text, systemName: FairSymbol.arrow_up_and_down_square_fill.symbolName, tint: Color.red, mode: .multicolor)
-            case .installed:
-                return TintedLabel(title: self.text, systemName: FairSymbol.externaldrive.symbolName, tint: Color.orange, mode: .multicolor)
-            case .recent:
-                return TintedLabel(title: self.text, systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .multicolor)
-            case .category(let grouping):
-                return grouping.tintedLabel
-            }
         }
 
         /// True indicates that this sidebar specifies to filter for locally-installed packages

@@ -6,9 +6,6 @@ import class Foundation.ProcessInfo
 /// true when we are running from Xcode; false for a fair-ground release
 let runningInXcode = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
 
-/// When running from within Xcode, enable cask support
-let caskSupport = true // runningInXcode
-
 let package = Package(
     name: "App",
     defaultLocalization: "en",
@@ -24,7 +21,8 @@ let package = Package(
             .product(name: "FairApp", package: "Fair"),
         ], resources: [.process("Resources"), .copy("Bundle")],
         swiftSettings:
-            caskSupport ? [ .define("CASK_SUPPORT") ] : []
+            []
+            //runningInXcode ? [ .define("CASK_SUPPORT") ] : []
         ),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]

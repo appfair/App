@@ -24,7 +24,9 @@ public extension AppContainer {
     /// The app-wide settings view
     @ViewBuilder static func settingsView(store fairManager: FairManager) -> some SwiftUI.View {
         AppSettingsView()
-            .environmentObject(fairManager)
             .preferredColorScheme(fairManager.themeStyle.colorScheme)
+            .environmentObject(fairManager)
+            .environmentObject(fairManager.appManager)
+            .environmentObject(fairManager.caskManager)
     }
 }
