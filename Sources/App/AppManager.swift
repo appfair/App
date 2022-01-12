@@ -14,7 +14,7 @@ let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 #endif
 
 /// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
-let minimumSearchLength = wip(1)
+let minimumSearchLength = 1
 
 
 protocol InstallationManager where Self : ObservableObject {
@@ -714,36 +714,3 @@ extension AppManager.SidebarItem {
         }
     }
 }
-
-#if os(macOS)
-extension NSAppleScript {
-    /// Performs the given shell command and returns the output via an `NSAppleScript` operation
-    public static func fork(command: String, admin: Bool = false) throws -> String? {
-        let withAdmin = admin ? " with administrator privileges" : ""
-
-        let cmd = "do shell script \"\(command)\"" + withAdmin
-
-        guard let script = NSAppleScript(source: cmd) else {
-            throw CocoaError(.coderReadCorrupt)
-        }
-
-        var errorDict: NSDictionary?
-        let output: NSAppleEventDescriptor = script.executeAndReturnError(&errorDict)
-
-        if var errorDict = errorDict as? [String: Any] {
-            dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
-
-            // also: ["NSAppleScriptErrorMessage": User canceled., "NSAppleScriptErrorAppName": App Fair, "NSAppleScriptErrorNumber": -128, "NSAppleScriptErrorBriefMessage": User canceled., "NSAppleScriptErrorRange": NSRange: {0, 115}]
-
-            // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
-            errorDict[NSLocalizedFailureReasonErrorKey] = errorDict["NSAppleScriptErrorMessage"]
-            errorDict[NSLocalizedDescriptionKey] = errorDict["NSAppleScriptErrorBriefMessage"]
-
-            throw NSError(domain: "", code: 0, userInfo: errorDict)
-        } else {
-            dbg("successfully executed script:", command)
-            return output.stringValue
-        }
-    }
-}
-#endif

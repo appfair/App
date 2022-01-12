@@ -38,7 +38,7 @@ import FairApp
     func refresh() async throws {
         async let v0: () = appManager.scanInstalledApps()
         async let v1: () = appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        async let v2: () = caskManager.refreshAll()
+        async let v2: () = caskManager.refreshAll(whenEnabled: true)
         let _ = try await (v0, v1, v2) // perform the two refreshes in tandem
     }
 

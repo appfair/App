@@ -52,36 +52,98 @@ public struct AppSettingsView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct HomebrewSettingsView: View {
+    @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var caskManager: CaskManager
 
     var body: some View {
+        let installedVersion = try? caskManager.installedBrewVersion()
+
         Form {
-            Toggle(isOn: $caskManager.enableHomebrew) {
-                Text(atx: "Homebrew Casks:")
+            HStack {
+                Toggle(isOn: $caskManager.enableHomebrew) {
+                    Text(atx: "Homebrew Casks:")
+                }
+                if let installedVersion = installedVersion {
+                    (Text("Installed version: \(installedVersion.version)")
+                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                } else {
+                    Text("Not Installed")
+                }
             }
             .toggleStyle(.switch)
-            .disabled(caskManager.enableHomebrew != true && CaskManager.isHomebrewInstalled == false)
-                .help(Text("Adds homebrew Casks to the sources of available apps."))
+            .help(Text("Adds homebrew Casks to the sources of available apps."))
 
-            Toggle(isOn: $caskManager.quarantineCasks) {
-                Text(atx: "Quarantine apps")
+            Group {
+                Toggle(isOn: $caskManager.quarantineCasks) {
+                    Text(atx: "Quarantine apps")
+                }
+                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+
+                Toggle(isOn: $caskManager.forceInstallCasks) {
+                    Text(atx: "Install overwrites pre-existing Cask apps")
+                }
+                    .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
             }
-                .help(Text("Marks apps installed with homebrew cask as being _quarantined_, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+            .disabled(caskManager.enableHomebrew == false)
 
-            Toggle(isOn: $caskManager.forceInstallCasks) {
-                Text(atx: "Install overwrites pre-existing Cask apps")
+
+            GroupBox {
+                VStack {
+                    if false, let _ = installedVersion {
+                        Text("Check for Homebrew updates")
+                            .button {
+                                do {
+                                    // check for updates
+                                    try await caskManager.manageInstallation(install: false)
+                                } catch {
+                                    fairManager.appManager.reportError(error)
+                                }
+                            }
+
+                        Text("""
+                            Launches Terminal.app and issues the command:
+
+                              `brew update`
+                            """)
+                            .frame(minHeight: 50, alignment: .top)
+                            .textSelection(.enabled)
+                    } else {
+                        Text("Install Homebrew")
+                            .button {
+                                do {
+                                    try await caskManager.manageInstallation(install: true)
+                                } catch {
+                                    fairManager.appManager.reportError(error)
+                                }
+                            }
+
+                        Text("""
+                            Launches Terminal.app and issues the command:
+
+                              `\(CaskManager.installCommand)`
+                            """)
+                            .frame(minHeight: 50, alignment: .top)
+                            .textSelection(.enabled)
+                    }
+
+                }
+                .padding()
             }
-                .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
-
 
             Text("""
-                Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
-
-                Read more at [`https://brew.sh`](https://brew.sh/)
-                """)
+            Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+            """)
                 .font(.body)
                 .multilineTextAlignment(.leading)
-                .frame(minHeight: 90, alignment: .top)
+                .frame(minHeight: 110, alignment: .top)
+                .padding()
+
+
+            Text("Read more at https://brew.sh")
+                .link(to: URL(string: "https://brew.sh/"))
+
         }
     }
 }

@@ -1,4 +1,5 @@
 import FairApp
+import Foundation
 
 
 
@@ -52,26 +53,38 @@ extension InstallationManager where Self : CaskManager {
     /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
     ///
     /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
-    static var brewInstallRoot: URL { URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local") }
-
-    /// The path to the `homebrew` command
-    static var localBrewCommand: URL {
-        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
-    }
+    /// var brewInstallRoot: URL { URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local") }
 
     /// Installation is check simply by seeing if the brew install root exists.
     /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
-    static var isHomebrewInstalled: Bool {
-        FileManager.default.isExecutableFile(atPath: localBrewCommand.path)
+    static func isHomebrewInstalled(at brewInstallRoot: URL) -> Bool {
+        FileManager.default.isExecutableFile(atPath: brewCommand(at: brewInstallRoot).path)
     }
 
+    static var defaultBrewPath: URL {
+        URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
+    }
+
+    static func brewCommand(at brewInstallRoot: URL) -> URL {
+        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+    }
 }
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject, InstallationManager {
     /// Whether to allow Homebrew Cask installation
-    @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled
+    @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled(at: CaskManager.defaultBrewPath) {
+        didSet {
+            Task {
+                // whenever the enableHomebrew setting is changed, perform a scan of the casks
+                try await refreshAll(whenEnabled: true)
+            }
+        }
+    }
+
+    /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
+    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.defaultBrewPath
 
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
@@ -96,11 +109,14 @@ extension InstallationManager where Self : CaskManager {
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
-    // private static let installCommand = #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"#
+    /// The recommended install script from https://brew.sh
+    static let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
+
+    /// The recommended install command from https://brew.sh
+    static let installCommand = "/bin/bash -c \"$(curl -fsSL \(CaskManager.installScript.absoluteString))\""
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
-
 
     private static let endpoint = URL(string: "https://formulae.brew.sh/api/")!
 
@@ -117,8 +133,32 @@ extension InstallationManager where Self : CaskManager {
     }
 
     /// The path where cask metadata and links are stored
-    static var localCaskroom: URL {
+    var localCaskroom: URL {
         URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
+    }
+
+    /// Whether the configured location is installed
+    func isInstalled() -> Bool {
+        FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
+    }
+
+    /// Returns the currently installed version of Homebrew, simply by scanning the git tags folder and using the most recent element.
+    ///
+    /// For example, `3.1.7` will be returned for the latest tag: `"/opt/homebrew/./.git/refs/tags/3.1.7"`
+    func installedBrewVersion() throws -> (version: String, updated: Date)? {
+        // from brew.sh:
+        // HOMEBREW_VERSION="$("${HOMEBREW_GIT}" -C "${HOMEBREW_REPOSITORY}" describe --tags --dirty --abbrev=7 2>/dev/null)"
+
+        // we just scan the git tags folder manually and use the latest one
+        // e.g.: "/opt/homebrew/./.git/refs/tags/3.1.7"
+        let tagsFolder = URL(fileURLWithPath: ".git/refs/tags", relativeTo: brewInstallRoot)
+        let children = try tagsFolder.fileChildren(deep: false, skipHidden: true, keys: [.contentModificationDateKey])
+        if let mostRecent = children.sorting(by: \.contentModificationDateKey).last {
+            return (mostRecent.lastPathComponent, mostRecent.modificationDate ?? .distantPast)
+        } else {
+            // no child folder elements
+            return nil
+        }
     }
 
     static let `default`: CaskManager = CaskManager()
@@ -126,11 +166,18 @@ extension InstallationManager where Self : CaskManager {
     private var fsobserver: FileSystemObserver? = nil
 
     internal init() {
-        if Self.isHomebrewInstalled == true &&
-            FileManager.default.isDirectory(url: Self.localCaskroom) == true {
+        setupBrewObserver()
+    }
+
+    func setupBrewObserver() {
+        if Self.isHomebrewInstalled(at: self.brewInstallRoot) == true &&
+            FileManager.default.isDirectory(url: self.localCaskroom) == true {
+
+            dbg("checking brew observer for:", try? self.installedBrewVersion()?.version)
+
             // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
-            self.fsobserver = FileSystemObserver(URL: Self.localCaskroom, queue: .main) {
-                dbg("changes detected in cask folder:", Self.localCaskroom.path)
+            self.fsobserver = FileSystemObserver(URL: self.localCaskroom, queue: .main) {
+                dbg("changes detected in cask folder:", self.localCaskroom.path)
                 // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
                 for delay in [0, 1, 5] {
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
@@ -142,9 +189,19 @@ extension InstallationManager where Self : CaskManager {
 
     }
 
-    func refreshAll() async throws {
-        async let a1: Void = fetchCasks()
-        async let a2: Void = fetchStats()
+    /// The path to the `homebrew` command
+    var localBrewCommand: URL {
+        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+    }
+
+    /// Fetch the available casks and stats, and integrate them with the locally-installed casks
+    func refreshAll(whenEnabled: Bool) async throws {
+        if whenEnabled == true && enableHomebrew == false {
+            dbg("skipping cask refresh because not isEnabled")
+            return
+        }
+        async let a1: Void = try fetchCasks()
+        async let a2: Void = try fetchStats()
         async let a3 = Task { try await scanInstalledCasks() }
         let (_, _, _) = try await (a1, a2, a3) // execute them all at the same time
     }
@@ -154,8 +211,9 @@ extension InstallationManager where Self : CaskManager {
         dbg("loading cask list")
         let url = Self.caskList
         let data = try await URLRequest(url: url).fetch()
-        dbg("loaded cask list", data.count.localizedByteCount(), "from url:", url)
+        dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
         self.casks = try Array<CaskItem>(json: data)
+        dbg("loaded", self.casks.count, "casks")
     }
 
     /// Fetches the cask stats and populates it in the `stats` property
@@ -183,7 +241,7 @@ extension InstallationManager where Self : CaskManager {
 
         var tokenVersions: [CaskItem.ID: Set<String>] = [:]
 
-        let dir = Self.localCaskroom
+        let dir = self.localCaskroom
         if fm.isDirectory(url: dir) == true {
             for caskFolder in try dir.fileChildren(deep: false, skipHidden: true) {
                 let dirName = caskFolder.lastPathComponent // the name of the file is the token
@@ -208,14 +266,59 @@ extension InstallationManager where Self : CaskManager {
         self.installedCasks = tokenVersions
     }
 
-    func run(command: String, toolName: String, askPassAppInfo: AppCatalogItem? = nil) throws -> String {
+    /// Performs a homebrew installation action by launching a Terminal.app window and issuing a shell command.
+    func manageInstallation(install: Bool, downloadInstallerScript: Bool = true) async throws {
+
+        let cacheFolder = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+
+        let cmdFile = URL(fileURLWithPath: "homebrew-" + (install ? "installer" : "updater"), relativeTo: cacheFolder).appendingPathExtension("sh")
+
+        if install == true {
+            if downloadInstallerScript {
+                // download the installer script directly and execute it; perhaps a little safer than forking `curl`
+                let scriptData = try await URLRequest(url: Self.installScript).fetch()
+                try scriptData.write(to: cmdFile)
+            } else {
+                let cmd = Self.installCommand
+                try (cmd + "\n").write(to: cmdFile, atomically: true, encoding: .utf8)
+            }
+        } else { // update
+            let cmd = self.localBrewCommand.path + " update"
+            try (cmd + "\n").write(to: cmdFile, atomically: true, encoding: .utf8)
+        }
+
+        try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: cmdFile.path) // set the executable bit
+
+        // (echo 'tell application "com.apple.Terminal"'; echo ' do script("echo hello")'; echo 'end tell') | osascript
+        let scriptFile = URL.tmpdir.appendingPathComponent("homebrew-script").appendingPathExtension("scpt")
+
+        // we might like "with administrator privileges" for the initial install, but it doesn't seem to work with tell to the terminal
+        let script = """
+        tell application "Terminal"
+            activate
+            do script("\(cmdFile.path)")
+        end tell
+        """
+        dbg("running script:", script)
+        
+        try script.write(to: scriptFile, atomically: false, encoding: .utf8)
+
+        defer { try? FileManager.default.removeItem(at: scriptFile) }
+
+        dbg("wrote to:", scriptFile.path)
+        let task = try NSUserAppleScriptTask(url: scriptFile)
+        let desc: NSAppleEventDescriptor = try await task.execute(withAppleEvent: nil)
+        dbg("executed:", desc)
+    }
+
+    func run(command: String, toolName: String, askPassAppInfo: AppCatalogItem? = nil) async throws -> String {
+
         // without SUDO_ASKPASS, priviedged operations can fail with: sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
         // sudo: a password is required
         // Error: Failure while executing; `/usr/bin/sudo -E -- /bin/rm -f -- /Library/LaunchDaemons/com.microsoft.autoupdate.helper.plist` exited with 1. Here's the output:
         // sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
 
         // from https://github.com/Homebrew/homebrew-cask/issues/77258#issuecomment-588552316
-
         var cmd = command
         var scpt: URL? = nil
 
@@ -252,30 +355,40 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
-        dbg("performing command:", cmd)
-        do {
-            guard let result = try NSAppleScript.fork(command: cmd) else {
-                throw AppError("No output from brew command")
+        // TODO: user async/await with NSUserAppleScriptTask (or NSUserUnixTask)
+        let scriptURL: URL? = nil // write out the script here and execute it
+        if let scriptURL = scriptURL {
+            //let task = try NSUserAppleScriptTask(url: scriptURL)
+            let task = try NSUserUnixTask(url: scriptURL)
+            try await task.execute(withArguments: [])
+            let response = task.standardOutput?.availableData
+            return response?.utf8String ?? ""
+        } else {
+            dbg("performing command:", cmd)
+            do {
+                guard let result = try NSAppleScript.fork(command: cmd) else {
+                    throw AppError("No output from brew command")
+                }
+
+                dbg("command output:", result)
+
+                return result
+            } catch {
+                dbg("error performing command:", cmd, error)
+                throw error
             }
-
-            dbg("command output:", result)
-
-            return result
-        } catch {
-            dbg("error performing command:", cmd, error)
-            throw error
         }
     }
 
     /// Processes the installed apps (too slow)
     @available(*, deprecated, message: "")
-    func refreshInstalledApps() throws {
+    func refreshInstalledApps() async throws {
         dbg("loading installed casks")
         // outputs the installed apps list
 
         // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
-        let cmd = Self.localBrewCommand.path + " info --quiet --installed --json=v2 --casks"
-        let json = try run(command: cmd, toolName: .init("refresher"))
+        let cmd = self.localBrewCommand.path + " info --quiet --installed --json=v2 --casks"
+        let json = try await run(command: cmd, toolName: .init("refresher"))
 
         struct BrewInstallOutput : Decodable {
             // var formulae: [Formulae] // unused but seems to always be included
@@ -404,7 +517,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
          🍺  sf-symbols was successfully installed!
          ```
          */
-        var cmd = Self.localBrewCommand.path
+        var cmd = self.localBrewCommand.path
         let op = update ? "upgrade" : "reinstall"
         cmd += " " + op
         if force { cmd += " --force" }
@@ -415,20 +528,20 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd += " --no-quarantine"
         }
         cmd += " --casks " + item.id.rawValue
-        let result = try run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
+        let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
         dbg("result:", result)
     }
 
     func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = true, verbose: Bool = true) async throws {
         dbg(item.id)
-        var cmd = Self.localBrewCommand.path
+        var cmd = localBrewCommand.path
         let op = "remove"
         cmd += " " + op
         if force { cmd += " --force" }
         if verbose { cmd += " --verbose" }
         if zap { cmd += " --zap" }
         cmd += " --casks " + item.id.rawValue
-        let result = try run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: item)
+        let result = try await run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: item)
         dbg("result:", result)
     }
 
@@ -443,7 +556,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
     func installPath(for item: AppCatalogItem) throws -> URL? {
         let token = item.bundleIdentifier.caskToken ?? ""
-        let caskDir = URL(fileURLWithPath: token, relativeTo: Self.localCaskroom)
+        let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) != true {
             dbg("not a folder:", versionDir)
