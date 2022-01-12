@@ -25,6 +25,10 @@ struct CatalogItemView: View {
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
+    @State private var caskSummary: String? = nil
+    @State private var caskURLFileSize: Int64? = nil
+    @State private var caskURLModifiedDate: Date? = nil
+
     @State private var previewScreenshot: URL? = nil
 
     private var currentOperation: CatalogOperation? {
@@ -60,29 +64,17 @@ struct CatalogItemView: View {
     #endif
 
     var body: some View {
-        if item.isCask == true {
-            // we don't have much useful information about casks, so just show a preview of the web page
-            VStack {
-                headerView()
-
-                Text("No Preview Available")
-                    .font(.title)
-                    .foregroundColor(.secondary)
-                    .vcenter()
-
-                // crashes!
-                //if let authorPage = item.developerURL {
-                    //FairBrowser(url: .constant(authorPage))
-                //}
+        catalogGrid()
+            .onAppear {
+                // transfer the progress so we can watch the operation
+                progress.progress = currentOperation?.progress ?? progress.progress
             }
-        } else {
-            catalogGrid()
-                .onAppear {
-                    // transfer the progress so we can watch the operation
-                    progress.progress = currentOperation?.progress ?? progress.progress
-                }
-        }
     }
+
+    var warningImage: some View {
+        FairSymbol.exclamationmark_triangle_fill.image.symbolRenderingMode(.multicolor)
+    }
+
 
     func headerView() -> some View {
         pinnedHeaderView()
@@ -136,7 +128,8 @@ struct CatalogItemView: View {
         summarySegment {
             card(
                 Text("Downloads"),
-                numberView(number: .decimal, \.downloadCount),
+                numberView(number: .decimal, \.downloadCount)
+                    .help(info.isCask ? Text("The number of downloads of this cask in the past 90 days") : Text("The total number of downloads for this release")),
                 histogramView(\.downloadCount)
             )
         }
@@ -146,9 +139,28 @@ struct CatalogItemView: View {
         summarySegment {
             card(
                 Text("Size"),
-                numberView(size: .file, \.fileSize),
+                downloadSizeView(),
                 histogramView(\.fileSize)
             )
+        }
+    }
+
+    func downloadSizeView() -> some View {
+        Group {
+            if info.isCask {
+                if let caskURLFileSize = caskURLFileSize {
+                    numberView(size: .file, value: Int(caskURLFileSize))
+                } else {
+                    // show the card view with an empty file size
+                    Text("Unknown")
+                        .redacted(reason: .placeholder)
+                        .task {
+                            await fetchDownloadURLStats()
+                        }
+                }
+            } else {
+                numberView(size: .file, \.fileSize)
+            }
         }
     }
 
@@ -186,15 +198,60 @@ struct CatalogItemView: View {
         summarySegment {
             card(
                 Text("Updated"),
-                Text(info.release.versionDate ?? Date(), format: .relative(presentation: .numeric, unitsStyle: .abbreviated)),
+                releaseDateView(),
                 histogramView(\.issueCount)
             )
+        }
+    }
+
+    func releaseDateView() -> some View {
+        Group {
+            if let date = item.versionDate ?? self.caskURLModifiedDate {
+                Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
+            } else {
+                Text("Unknown")
+                    .redacted(reason: .placeholder)
+            }
+        }
+    }
+
+
+    private func fetchCaskSummary() async {
+        if let cask = self.info.cask, self.caskSummary == nil, let url = cask.metadataURL {
+            // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
+            do {
+                dbg("checking cask summary:", url.absoluteString)
+                let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData))
+                self.caskSummary = metadata.data.utf8String
+            } catch {
+                // errors are not unexpected when the user leaves this view:
+                // NSURLErrorDomain Code=-999 "cancelled"
+                dbg("error checking cask metadata:", url.absoluteString, "error:", error)
+            }
+        }
+    }
+
+    private func fetchDownloadURLStats() async {
+        if caskManager.manageDownloads == true {
+            do {
+                dbg("checking URL HEAD:", item.downloadURL.absoluteString)
+                let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
+                self.caskURLFileSize = head.expectedContentLength
+                self.caskURLModifiedDate = head.lastModifiedDate
+                dbg("URL HEAD:", item.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize)
+
+            } catch {
+                // errors are not unexpected when the user leaves this view:
+                // NSURLErrorDomain Code=-999 "cancelled"
+                dbg("error checking URL size:", item.downloadURL.absoluteString, "error:", error)
+            }
         }
     }
 
     func catalogSummaryCards() -> some View {
         HStack(alignment: .center) {
             starsCard()
+                .opacity(info.isCask ? 0.0 : 1.0)
             Divider()
             releaseDateCard()
             Divider()
@@ -203,49 +260,108 @@ struct CatalogItemView: View {
             sizeCard()
             Divider()
             issuesCard()
+                .opacity(info.isCask ? 0.0 : 1.0)
             //watchersCard()
         }
-        .frame(height: 54)
+        //.frame(height: 54)
     }
 
-    func linkTextField(_ title: Text, icon: String, url: URL, linkText: String? = nil) -> some View {
-        TextField(text: .constant(linkText ?? url.absoluteString)) {
+    func linkTextField(_ title: Text, icon: String, url: URL?, linkText: String? = nil) -> some View {
+        // the text winds up being un-aligned vertically when rendered like this
+        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
             title
                 .label(symbol: icon)
                 .labelStyle(.titleAndIconFlipped)
                 .link(to: url)
-                .font(Font.body)
+                //.font(Font.body)
         }
+        .textFieldStyle(.roundedBorder)
+
+
+//        HStack {
+//
+//            TextField(text: .constant("")) {
+//                title
+//                    .label(symbol: icon)
+//                    .labelStyle(.titleAndIconFlipped)
+//                    .link(to: url)
+//                    .font(Font.body)
+//            }
+//            Text(linkText ?? url.absoluteString)
+//                .font(Font.body.monospaced())
+//                .truncationMode(.middle)
+//                .textSelection(.enabled)
+//        }
+
+//        TextField(text: .constant(linkText ?? url.absoluteString)) {
+//            title
+//                .label(symbol: icon)
+//                .labelStyle(.titleAndIconFlipped)
+//                .link(to: url)
+//                .font(Font.body)
+//        }
+
+
     }
 
     func detailsView() -> some View {
         ScrollView {
             Form {
-                if let discussionsURL = info.release.discussionsURL {
-                    linkTextField(Text("Discussions"), icon: "text.bubble", url: discussionsURL)
-                        .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
-                }
-                if let issuesURL = info.release.issuesURL {
-                    linkTextField(Text("Issues"), icon: "checklist", url: issuesURL)
-                        .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)"))
-                }
-                if let sourceURL = info.release.sourceURL {
-                    linkTextField(Text("Source"), icon: "chevron.left.forwardslash.chevron.right", url: sourceURL)
-                        .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)"))
-                }
-                if let fairsealURL = info.release.fairsealURL {
-                    linkTextField(Text("Fairseal"), icon: "rosette", url: fairsealURL, linkText: String(info.release.sha256 ?? ""))
-                        .help(Text("Lookup fairseal at: \(info.release.fairsealURL?.absoluteString ?? "")"))
-                }
-                if let developerURL = info.release.developerURL {
-                    linkTextField(Text("Developer"), icon: "person", url: developerURL, linkText: item.developerName)
-                        .help(Text("Searches for this developer at: \(info.release.developerURL?.absoluteString ?? "")"))
+                if let cask = info.cask {
+                    if let page = cask.homepage, let homepage = URL(string: page) {
+                        linkTextField(Text("Homepage"), icon: FairSymbol.house.symbolName, url: homepage)
+                            .help(Text("Opens link to the home page for this app at: \(homepage.absoluteString)"))
+                    }
+
+                    if let downloadURL = cask.url, let downloadURL = URL(string: downloadURL) {
+                        linkTextField(Text("Download"), icon: FairSymbol.arrow_down_circle.symbolName, url: downloadURL)
+                            .help(Text("Opens link to the direct download for this app at: \(downloadURL.absoluteString)"))
+                    }
+
+                    if let appcast = cask.appcast, let appcast = URL(string: appcast) {
+                        linkTextField(Text("Appcast"), icon: FairSymbol.house.symbolName, url: appcast)
+                            .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)"))
+                    }
+
+                    if let sha256 = cask.sha256 {
+                        linkTextField(Text("SHA256"), icon: FairSymbol.rosette.symbolName, url: URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
+                            .help(Text("The SHA-256 checksum for the app download"))
+                    }
+
+                    if let tapToken = cask.tapToken, let tapURL = cask.tapURL {
+                        linkTextField(Text("Cask Token"), icon: FairSymbol.sparkles_rectangle_stack_fill.symbolName, url: tapURL, linkText: tapToken)
+                            .help(Text("The page for the Homebrew Cask token"))
+                    }
+
+                    linkTextField(Text("Auto-Updates"), icon: FairSymbol.sparkle.symbolName, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
+                        .help(Text("Whether this app handles updating itself"))
+
+                } else {
+                    if let discussionsURL = info.release.discussionsURL {
+                        linkTextField(Text("Discussions"), icon: FairSymbol.text_bubble.symbolName, url: discussionsURL)
+                            .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
+                    }
+                    if let issuesURL = info.release.issuesURL {
+                        linkTextField(Text("Issues"), icon: FairSymbol.checklist.symbolName, url: issuesURL)
+                            .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)"))
+                    }
+                    if let sourceURL = info.release.sourceURL {
+                        linkTextField(Text("Source"), icon: FairSymbol.chevron_left_forwardslash_chevron_right.symbolName, url: sourceURL)
+                            .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)"))
+                    }
+                    if let fairsealURL = info.release.fairsealURL {
+                        linkTextField(Text("Fairseal"), icon: FairSymbol.rosette.symbolName, url: fairsealURL, linkText: String(info.release.sha256 ?? ""))
+                            .help(Text("Lookup fairseal at: \(info.release.fairsealURL?.absoluteString ?? "")"))
+                    }
+                    if let developerURL = info.release.developerURL {
+                        linkTextField(Text("Developer"), icon: FairSymbol.person.symbolName, url: developerURL, linkText: item.developerName)
+                            .help(Text("Searches for this developer at: \(info.release.developerURL?.absoluteString ?? "")"))
+                    }
                 }
             }
-            .symbolRenderingMode(SymbolRenderingMode.multicolor)
-            .font(Font.body.monospaced())
-            .textFieldStyle(.plain)
-            .truncationMode(.middle)
+            .symbolRenderingMode(SymbolRenderingMode.hierarchical)
+            //.font(Font.body.monospaced())
+            //.textFieldStyle(.plain)
         }
     }
 
@@ -275,67 +391,114 @@ struct CatalogItemView: View {
                     ScrollView(.horizontal) {
                         previewView()
                     }
-                    .frame(height: 300)
+                    .frame(height: 200)
+                    .overlay(Group {
+                        if info.isCask {
+                            Text("Screenshots unavailable for Homebrew Casks")
+                                .label(image: warningImage)
+                                .font(Font.callout)
+                                .help(Text("Screenshots are not available for Homebrew Casks"))
+                        }
+                    })
                 }
             }
+        }
+    }
+
+    func descriptionSection() -> some View {
+        groupBox(title: info.isCask ? Text("Cask Info") : Text("App Summary"), trailing: EmptyView()) {
+            ScrollView {
+                Group {
+                    if let cask = info.cask {
+                        caskSummary(cask)
+                            .font(Font.body.monospaced())
+                    } else {
+                        readmeSummary()
+                            .font(Font.body)
+                    }
+                }
+                    .textSelection(.enabled)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: .infinity)
+        }
+    }
+
+    func releaseVersionView() -> Text? {
+        if let versionDate = info.release.versionDate ?? self.caskURLModifiedDate {
+            return Text(versionDate, format: .dateTime)
+        } else {
+            return nil
         }
     }
 
     func catalogColumns() -> some View {
         HStack {
             VStack {
-                groupBox(title: Text("Description"), trailing: EmptyView()) {
-                    ScrollView {
-                        descriptionSummary()
-                            .font(.body)
-                            .textSelection(.enabled)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(maxHeight: .infinity)
-                }
-                .frame(height: 150)
+                descriptionSection()
+                    .frame(height: 120)
 
-                groupBox(title: Text("Version: ") + Text(verbatim: info.releasedVersion?.versionStringExtended ?? ""), trailing: Text(info.release.versionDate ?? .distantPast, format: .dateTime)) {
+                groupBox(title: Text("Version: ") + Text(verbatim: item.version ?? ""), trailing: releaseVersionView()) {
                     ScrollView {
                         versionSummary()
                     }
                     .frame(maxHeight: .infinity)
                 }
-                .frame(height: 150)
+                .frame(height: 120)
             }
 
             VStack(alignment: .leading) {
                 groupBox(title: Text("Details"), trailing: EmptyView()) {
                     detailsView()
                 }
-                .frame(height: 150)
+                .frame(height: 110)
 
-                groupBox(title: Text("Permissions: ") + item.riskLevel.textLabel().fontWeight(.regular), trailing: item.riskLevel.riskLabel()
+                let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
+
+                groupBox(title: riskLabel, trailing: item.riskLevel.riskLabel()
                             .help(item.riskLevel.riskSummaryText())
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
                     permissionsList()
                 }
-                .frame(height: 150)
+                .frame(height: 110)
+                .overlay(Group {
+                    if info.isCask {
+                        Text("Risk assessment unavailable for Homebrew Casks")
+                            .label(image: warningImage)
+                            .font(Font.callout)
+                            .help(Text("Risk assessment is only available for App Fair Fairground apps"))
+                    }
+                })
             }
         }
     }
 
     func versionSummary() -> some View {
-        Text(atx: self.info.release.versionDescription ?? "")
+        // casks don't report their versions, so instead we use any caveats in the metadata
+        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
+        return Text(atx: desc ?? "")
             .font(.body)
             .textSelection(.enabled)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder func descriptionSummary() -> some View {
-        if let readme = self.appManager.readme(for: self.info.release) {
-            Text(readme)
-        } else {
-            Text("Loading README…")
-        }
+    @ViewBuilder func caskSummary(_ cask: CaskItem) -> some View {
+        Text(self.caskSummary ?? "")
+            .task {
+                await fetchCaskSummary()
+            }
+            .font(Font.body.monospacedDigit())
+            .redacting(when: self.caskSummary == nil)
+    }
+
+
+    @ViewBuilder func readmeSummary() -> some View {
+        let readme = self.appManager.readme(for: self.info.release)
+        Text(readme ?? "")
+            .redacting(when: readme == nil)
     }
 
     func permissionListItem(permission: AppPermission) -> some View {
@@ -394,7 +557,6 @@ struct CatalogItemView: View {
         } content: {
             screenshotPreview()
         }
-
     }
 
     func screenshotPreview() -> some View {
@@ -443,7 +605,10 @@ struct CatalogItemView: View {
     }
 
     func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, _ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        let value = info.release[keyPath: path]
+        numberView(number: numberStyle, size: sizeStyle, value: info.release[keyPath: path])
+    }
+
+    func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, value: Int?) -> some View {
         if let value = value {
             if let sizeStyle = sizeStyle {
                 return Text(Int64(value), format: .byteCount(style: sizeStyle))
@@ -456,8 +621,8 @@ struct CatalogItemView: View {
     }
 
     /// Show a histogram of where the given value lies in the context of other apps in the grouping (TODO)
-    func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        EmptyView()
+    func histogramView(_ path: KeyPath<AppCatalogItem, Int?>) -> EmptyView? {
+        nil
         //FairSymbol.chart_bar_xaxis.image.resizable()
     }
 
@@ -541,8 +706,8 @@ struct CatalogItemView: View {
                 Text("Download & Install \(info.release.name)").button {
                     runTask(activity: .install, confirm: true)
                 }
-                if info.release.isCask {
-                    if let homepage = info.release.caskHomepage {
+                if let cask = info.cask {
+                    if let page = cask.homepage, let homepage = URL(string: page) {
                         (Text("Visit Homepage: ") + Text(homepage.host ?? "")).button {
                             openURLAction(homepage)
                         }
@@ -599,7 +764,7 @@ struct CatalogItemView: View {
     }
 
     func installMessage() -> some View {
-        if info.release.isCask {
+        if info.isCask {
             return Text(atx: """
                 This will use Homebrew to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
 
@@ -659,7 +824,7 @@ struct CatalogItemView: View {
     /// Whether the app is successfully installed
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
-        if info.release.isCask {
+        if info.isCask {
             return caskManager.installedCasks[info.id.rawValue]?.isEmpty == false
         }
 
@@ -669,7 +834,7 @@ struct CatalogItemView: View {
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
-        if info.release.isCask {
+        if info.isCask {
             let versions = caskManager.installedCasks[info.id.rawValue] ?? []
             return info.release.version.flatMap(versions.contains) != true
         }
@@ -768,7 +933,7 @@ struct CatalogItemView: View {
 
         // check for installed caches
         /* // this is called on every body update, so we should cache it in the caskManager 
-        if item.isCask == true, let img = caskManager.icon(for: item) {
+        if info.isCask == true, let img = caskManager.icon(for: item) {
             img.resizable().aspectRatio(contentMode: .fit)
         } else {
             item.iconImage()
@@ -789,14 +954,14 @@ struct CatalogItemView: View {
             .foregroundColor(.secondary)
     }
 
-    func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3) -> some View {
+    func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3?) -> some View {
         VStack(alignment: .center) {
             s1
                 .textCase(.uppercase)
                 .font(.system(size: 11, weight: .bold, design: .default))
             s2
                 .font(.system(size: 20, weight: .heavy, design: .rounded))
-            s3
+            s3?
                 .padding(.horizontal)
         }
         .foregroundColor(.secondary)
@@ -811,7 +976,7 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         await appManager.trying {
-            if item.isCask == true {
+            if info.isCask == true {
                 try await caskManager.install(item: item, progress: startProgress(), update: false)
             } else {
                 try await appManager.install(item: item, progress: startProgress(), update: false)
@@ -821,7 +986,7 @@ struct CatalogItemView: View {
 
     func launchButtonTapped() async {
         dbg("launchButtonTapped")
-        if item.isCask == true {
+        if info.isCask == true {
             await fairManager.trying {
                 try await caskManager.launch(item: item)
             }
@@ -833,7 +998,7 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         await appManager.trying {
-            if item.isCask == true {
+            if info.isCask == true {
                 try await caskManager.install(item: item, progress: startProgress(), update: true)
             } else {
                 try await appManager.install(item: item, progress: startProgress(), update: true)
@@ -843,7 +1008,7 @@ struct CatalogItemView: View {
 
     func revealButtonTapped() async {
         dbg("revealButtonTapped")
-        if item.isCask == true {
+        if info.isCask == true {
             await fairManager.trying {
                 try await caskManager.reveal(item: item)
             }
@@ -854,7 +1019,7 @@ struct CatalogItemView: View {
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
-        if item.isCask == true {
+        if info.isCask == true {
             return await fairManager.trying {
                 try await caskManager.delete(item: item)
             }
@@ -880,7 +1045,6 @@ private extension CatalogActivity {
         }
     }
 }
-
 
 extension AppCatalogItem {
     @ViewBuilder func iconImage() -> some View {

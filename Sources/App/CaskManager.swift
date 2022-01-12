@@ -4,20 +4,6 @@ import Foundation
 
 
 extension AppCatalogItem {
-
-    /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
-    var isCask: Bool {
-        bundleIdentifier.isCaskApp
-        //starCount == nil && forkCount == nil && versionDate == nil
-    }
-
-    /// The home page for this cask
-    var caskHomepage: URL? {
-        guard isCask else { return nil }
-        // developerName is overloaded as the URL
-        return URL(string: developerName)
-    }
-
     /// The basename of the local cache file for this item's download URL
     fileprivate var cacheBasePath: String {
         let url = self.downloadURL
@@ -93,7 +79,7 @@ extension InstallationManager where Self : CaskManager {
     @AppStorage("forceInstallCasks") var forceInstallCasks = false
 
     /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
-    @AppStorage("preCacheCasks") var preCacheCasks = true
+    @AppStorage("manageDownloads") var manageDownloads = true
 
     /// The arranged list of app info items
     @Published private(set) var appInfos: [AppInfo] = []
@@ -108,12 +94,6 @@ extension InstallationManager where Self : CaskManager {
     @Published private(set) var stats: CaskStats? { didSet { updateAppInfo() } }
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
-
-    /// The recommended install script from https://brew.sh
-    static let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
-
-    /// The recommended install command from https://brew.sh
-    static let installCommand = "/bin/bash -c \"$(curl -fsSL \(CaskManager.installScript.absoluteString))\""
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
@@ -132,6 +112,11 @@ extension InstallationManager where Self : CaskManager {
         URL(string: "cask-source/\(name).rb", relativeTo: endpoint)!
     }
 
+    /// The home installation path for homebrew.
+    var brewHome: URL {
+        ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
+    }
+
     /// The path where cask metadata and links are stored
     var localCaskroom: URL {
         URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
@@ -140,11 +125,6 @@ extension InstallationManager where Self : CaskManager {
     /// Whether the configured location is installed
     func isInstalled() -> Bool {
         FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
-    }
-
-    /// The home installation path for homebrew.
-    var brewHome: URL {
-        ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
     }
 
     /// Either `/opt/homebrew/.git` (ARM) or `/usr/local/Homebrew/.git` (Intel)
@@ -265,7 +245,7 @@ extension InstallationManager where Self : CaskManager {
                     .filter { fm.isDirectory(url: $0) == true }
                 var names = Set(subfiles.map(\.lastPathComponent)) // e.g.: .metadata, 94.0.1, 95.0.2
                 if names.remove(".metadata") != nil { // only handle folders with a metadata dir
-                    // TODO: how to handle non-homebrew (e.g., appfair/app) casks? All the taps seem to go into /opt/homebrew/Caskroom/, so there doesn't seem to be a way to distinguish between cask sources?
+                    // TODO: how to handle non-homebrew (e.g., appfair/app) casks? All the taps seem to go into /opt/homebrew/Caskroom/, so there doesn't seem to be a way to distinguish between different cask sources?
                     let token = "homebrew/cask/" + dirName
                     tokenVersions[token] = names
                 }
@@ -276,10 +256,17 @@ extension InstallationManager where Self : CaskManager {
         self.installedCasks = tokenVersions
     }
 
+    /// The recommended install script from https://brew.sh
+    private static let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
+
+    /// The recommended install command from https://brew.sh
+    static let installCommand = "/bin/bash -c \"$(curl -fsSL \(CaskManager.installScript.absoluteString))\""
+
     /// Performs a homebrew installation action by launching a Terminal.app window and issuing a shell command.
     func manageInstallation(install: Bool, downloadInstallerScript: Bool = true) async throws {
 
-        let cacheFolder = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let cacheFolder = try URL(fileURLWithPath: "appfair-homebrew", relativeTo: FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+        try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
 
         let cmdFile = URL(fileURLWithPath: "homebrew-" + (install ? "installer" : "updater"), relativeTo: cacheFolder).appendingPathExtension("sh")
 
@@ -289,6 +276,7 @@ extension InstallationManager where Self : CaskManager {
                 let scriptData = try await URLRequest(url: Self.installScript).fetch()
                 try scriptData.write(to: cmdFile)
             } else {
+                // otherwise use the complete download command, which uses `curl` to execute the script
                 let cmd = Self.installCommand
                 try (cmd + "\n").write(to: cmdFile, atomically: true, encoding: .utf8)
             }
@@ -300,20 +288,25 @@ extension InstallationManager where Self : CaskManager {
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: cmdFile.path) // set the executable bit
 
         // (echo 'tell application "com.apple.Terminal"'; echo ' do script("echo hello")'; echo 'end tell') | osascript
-        let scriptFile = URL.tmpdir.appendingPathComponent("homebrew-script").appendingPathExtension("scpt")
+        let scriptFile = URL(fileURLWithPath: "homebrew-script.scpt", relativeTo: cacheFolder)
 
-        // we might like "with administrator privileges" for the initial install, but it doesn't seem to work with tell to the terminal
+        // we might like "with administrator privileges" for the initial homebrew install, but it doesn't seem to work with tell to the terminal, so we would need to 
+        /// `do shell script \"\(command)\" with administrator privileges`
+
+        // otherwise, the script will prompt for sudo password if needed
+
         let script = """
         tell application "Terminal"
             activate
             do script("\(cmdFile.path)")
         end tell
         """
+
         dbg("running script:", script)
         
         try script.write(to: scriptFile, atomically: false, encoding: .utf8)
 
-        defer { try? FileManager.default.removeItem(at: scriptFile) }
+        // defer { try? FileManager.default.removeItem(at: scriptFile) }
 
         dbg("wrote to:", scriptFile.path)
         let task = try NSUserAppleScriptTask(url: scriptFile)
@@ -414,17 +407,17 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     /// - Parameters:
     ///   - item: the catalog item to install
     ///   - parentProgress: optional progress for reporting download progress
-    ///   - preCache: use the in-process downloader (which provides progress reporting and cancellation) rather than brew's downloader (which uses a `curl` command). This works by figuring out the cache file to which homebrew would have downloaded the file and placting it there. SHA-256 checksums will be validated both by the in-process downloader and then again by the brew command.
+    ///   - manageDownloads: use the in-process downloader (which provides progress reporting and cancellation) rather than brew's downloader (which uses a `curl` command). This works by figuring out the cache file to which homebrew would have downloaded the file and placting it there. SHA-256 checksums will be validated both by the in-process downloader and then again by the brew command.
     ///   - update: whether the action should be an update or an initial install
     ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
     ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
     ///   - verbose: whether to verbosely report progress
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, preCache: Bool? = nil, update: Bool = true, quarantine: Bool? = nil, force: Bool? = nil, verbose: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, quarantine: Bool? = nil, force: Bool? = nil, verbose: Bool = true) async throws {
         dbg(item.id)
 
         let quarantine = quarantine ?? self.quarantineCasks
         let force = force ?? self.forceInstallCasks
-        let preCache = preCache ?? self.preCacheCasks
+        let manageDownloads = manageDownloads ?? self.manageDownloads
 
         /**
          When we download maually, we fetch the artifact with a cancellable progress and validate the SHA256 hash
@@ -457,7 +450,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                 FileManager.default.isDirectory(url: $0) == true
             }
 
-        if preCache == true, let cacheDir = cacheDir {
+        if manageDownloads == true, let cacheDir = cacheDir {
             try Task.checkCancellation()
             // iterate through all the user cache directories (I've never seen more than one, but maybe it's possible)
             dbg("checking cache:", cacheDir.path)
@@ -479,7 +472,15 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
             //dbg("fetchExpectedContentLength:", size)
 
-            let (downloadedArtifact, _) = try await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
+            let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
+
+            if let expectedHash = item.sha256 {
+                let actualHash = downloadSha256.hex()
+                dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
+                if expectedHash != actualHash {
+                    throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
+                }
+            }
 
             // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
             // overwrite any previous cached version
@@ -705,7 +706,7 @@ extension CaskManager {
                     InfoPlistKey.CFBundleShortVersionString.rawValue: installed,
                 ])
             }
-            let info = AppInfo(release: item, installedPlist: plist)
+            let info = AppInfo(release: item, cask: cask, installedPlist: plist)
             infos.append(info)
         }
 
@@ -744,6 +745,7 @@ extension CaskManager {
         return txt.count < minimumSearchLength
         || item.release.name.localizedCaseInsensitiveContains(txt) == true
         || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
+        || item.cask?.homepage?.localizedCaseInsensitiveContains(txt) == true
         || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
         || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
     }
@@ -1008,5 +1010,24 @@ extension CaskItem : Identifiable {
         } else {
             return (tap ?? "") + "/" + full_token
         }
+    }
+
+    /// The URL that points to the Hub's spec for the token.
+    /// 
+    /// e.g.: homebrew/cask/iterm2 or appfair/app/bon-mot
+    var tapURL: URL? {
+        let parts = tapToken.split(separator: "/")
+        if parts.count == 3 {
+            let base = parts[0]
+            let cask = parts[1]
+            let token = parts[2]
+            return URL(string: "https://github.com/\(base)/\(base)-\(cask)/blob/HEAD/Casks/\(token).rb")
+        } else {
+            return nil
+        }
+    }
+
+    var metadataURL: URL? {
+        URL(string: "https://formulae.brew.sh/api/cask/\(token).json")
     }
 }

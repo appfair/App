@@ -1,0 +1,16 @@
+
+<div>
+Launch App: <a id="applink" href="appfair://app">App Name</a>
+</div>
+ 
+<script>
+    let appHash = window.location.hash;
+    //console.log("HASH", appHash);
+
+    if (typeof appHash === 'string') {    
+        let appName = appHash.substring(1);
+        document.getElementById("applink").innerHTML = appName;
+        document.getElementById("applink").href = "appfair://app/" + appName;
+    }
+</script>
+

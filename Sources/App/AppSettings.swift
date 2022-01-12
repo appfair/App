@@ -85,6 +85,11 @@ struct HomebrewSettingsView: View {
                     Text(atx: "Install overwrites pre-existing Cask apps")
                 }
                     .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
+
+                Toggle(isOn: $caskManager.manageDownloads) {
+                    Text(atx: "Preview download size")
+                }
+                    .help(Text("Whether to check the download size from the app itself. This will permit Cask installation to be monitored and cancelled from within the app."))
             }
             .disabled(caskManager.enableHomebrew == false)
 

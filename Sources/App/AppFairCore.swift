@@ -59,7 +59,13 @@ public extension AppSource {
 
 struct AppInfo : Identifiable, Equatable {
     var release: AppCatalogItem
+    var cask: CaskItem?
     var installedPlist: Plist?
+
+    /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
+    var isCask: Bool {
+        cask != nil
+    }
 
     /// The bundle ID of the selected app (e.g., "app.App-Name")
     var id: AppCatalogItem.ID {
@@ -308,6 +314,17 @@ public struct HelpButton : View {
         .buttonStyle(.bordered)
     }
 
+}
+
+extension View {
+    /// Redacts the view when the given condition is true
+    @ViewBuilder public func redacting(when condition: Bool) -> some View {
+        if condition {
+            self.redacted(reason: .placeholder)
+        } else {
+            self
+        }
+    }
 }
 
 public extension View {
