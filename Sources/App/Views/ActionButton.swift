@@ -27,6 +27,7 @@ struct ActionButtonStyle: ButtonStyle {
 
     private struct ActionButton: View {
         @Environment(\.isEnabled) var isEnabled
+        @State var hovering = false
 
         var defaultColor: Color = Color.white
         var highlightColor: Color = Color.accentColor
@@ -44,11 +45,14 @@ struct ActionButtonStyle: ButtonStyle {
                 .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
                 .frame(minWidth: 65)
                 .background(background(isPressed: configuration.isPressed))
+                .onHover(perform: { self.hovering = $0 })
                 .padding(1)
         }
 
         var internalColor: Color {
-            isEnabled ? (primary ? (highlighted ? highlightColor : defaultColor) : highlightColor) : (primary ? (highlighted ? disabledColor : defaultColor)  : (highlighted ? defaultColor : disabledColor))
+            isEnabled
+                ? (primary ? (highlighted ? highlightColor : defaultColor) : highlightColor)
+                : (primary ? (highlighted ? disabledColor : defaultColor)  : (highlighted ? defaultColor : disabledColor))
         }
 
         @ViewBuilder func background(isPressed: Bool) -> some View {
@@ -65,7 +69,7 @@ struct ActionButtonStyle: ButtonStyle {
                     Capsule().fill(highlighted ? defaultColor : disabledColor)
                 }
             }
-            .brightness(isPressed ? -0.25 : 0)
+            .brightness(isPressed ? -0.25 : hovering && isEnabled ? -0.10 : 0.0)
         }
     }
 }
