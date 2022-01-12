@@ -142,6 +142,16 @@ extension InstallationManager where Self : CaskManager {
         FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
     }
 
+    /// The home installation path for homebrew.
+    var brewHome: URL {
+        ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
+    }
+
+    /// Either `/opt/homebrew/.git` (ARM) or `/usr/local/Homebrew/.git` (Intel)
+    var brewGitFolder: URL? {
+        URL(fileURLWithPath: ".git", relativeTo: brewHome)
+    }
+
     /// Returns the currently installed version of Homebrew, simply by scanning the git tags folder and using the most recent element.
     ///
     /// For example, `3.1.7` will be returned for the latest tag: `"/opt/homebrew/./.git/refs/tags/3.1.7"`
@@ -151,7 +161,7 @@ extension InstallationManager where Self : CaskManager {
 
         // we just scan the git tags folder manually and use the latest one
         // e.g.: "/opt/homebrew/./.git/refs/tags/3.1.7"
-        let tagsFolder = URL(fileURLWithPath: ".git/refs/tags", relativeTo: brewInstallRoot)
+        let tagsFolder = URL(fileURLWithPath: "refs/tags", relativeTo: brewGitFolder)
         let children = try tagsFolder.fileChildren(deep: false, skipHidden: true, keys: [.contentModificationDateKey])
         if let mostRecent = children.sorting(by: \.contentModificationDateKey).last {
             return (mostRecent.lastPathComponent, mostRecent.modificationDate ?? .distantPast)

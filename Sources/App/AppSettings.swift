@@ -89,61 +89,60 @@ struct HomebrewSettingsView: View {
             .disabled(caskManager.enableHomebrew == false)
 
 
-            GroupBox {
-                VStack {
-                    if false, let _ = installedVersion {
-                        Text("Check for Homebrew updates")
-                            .button {
-                                do {
-                                    // check for updates
-                                    try await caskManager.manageInstallation(install: false)
-                                } catch {
-                                    fairManager.appManager.reportError(error)
+            Section {
+                GroupBox {
+                    VStack {
+                        if let _ = installedVersion {
+                            Text("Check for Homebrew updates")
+                                .button {
+                                    do {
+                                        // check for updates
+                                        try await caskManager.manageInstallation(install: false)
+                                    } catch {
+                                        fairManager.appManager.reportError(error)
+                                    }
                                 }
-                            }
 
-                        Text("""
-                            Launches Terminal.app and issues the command:
+                            Text("""
+                                Launches Terminal.app and issues the command:
 
-                              `brew update`
-                            """)
-                            .frame(minHeight: 50, alignment: .top)
-                            .textSelection(.enabled)
-                    } else {
-                        Text("Install Homebrew")
-                            .button {
-                                do {
-                                    try await caskManager.manageInstallation(install: true)
-                                } catch {
-                                    fairManager.appManager.reportError(error)
+                                  `brew update`
+                                """)
+                                .frame(minHeight: 50, alignment: .top)
+                                .textSelection(.enabled)
+                        } else {
+                            Text("Install Homebrew")
+                                .button {
+                                    do {
+                                        try await caskManager.manageInstallation(install: true)
+                                    } catch {
+                                        fairManager.appManager.reportError(error)
+                                    }
                                 }
-                            }
 
-                        Text("""
-                            Launches Terminal.app and issues the command:
+                            Text("""
+                                Launches Terminal.app and issues the command:
 
-                              `\(CaskManager.installCommand)`
-                            """)
-                            .frame(minHeight: 50, alignment: .top)
-                            .textSelection(.enabled)
+                                  `\(CaskManager.installCommand)`
+                                """)
+                                .frame(minHeight: 50, alignment: .top)
+                                .textSelection(.enabled)
+                        }
+
                     }
-
+                    .padding()
                 }
-                .padding()
+            } footer: {
+                Text("""
+                    Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+
+                      Read more at: [https://brew.sh](https://brew.sh)
+                      Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
+                    """)
+                    .multilineTextAlignment(.leading)
+                    .frame(minHeight: 130, alignment: .top)
+
             }
-
-            Text("""
-            Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
-            """)
-                .font(.body)
-                .multilineTextAlignment(.leading)
-                .frame(minHeight: 110, alignment: .top)
-                .padding()
-
-
-            Text("Read more at https://brew.sh")
-                .link(to: URL(string: "https://brew.sh/"))
-
         }
     }
 }
