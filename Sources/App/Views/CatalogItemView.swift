@@ -64,7 +64,7 @@ struct CatalogItemView: View {
     #endif
 
     var body: some View {
-        catalogGrid()
+        catalogStack()
             .onAppear {
                 // transfer the progress so we can watch the operation
                 progress.progress = currentOperation?.progress ?? progress.progress
@@ -86,6 +86,7 @@ struct CatalogItemView: View {
         VStack {
             headerView()
             catalogSummaryCards()
+                .frame(height: 50)
             Divider()
             catalogOverview()
         }
@@ -383,24 +384,22 @@ struct CatalogItemView: View {
     }
 
     func catalogOverview() -> some View {
-        LazyVStack {
-            Section {
-                catalogColumns()
-            } footer: {
-                groupBox(title: Text("Preview"), trailing: EmptyView()) {
-                    ScrollView(.horizontal) {
-                        previewView()
-                    }
-                    .frame(height: 200)
-                    .overlay(Group {
-                        if info.isCask {
-                            Text("Screenshots unavailable for Homebrew Casks")
-                                .label(image: warningImage)
-                                .font(Font.callout)
-                                .help(Text("Screenshots are not available for Homebrew Casks"))
-                        }
-                    })
+        VStack {
+            catalogColumns()
+            groupBox(title: Text("Preview"), trailing: EmptyView()) {
+                ScrollView(.horizontal) {
+                    previewView()
                 }
+                //.frame(maxHeight: .infinity)
+                .frame(height: catalogScreensHeight)
+                .overlay(Group {
+                    if info.isCask {
+                        Text("Screenshots unavailable for Homebrew Casks")
+                            .label(image: warningImage)
+                            .font(Font.callout)
+                            .help(Text("Screenshots are not available for Homebrew Casks"))
+                    }
+                })
             }
         }
     }
@@ -433,11 +432,15 @@ struct CatalogItemView: View {
         }
     }
 
+    let catalogTopHeight: CGFloat? = nil // 120
+    let catalogBottomHeight: CGFloat? = nil // 110
+    let catalogScreensHeight: CGFloat? = nil // 200
+
     func catalogColumns() -> some View {
         HStack {
             VStack {
                 descriptionSection()
-                    .frame(height: 120)
+                    .frame(height: catalogTopHeight)
 
                 groupBox(title: Text("Version: ") + Text(verbatim: item.version ?? ""), trailing: releaseVersionView()) {
                     ScrollView {
@@ -445,14 +448,14 @@ struct CatalogItemView: View {
                     }
                     .frame(maxHeight: .infinity)
                 }
-                .frame(height: 120)
+                .frame(height: catalogTopHeight)
             }
 
             VStack(alignment: .leading) {
                 groupBox(title: Text("Details"), trailing: EmptyView()) {
                     detailsView()
                 }
-                .frame(height: 110)
+                .frame(height: catalogBottomHeight)
 
                 let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
 
@@ -462,7 +465,7 @@ struct CatalogItemView: View {
                             .padding(.trailing)) {
                     permissionsList()
                 }
-                .frame(height: 110)
+                .frame(height: catalogBottomHeight)
                 .overlay(Group {
                     if info.isCask {
                         Text("Risk assessment unavailable for Homebrew Casks")
@@ -961,8 +964,10 @@ struct CatalogItemView: View {
                 .font(.system(size: 11, weight: .bold, design: .default))
             s2
                 .font(.system(size: 20, weight: .heavy, design: .rounded))
-            s3?
-                .padding(.horizontal)
+            if let s3 = s3 {
+                s3
+                    .padding(.horizontal)
+            }
         }
         .foregroundColor(.secondary)
     }
