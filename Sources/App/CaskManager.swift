@@ -3,35 +3,11 @@ import Foundation
 
 
 
-extension AppCatalogItem {
-    /// The basename of the local cache file for this item's download URL
-    fileprivate var cacheBasePath: String {
-        let url = self.downloadURL
-        let urlHash = url.absoluteString.utf8Data.sha256().hex()
-        let baseName = url.lastPathComponent
-        let cachePath = urlHash + "--" + baseName
-        return cachePath
-    }
-}
+/// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
+let minimumSearchLength = 1
 
-
-/// A unique identifier for a bundle. Note that this overloads the "BundleIdentifier" concept, which may make more sense
-typealias CaskIdentifier = BundleIdentifier
-
-extension CaskIdentifier {
-    /// Returns true if this is a homebrew cask (vs. a fairapp)
-    var isCaskApp: Bool {
-        rawValue.hasPrefix("homebrew/cask/")
-    }
-
-    var caskToken: String? {
-        if rawValue.hasPrefix("homebrew/cask/") {
-            return String(rawValue.dropFirst(14))
-        } else {
-            return nil
-        }
-    }
-}
+/// The minimum number of downloads for a Cask to be visible
+let caskDownloadThreshold = 100
 
 /// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
 extension InstallationManager where Self : CaskManager {
@@ -711,7 +687,9 @@ extension CaskManager {
         }
 
         
-        let sortedInfos = infos.sorted(using: self.sortOrder)
+        let sortedInfos = infos
+            .filter { ($0.release.downloadCount ?? 0) >= caskDownloadThreshold }
+            .sorted(using: self.sortOrder)
         //dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
 
         // avoid triggering unnecessary changes
@@ -1029,5 +1007,36 @@ extension CaskItem : Identifiable {
 
     var metadataURL: URL? {
         URL(string: "https://formulae.brew.sh/api/cask/\(token).json")
+    }
+}
+
+
+extension AppCatalogItem {
+    /// The basename of the local cache file for this item's download URL
+    fileprivate var cacheBasePath: String {
+        let url = self.downloadURL
+        let urlHash = url.absoluteString.utf8Data.sha256().hex()
+        let baseName = url.lastPathComponent
+        let cachePath = urlHash + "--" + baseName
+        return cachePath
+    }
+}
+
+
+/// A unique identifier for a bundle. Note that this overloads the "BundleIdentifier" concept, which may make more sense
+typealias CaskIdentifier = BundleIdentifier
+
+extension CaskIdentifier {
+    /// Returns true if this is a homebrew cask (vs. a fairapp)
+    var isCaskApp: Bool {
+        rawValue.hasPrefix("homebrew/cask/")
+    }
+
+    var caskToken: String? {
+        if rawValue.hasPrefix("homebrew/cask/") {
+            return String(rawValue.dropFirst(14))
+        } else {
+            return nil
+        }
     }
 }

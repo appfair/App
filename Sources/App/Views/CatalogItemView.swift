@@ -464,16 +464,16 @@ struct CatalogItemView: View {
                             .labelStyle(IconOnlyLabelStyle())
                             .padding(.trailing)) {
                     permissionsList()
+                        .overlay(Group {
+                            if info.isCask {
+                                Text("Risk assessment unavailable for Homebrew Casks")
+                                    .label(image: warningImage)
+                                    .font(Font.callout)
+                                    .help(Text("Risk assessment is only available for App Fair Fairground apps"))
+                            }
+                        })
                 }
                 .frame(height: catalogBottomHeight)
-                .overlay(Group {
-                    if info.isCask {
-                        Text("Risk assessment unavailable for Homebrew Casks")
-                            .label(image: warningImage)
-                            .font(Font.callout)
-                            .help(Text("Risk assessment is only available for App Fair Fairground apps"))
-                    }
-                })
             }
         }
     }
@@ -619,7 +619,7 @@ struct CatalogItemView: View {
                 return Text(value, format: .number)
             }
         } else {
-            return Text(FairSymbol.questionmark_square.image)
+            return Text(FairSymbol.questionmark.image)
         }
     }
 

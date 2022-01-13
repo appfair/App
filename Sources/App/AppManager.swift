@@ -13,10 +13,6 @@ let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
 #endif
 
-/// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
-let minimumSearchLength = 1
-
-
 protocol InstallationManager where Self : ObservableObject {
     // Static method 'installedPath(for:)' isolated to global actor 'MainActor' can not satisfy corresponding requirement from protocol 'InstallationManager'
     // static func installedPath(for item: AppCatalogItem) -> URL?
