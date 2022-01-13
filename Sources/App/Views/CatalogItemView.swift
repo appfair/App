@@ -71,8 +71,9 @@ struct CatalogItemView: View {
             }
     }
 
-    var warningImage: some View {
-        FairSymbol.exclamationmark_triangle_fill.image.symbolRenderingMode(.multicolor)
+    var unavailableIcon: some View {
+        // FairSymbol.exclamationmark_triangle_fill.image.symbolRenderingMode(.multicolor)
+        FairSymbol.puzzlepiece_fill.image.symbolRenderingMode(.hierarchical)
     }
 
 
@@ -395,8 +396,9 @@ struct CatalogItemView: View {
                 .overlay(Group {
                     if info.isCask {
                         Text("Screenshots unavailable for Homebrew Casks")
-                            .label(image: warningImage)
+                            .label(image: unavailableIcon)
                             .font(Font.callout)
+                            .foregroundColor(.secondary)
                             .help(Text("Screenshots are not available for Homebrew Casks"))
                     }
                 })
@@ -467,8 +469,9 @@ struct CatalogItemView: View {
                         .overlay(Group {
                             if info.isCask {
                                 Text("Risk assessment unavailable for Homebrew Casks")
-                                    .label(image: warningImage)
+                                    .label(image: unavailableIcon)
                                     .font(Font.callout)
+                                    .foregroundColor(.secondary)
                                     .help(Text("Risk assessment is only available for App Fair Fairground apps"))
                             }
                         })

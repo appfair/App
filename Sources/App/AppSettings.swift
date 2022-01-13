@@ -76,23 +76,35 @@ struct HomebrewSettingsView: View {
             .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Group {
+                Toggle(isOn: $caskManager.manageDownloads) {
+                    Text(atx: "Use integrated download manager")
+                }
+                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use the curl command for downloads."))
+
                 Toggle(isOn: $caskManager.quarantineCasks) {
-                    Text(atx: "Quarantine apps")
+                    Text(atx: "Quarantine installed apps")
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+
+                Toggle(isOn: $caskManager.enableBrewAnalytics) {
+                    Text(atx: "Allow installation telemetry (see [brew.sh/Analytics](https://docs.brew.sh/Analytics))")
+                }
+                    .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update."))
+
+                Toggle(isOn: $caskManager.enableSelfUpdate) {
+                    Text(atx: "Enable Homebrew self-update")
+                }
+                    .help(Text("Allow Homebrew to send telemetry to Google about the packages you install and update."))
 
                 Toggle(isOn: $caskManager.forceInstallCasks) {
                     Text(atx: "Install overwrites pre-existing Cask apps")
                 }
                     .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
-
-                Toggle(isOn: $caskManager.manageDownloads) {
-                    Text(atx: "Preview download size")
-                }
-                    .help(Text("Whether to check the download size from the app itself. This will permit Cask installation to be monitored and cancelled from within the app."))
             }
             .disabled(caskManager.enableHomebrew == false)
 
+
+            Divider().padding()
 
             Section {
                 GroupBox {
@@ -108,13 +120,7 @@ struct HomebrewSettingsView: View {
                                     }
                                 }
 
-                            Text("""
-                                Launches Terminal.app and issues the command:
-
-                                  `brew update`
-                                """)
-                                .frame(minHeight: 50, alignment: .top)
-                                .textSelection(.enabled)
+                            commandText("brew update")
                         } else {
                             Text("Install Homebrew")
                                 .button {
@@ -125,13 +131,7 @@ struct HomebrewSettingsView: View {
                                     }
                                 }
 
-                            Text("""
-                                Launches Terminal.app and issues the command:
-
-                                  `\(CaskManager.installCommand)`
-                                """)
-                                .frame(minHeight: 50, alignment: .top)
-                                .textSelection(.enabled)
+                            commandText(CaskManager.installCommand)
                         }
 
                     }
@@ -139,16 +139,29 @@ struct HomebrewSettingsView: View {
                 }
             } footer: {
                 Text("""
-                    Homebrew Cask is a repository of third-party applications and installers. These packages will be installed using the `brew` command. These packages are not subject to the same sandboxing and security requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+                    Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command.
 
-                      Read more at: [https://brew.sh](https://brew.sh)
-                      Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
+                    Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+
+                    Read more at: [https://brew.sh](https://brew.sh)
+                    Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
                     """)
                     .multilineTextAlignment(.leading)
-                    .frame(minHeight: 130, alignment: .top)
+                    .frame(minHeight: 180, alignment: .top)
 
             }
         }
+    }
+
+    func commandText(_ cmd: String) -> some View {
+        Text("""
+            Opens `Terminal.app` and issues the command:
+
+              `\(cmd)`
+            """)
+            .frame(minHeight: 50, alignment: .top)
+            .textSelection(.enabled)
+
     }
 }
 

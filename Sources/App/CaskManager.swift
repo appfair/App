@@ -6,9 +6,6 @@ import Foundation
 /// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
 let minimumSearchLength = 1
 
-/// The minimum number of downloads for a Cask to be visible
-let caskDownloadThreshold = 100
-
 /// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
 extension InstallationManager where Self : CaskManager {
 
@@ -57,6 +54,15 @@ extension InstallationManager where Self : CaskManager {
     /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
     @AppStorage("manageDownloads") var manageDownloads = true
 
+    /// Whether to permit the `brew` command to send activitiy analytics. This controls whether to set Homebrew's flag [HOMEBREW_NO_ANALYTICS](https://docs.brew.sh/Analytics#opting-out)
+    @AppStorage("enableBrewAnalytics") var enableBrewAnalytics = false
+
+    /// Allow bre to update itself when performing operations
+    @AppStorage("enableSelfUpdate") var enableSelfUpdate = true
+
+    /// The minimum number of downloads for a Cask to be visible in the list
+    @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 100
+
     /// The arranged list of app info items
     @Published private(set) var appInfos: [AppInfo] = []
 
@@ -79,9 +85,11 @@ extension InstallationManager where Self : CaskManager {
     private static let formulaList = URL(string: "formula.json", relativeTo: endpoint)!
     private static let caskList = URL(string: "cask.json", relativeTo: endpoint)!
 
-    private static let caskStats30 = URL(string: "analytics/cask-install/homebrew-cask/30d.json", relativeTo: endpoint)!
-    private static let caskStats90 = URL(string: "analytics/cask-install/homebrew-cask/90d.json", relativeTo: endpoint)!
-    private static let caskStats365 = URL(string: "analytics/cask-install/homebrew-cask/365d.json", relativeTo: endpoint)!
+    private static let caskStatsBase = URL(string: "analytics/cask-install/homebrew-cask/", relativeTo: endpoint)!
+
+    private static let caskStats30 = URL(string: "30d.json", relativeTo: caskStatsBase)!
+    private static let caskStats90 = URL(string: "90d.json", relativeTo: caskStatsBase)!
+    private static let caskStats365 = URL(string: "365d.json", relativeTo: caskStatsBase)!
 
     /// The source to the cask ruby definition file
     private static func caskSource(name: String) -> URL? {
@@ -326,6 +334,17 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd = "SUDO_ASKPASS=" + scriptFile.path + " " + cmd
         }
 
+        if self.enableSelfUpdate == false {
+            // see: https://docs.brew.sh/Manpage
+            cmd = "HOMEBREW_NO_AUTO_UPDATE=1 " + cmd
+        }
+
+        if self.enableBrewAnalytics == false {
+            // see: https://docs.brew.sh/Analytics#opting-out
+            cmd = "HOMEBREW_NO_ANALYTICS=1 " + cmd
+        }
+
+
         defer {
             // clean up any askpass script we may have generated
             if let scpt = scpt, FileManager.default.isWritableFile(atPath: scpt.path) {
@@ -505,6 +524,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
          ```
          */
         var cmd = self.localBrewCommand.path
+
         let op = update ? "upgrade" : "reinstall"
         cmd += " " + op
         if force { cmd += " --force" }
@@ -516,7 +536,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
         cmd += " --casks " + item.id.rawValue
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
-        dbg("result:", result)
+        dbg("result of command:", cmd, ":", result)
     }
 
     func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = true, verbose: Bool = true) async throws {
@@ -688,7 +708,7 @@ extension CaskManager {
 
         
         let sortedInfos = infos
-            .filter { ($0.release.downloadCount ?? 0) >= caskDownloadThreshold }
+            .filter { ($0.release.downloadCount ?? 0) >= caskDownloadVisibilityThreshold }
             .sorted(using: self.sortOrder)
         //dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
 
