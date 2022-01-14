@@ -517,7 +517,7 @@ extension AppManager {
         Task {
             do {
                 dbg("fetching README for:", release.id, readmeURL.absoluteString)
-                let data = try await URLRequest(url: readmeURL)
+                let data = try await URLRequest(url: readmeURL, cachePolicy: .reloadRevalidatingCacheData)
                     .fetch(validateFragmentHash: true)
                 var atx = String(data: data, encoding: .utf8) ?? ""
                 // extract the portion of text between the "# Description" and following "#" sections

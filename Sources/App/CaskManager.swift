@@ -48,6 +48,9 @@ extension InstallationManager where Self : CaskManager {
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
 
+    /// Whether to require a checksum before downloading
+    @AppStorage("requireChecksum") var requireChecksum = true
+
     /// Whether to force overwrite other installations
     @AppStorage("forceInstallCasks") var forceInstallCasks = false
 
@@ -464,17 +467,21 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             let downloadURL = item.downloadURL
             dbg("downloading:", downloadURL.absoluteString, "to cache target:", targetURL.path)
 
+
+            let expectedHash = item.sha256
+            if expectedHash == nil && self.requireChecksum == true {
+                throw AppError("Absent SHA-256 Hash", failureReason: "The download has no SHA-256 checksum set.")
+            }
+
             //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
             //dbg("fetchExpectedContentLength:", size)
 
             let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
 
-            if let expectedHash = item.sha256 {
-                let actualHash = downloadSha256.hex()
-                dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
-                if expectedHash != actualHash {
-                    throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
-                }
+            let actualHash = downloadSha256.hex()
+            dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
+            if let expectedHash = expectedHash, expectedHash != actualHash {
+                throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
             }
 
             // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
@@ -693,7 +700,7 @@ extension CaskManager {
 
             let categories: [String]? = nil // sadly, casks are un-categorized
 
-            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.sha256, permissions: nil, metadataURL: nil, readmeURL: nil)
+            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
 
             var plist: Plist? = nil
             if let installed = installed {
@@ -956,8 +963,13 @@ struct CaskItem : Equatable, Decodable {
 
     // let outdated: false // not relevent for API
 
-    /// The SHA-256 hash of the artiface
-    let sha256: String
+    /// The SHA-256 hash of the artifact.
+    private let sha256: String
+
+    /// Returns the checksum unless it is the "no_check" constant
+    var checksum: String? {
+        sha256 == "no_check" ? nil : sha256
+    }
 
     /// E.g.: `app has been officially discontinued upstream`
     let caveats: String?
@@ -1025,9 +1037,16 @@ extension CaskItem : Identifiable {
         }
     }
 
+    /// https://formulae.brew.sh/docs/api/#get-formula-metadata-for-a-cask-formula
     var metadataURL: URL? {
         URL(string: "https://formulae.brew.sh/api/cask/\(token).json")
     }
+
+    /// https://formulae.brew.sh/docs/api/#get-the-source-code-for-a-cask-in-homebrewhomebrew-cask
+    var sourceURL: URL? {
+        URL(string: "https://formulae.brew.sh/api/cask-source/\(token).rb")
+    }
+
 }
 
 

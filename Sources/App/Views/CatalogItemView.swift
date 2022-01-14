@@ -150,7 +150,7 @@ struct CatalogItemView: View {
     func downloadSizeView() -> some View {
         Group {
             if info.isCask {
-                if let caskURLFileSize = caskURLFileSize {
+                if let caskURLFileSize = caskURLFileSize, caskURLFileSize > 0 { // sometimes -1 when it isn't found
                     numberView(size: .file, value: Int(caskURLFileSize))
                 } else {
                     // show the card view with an empty file size
@@ -218,13 +218,23 @@ struct CatalogItemView: View {
     }
 
 
-    private func fetchCaskSummary() async {
-        if let cask = self.info.cask, self.caskSummary == nil, let url = cask.metadataURL {
+    private func fetchCaskSummary(jsonSource: Bool = false) async {
+        if let cask = self.info.cask, self.caskSummary == nil, let url = jsonSource ? cask.metadataURL : cask.sourceURL {
             // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)
                 let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData))
-                self.caskSummary = metadata.data.utf8String
+                if jsonSource {
+                    do {
+                        let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
+                        let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                        self.caskSummary = pretty.utf8String
+                    } catch {
+                        self.caskSummary = metadata.data.utf8String
+                    }
+                } else {
+                    self.caskSummary = metadata.data.utf8String
+                }
             } catch {
                 // errors are not unexpected when the user leaves this view:
                 // NSURLErrorDomain Code=-999 "cancelled"
@@ -238,9 +248,10 @@ struct CatalogItemView: View {
             do {
                 dbg("checking URL HEAD:", item.downloadURL.absoluteString)
                 let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
+                // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
                 self.caskURLFileSize = head.expectedContentLength
                 self.caskURLModifiedDate = head.lastModifiedDate
-                dbg("URL HEAD:", item.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize)
+                dbg("URL HEAD:", item.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
 
             } catch {
                 // errors are not unexpected when the user leaves this view:
@@ -325,8 +336,8 @@ struct CatalogItemView: View {
                             .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)"))
                     }
 
-                    if let sha256 = cask.sha256 {
-                        linkTextField(Text("SHA256"), icon: FairSymbol.rosette.symbolName, url: URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
+                    if let sha256 = cask.checksum ?? "None" {
+                        linkTextField(Text("Checksum"), icon: FairSymbol.rosette.symbolName, url: cask.checksum == nil ? nil : URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
                             .help(Text("The SHA-256 checksum for the app download"))
                     }
 

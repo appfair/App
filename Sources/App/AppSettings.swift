@@ -169,15 +169,17 @@ struct HomebrewSettingsView: View {
 struct FairAppsSettingsView: View {
     @AppStorage("showPreReleases") private var showPreReleases = false
     @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+    @State var hoverRisk: AppRisk? = nil
 
     var body: some View {
         Form {
-            HStack(alignment: .firstTextBaseline) {
-                AppRiskPicker(risk: $riskFilter)
-                riskFilter.riskSummaryText(bold: true)
+            HStack(alignment: .top) {
+                AppRiskPicker(risk: $riskFilter, hoverRisk: $hoverRisk)
+                (hoverRisk ?? riskFilter).riskSummaryText(bold: true)
                     .textSelection(.enabled)
                     .font(.body)
                     .frame(height: 150, alignment: .top)
+                    .frame(maxWidth: .infinity)
             }
 
             Toggle(isOn: $showPreReleases) {
@@ -263,11 +265,16 @@ struct ThemeStylePicker: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppRiskPicker: View {
     @Binding var risk: AppRisk
+    @Binding var hoverRisk: AppRisk?
 
     var body: some View {
         Picker(selection: $risk) {
             ForEach(AppRisk.allCases) { appRisk in
                 appRisk.riskLabel()
+                    .brightness(hoverRisk == appRisk ? 0.2 : 0.0)
+                    .onHover {
+                        self.hoverRisk = $0 ? appRisk : nil
+                    }
             }
         } label: {
             Text("Risk Exposure:")
