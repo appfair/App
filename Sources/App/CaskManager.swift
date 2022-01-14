@@ -971,9 +971,10 @@ struct CaskItem : Equatable, Decodable {
     /// The SHA-256 hash of the artifact.
     private let sha256: String
 
-    /// Returns the checksum unless it is the "no_check" constant
+    /// Returns the checksum unless it is the "no_check" constant or does not otherwise appear to be a checksum
     var checksum: String? {
-        sha256 == "no_check" ? nil : sha256
+        //let validCharacters = CharacterSet(charactersIn: "")
+        sha256 == "no_check" || sha256.count != 64 ? nil : sha256
     }
 
     /// E.g.: `app has been officially discontinued upstream`
@@ -1012,6 +1013,7 @@ struct CaskItem : Equatable, Decodable {
     /// E.g.: `"container":"{:type=>:zip}"`
     // let container": null,
 }
+
 
 extension CaskItem : Identifiable {
 

@@ -9,6 +9,9 @@ import FairApp
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
+    @AppStorage("enableInstallWarning") public var enableInstallWarning = true
+    @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
+
     /// The base domain of the provider for the hub
     @AppStorage("hubProvider") public var hubProvider = "github.com"
     /// The organization name of the hub

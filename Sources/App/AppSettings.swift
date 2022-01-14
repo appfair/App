@@ -115,6 +115,12 @@ struct HomebrewSettingsView: View {
             Section {
                 GroupBox {
                     VStack {
+                        Text("""
+                            Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.
+                            """)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+
                         if let _ = installedVersion {
                             Text("Check for Homebrew updates")
                                 .button {
@@ -125,8 +131,9 @@ struct HomebrewSettingsView: View {
                                         fairManager.appManager.reportError(error)
                                     }
                                 }
+                                .help("This action will open a new Terminal.app window and issue the command: brew update")
 
-                            commandText("brew update")
+                            //commandText("brew update")
                         } else {
                             Text("Install Homebrew")
                                 .button {
@@ -136,25 +143,23 @@ struct HomebrewSettingsView: View {
                                         fairManager.appManager.reportError(error)
                                     }
                                 }
+                                .help("This action will open a new Terminal.app window and issue the command: \(CaskManager.installCommand)")
 
-                            commandText(CaskManager.installCommand)
+                            //commandText(CaskManager.installCommand)
                         }
 
                     }
-                    .padding()
+                    .frame(maxWidth: .infinity)
+
+                    Text("""
+                        Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+
+                        Read more at: [https://brew.sh](https://brew.sh)
+                        Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
+                        """)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } footer: {
-                Text("""
-                    Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command.
-
-                    Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
-
-                    Read more at: [https://brew.sh](https://brew.sh)
-                    Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-                    """)
-                    .multilineTextAlignment(.leading)
-                    .frame(minHeight: 180, alignment: .top)
-
             }
         }
     }
@@ -196,7 +201,7 @@ struct FairAppsSettingsView: View {
             Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
                 .font(.body)
                 .multilineTextAlignment(.leading)
-                .frame(minHeight: 90, alignment: .top)
+                .fixedSize(horizontal: false, vertical: true)
 
         }
     }
@@ -305,8 +310,20 @@ struct AdvancedSettingsView: View {
     var body: some View {
         VStack {
             Form {
+                Toggle(isOn: $fairManager.enableInstallWarning) {
+                    Text(atx: "Require App Install Confirmation")
+                }
+                .toggleStyle(.switch)
+
+                Toggle(isOn: $fairManager.enableDeleteWarning) {
+                    Text(atx: "Require App Delete Confirmation")
+                }
+                .toggleStyle(.switch)
+
+                Divider()
+
                 HStack {
-                    TextField("Hub", text: fairManager.$hubProvider)
+                    TextField("Hub Host", text: fairManager.$hubProvider)
                     checkButton(fairManager.hubProvider)
                 }
                 HStack {
@@ -317,11 +334,11 @@ struct AdvancedSettingsView: View {
                     TextField("Repository", text: fairManager.$hubRepo)
                     checkButton(fairManager.hubProvider, fairManager.hubOrg, fairManager.hubRepo)
                 }
-                HStack {
-                    SecureField("Token", text: fairManager.$hubToken)
-                }
-
-                Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
+//                HStack {
+//                    SecureField("Token", text: fairManager.$hubToken)
+//                }
+//
+//                Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
 
                 HelpButton(url: "https://github.com/settings/tokens")
             }

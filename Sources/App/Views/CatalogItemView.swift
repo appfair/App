@@ -84,12 +84,16 @@ struct CatalogItemView: View {
     }
 
     func catalogStack() -> some View {
-        VStack {
-            headerView()
-            catalogSummaryCards()
-                .frame(height: 50)
-            Divider()
-            catalogOverview()
+        ZStack {
+            VStack {
+                headerView()
+                catalogSummaryCards()
+                    .frame(height: 50)
+                Divider()
+                catalogOverview()
+            }
+
+            screenshotPreviewOverlay()
         }
     }
 
@@ -402,8 +406,6 @@ struct CatalogItemView: View {
                 ScrollView(.horizontal) {
                     previewView()
                 }
-                //.frame(maxHeight: .infinity)
-                .frame(height: catalogScreensHeight)
                 .overlay(Group {
                     if info.isCask {
                         Text("Screenshots unavailable for Homebrew Casks")
@@ -418,7 +420,7 @@ struct CatalogItemView: View {
     }
 
     func descriptionSection() -> some View {
-        groupBox(title: info.isCask ? Text("Cask Info") : Text("App Summary"), trailing: EmptyView()) {
+        groupBox(title: info.isCask ? Text("Cask Formula") : Text("App Summary"), trailing: EmptyView()) {
             ScrollView {
                 Group {
                     if let cask = info.cask {
@@ -437,7 +439,16 @@ struct CatalogItemView: View {
         }
     }
 
-    func releaseVersionView() -> Text? {
+    func versionSection() -> some View {
+        groupBox(title: Text("Version: ") + Text(verbatim: item.version ?? ""), trailing: releaseVersionAccessoryView()) {
+            ScrollView {
+                versionSummary()
+            }
+            .frame(maxHeight: .infinity)
+        }
+    }
+
+    func releaseVersionAccessoryView() -> Text? {
         if let versionDate = info.release.versionDate ?? self.caskURLModifiedDate {
             return Text(versionDate, format: .dateTime)
         } else {
@@ -445,50 +456,56 @@ struct CatalogItemView: View {
         }
     }
 
-    let catalogTopHeight: CGFloat? = nil // 120
-    let catalogBottomHeight: CGFloat? = nil // 110
-    let catalogScreensHeight: CGFloat? = nil // 200
+    func detailsSection() -> some View {
+        groupBox(title: Text("Details"), trailing: EmptyView()) {
+            detailsView()
+        }
+    }
 
-    func catalogColumns() -> some View {
-        HStack {
+    @ViewBuilder func catalogColumns(rowMajor: Bool = true) -> some View {
+        if rowMajor {
             VStack {
-                descriptionSection()
-                    .frame(height: catalogTopHeight)
+                HStack {
+                    detailsSection()
+                    descriptionSection()
+                }
+                HStack {
+                    versionSection()
+                    riskSection()
+                }
+            }
+        } else {
+            HStack {
+                VStack {
+                    descriptionSection()
+                    versionSection()
+                }
 
-                groupBox(title: Text("Version: ") + Text(verbatim: item.version ?? ""), trailing: releaseVersionView()) {
-                    ScrollView {
-                        versionSummary()
+                VStack {
+                    riskSection()
+                    detailsSection()
+                }
+            }
+        }
+    }
+
+    func riskSection() -> some View {
+        let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
+
+        return groupBox(title: riskLabel, trailing: item.riskLevel.riskLabel()
+                    .help(item.riskLevel.riskSummaryText())
+                    .labelStyle(IconOnlyLabelStyle())
+                    .padding(.trailing)) {
+            permissionsList()
+                .overlay(Group {
+                    if info.isCask {
+                        Text("Risk assessment unavailable for Homebrew Casks")
+                            .label(image: unavailableIcon)
+                            .font(Font.callout)
+                            .foregroundColor(.secondary)
+                            .help(Text("Risk assessment is only available for App Fair Fairground apps"))
                     }
-                    .frame(maxHeight: .infinity)
-                }
-                .frame(height: catalogTopHeight)
-            }
-
-            VStack(alignment: .leading) {
-                groupBox(title: Text("Details"), trailing: EmptyView()) {
-                    detailsView()
-                }
-                .frame(height: catalogBottomHeight)
-
-                let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
-
-                groupBox(title: riskLabel, trailing: item.riskLevel.riskLabel()
-                            .help(item.riskLevel.riskSummaryText())
-                            .labelStyle(IconOnlyLabelStyle())
-                            .padding(.trailing)) {
-                    permissionsList()
-                        .overlay(Group {
-                            if info.isCask {
-                                Text("Risk assessment unavailable for Homebrew Casks")
-                                    .label(image: unavailableIcon)
-                                    .font(Font.callout)
-                                    .foregroundColor(.secondary)
-                                    .help(Text("Risk assessment is only available for App Fair Fairground apps"))
-                            }
-                        })
-                }
-                .frame(height: catalogBottomHeight)
-            }
+                })
         }
     }
 
@@ -554,7 +571,6 @@ struct CatalogItemView: View {
 
     func previewImage(_ url: URL) -> some View {
         URLImage(url: url, resizable: .fit)
-            // .matchedGeometryEffect(id: url, in: namespace, properties: .frame) // doesn't work: makes the source image disappear (and ever re-appear) when it is tapped
 
     }
 
@@ -562,53 +578,62 @@ struct CatalogItemView: View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
                 previewImage(url)
+                    .matchedGeometryEffect(id: url, in: namespace, isSource: self.previewScreenshot != url)
+                    .contentShape(Rectangle())
                     .button {
                         dbg("open screenshot:", url.relativePath)
-                        self.previewScreenshot = url
+                        withAnimation(Animation.spring(response: 0.45, dampingFraction: 0.9)) {
+                            self.previewScreenshot = url
+                        }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.zoomable)
             }
-        }
-        .sheet(isPresented: nullifyingBoolBinding($previewScreenshot)) {
-            dbg("dismissed")
-        } content: {
-            screenshotPreview()
         }
     }
 
-    func screenshotPreview() -> some View {
-        Group {
-            VStack {
-                HStack {
-                    Spacer()
-                    Text("Close")
-                        .label(image: FairSymbol.xmark)
-                        .labelsHidden()
-                        .button {
-                            self.previewScreenshot = nil // closes the sheet
-                        }
-                        .buttonStyle(.borderless)
-                        .keyboardShortcut(.cancelAction)
-                }
 
-                GroupBox {
-                    if let previewScreenshot = previewScreenshot {
-                        previewImage(previewScreenshot)
-                    }
-                }
+    func screenshotPreviewOverlay() -> some View {
+        ZStack {
 
-                //TabView(selection: $previewScreenshot) {
-                //    ForEach(item.screenshotURLs ?? [], id: \.self) { url in
-                //        URLImage(url: url, resizable: .fit)
-                //            .id(url)
-                //    }
-                //}
-                //.tabViewStyle(.paginated)
+            if self.previewScreenshot != nil {
+                Rectangle().fill(.regularMaterial).ignoresSafeArea()
             }
-            .padding()
+
+            ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+                let presenting = self.previewScreenshot == url
+
+                ZStack {
+                    URLImage(url: url, resizable: ContentMode.fit, showProgress: false)
+                        .matchedGeometryEffect(id: url, in: namespace, isSource: presenting)
+                        .shadow(color: Color.black.opacity(presenting ? 0.2 : 0), radius: 20, y: 10)
+                        .padding(20)
+
+                    // The top button bar
+                    VStack {
+                        HStack {
+                            Spacer()
+                            FairSymbol.xmark_circle_fill
+                                .button {
+                                    withAnimation {
+                                        self.previewScreenshot = nil
+                                    }
+                                }
+                                .disabled(!presenting)
+                                .keyboardShortcut(.escape) // sadly doesn't seem to work
+                                .buttonStyle(.plain)
+                                .scaleEffect(2.0)
+                                .padding()
+                        }
+                        Spacer()
+                    }
+
+                }
+                .accessibilityElement(children: .contain)
+                .accessibility(sortPriority: presenting ? 1 : 0)
+                .accessibility(hidden: !presenting)
+                .opacity(presenting ? 1 : 0)
+            }
         }
-        .frame(idealWidth: 800, idealHeight: 600)
-        .edgesIgnoringSafeArea(.all)
     }
 
     func catalogAuthorRow() -> some View {
@@ -716,7 +741,7 @@ struct CatalogItemView: View {
     }
 
     func installButton() -> some View {
-        button(activity: .install, role: nil, needsConfirm: true)
+        button(activity: .install, role: nil, needsConfirm: fairManager.enableInstallWarning)
             .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
             .disabled(appInstalled)
             .confirmationDialog(Text("Install \(info.release.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
@@ -767,7 +792,7 @@ struct CatalogItemView: View {
     }
 
     func trashButton() -> some View {
-        button(activity: .trash, role: ButtonRole.destructive, needsConfirm: true)
+        button(activity: .trash, role: ButtonRole.destructive, needsConfirm: fairManager.enableDeleteWarning)
             .keyboardShortcut(.delete, modifiers: [])
             .disabled(!appInstalled)
             //.accentColor(.red) // coflicts with the red background of the button
@@ -1101,7 +1126,7 @@ extension AppCatalogItem {
                         .aspectRatio(contentMode: .fit)
                 case .failure(let error):
                     fallbackIcon()
-                        .brightness(0.4)
+                        .grayscale(0.9)
                         .help(error.localizedDescription)
                 case .empty:
                     fallbackIcon()
@@ -1128,7 +1153,11 @@ extension AppCatalogItem {
 
     @ViewBuilder func fallbackIcon() -> some View {
         // fall-back to the generated image for the app, but with no title or sub-title
-        FairIconView("", subtitle: "", iconColor: itemTintColor())
+//        if id.isCaskApp {
+//            // cask apps use a blank icon
+//        } else {
+            FairIconView("", subtitle: "", iconColor: itemTintColor())
+//        }
     }
 
     /// The specified tint color, falling back on the default tint for the app name
@@ -1196,6 +1225,25 @@ public struct TitleAndIconFlippedLabelStyle : LabelStyle {
             configuration.title
             configuration.icon
         }
+    }
+}
+
+struct ZoomableButtonStyle: ButtonStyle {
+    var zoomLevel = 0.95
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? zoomLevel : 1)
+    }
+}
+
+extension ButtonStyle where Self == ZoomableButtonStyle {
+    static var zoomable: ZoomableButtonStyle {
+        ZoomableButtonStyle()
+    }
+
+    static func zoomable(level: Double = 0.95) -> ZoomableButtonStyle {
+        ZoomableButtonStyle(zoomLevel: level)
     }
 }
 

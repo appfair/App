@@ -852,18 +852,18 @@ struct SidebarView: View {
     var body: some View {
         List {
             Section("Fairground") {
-                item(.fairapps, .popular).keyboardShortcut("4")
-                item(.fairapps, .recent).keyboardShortcut("5")
-                item(.fairapps, .installed).keyboardShortcut("6")
-                item(.fairapps, .updated).keyboardShortcut("7")
+                item(.fairapps, .popular).keyboardShortcut("1")
+                item(.fairapps, .recent).keyboardShortcut("2")
+                item(.fairapps, .installed).keyboardShortcut("3")
+                item(.fairapps, .updated).keyboardShortcut("4")
             }
 
             if caskManager.enableHomebrew {
                 Section("Homebrew") {
-                    item(.homebrew, .popular).keyboardShortcut("1")
+                    item(.homebrew, .popular).keyboardShortcut("5")
                     // item(.homebrew, .recent) // casks don't have a last-updated date
-                    item(.homebrew, .installed).keyboardShortcut("2")
-                    item(.homebrew, .updated).keyboardShortcut("3")
+                    item(.homebrew, .installed).keyboardShortcut("6")
+                    item(.homebrew, .updated).keyboardShortcut("7")
                 }
             }
 
