@@ -612,16 +612,20 @@ struct CatalogItemView: View {
                     VStack {
                         HStack {
                             Spacer()
-                            FairSymbol.xmark_circle_fill
+                            FairSymbol.xmark_circle
+                                .image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .hoverSymbol(activeVariant: .none, inactiveVariant: .fill)
                                 .button {
                                     withAnimation {
                                         self.previewScreenshot = nil
                                     }
                                 }
-                                .disabled(!presenting)
                                 .keyboardShortcut(.escape) // sadly doesn't seem to work
+                                .disabled(!presenting)
                                 .buttonStyle(.plain)
-                                .scaleEffect(2.0)
+                                .frame(width: 25, height: 25)
                                 .padding()
                         }
                         Spacer()
