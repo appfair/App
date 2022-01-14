@@ -49,19 +49,19 @@ extension InstallationManager where Self : CaskManager {
     @AppStorage("quarantineCasks") var quarantineCasks = true
 
     /// Whether to require a checksum before downloading
-    @AppStorage("requireChecksum") var requireChecksum = true
+    @AppStorage("requireCaskChecksum") var requireCaskChecksum = true
 
     /// Whether to force overwrite other installations
     @AppStorage("forceInstallCasks") var forceInstallCasks = false
 
     /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
-    @AppStorage("manageDownloads") var manageDownloads = true
+    @AppStorage("manageCaskDownloads") var manageCaskDownloads = true
 
     /// Whether to permit the `brew` command to send activitiy analytics. This controls whether to set Homebrew's flag [HOMEBREW_NO_ANALYTICS](https://docs.brew.sh/Analytics#opting-out)
     @AppStorage("enableBrewAnalytics") var enableBrewAnalytics = false
 
     /// Allow bre to update itself when performing operations
-    @AppStorage("enableSelfUpdate") var enableSelfUpdate = true
+    @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = true
 
     /// The minimum number of downloads for a Cask to be visible in the list
     @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 100
@@ -337,7 +337,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd = "SUDO_ASKPASS=" + scriptFile.path + " " + cmd
         }
 
-        if self.enableSelfUpdate == false {
+        if self.enableBrewSelfUpdate == false {
             // see: https://docs.brew.sh/Manpage
             cmd = "HOMEBREW_NO_AUTO_UPDATE=1 " + cmd
         }
@@ -415,7 +415,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         let quarantine = quarantine ?? self.quarantineCasks
         let force = force ?? self.forceInstallCasks
-        let manageDownloads = manageDownloads ?? self.manageDownloads
+        let manageDownloads = manageDownloads ?? self.manageCaskDownloads
 
         /**
          When we download maually, we fetch the artifact with a cancellable progress and validate the SHA256 hash
@@ -469,8 +469,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
 
             let expectedHash = item.sha256
-            if expectedHash == nil && self.requireChecksum == true {
-                throw AppError("Absent SHA-256 Hash", failureReason: "The download has no SHA-256 checksum set.")
+            if expectedHash == nil && self.requireCaskChecksum == true {
+                throw AppError("Missing cryptographic checksum", failureReason: "The download has no SHA-256 checksum set and so its authenticity cannot be verified.")
             }
 
             //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
@@ -541,6 +541,11 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         } else {
             cmd += " --no-quarantine"
         }
+
+        if requireCaskChecksum != false {
+            cmd += " --require-sha"
+        }
+
         cmd += " --casks " + item.id.rawValue
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
         dbg("result of command:", cmd, ":", result)

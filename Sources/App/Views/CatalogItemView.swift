@@ -244,7 +244,7 @@ struct CatalogItemView: View {
     }
 
     private func fetchDownloadURLStats() async {
-        if caskManager.manageDownloads == true {
+        if caskManager.manageCaskDownloads == true {
             do {
                 dbg("checking URL HEAD:", item.downloadURL.absoluteString)
                 let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
@@ -526,7 +526,7 @@ struct CatalogItemView: View {
             title = title + Text(" – ") + Text(permission.usageDescription).foregroundColor(.secondary).italic()
         }
 
-        return title.label(symbol: entitlement.localizedInfo.symbol)
+        return title.label(symbol: entitlement.localizedInfo.symbol.symbolName)
             .listItemTint(ListItemTint.monochrome)
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
@@ -908,7 +908,14 @@ struct CatalogItemView: View {
                         .multilineTextAlignment(.center)
                     Group {
                         if currentActivity == activity {
-                            FairSymbol.x_circle.hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut)//.symbolRenderingMode(.hierarchical)
+                            FairSymbol.x_circle
+                                .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut) //.symbolRenderingMode(.hierarchical)
+                        } else if let activityWarning = warning(for: activity) {
+                            EnabledView { enabled in
+                                FairSymbol.exclamationmark_triangle_fill
+                                    .symbolRenderingMode(enabled ? .multicolor : .hierarchical)
+                                    .help(activityWarning)
+                            }
                         } else {
                             FairSymbol.circle
                         }
@@ -923,7 +930,7 @@ struct CatalogItemView: View {
                             .controlSize(.mini) // needs to be small to fit in the button
                             .opacity(currentActivity == activity ? 1 : 0)
                     } else {
-                        Image(systemName: activity.info.systemSymbol)
+                        activity.info.systemSymbol
                     }
                 }
                 .frame(width: 20, height: accessoryHeight)
@@ -942,6 +949,24 @@ struct CatalogItemView: View {
         case .trash: await deleteButtonTapped()
         case .reveal: await revealButtonTapped()
         case .launch: await launchButtonTapped()
+        }
+    }
+
+    /// Returns a warning if there is likely to be an issue with the given operation
+    func warning(for activity: CatalogActivity) -> Text? {
+        switch activity {
+        case .install, .update:
+            if info.release.sha256 == nil {
+                return Text("Installation artifact cannot be verified because it has no associated SHA-256 checksum.")
+            }
+            return nil
+
+        case .trash:
+            return nil
+        case .reveal:
+            return nil
+        case .launch:
+            return nil
         }
     }
 
@@ -1049,18 +1074,18 @@ struct CatalogItemView: View {
 }
 
 private extension CatalogActivity {
-    var info: (title: Text, systemSymbol: String, tintColor: Color?, toolTip: Text) {
+    var info: (title: Text, systemSymbol: FairSymbol, tintColor: Color?, toolTip: Text) {
         switch self {
         case .install:
-            return (Text("Install"), "square.and.arrow.down.fill", Color.blue, Text("Download and install the app."))
+            return (Text("Install"), .square_and_arrow_down_fill, Color.blue, Text("Download and install the app."))
         case .update:
-            return (Text("Update"), "square.and.arrow.down.on.square", Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
+            return (Text("Update"), .square_and_arrow_down_on_square, Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
         case .trash:
-            return (Text("Delete"), "trash", Color.red, Text("Delete the app from your computer."))
+            return (Text("Delete"), .trash, Color.red, Text("Delete the app from your computer."))
         case .reveal:
-            return (Text("Reveal"), "doc.text.fill.viewfinder", Color.indigo, Text("Displays the app install location in the Finder."))
+            return (Text("Reveal"), .doc_viewfinder_fill, Color.indigo, Text("Displays the app install location in the Finder."))
         case .launch:
-            return (Text("Launch"), "checkmark.seal.fill", Color.green, Text("Launches the app."))
+            return (Text("Launch"), .checkmark_seal_fill, Color.green, Text("Launches the app."))
         }
     }
 }

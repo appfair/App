@@ -58,7 +58,9 @@ public extension AppSource {
 
 
 struct AppInfo : Identifiable, Equatable {
+    /// The fairapp catalog item
     var release: AppCatalogItem
+    /// The associated cash, if any
     var cask: CaskItem?
     var installedPlist: Plist?
 
@@ -811,6 +813,22 @@ public extension AppCategory {
         }
     }
 }
+
+
+/// A view that passes its enabled state to the given content closure
+public struct EnabledView<V: View> : View {
+    @Environment(\.isEnabled) var isEnabled
+    public let content: (Bool) -> V
+
+    public init(@ViewBuilder content: @escaping (Bool) -> V) {
+        self.content = content
+    }
+
+    public var body: some View {
+        content(isEnabled)
+    }
+}
+
 
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {

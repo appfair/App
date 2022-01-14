@@ -76,25 +76,31 @@ struct HomebrewSettingsView: View {
             .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Group {
-                Toggle(isOn: $caskManager.manageDownloads) {
-                    Text(atx: "Use integrated download manager")
+                Toggle(isOn: $caskManager.requireCaskChecksum) {
+                    Text(atx: "Authenticate downloads")
                 }
-                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use the curl command for downloads."))
+                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
 
                 Toggle(isOn: $caskManager.quarantineCasks) {
                     Text(atx: "Quarantine installed apps")
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-                Toggle(isOn: $caskManager.enableBrewAnalytics) {
-                    Text(atx: "Allow installation telemetry (see [brew.sh/Analytics](https://docs.brew.sh/Analytics))")
+                Toggle(isOn: $caskManager.manageCaskDownloads) {
+                    Text(atx: "Use integrated download manager")
                 }
-                    .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update."))
+                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use the curl command for downloads."))
 
-                Toggle(isOn: $caskManager.enableSelfUpdate) {
+
+                Toggle(isOn: $caskManager.enableBrewSelfUpdate) {
                     Text(atx: "Enable Homebrew self-update")
                 }
                     .help(Text("Allow Homebrew to send telemetry to Google about the packages you install and update."))
+
+                Toggle(isOn: $caskManager.enableBrewAnalytics) {
+                    Text(atx: "Enable installation telemetry")
+                }
+                    .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
 
                 Toggle(isOn: $caskManager.forceInstallCasks) {
                     Text(atx: "Install overwrites pre-existing Cask apps")
