@@ -1036,13 +1036,16 @@ struct CatalogItemView: View {
     func categorySymbol() -> some View {
         let category = (item.appCategories.first?.groupings.first ?? .create)
 
-        return Image(systemName: category.symbolName.description)
+        //let img = Image(systemName: category.symbolName.description)
+        let img = info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image
+        return img
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .fairTint(simple: false, color: item.itemTintColor(), scheme: colorScheme)
+            .fairTint(simple: true, color: item.itemTintColor(), scheme: colorScheme)
             .symbolVariant(.fill)
-            .symbolRenderingMode(.hierarchical)
-            .foregroundColor(.secondary)
+            .symbolRenderingMode(.palette)
+            .brightness(0.4)
+            //.foregroundColor(.secondary)
     }
 
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3?) -> some View {
