@@ -15,7 +15,6 @@ jobs:
     uses: fair-ground/Fair/.github/workflows/configure_app.yml@main
     with:
       fairground: appfair
-      appname: ${{ github.repository_owner }}
-      version: appfair
+      version: ${{ inputs.version }}
 
 
