@@ -2,6 +2,10 @@ PNG files placed in this folder will be used as the App Fair preview screenshots
 
 The files should be named according to the following pattern:
 
+  `screenshot_NUMBER-PLATFORM-MODE-WIDTHxHEIGHT@SCALEx.png`
+
+For example:
+
   * screenshot_01-mac-dark-1024x768@1x.png
   * screenshot_01-mac-light-1024x768@1x.png
   * screenshot_02-iphone-dark-1284x2778.png
