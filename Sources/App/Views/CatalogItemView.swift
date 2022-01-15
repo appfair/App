@@ -285,15 +285,30 @@ struct CatalogItemView: View {
 
     func linkTextField(_ title: Text, icon: String, url: URL?, linkText: String? = nil) -> some View {
         // the text winds up being un-aligned vertically when rendered like this
-        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
+//        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
+//            title
+//                .label(symbol: icon)
+//                .labelStyle(.titleAndIconFlipped)
+//                .link(to: url)
+//                //.font(Font.body)
+//        }
+//        .textFieldStyle(.plain)
+
+        HStack {
             title
                 .label(symbol: icon)
+                .lineLimit(1)
                 .labelStyle(.titleAndIconFlipped)
                 .link(to: url)
-                //.font(Font.body)
-        }
-        .textFieldStyle(.roundedBorder)
+                .frame(width: 110, alignment: .trailing)
 
+            Text(linkText ?? url?.absoluteString ?? "")
+                .lineLimit(1)
+                .textSelection(.enabled)
+                .font(Font.body.monospacedDigit())
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        //.alignmentGuide(.leading, computeValue: { d in (d.width - 60) })
 
 //        HStack {
 //
@@ -594,9 +609,8 @@ struct CatalogItemView: View {
 
     func screenshotPreviewOverlay() -> some View {
         ZStack {
-
             if self.previewScreenshot != nil {
-                Rectangle().fill(.regularMaterial).ignoresSafeArea()
+                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
             }
 
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
@@ -631,6 +645,12 @@ struct CatalogItemView: View {
                         Spacer()
                     }
 
+                }
+                .onTapGesture {
+                    // tapping anywhere in the view will close the preview
+                    withAnimation {
+                        self.previewScreenshot = nil
+                    }
                 }
                 .accessibilityElement(children: .contain)
                 .accessibility(sortPriority: presenting ? 1 : 0)
