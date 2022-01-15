@@ -31,3 +31,6 @@ SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 PRODUCT_NAME = Yankee Swap
 PRODUCT_BUNDLE_IDENTIFIER = app.Yankee-Swap
 MARKETING_VERSION = appfair
+PRODUCT_NAME = Yankee Swap
+PRODUCT_BUNDLE_IDENTIFIER = app.Yankee-Swap
+MARKETING_VERSION = appfair
