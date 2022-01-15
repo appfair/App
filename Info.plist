@@ -8,6 +8,8 @@
 	<string>$(ICON_TINT)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -29,8 +31,8 @@
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
 	</dict>
- 	<key>ITSAppUsesNonExemptEncryption</key>
- 	<false/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>

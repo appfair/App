@@ -1,0 +1,7 @@
+// French strings for this App Fair app.
+// Translators wanted! Simply edit this file…
+
+"OK" = "OK";
+"Cancel" = "Annuler";
+"Welcome to %@!" = "Bienvenue sur %@ !";
+

@@ -25,7 +25,10 @@ open class AppTests: XCTestCase {
     }
 
     func testTideTables() async throws {
-        // TODO: use API at https://api.tidesandcurrents.noaa.gov/mdapi/prod/
+        // TODO: use APIs at:
+        // https://api.tidesandcurrents.noaa.gov/api/prod/
+        // https://api.tidesandcurrents.noaa.gov/mdapi/prod/
+
         // fetch all the tide predictions, aggregate them and save them to a resource
 
         // FIXME: this is not the complete list of stations
@@ -33,6 +36,12 @@ open class AppTests: XCTestCase {
         let (data, response) = try await URLSession.shared.data(from: url)
         XCTAssert((200..<300).contains((response as? HTTPURLResponse)?.statusCode ?? 0))
         XCTAssert(data.count > 1024)
+
+        // to get the actual tide predictions:
+        // https://tidesandcurrents.noaa.gov/noaatideannual.html?id=8411250
+        // links to XML download:
+        // https://tidesandcurrents.noaa.gov/cgi-bin/predictiondownload.cgi?&stnid=8411250&threshold=&thresholdDirection=greaterThan&bdate=2022&timezone=LST/LDT&datum=MLLW&clock=12hour&type=xml&annual=true
+
 
         struct StationList : Decodable {
             let count: Int
