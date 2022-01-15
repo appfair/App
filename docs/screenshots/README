@@ -8,10 +8,8 @@ The files should be named according to one of the following pattern:
 
 Where `PLATFORM` is `mac`, `iphone`, or `ipad`.
 
-
 For example:
 
-  `screenshot_NUMBER-PLATFORM-MODE-WIDTHxHEIGHT@SCALEx.png`
 
 For example:
 
