@@ -1,8 +1,13 @@
 PNG files placed in this folder will be used as the App Fair preview screenshots.
 
-The files should be named according to the following pattern:
+The files should be named according to one of the following pattern:
 
-  `screenshot_NUMBER-PLATFORM-MODE-WIDTHxHEIGHT@SCALEx.png`
+  `screenshot_ID-PLATFORM-WIDTHxHEIGHT.png`
+  `screenshot_ID-PLATFORM-MODE-WIDTHxHEIGHT.png`
+  `screenshot_ID-PLATFORM-MODE-WIDTHxHEIGHT@SCALEx.png`
+
+Where `PLATFORM` is `mac`, `iphone`, or `ipad`.
+
 
 For example:
 
