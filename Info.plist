@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AppFairIconSymbol</key>
+	<string>$(ICON_SYMBOL)</string>
+	<key>AppFairIconTint</key>
+	<string>$(ICON_TINT)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -35,6 +39,8 @@
 		<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 		<string>This enabled this permission for testing</string>
 	</dict>
+ 	<key>ITSAppUsesNonExemptEncryption</key>
+ 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
 	<key>LSMinimumSystemVersion</key>
