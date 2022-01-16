@@ -768,6 +768,7 @@ extension CaskManager {
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return txt.count < minimumSearchLength
+        || item.cask?.tapToken.localizedCaseInsensitiveContains(searchText) == true
         || item.release.name.localizedCaseInsensitiveContains(txt) == true
         || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
         || item.cask?.homepage?.localizedCaseInsensitiveContains(txt) == true

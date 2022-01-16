@@ -11,7 +11,7 @@ struct AppsListView : View {
     @Binding var scrollToSelection: Bool
     var sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
-    @State var searchText: String = ""
+    @Binding var searchText: String
 
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         switch source {

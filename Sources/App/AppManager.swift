@@ -183,9 +183,10 @@ extension AppManager {
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return (txt.count < minimumSearchLength
-            || item.release.name.localizedCaseInsensitiveContains(searchText) == true
-            || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
-            || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
+                || item.release.bundleIdentifier.rawValue.localizedCaseInsensitiveContains(searchText) == true
+                || item.release.name.localizedCaseInsensitiveContains(searchText) == true
+                || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
+                || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
     }
 
     static var installFolderURL: URL {
