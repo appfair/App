@@ -32,12 +32,12 @@ extension InstallationManager where Self : CaskManager {
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject, InstallationManager {
-    /// Whether to allow Homebrew Cask installation
+    /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled(at: CaskManager.defaultBrewPath) {
         didSet {
             Task {
                 // whenever the enableHomebrew setting is changed, perform a scan of the casks
-                try await refreshAll(whenEnabled: true)
+                try await refreshAll()
             }
         }
     }
@@ -172,8 +172,8 @@ extension InstallationManager where Self : CaskManager {
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
-    func refreshAll(whenEnabled: Bool) async throws {
-        if whenEnabled == true && enableHomebrew == false {
+    func refreshAll() async throws {
+        if enableHomebrew == false {
             dbg("skipping cask refresh because not isEnabled")
             return
         }
@@ -239,7 +239,7 @@ extension InstallationManager where Self : CaskManager {
             }
         }
 
-        dbg("scanned installed casks:", tokenVersions)
+        dbg("scanned installed casks:", tokenVersions.count) // tokenVersions)
         self.installedCasks = tokenVersions
     }
 
@@ -301,6 +301,30 @@ extension InstallationManager where Self : CaskManager {
         dbg("executed:", desc)
     }
 
+    func caskEnvironment() -> String {
+        var cmd = ""
+
+        cmd += "HOMEBREW_INSTALL_FROM_API=1 "
+
+        if self.requireCaskChecksum == true {
+            // this probably only affects curl options for non-integrated downloading
+            cmd += "HOMEBREW_NO_INSECURE_REDIRECT=1 "
+        }
+
+        if self.enableBrewAnalytics == false {
+            // see: https://docs.brew.sh/Analytics#opting-out
+            cmd += "HOMEBREW_NO_ANALYTICS=1 "
+        }
+
+        if self.enableBrewSelfUpdate == false {
+            // see: https://docs.brew.sh/Manpage
+            cmd += "HOMEBREW_NO_AUTO_UPDATE=1 "
+        }
+
+
+        return cmd
+    }
+
     func run(command: String, toolName: String, askPassAppInfo: AppCatalogItem? = nil) async throws -> String {
 
         // without SUDO_ASKPASS, priviedged operations can fail with: sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
@@ -337,16 +361,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd = "SUDO_ASKPASS=" + scriptFile.path + " " + cmd
         }
 
-        if self.enableBrewSelfUpdate == false {
-            // see: https://docs.brew.sh/Manpage
-            cmd = "HOMEBREW_NO_AUTO_UPDATE=1 " + cmd
-        }
-
-        if self.enableBrewAnalytics == false {
-            // see: https://docs.brew.sh/Analytics#opting-out
-            cmd = "HOMEBREW_NO_ANALYTICS=1 " + cmd
-        }
-
+        cmd = caskEnvironment() + cmd
 
         defer {
             // clean up any askpass script we may have generated

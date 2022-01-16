@@ -219,9 +219,10 @@ struct SearchCommands: Commands {
                 Text("Search").button {
                     if let window = NSApp.currentEvent?.window,
                        let toolbar = window.toolbar {
-                        dbg("search toolbar:", toolbar, toolbar.visibleItems?.compactMap(\.view).flatMap(\.subviews))
-                        if let textField = toolbar.visibleItems?.compactMap(\.view).flatMap(\.subviews).compactMap({ $0 as? UXTextField }).first {
-                            window.makeFirstResponder(textField)
+                        // <SwiftUI.AppKitSearchToolbarItem: 0x13a8721a0> identifier = "com.apple.SwiftUI.search"]
+                        if let searchField = toolbar.visibleItems?.first(where: { $0.itemIdentifier.rawValue == "com.apple.SwiftUI.search" }) {
+                            dbg("searchField:", searchField, searchField.view) // view is empty
+                            // window.makeFirstResponder(view)
                         }
                     }
                 }
@@ -489,8 +490,13 @@ struct NavigationRootView : View {
     @EnvironmentObject var caskManager: CaskManager
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+
     @State var selection: AppInfo.ID? = nil
+    /// Indication that the selection should be scrolled to
+    @State var scrollToSelection: Bool = false
+
     @State var sidebarSelection: SidebarSelection? = SidebarSelection(item: .popular, source: .allCases[0])
+
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
     //@SceneStorage("source") var source: AppSource = AppSource.allCases.first!
@@ -507,7 +513,7 @@ struct NavigationRootView : View {
                         .help(Text("Reload the App Fair catalog"))
                         .keyboardShortcut("R")
                 }
-                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
+                ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: false) {
                     DisplayModePicker(mode: $displayMode)
                 }
             }
@@ -542,11 +548,11 @@ struct NavigationRootView : View {
                     let appID = appName.hasPrefix("app.") ? appName : ("app." + appName)
                     let bundleID = BundleIdentifier(appID)
 
-                    // random crashes seem to happen without this
+                    // random crashes seem to happen without dispatching to main
                     DispatchQueue.main.async {
                         self.selection = bundleID
-                        // self.fairManager.scrollToSelection = true
-                        dbg("selected app ID", wip(self.selection)) // TODO: if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+                        self.scrollToSelection = true // if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+                        dbg("selected app ID", wip(self.selection))
                     }
                 }
             }
@@ -559,9 +565,9 @@ struct NavigationRootView : View {
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
-            SidebarView(selection: $selection, sidebarSelection: $sidebarSelection, displayMode: $displayMode)
+            SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: $sidebarSelection, displayMode: $displayMode)
         } list: {
-            AppsListView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection)
+            AppsListView(source: sidebarSource, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection)
         } table: {
             #if os(macOS)
             AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection)
@@ -836,6 +842,7 @@ struct SidebarView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var caskManager: CaskManager
     @Binding var selection: AppInfo.ID?
+    @Binding var scrollToSelection: Bool
     @Binding var sidebarSelection: SidebarSelection?
     @Binding var displayMode: TriptychOrient
 
@@ -924,7 +931,7 @@ struct SidebarView: View {
     @ViewBuilder func navigationDestinationView(item: SidebarSelection) -> some View {
         switch displayMode {
         case .list:
-            AppsListView(source: item.source, selection: $selection, sidebarSelection: sidebarSelection)
+            AppsListView(source: item.source, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection)
         #if os(macOS)
         case .table:
             AppTableDetailSplitView(source: item.source, selection: $selection, sidebarSelection: sidebarSelection)

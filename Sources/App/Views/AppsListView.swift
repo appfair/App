@@ -8,6 +8,7 @@ struct AppsListView : View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var caskManager: CaskManager
     @Binding var selection: AppInfo.ID?
+    @Binding var scrollToSelection: Bool
     var sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @State var searchText: String = ""
@@ -26,17 +27,27 @@ struct AppsListView : View {
     }
 
     var body : some View {
-        List {
-            ForEach(items) { item in
-                NavigationLink(tag: item.id, selection: $selection, destination: {
-                    CatalogItemView(info: item)
-                }, label: {
-                    //Text(wip(item.release.name))
-                    label(for: item)
-                })
+        ScrollViewReader { proxy in
+            List {
+                ForEach(items) { item in
+                    NavigationLink(tag: item.id, selection: $selection, destination: {
+                        CatalogItemView(info: item)
+                    }, label: {
+                        //Text(wip(item.release.name))
+                        label(for: item)
+                    })
+                }
             }
+            .onChange(of: scrollToSelection) { scrollToSelection in
+                // sadly, this doesn't work
+                if scrollToSelection == true {
+                    dbg("scrolling to:", selection)
+                    proxy.scrollTo(selection, anchor: nil)
+                    self.scrollToSelection = false // reset once we have performed the scroll
+                }
+            }
+            .searchable(text: $searchText)
         }
-        .searchable(text: $searchText)
     }
 
     func label(for item: AppInfo) -> some View {
