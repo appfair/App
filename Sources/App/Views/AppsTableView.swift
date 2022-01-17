@@ -141,8 +141,4 @@ struct AppsTableView : View, ItemTableView {
     }
 }
 
-
-
-    .
 #endif // os(macOS)
-
