@@ -15,7 +15,7 @@ struct AppsTableView : View, ItemTableView {
     @Binding var selection: AppInfo.ID?
     let sidebarSelection: SidebarSelection?
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
-    @State var searchText: String = ""
+    @Binding var searchText: String
 
     var items: [AppInfo] {
         switch source {
@@ -143,30 +143,6 @@ struct AppsTableView : View, ItemTableView {
 
 
 
-@available(macOS 12.0, *)
-struct AppsTableView_Previews: PreviewProvider {
-    static var previews: some View {
-        let manager = AppManager()
-        manager.catalog = [
-            AppCatalogItem.sample,
-            //AppCatalogItem.sample,
-            //AppCatalogItem.sample,
-            //AppCatalogItem.sample,
-            //AppCatalogItem.sample,
-        ]
-
-        //AppManager.default.catalog += AppManager.default.catalog
-
-        //assert(AppManager.default.catalog.count > 0)
-
-        return VStack {
-            Text("App Catalog Table")
-                .font(.largeTitle)
-            AppsTableView(source: .fairapps, selection: .constant(AppCatalogItem.sample.id), sidebarSelection: .init(item: .popular, source: .fairapps))
-                .environmentObject(manager)
-        }
-    }
-}
-
+    .
 #endif // os(macOS)
 

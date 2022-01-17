@@ -1034,7 +1034,7 @@ struct CatalogItemView: View {
     }
 
     func categorySymbol() -> some View {
-        let category = (item.appCategories.first?.groupings.first ?? .create)
+        //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
         let img = info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image

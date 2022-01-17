@@ -479,8 +479,8 @@ public struct RootView : View {
 //typealias SidebarSelection = AppManager.SidebarItem
 
 struct SidebarSelection : Hashable {
-    let item: AppManager.SidebarItem
     let source: AppSource
+    let item: AppManager.SidebarItem
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -495,7 +495,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SidebarSelection? = SidebarSelection(item: .popular, source: .allCases[0])
+    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: .fairapps, item: .popular)
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -534,6 +534,9 @@ struct NavigationRootView : View {
                 // update the badge when the setting changes
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
+            .onChange(of: sidebarSelection) { selection in
+                searchText = "" // clear search whenever the sidebar selection changes
+            }
 //            .onChange(of: selection) { newSelection in
 //                dbg("selected:", newSelection)
 //            }
@@ -558,8 +561,9 @@ struct NavigationRootView : View {
                     let bundleID = BundleIdentifier(searchID)
 
                     // random crashes seem to happen without dispatching to main
-                    self.sidebarSelection = SidebarSelection(item: .popular, source: isCask ? .homebrew : .fairapps)
                     self.searchText = bundleID.rawValue // needed to cause the item to appear
+                    self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .popular)
+
                     // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
                     DispatchQueue.main.async {
                         self.selection = bundleID
@@ -584,7 +588,7 @@ struct NavigationRootView : View {
             AppsListView(source: sidebarSource, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchText: $searchText)
         } table: {
             #if os(macOS)
-            AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection)
+            AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
             #endif
         } content: {
             AppDetailView()
@@ -601,11 +605,12 @@ struct NavigationRootView : View {
 public struct AppTableDetailSplitView : View {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
+    @Binding var searchText: String
     let sidebarSelection: SidebarSelection?
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection)
+            AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
                 .frame(minHeight: 150)
             AppDetailView()
                 .layoutPriority(1.0)
@@ -924,7 +929,7 @@ struct SidebarView: View {
     }
 
     func item(_ source: AppSource, _ item: AppManager.SidebarItem) -> some View {
-        let selection = SidebarSelection(item: item, source: source)
+        let selection = SidebarSelection(source: source, item: item)
         let label = selection.item.label(for: source)
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
@@ -949,7 +954,7 @@ struct SidebarView: View {
             AppsListView(source: item.source, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchText: $searchText)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(source: item.source, selection: $selection, sidebarSelection: sidebarSelection)
+            AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sidebarSelection: sidebarSelection)
         #endif
         }
     }
