@@ -41,11 +41,14 @@ struct ActionButtonStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .font(Font.caption.weight(.bold))
-                .foregroundColor(isEnabled ? internalColor : internalColor.opacity(0.7))
+                .foregroundColor(isEnabled ? internalColor : internalColor.opacity(0.8))
                 .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-                .frame(minWidth: 65)
                 .background(background(isPressed: configuration.isPressed))
-                .onHover(perform: { self.hovering = $0 })
+                .onHover(perform: { hoverState in
+                    withAnimation(Animation.easeIn(duration: 0.2)) {
+                        self.hovering = hoverState
+                    }
+                })
                 .padding(1)
         }
 

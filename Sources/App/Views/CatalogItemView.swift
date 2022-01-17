@@ -977,6 +977,7 @@ struct CatalogItemView: View {
             .focusable(true)
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
+            .animation(.easeIn(duration: 0.25), value: currentActivity) // make the enabled state of the button animate
             .help(currentActivity == activity ? (Text("Cancel ") + activity.info.title) : activity.info.toolTip)
     }
 
