@@ -7,7 +7,7 @@ PRODUCT_NAME = Media Res
 PRODUCT_BUNDLE_IDENTIFIER = app.Media-Res
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.9
+MARKETING_VERSION = 0.0.10
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 91
