@@ -56,12 +56,18 @@ struct CatalogItemView: View {
 
     @Namespace private var namespace
 
-    #if os(macOS) // horizontalSizeClass unavailable on macOS
+#if os(macOS) // horizontalSizeClass unavailable on macOS
     func horizontalCompact() -> Bool { false }
-    #else
+#else
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     func horizontalCompact() -> Bool { horizontalSizeClass == .compact }
-    #endif
+#endif
+
+    var unavailableIcon: some View {
+        // FairSymbol.exclamationmark_triangle_fill.image.symbolRenderingMode(.multicolor)
+        FairSymbol.puzzlepiece_fill.image.symbolRenderingMode(.hierarchical)
+    }
+
 
     var body: some View {
         catalogStack()
@@ -71,52 +77,23 @@ struct CatalogItemView: View {
             }
     }
 
-    var unavailableIcon: some View {
-        // FairSymbol.exclamationmark_triangle_fill.image.symbolRenderingMode(.multicolor)
-        FairSymbol.puzzlepiece_fill.image.symbolRenderingMode(.hierarchical)
-    }
-
-
-    func headerView() -> some View {
-        pinnedHeaderView()
-            .padding(.top)
-            .background(Material.ultraThinMaterial)
-    }
-
     func catalogStack() -> some View {
         ZStack {
             VStack {
-                headerView()
+                catalogHeader()
+                    .padding(.top)
+                    .background(Material.ultraThinMaterial)
+                Divider()
+                catalogActionButtons()
+                    .frame(height: 40)
+                Divider()
                 catalogSummaryCards()
-                    .frame(height: 50)
+                    .frame(height: 40)
                 Divider()
                 catalogOverview()
             }
 
             screenshotPreviewOverlay()
-        }
-    }
-
-    func catalogGrid() -> some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(pinnedViews: [.sectionHeaders]) {
-                Section {
-                    catalogSummaryCards()
-                    Divider()
-                    catalogOverview()
-                } header: {
-                    headerView()
-                }
-            }
-        }
-    }
-
-    func pinnedHeaderView() -> some View {
-        VStack {
-            catalogHeader()
-            Divider()
-            catalogActionButtons()
-            Divider()
         }
     }
 
@@ -285,14 +262,14 @@ struct CatalogItemView: View {
 
     func linkTextField(_ title: Text, icon: String, url: URL?, linkText: String? = nil) -> some View {
         // the text winds up being un-aligned vertically when rendered like this
-//        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
-//            title
-//                .label(symbol: icon)
-//                .labelStyle(.titleAndIconFlipped)
-//                .link(to: url)
-//                //.font(Font.body)
-//        }
-//        .textFieldStyle(.plain)
+        //        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
+        //            title
+        //                .label(symbol: icon)
+        //                .labelStyle(.titleAndIconFlipped)
+        //                .link(to: url)
+        //                //.font(Font.body)
+        //        }
+        //        .textFieldStyle(.plain)
 
         HStack {
             title
@@ -311,28 +288,28 @@ struct CatalogItemView: View {
         }
         //.alignmentGuide(.leading, computeValue: { d in (d.width - 60) })
 
-//        HStack {
-//
-//            TextField(text: .constant("")) {
-//                title
-//                    .label(symbol: icon)
-//                    .labelStyle(.titleAndIconFlipped)
-//                    .link(to: url)
-//                    .font(Font.body)
-//            }
-//            Text(linkText ?? url.absoluteString)
-//                .font(Font.body.monospaced())
-//                .truncationMode(.middle)
-//                .textSelection(.enabled)
-//        }
+        //        HStack {
+        //
+        //            TextField(text: .constant("")) {
+        //                title
+        //                    .label(symbol: icon)
+        //                    .labelStyle(.titleAndIconFlipped)
+        //                    .link(to: url)
+        //                    .font(Font.body)
+        //            }
+        //            Text(linkText ?? url.absoluteString)
+        //                .font(Font.body.monospaced())
+        //                .truncationMode(.middle)
+        //                .textSelection(.enabled)
+        //        }
 
-//        TextField(text: .constant(linkText ?? url.absoluteString)) {
-//            title
-//                .label(symbol: icon)
-//                .labelStyle(.titleAndIconFlipped)
-//                .link(to: url)
-//                .font(Font.body)
-//        }
+        //        TextField(text: .constant(linkText ?? url.absoluteString)) {
+        //            title
+        //                .label(symbol: icon)
+        //                .labelStyle(.titleAndIconFlipped)
+        //                .link(to: url)
+        //                .font(Font.body)
+        //        }
 
 
     }
@@ -409,7 +386,7 @@ struct CatalogItemView: View {
                 trailing
                     .font(.subheadline)
             }
-                .lineLimit(1)
+            .lineLimit(1)
         })
             .groupBoxStyle(.automatic)
             .padding()
@@ -447,9 +424,9 @@ struct CatalogItemView: View {
                             .font(Font.body)
                     }
                 }
-                    .textSelection(.enabled)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                .textSelection(.enabled)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: .infinity)
         }
@@ -509,9 +486,9 @@ struct CatalogItemView: View {
         let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
 
         return groupBox(title: riskLabel, trailing: item.riskLevel.riskLabel()
-                    .help(item.riskLevel.riskSummaryText())
-                    .labelStyle(IconOnlyLabelStyle())
-                    .padding(.trailing)) {
+                            .help(item.riskLevel.riskSummaryText())
+                            .labelStyle(IconOnlyLabelStyle())
+                            .padding(.trailing)) {
             permissionsList()
                 .overlay(Group {
                     if info.isCask {
@@ -564,7 +541,7 @@ struct CatalogItemView: View {
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
             .truncationMode(.tail)
-            //.textSelection(.enabled)
+        //.textSelection(.enabled)
             .help(entitlement.localizedInfo.info + Text(": ") + Text(permission.usageDescription))
     }
 
@@ -697,7 +674,7 @@ struct CatalogItemView: View {
         content()
             .lineLimit(1)
             .truncationMode(.middle)
-            //.textSelection(.enabled)
+        //.textSelection(.enabled)
             .hcenter()
     }
 
@@ -712,7 +689,7 @@ struct CatalogItemView: View {
                     .font(Font.largeTitle)
                     .truncationMode(.middle)
                 Text(item.subtitle ?? item.localizedDescription)
-                .font(Font.title2)
+                    .font(Font.title2)
                     .truncationMode(.tail)
                 catalogAuthorRow()
                     .font(Font.title3)
@@ -732,37 +709,40 @@ struct CatalogItemView: View {
     func catalogActionButtons() -> some View {
         let isCatalogApp = info.release.bundleIdentifier.rawValue == Bundle.main.bundleID
 
-        return HStack {
-            if isCatalogApp {
-                Spacer() // no button to install ourselves
-                    .hcenter()
-            } else {
-                installButton()
-                    .hcenter()
-            }
-            updateButton()
-                .hcenter()
-            if isCatalogApp {
-                Spacer() // no button to launch ourselves
-                    .hcenter()
-            } else {
-                launchButton()
-                    .hcenter()
-            }
-            revealButton()
-                .hcenter()
-            if isCatalogApp {
-                Spacer() // no button to delete ourselves
-                    .hcenter()
-            } else {
-                trashButton()
-                    .hcenter()
+        return GeometryReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    if isCatalogApp {
+                        Spacer() // no button to install ourselves
+                            .hcenter()
+                    } else {
+                        installButton()
+                            .hcenter()
+                    }
+                    updateButton()
+                        .hcenter()
+                    if isCatalogApp {
+                        Spacer() // no button to launch ourselves
+                            .hcenter()
+                    } else {
+                        launchButton()
+                            .hcenter()
+                    }
+                    revealButton()
+                        .hcenter()
+                    if isCatalogApp {
+                        Spacer() // no button to delete ourselves
+                            .hcenter()
+                    } else {
+                        trashButton()
+                            .hcenter()
+                    }
+                }
+                .symbolRenderingMode(.hierarchical)
+                .buttonBorderShape(.roundedRectangle)
+                .frame(minWidth: proxy.size.width) // cause the buttons to scroll off the view if it is too narrow to hold them all
             }
         }
-        .symbolRenderingMode(.monochrome)
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle)
-        .controlSize(.regular)
     }
 
     func installButton() -> some View {
@@ -820,7 +800,7 @@ struct CatalogItemView: View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: fairManager.enableDeleteWarning)
             .keyboardShortcut(.delete, modifiers: [])
             .disabled(!appInstalled)
-            //.accentColor(.red) // coflicts with the red background of the button
+        //.accentColor(.red) // coflicts with the red background of the button
             .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
                 Text("Delete").button {
                     runTask(activity: .trash, confirm: true)
@@ -940,6 +920,8 @@ struct CatalogItemView: View {
     /// The height of the accessory for the buttons
     let accessoryHeight = 18.0
 
+    let buttonHeight = 22.0 // a friendly-feeling height
+
     func button(activity: CatalogActivity, role: ButtonRole? = .none, needsConfirm: Bool = false) -> some View {
         Button(role: role, action: {
             if currentActivity == activity {
@@ -949,30 +931,7 @@ struct CatalogItemView: View {
                 runTask(activity: activity, confirm: !needsConfirm)
             }
         }, label: {
-            Label(title: {
-                HStack(spacing: 5) {
-                    activity.info.title
-                        .font(Font.headline.smallCaps())
-                        .truncationMode(.middle)
-                        .lineLimit(1)
-                        .multilineTextAlignment(.center)
-                    Group {
-                        if currentActivity == activity {
-                            FairSymbol.x_circle
-                                .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut) //.symbolRenderingMode(.hierarchical)
-                        } else if let activityWarning = warning(for: activity) {
-                            EnabledView { enabled in
-                                FairSymbol.exclamationmark_triangle_fill
-                                    .symbolRenderingMode(enabled ? .multicolor : .hierarchical)
-                                    .help(activityWarning)
-                            }
-                        } else {
-                            FairSymbol.circle
-                        }
-                    }
-                    .frame(width: 20, height: accessoryHeight)
-                }
-            }, icon: {
+            HStack(spacing: 0) {
                 Group {
                     if currentActivity == activity {
                         ProgressView()
@@ -983,10 +942,39 @@ struct CatalogItemView: View {
                         activity.info.systemSymbol
                     }
                 }
-                .frame(width: 20, height: accessoryHeight)
-            })
+                .frame(width: 20)
+                Group {
+                    //GeometryReader { proxy in
+                    activity.info.title
+                        .font(Font.headline.smallCaps())
+                    //.truncationMode(.middle)
+                    //.allowsTightening(true)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: true, vertical: true) // needed to prevent text truncation
+                    //.opacity(proxy.size.width < 50 ? 0.0 : 1.0) // hide label when the button is too small
+                }
+                .hcenter()
+                Group {
+                    if currentActivity == activity {
+                        FairSymbol.x_circle
+                            .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut) //.symbolRenderingMode(.hierarchical)
+                    } else if let activityWarning = warning(for: activity) {
+                        EnabledView { enabled in
+                            FairSymbol.exclamationmark_triangle_fill
+                                .symbolRenderingMode(enabled ? .multicolor : .hierarchical)
+                                .help(activityWarning)
+                        }
+                    } else {
+                        FairSymbol.circle
+                    }
+                }
+                .frame(width: 20)
+            }
+            .frame(height: buttonHeight)
         })
             .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
+            .focusable(true)
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
             .help(currentActivity == activity ? (Text("Cancel ") + activity.info.title) : activity.info.toolTip)
@@ -1024,12 +1012,12 @@ struct CatalogItemView: View {
         // if NSWorkspace.shared.icon(forFile: appPath)
 
         // check for installed caches
-        /* // this is called on every body update, so we should cache it in the caskManager 
-        if info.isCask == true, let img = caskManager.icon(for: item) {
-            img.resizable().aspectRatio(contentMode: .fit)
-        } else {
-            item.iconImage()
-        }
+        /* // this is called on every body update, so we should cache it in the caskManager
+         if info.isCask == true, let img = caskManager.icon(for: item) {
+         img.resizable().aspectRatio(contentMode: .fit)
+         } else {
+         item.iconImage()
+         }
          */
         item.iconImage()
     }
@@ -1046,7 +1034,7 @@ struct CatalogItemView: View {
             .symbolVariant(.fill)
             .symbolRenderingMode(.palette)
             .brightness(0.4)
-            //.foregroundColor(.secondary)
+        //.foregroundColor(.secondary)
     }
 
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3?) -> some View {
@@ -1181,16 +1169,16 @@ extension AppCatalogItem {
 
     @ViewBuilder func fallbackIcon() -> some View {
         // fall-back to the generated image for the app, but with no title or sub-title
-//        if id.isCaskApp {
-//            // cask apps use a blank icon
-//        } else {
-            FairIconView("", subtitle: "", iconColor: itemTintColor())
-//        }
+        //        if id.isCaskApp {
+        //            // cask apps use a blank icon
+        //        } else {
+        FairIconView("", subtitle: "", iconColor: itemTintColor())
+        //        }
     }
 
     /// The specified tint color, falling back on the default tint for the app name
     func itemTintColor() -> Color {
-         self.tintColor() ?? FairIconView.iconColor(name: self.appNameHyphenated)
+        self.tintColor() ?? FairIconView.iconColor(name: self.appNameHyphenated)
     }
 
 

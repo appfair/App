@@ -541,39 +541,49 @@ struct NavigationRootView : View {
                 }
             }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open external URLs
-            .onOpenURL { url in
-                let components = url.pathComponents
-                dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
-                // e.g., appfair://app/App-Name
-                // e.g., appfair://homebrew/cask/token
-                if let scheme = url.scheme, scheme == "appfair" {
-                    let path = ([url.host ?? ""] + url.pathComponents)
-                        .filter { !$0.isEmpty && $0 != "." && $0 != "/" }
+            .onOpenURL(perform: handleURL)
+    }
 
-                    if path.count < 1 {
-                        dbg("invalid URL path", path)
-                        return
-                    }
+    /// Handles opening the URL schemes suppored by this app.
+    ///
+    /// Supported schemes:
+    ///
+    ///   1. `appfair://app/App-Name`: selects the "Apps" outline and searches for "app.App-Name"
+    ///   1. `appfair://cask/token`: selects the "Casks" outline and searches for "homebrew/cask/token"
+    func handleURL(_ url: URL) {
+        let components = url.pathComponents
+        dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
+        if let scheme = url.scheme, scheme == "appfair" {
+            var path = ([url.host ?? ""] + url.pathComponents)
+                .filter { !$0.isEmpty && $0 != "." && $0 != "/" }
 
-                    let isCask = path.first == "homebrew"
-                    let searchID = path.joined(separator: isCask ? "/" : ".") // "homebrew/cask/iterm2" vs. "app/Tidal-Zone"
+            if path.count < 1 {
+                dbg("invalid URL path", path)
+                return
+            }
 
-                    let bundleID = BundleIdentifier(searchID)
+            if path.count == 2 && path.first == "cask" {
+                path.insert("homebrew", at: 0)
+            }
 
-                    // random crashes seem to happen without dispatching to main
-                    self.searchText = bundleID.rawValue // needed to cause the item to appear
-                    self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .all)
+            let isCask = path.first == "homebrew"
+            let searchID = path.joined(separator: isCask ? "/" : ".") // "homebrew/cask/iterm2" vs. "app/Tidal-Zone"
 
-                    // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
-                    DispatchQueue.main.async {
-                        self.selection = bundleID
-                        dbg("selected app ID", self.selection)
+            let bundleID = BundleIdentifier(searchID)
+
+            // random crashes seem to happen without dispatching to main
+            self.searchText = bundleID.rawValue // needed to cause the item to appear
+            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .all)
+
+            // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
+            DispatchQueue.main.async {
+                self.selection = bundleID
+                dbg("selected app ID", self.selection)
 //                        DispatchQueue.main.async {
 //                            self.scrollToSelection = true // if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
 //                        }
-                    }
-                }
             }
+        }
     }
 
     /// The currently selected source for the sidebar
