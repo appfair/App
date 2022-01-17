@@ -33,7 +33,6 @@ struct AppsListView : View {
                     NavigationLink(tag: item.id, selection: $selection, destination: {
                         CatalogItemView(info: item)
                     }, label: {
-                        //Text(wip(item.release.name))
                         label(for: item)
                     })
                 }

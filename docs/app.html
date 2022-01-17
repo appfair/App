@@ -1,16 +1,73 @@
+<html>
+    <head>
+        <title>App Fair App</title>
+      <style>
+            body {
+                height: 100vh;
+                margin: 0;
+                background-disabled: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(115,115,115,1) 100%);
+            }
 
-<div>
-Launch App: <a id="applink" href="appfair://app">App Name</a>
-</div>
- 
-<script>
-    let appHash = window.location.hash;
-    //console.log("HASH", appHash);
+            .outerlync {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              margin-right: -50%;
+              transform: translate(-50%, -50%);
+              display: inline-block;
+              background: transparent;
+            }
 
-    if (typeof appHash === 'string') {    
-        let appName = appHash.substring(1);
-        document.getElementById("applink").innerHTML = appName;
-        document.getElementById("applink").href = "appfair://app/" + appName;
-    }
-</script>
+            img.innerlync {
+              /* max-width: 15vw; */
+              /* max-height: 15vh; */
+            }
 
+        </style>
+    </head>
+</html>
+<body>
+    <div class="container-lg px-3 my-5 markdown-body">
+        <div class="outerlync" style="text-align: center;">
+            <h1 id="apptitle" style="text-align: center; font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif;">Welcome to the App Fair</h1>
+            <hr />
+
+            <p>
+            <a id="applink" href="appfair://app"><img class="innerlync" width="180" height="180" id="appicon" src="https://github.com/App-Fair/App/releases/latest/download/App-Fair.png" /></a>
+            </p>
+            <hr />
+            <a href="https://appfair.net"><img src="https://www.appfair.net/appfair-free-for-all.svg" width="450" alt="Free for all at the App Fair – https://www.appfair.net" /></a>
+        </div>
+    </div>
+
+
+    <!-- e.g.: 
+        file:///opt/src/github/appfair/App-Fair/docs/app.html#app/Tidal-Zone 
+        file:///opt/src/github/appfair/App-Fair/docs/app.html#homebrew/cask/iterm2 
+    -->
+    <script>
+        let appHash = window.location.hash;
+        //console.log("HASH", appHash);
+
+        if (typeof appHash === 'string') {    
+            let appPath = appHash.substring(1)
+            let appParts = appPath.split("/");
+            let appID = appParts[appParts.length - 1];
+            let appName = appID.replace("-", " ");
+            if (appParts[0] == "app") { 
+                let appImageLink = "https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png"
+
+                document.getElementById("appicon").src = appImageLink;
+            }
+
+            document.getElementById("apptitle").innerHTML = appName;
+
+            //let launchLink = "appfair://app/" + appID;
+            let launchLink = "appfair://" + appPath;
+            document.getElementById("applink").href = launchLink;
+
+            // attempt to launch the app fair app
+            document.location = launchLink;
+        }
+    </script>
+</body>

@@ -306,6 +306,7 @@ struct CatalogItemView: View {
                 .lineLimit(1)
                 .textSelection(.enabled)
                 .font(Font.body.monospacedDigit())
+                .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         //.alignmentGuide(.leading, computeValue: { d in (d.width - 60) })
