@@ -495,7 +495,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: .fairapps, item: .popular)
+    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: .fairapps, item: .all)
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -505,6 +505,7 @@ struct NavigationRootView : View {
 
     public var body: some View {
         triptychView
+            .frame(minHeight: 600) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
             .displayingFirstAlert($appManager.errors)
             .toolbar(id: "NavToolbar") {
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
@@ -535,11 +536,10 @@ struct NavigationRootView : View {
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
             .onChange(of: sidebarSelection) { selection in
-                searchText = "" // clear search whenever the sidebar selection changes
+                if selection?.item != .all { // only clear when switching away from the "popular" tab
+                    searchText = "" // clear search whenever the sidebar selection changes
+                }
             }
-//            .onChange(of: selection) { newSelection in
-//                dbg("selected:", newSelection)
-//            }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open external URLs
             .onOpenURL { url in
                 let components = url.pathComponents
@@ -562,7 +562,7 @@ struct NavigationRootView : View {
 
                     // random crashes seem to happen without dispatching to main
                     self.searchText = bundleID.rawValue // needed to cause the item to appear
-                    self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .popular)
+                    self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .all)
 
                     // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
                     DispatchQueue.main.async {
@@ -879,7 +879,7 @@ struct SidebarView: View {
     var body: some View {
         List {
             Section("Fairground") {
-                item(.fairapps, .popular).keyboardShortcut("1")
+                item(.fairapps, .all).keyboardShortcut("1")
                 item(.fairapps, .recent).keyboardShortcut("2")
                 item(.fairapps, .installed).keyboardShortcut("3")
                 item(.fairapps, .updated).keyboardShortcut("4")
@@ -887,7 +887,7 @@ struct SidebarView: View {
 
             if caskManager.enableHomebrew {
                 Section("Homebrew") {
-                    item(.homebrew, .popular).keyboardShortcut("5")
+                    item(.homebrew, .all).keyboardShortcut("5")
                     // item(.homebrew, .recent) // casks don't have a last-updated date
                     item(.homebrew, .installed).keyboardShortcut("6")
                     item(.homebrew, .updated).keyboardShortcut("7")
@@ -914,7 +914,7 @@ struct SidebarView: View {
         //.symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
         .toolbar(id: "SidebarView") {
-            tool(.popular)
+            tool(.all)
             tool(.recent)
             tool(.updated)
             tool(.installed)

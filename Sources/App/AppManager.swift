@@ -155,7 +155,7 @@ extension AppManager {
         switch category {
         case .none:
             return []
-        case .popular:
+        case .all:
             return [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
         case .recent:
             return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
@@ -603,7 +603,7 @@ extension AppManager {
 
     func badgeCount(for item: SidebarItem) -> Text? {
         switch item {
-        case .popular:
+        case .all:
             return nil // Text(123.localizedNumber(style: .decimal))
         case .recent:
             return nil // Text(11.localizedNumber(style: .decimal))
@@ -622,7 +622,7 @@ extension AppManager {
     }
 
     enum SidebarItem : Hashable {
-        case popular
+        case all
         case updated
         case installed
         case recent
@@ -631,8 +631,8 @@ extension AppManager {
         /// The persistent identifier for this grouping
         var id: String {
             switch self {
-            case .popular:
-                return "popular"
+            case .all:
+                return "all"
             case .updated:
                 return "updated"
             case .installed:
@@ -648,7 +648,7 @@ extension AppManager {
             switch source {
             case .fairapps:
                 switch self {
-                case .popular:
+                case .all:
                     return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
                 case .recent:
                     return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
@@ -661,7 +661,7 @@ extension AppManager {
                 }
             case .homebrew:
                 switch self {
-                case .popular:
+                case .all:
                     return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
                 case .installed:
                     return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
@@ -683,7 +683,7 @@ extension AppManager {
                 return true
             case .installed:
                 return true
-            case .popular:
+            case .all:
                 return false
             case .recent:
                 return false
@@ -698,7 +698,7 @@ extension AppManager {
 extension AppManager.SidebarItem {
     func matches(item: AppInfo) -> Bool {
         switch self {
-        case .popular:
+        case .all:
             return true
         case .updated:
             return item.appUpdated

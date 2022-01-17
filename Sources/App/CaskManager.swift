@@ -809,7 +809,7 @@ extension CaskManager {
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {
         switch item {
-        case .popular:
+        case .all:
             return nil
         case .updated:
             return Text(updateCount(), format: .number)
