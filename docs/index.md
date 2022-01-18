@@ -4,6 +4,8 @@ layout: fairapp
 
 # Welcome to the App Fair!
 
-<a href="https://github.com/App-Fair/App/releases/latest/download/App-Fair-macOS.zip"><img height="60" src="assets/download_button.svg" /></a>
+<div style="text-align: center;">
+<a href="https://github.com/App-Fair/App/releases/latest/download/App-Fair-macOS.zip"><img alt="Download App Fair.app for macOS 12+" height="80" src="assets/download_button.svg" /></a>
+</div>
 
 
