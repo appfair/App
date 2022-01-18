@@ -80,12 +80,14 @@ struct CatalogItemView: View {
     func catalogStack() -> some View {
         ZStack {
             VStack {
-                catalogHeader()
-                    .padding(.top)
-                    .background(Material.ultraThinMaterial)
-                Divider()
+                VStack(spacing: 0) {
+                    catalogHeader()
+                        .padding(.vertical)
+                        .background(Material.ultraThinMaterial)
+                    Divider()
+                }
                 catalogActionButtons()
-                    .frame(height: 40)
+                    .frame(height: buttonHeight + 12)
                 Divider()
                 catalogSummaryCards()
                     .frame(height: 40)

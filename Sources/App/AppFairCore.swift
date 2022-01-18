@@ -483,10 +483,21 @@ struct NavigationRootView : View {
             .frame(minHeight: 600) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
             .displayingFirstAlert($appManager.errors)
             .toolbar(id: "NavToolbar") {
+//                ToolbarItem(placement: .navigation) {
+//                    Button(action: toggleSidebar) {
+//                        FairSymbol.sidebar_left.image
+//                    })
+//                }
+
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
                     Text("Reload")
                         .label(symbol: "arrow.triangle.2.circlepath.circle")
-                        .button(command: reloadCommand)
+                        //.button(command: reloadCommand)
+                        .button {
+                            await fairManager.trying {
+                                try await fairManager.refresh()
+                            }
+                        }
                         .hoverSymbol(activeVariant: .fill)
                         .help(Text("Reload the App Fair catalog"))
                         .keyboardShortcut("R")
