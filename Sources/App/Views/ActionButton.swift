@@ -45,9 +45,7 @@ struct ActionButtonStyle: ButtonStyle {
                 .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
                 .background(background(isPressed: configuration.isPressed))
                 .onHover(perform: { hoverState in
-                    withAnimation(Animation.easeIn(duration: 0.2)) {
-                        self.hovering = hoverState
-                    }
+                    self.hovering = hoverState
                 })
                 .padding(1)
         }
