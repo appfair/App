@@ -2,7 +2,7 @@
 <svg width="1034px" height="209px" viewBox="0 0 1034 209" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>Download App Fair</title>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect id="Rectangle" stroke="#AFAFAF" stroke-width="4" fill="#000000" x="1" y="1" width="1032" height="207" rx="71"></rect>
+        <rect id="Rectangle" stroke="#AFAFAF" stroke-width="4" fill="#000000" x="1" y="1" width="1032" height="207" rx="40"></rect>
         <text id="Download-App-Fair" font-family="ui-rounded, system-ui, HelveticaNeue, Helvetica Neue" font-size="72" font-weight="bold" fill="#FFFFFF">
             <tspan x="216" y="102">Download App Fair.app</tspan>
         </text>
