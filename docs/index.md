@@ -7,5 +7,3 @@ layout: fairapp
 </div>
 
 
-
-
