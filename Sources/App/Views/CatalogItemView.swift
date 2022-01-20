@@ -703,7 +703,7 @@ struct CatalogItemView: View {
                     .font(Font.title3)
                     .truncationMode(.head)
             }
-            .textSelection(.enabled)
+            //.textSelection(.enabled) // this makes the text turn very dark when it is selected
             .lineLimit(1)
             .allowsTightening(true)
             .hcenter()
@@ -1035,7 +1035,7 @@ struct CatalogItemView: View {
         //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
-        let img = info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image
+        let img = item.appCategories.first?.groupings.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
         return img
             .resizable()
             .aspectRatio(contentMode: .fit)

@@ -709,16 +709,21 @@ public extension AppCategory {
         case work
 
         /// All the categories that belong to this grouping
-        public var symbolName: String {
+        public var symbol: FairSymbol {
             switch self {
-            case .create: return FairSymbol.puzzlepiece.symbolName
-            case .research: return FairSymbol.book.symbolName
-            case .communicate: return FairSymbol.envelope.symbolName
-            case .entertain: return FairSymbol.sparkles_tv.symbolName
-            case .live: return FairSymbol.house.symbolName
-            case .game: return FairSymbol.circle_hexagongrid.symbolName
-            case .work: return FairSymbol.briefcase.symbolName
+            case .create: return FairSymbol.puzzlepiece
+            case .research: return FairSymbol.book
+            case .communicate: return FairSymbol.envelope
+            case .entertain: return FairSymbol.sparkles_tv
+            case .live: return FairSymbol.house
+            case .game: return FairSymbol.circle_hexagongrid
+            case .work: return FairSymbol.briefcase
             }
+        }
+
+        /// All the categories that belong to this grouping
+        public var symbolName: String {
+            symbol.symbolName
         }
 
         /// All the categories that belong to this grouping
