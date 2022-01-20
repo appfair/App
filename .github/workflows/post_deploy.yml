@@ -1,0 +1,19 @@
+name: Post Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  create-pr:
+    name: "Create OR"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Create PR: ${{ github.repository_owner }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          gh pr create --title "PR TITLE" --body "PR BODY"
+
