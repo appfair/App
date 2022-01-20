@@ -405,6 +405,8 @@ struct CatalogItemView: View {
                     if info.isCask {
                         Text("Screenshots unavailable for Homebrew Casks")
                             .label(image: unavailableIcon)
+                            .padding()
+                            .lineLimit(1)
                             .font(Font.callout)
                             .foregroundColor(.secondary)
                             .help(Text("Screenshots are not available for Homebrew Casks"))
@@ -487,15 +489,19 @@ struct CatalogItemView: View {
     func riskSection() -> some View {
         let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
 
-        return groupBox(title: riskLabel, trailing: item.riskLevel.riskLabel()
-                            .help(item.riskLevel.riskSummaryText())
-                            .labelStyle(IconOnlyLabelStyle())
-                            .padding(.trailing)) {
+        let riskIcon = (info.isCask ? nil : item)?.riskLevel.riskLabel()
+            .help(item.riskLevel.riskSummaryText())
+            .labelStyle(IconOnlyLabelStyle())
+            .padding(.trailing)
+
+        return groupBox(title: riskLabel, trailing: riskIcon) {
             permissionsList()
                 .overlay(Group {
                     if info.isCask {
                         Text("Risk assessment unavailable for Homebrew Casks")
                             .label(image: unavailableIcon)
+                            .padding()
+                            .lineLimit(1)
                             .font(Font.callout)
                             .foregroundColor(.secondary)
                             .help(Text("Risk assessment is only available for App Fair Fairground apps"))
