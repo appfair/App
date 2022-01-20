@@ -1,6 +1,9 @@
 import SwiftUI
 import Lottie
 
+public struct MotionViewInfo {
+}
+
 /// A view that displays a Lottie Animation
 public struct MotionEffectView : View {
     let animation: Lottie.Animation
