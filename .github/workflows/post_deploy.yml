@@ -42,5 +42,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: |
-          gh pr create --no-maintainer-edit --repo "${{ github.repository_owner }}/App" --title "app.${{ github.repository_owner }}" --body "release"
+          gh pr create --repo appfair/App --no-maintainer-edit --repo "${{ github.repository_owner }}/App" --title "app.${{ github.repository_owner }}" --body "release"
 
