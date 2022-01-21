@@ -6,7 +6,6 @@ on:
 
 jobs:
   create-pr:
-    name: "Create OR"
     runs-on: ubuntu-latest
 
     steps:
