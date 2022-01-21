@@ -5,7 +5,7 @@ let package = Package(
     name: "App",
     defaultLocalization: "en",
     platforms: [ .macOS(.v12), .iOS(.v15) ],
-    products: [ .library(name: "App", targets: ["App"]) ],
+    products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         // the Fair main branch must be the *first* dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
@@ -14,7 +14,11 @@ let package = Package(
         .package(url: "https://github.com/CoreOffice/CoreXLSX.git", .upToNextMinor(from: "0.14.1")),
     ],
     targets: [
-        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair"), "Charts", "CoreXLSX" ], resources: [.process("Resources"), .copy("Bundle")]),
+        .target(name: "App", dependencies: [
+            .product(name: "FairApp", package: "Fair"),
+            "Charts",
+            "CoreXLSX",
+        ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )
