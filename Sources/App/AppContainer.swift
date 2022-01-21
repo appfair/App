@@ -11,6 +11,7 @@ public struct ContentView: View {
             Text("(it doesn't do anything _yet_)")
                 .font(.headline)
         }
+        .redacted(reason: .privacy)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
