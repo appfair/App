@@ -38,11 +38,14 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: main
 
       - name: "Create PR: ${{ github.repository_owner }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: |
+          # pull request create failed: GraphQL: Resource not accessible by integration
           gh pr create --repo appfair/App --base main --no-maintainer-edit --title "app.${{ github.repository_owner }}" --body "release"
 
