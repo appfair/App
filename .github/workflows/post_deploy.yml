@@ -4,6 +4,8 @@ name: Post Release
 on:
   release:
     types: [published]
+    branch: [ main ]
+  workflow_dispatch:
 
 jobs:
   create-pr:
@@ -42,6 +44,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: |
-          git checkout main
-          gh pr create --repo appfair/App --no-maintainer-edit --repo "${{ github.repository_owner }}/App" --title "app.${{ github.repository_owner }}" --body "release"
+          gh pr create -B main -H n --repo appfair/App --no-maintainer-edit --repo "${{ github.repository_owner }}/App" --title "app.${{ github.repository_owner }}" --body "release"
 
