@@ -10,10 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: "Initialize fair-ground"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
+          # The target folder for I-R; setting to the current folder
+          # uses the sanitized project.xcodeproj, and setting it to
+          # ReleasePR/ uses the raw PR build settings
+          echo "IR_TARGET=." >> $GITHUB_ENV
+          #echo "IR_TARGET=ReleasePR" >> $GITHUB_ENV
+
+          echo "PRTITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "ORGNAME=${{ github.event.pull_request.head.user.login }}" >> $GITHUB_ENV
+          echo "COMMITHASH=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "PRID=${{ github.event.pull_request.id }}" >> $GITHUB_ENV
+
+      - name: "Configure App: ${{ env.ORGNAME }}"
+        run: |
+          echo "FAIR_APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
+          echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
+          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
+          echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: "Create PR: ${{ github.repository_owner }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: |
-          gh pr create --title "PR TITLE" --body "PR BODY"
+          gh pr create --no-maintainer-edit --repo "${{ github.repository_owner }}/App" --title "app.${{ github.repository_owner }}" --body "release"
 
