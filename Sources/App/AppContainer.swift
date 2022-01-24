@@ -6,7 +6,7 @@ public struct ContentView: View {
 
     public var body: some View {
         VStack {
-            Text("Welcome to **\(Bundle.main.bundleName!)**")
+            Text("Welcome to *\(Bundle.main.bundleName!)*")
                 .font(.largeTitle)
             Text("(it doesn't do anything _yet_)")
                 .font(.headline)
