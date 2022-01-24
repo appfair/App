@@ -61,7 +61,7 @@ struct AppsTableView : View, ItemTableView {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
                 let imageColumn = TableColumn("", value: \AppInfo.release.iconURL, comparator: URLComparator()) { item in
-                    item.release.iconImage()
+                    fairManager.iconView(for: item)
                         .frame(width: 20, height: 20)
                 }
                 imageColumn

@@ -134,8 +134,13 @@ extension AppCatalogItem : Identifiable {
         self.name.rehyphenated()
     }
 
+    /// The official landing page for the app
+    var landingPage: URL! {
+        URL(string: "https://\(appNameHyphenated).github.io/App")
+    }
+
     /// Returns the URL to this app's home page
-    var baseURL: URL? {
+    var baseURL: URL! {
         URL(string: "https://github.com/\(appNameHyphenated)/App")
     }
 
@@ -145,23 +150,23 @@ extension AppCatalogItem : Identifiable {
     }
 
     /// Returns the URL to this app's home page
-    var sourceURL: URL? {
-        baseURL?.appendingPathExtension("git")
+    var sourceURL: URL! {
+        baseURL.appendingPathExtension("git")
     }
 
-    var issuesURL: URL? {
-        baseURL?.appendingPathComponent("issues")
+    var issuesURL: URL! {
+        baseURL.appendingPathComponent("issues")
     }
 
-    var discussionsURL: URL? {
-        baseURL?.appendingPathComponent("discussions")
+    var discussionsURL: URL! {
+        baseURL.appendingPathComponent("discussions")
     }
 
-    var developerURL: URL? {
+    var developerURL: URL! {
         queryURL(type: "users", term: developerEmail)
     }
 
-    var fairsealURL: URL? {
+    var fairsealURL: URL! {
         queryURL(type: "issues", term: sha256 ?? "")
     }
 

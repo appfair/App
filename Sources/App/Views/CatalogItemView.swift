@@ -331,7 +331,7 @@ struct CatalogItemView: View {
                     }
 
                     if let appcast = cask.appcast, let appcast = URL(string: appcast) {
-                        linkTextField(Text("Appcast"), icon: FairSymbol.house.symbolName, url: appcast)
+                        linkTextField(Text("Appcast"), icon: FairSymbol.dot_radiowaves_up_forward.symbolName, url: appcast)
                             .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)"))
                     }
 
@@ -349,6 +349,10 @@ struct CatalogItemView: View {
                         .help(Text("Whether this app handles updating itself"))
 
                 } else {
+                    if let landingPage = info.release.landingPage {
+                        linkTextField(Text("Home"), icon: FairSymbol.house.symbolName, url: landingPage)
+                            .help(Text("Opens link to the landing page for this app at: \(landingPage.absoluteString)"))
+                    }
                     if let discussionsURL = info.release.discussionsURL {
                         linkTextField(Text("Discussions"), icon: FairSymbol.text_bubble.symbolName, url: discussionsURL)
                             .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
@@ -688,7 +692,7 @@ struct CatalogItemView: View {
 
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
-            iconView()
+            fairManager.iconView(for: info)
                 .frame(width: 80, height: 80)
                 .padding(.leading, 40)
 
@@ -1017,33 +1021,32 @@ struct CatalogItemView: View {
         }
     }
 
-    @ViewBuilder func iconView() -> some View {
-        // if NSWorkspace.shared.icon(forFile: appPath)
-
-        // check for installed caches
-        /* // this is called on every body update, so we should cache it in the caskManager
-         if info.isCask == true, let img = caskManager.icon(for: item) {
-         img.resizable().aspectRatio(contentMode: .fit)
-         } else {
-         item.iconImage()
-         }
-         */
-        item.iconImage()
-    }
-
     func categorySymbol() -> some View {
         //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
         let img = item.appCategories.first?.groupings.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
-        return img
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .fairTint(simple: true, color: item.itemTintColor(), scheme: colorScheme)
-            .symbolVariant(.fill)
-            .symbolRenderingMode(.palette)
-            .brightness(0.4)
-        //.foregroundColor(.secondary)
+        let baseColor = item.itemTintColor()
+        return ZStack {
+            Circle()
+                //.fill(baseColor)
+                //.foregroundStyle(.linearGradient(colors: [baseColor, baseColor], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(
+                    .linearGradient(colors: [baseColor.opacity(0.8), baseColor], startPoint: .top, endPoint: .bottom)
+                )
+                .background(Circle().foregroundColor(Color.white)) // need a background of white so the opacity looks right
+
+            img
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .foregroundColor(Color.white)
+                //.fairTint(simple: true, color: baseColor, scheme: colorScheme)
+                .symbolVariant(.fill)
+                .symbolRenderingMode(.palette)
+                .padding()
+                //.brightness(0.4)
+            //.foregroundColor(.secondary)
+        }
     }
 
     func card<V1: View, V2: View, V3: View>(_ s1: V1, _ s2: V2, _ s3: V3?) -> some View {
@@ -1165,14 +1168,6 @@ extension AppCatalogItem {
         } else {
             fallbackIcon()
                 .grayscale(1.0)
-        }
-    }
-
-    @ViewBuilder func iconImageOLD() -> some View {
-        if let iconURL = self.iconURL {
-            URLImage(url: iconURL, resizable: .fit)
-        } else {
-            fallbackIcon()
         }
     }
 

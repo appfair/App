@@ -579,13 +579,16 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("result:", result)
     }
 
-    func icon(for item: AppCatalogItem) -> Image? {
-        if let path = try? self.installPath(for: item) {
+    @ViewBuilder func icon(for item: AppCatalogItem, useInstalledIcon: Bool) -> some View {
+        if useInstalledIcon, let path = try? self.installPath(for: item) {
             // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
             let icon = NSWorkspace.shared.icon(forFile: path.path)
-            return Image(uxImage: icon)
+            Image(uxImage: icon).resizable()
+        } else if let baseURL = URL(string: item.developerName) {
+            FaviconImage(baseURL: baseURL)
+        } else {
+            FairSymbol.questionmark_square_dashed
         }
-        return nil
     }
 
     func installPath(for item: AppCatalogItem) throws -> URL? {
@@ -710,17 +713,11 @@ extension CaskManager {
                 continue
             }
 
-            // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
-            let iconURL = URL(string: "/favicon.ico", relativeTo: homepage)
-
-            // TODO: for installed apps, we could try to use the system icon for the app via `NSWorkspace.shared.icon(forFile: appPath)`, but the icon is an image rather than a file
-
-
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
             let categories: [String]? = nil // sadly, casks are un-categorized
 
-            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: iconURL, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
+            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: nil, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
 
             var plist: Plist? = nil
             if let installed = installed {

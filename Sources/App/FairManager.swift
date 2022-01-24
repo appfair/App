@@ -58,5 +58,15 @@ import FairApp
         return appManager.updateCount()
             + (caskManager.enableHomebrew ? caskManager.updateCount() : 0)
     }
+
+    @ViewBuilder func iconView(for info: AppInfo) -> some View {
+        if info.isCask == true {
+            caskManager.icon(for: info.release, useInstalledIcon: false)
+        } else {
+            info.release.iconImage()
+        }
+    }
+
+
 }
 

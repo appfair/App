@@ -52,7 +52,7 @@ struct AppsListView : View {
     func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
             ZStack {
-                item.release.iconImage()
+                fairManager.iconView(for: item)
                 if let progress = fairManager.appManager.operations[item.id]?.progress {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
