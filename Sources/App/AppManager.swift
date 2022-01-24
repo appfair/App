@@ -5,12 +5,12 @@ import Foundation
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]
-let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps.json")!
+let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-macos.json")!
 #endif
 
 #if os(iOS)
 let displayExtensions: Set<String>? = ["ipa"]
-let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-iOS.json")!
+let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-ios.json")!
 #endif
 
 protocol InstallationManager where Self : ObservableObject {
