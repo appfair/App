@@ -10,10 +10,17 @@ let package = Package(
         // the Fair main branch must be the *first* dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
+        .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.1.0"),
+        .package(url: "https://github.com/vapor/postgres-kit.git", from: "2.5.1"),
+        .package(url: "https://github.com/vapor/mysql-kit.git", from: "4.5.0"),
+
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
+            .product(name: "SQLiteKit", package: "sqlite-kit"),
+            .product(name: "PostgresKit", package: "postgres-kit"),
+            .product(name: "MySQLKit", package: "mysql-kit"),
         ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
