@@ -693,8 +693,8 @@ struct CatalogItemView: View {
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
             fairManager.iconView(for: info)
-                .frame(width: 80, height: 80)
-                .padding(.leading, 40)
+                .frame(width: 60, height: 60)
+                .padding(.leading)
 
             VStack(alignment: .center) {
                 Text(item.name)
@@ -703,9 +703,9 @@ struct CatalogItemView: View {
                 Text(item.subtitle ?? item.localizedDescription)
                     .font(Font.title2)
                     .truncationMode(.tail)
-                catalogAuthorRow()
-                    .font(Font.title3)
-                    .truncationMode(.head)
+//                catalogAuthorRow()
+//                    .font(Font.title3)
+//                    .truncationMode(.head)
             }
             //.textSelection(.enabled) // this makes the text turn very dark when it is selected
             .lineLimit(1)
@@ -713,8 +713,8 @@ struct CatalogItemView: View {
             .hcenter()
 
             categorySymbol()
-                .frame(width: 80, height: 80)
-                .padding(.trailing, 40)
+                .frame(width: 60, height: 60)
+                .padding(.trailing)
         }
     }
 
