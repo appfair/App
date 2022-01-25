@@ -20,18 +20,35 @@ extension InstallationManager where Self : CaskManager {
         FileManager.default.isExecutableFile(atPath: brewCommand(at: brewInstallRoot).path)
     }
 
-    static var defaultBrewPath: URL {
-        URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
-    }
-
     static func brewCommand(at brewInstallRoot: URL) -> URL {
         URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+    }
+
+    static var defaultBrewPath: URL {
+        URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
     }
 }
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class CaskManager: ObservableObject, InstallationManager {
+    private static let endpoint = URL(string: "https://formulae.brew.sh/api/")!
+
+    /// The list of casks (x86 if there are architecture-specific binaries: https://github.com/Homebrew/brew/issues/12786)
+    private static let caskList = URL(string: ProcessInfo.isArmMac ? "cask.json" : "cask.json", relativeTo: endpoint)!
+    private static let formulaList = URL(string: "formula.json", relativeTo: endpoint)!
+
+    private static let caskSource = URL(string: "cask-source/", relativeTo: endpoint)!
+    private static let caskStatsBase = URL(string: "analytics/cask-install/homebrew-cask/", relativeTo: endpoint)!
+
+    private static let caskStats30 = URL(string: "30d.json", relativeTo: caskStatsBase)!
+    private static let caskStats90 = URL(string: "90d.json", relativeTo: caskStatsBase)!
+    private static let caskStats365 = URL(string: "365d.json", relativeTo: caskStatsBase)!
+
+    /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
+    private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
+
+
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled(at: CaskManager.defaultBrewPath) {
         didSet {
@@ -80,23 +97,9 @@ extension InstallationManager where Self : CaskManager {
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
-    /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
-    private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
-
-    private static let endpoint = URL(string: "https://formulae.brew.sh/api/")!
-
-    private static let formulaList = URL(string: "formula.json", relativeTo: endpoint)!
-    private static let caskList = URL(string: "cask.json", relativeTo: endpoint)!
-
-    private static let caskStatsBase = URL(string: "analytics/cask-install/homebrew-cask/", relativeTo: endpoint)!
-
-    private static let caskStats30 = URL(string: "30d.json", relativeTo: caskStatsBase)!
-    private static let caskStats90 = URL(string: "90d.json", relativeTo: caskStatsBase)!
-    private static let caskStats365 = URL(string: "365d.json", relativeTo: caskStatsBase)!
-
     /// The source to the cask ruby definition file
     private static func caskSource(name: String) -> URL? {
-        URL(string: "cask-source/\(name).rb", relativeTo: endpoint)!
+        URL(string: name, relativeTo: caskSource)!.appendingPathExtension("rb")
     }
 
     /// The home installation path for homebrew.
@@ -595,29 +598,41 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let token = item.bundleIdentifier.caskToken ?? ""
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.version ?? "", relativeTo: caskDir)
-        if FileManager.default.isDirectory(url: versionDir) != true {
-            dbg("not a folder:", versionDir)
-            return nil
+        if FileManager.default.isDirectory(url: versionDir) == true {
+            let children = try versionDir.fileChildren(deep: false, skipHidden: true)
+            for appURL in children {
+                dbg("checking install child:", appURL.path)
+                if appURL.pathExtension == "app"
+                    && FileManager.default.isExecutableFile(atPath: appURL.path) {
+                    // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
+                    let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
+                    dbg("executable:", appURL.path, linkPath)
+
+                    if let linkPath = linkPath {
+                        return URL(fileURLWithPath: linkPath)
+                    } else {
+                        return appURL
+                    }
+                }
+            }
+            dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
         }
 
-        let children = try versionDir.fileChildren(deep: false, skipHidden: true)
-        for appURL in children {
-            dbg("checking install child:", appURL.path)
-            if appURL.pathExtension == "app"
-                && FileManager.default.isExecutableFile(atPath: appURL.path) {
-                // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
-                let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
-                dbg("executable:", appURL.path, linkPath)
-
-                if let linkPath = linkPath {
-                    return URL(fileURLWithPath: linkPath)
-                } else {
-                    return appURL
+        // fall back to scanning for the app artifact and looking in the /Applications folder
+        if let cask = casks.first(where: { $0.token == token }) {
+            for appList in (cask.artifacts ?? []).compactMap({ $0.infer() as [String]? }) {
+                for appName in appList {
+                    dbg("checking app:", appName)
+                    if appName.hasSuffix(".app") {
+                        let appURL = URL(fileURLWithPath: appName, relativeTo: AppManager.applicationsFolderURL)
+                        dbg("checking app path:", appURL.path)
+                        if FileManager.default.isExecutableFile(atPath: appURL.path) {
+                            return appURL
+                        }
+                    }
                 }
             }
         }
-
-        dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
         return nil
     }
 
@@ -995,27 +1010,16 @@ struct CaskItem : Equatable, Decodable {
 
     let auto_updates: Bool?
 
-    // TODO
-    //    let artifacts": [
-    //      {
-    //        "quit": "com.runningwithcrayons.Alfred",
-    //        "signal": {}
-    //      },
-    //      [
-    //        "Alfred 4.app"
-    //      ],
-    //      {
-    //        "trash": [
-    //          "~/Library/Application Support/Alfred",
-    //          "~/Library/Caches/com.runningwithcrayons.Alfred",
-    //          "~/Library/Cookies/com.runningwithcrayons.Alfred.binarycookies",
-    //          "~/Library/Preferences/com.runningwithcrayons.Alfred.plist",
-    //          "~/Library/Preferences/com.runningwithcrayons.Alfred-Preferences.plist",
-    //          "~/Library/Saved Application State/com.runningwithcrayons.Alfred-Preferences.savedState"
-    //        ],
-    //        "signal": {}
-    //      }
-    //    ],
+    // "artifacts":[["Signal.app"],{"trash":["~/Library/Application Support/Signal","~/Library/Preferences/org.whispersystems.signal-desktop.helper.plist","~/Library/Preferences/org.whispersystems.signal-desktop.plist","~/Library/Saved Application State/org.whispersystems.signal-desktop.savedState"],"signal":{}}]
+    typealias ArtifactItem = XOr<Array<String>>.Or<ArtifactObject>
+
+    let artifacts: Array<ArtifactItem>?
+
+    struct ArtifactObject : Equatable, Decodable {
+        //let trash: Array<String>?
+        //let quit: String?
+        //let signal: Array<SignalItem>?
+    }
 
     /// E.g., `{"macos":{">=":["10.12"]}}`
     // let depends_on": {},
@@ -1025,6 +1029,15 @@ struct CaskItem : Equatable, Decodable {
     
     /// E.g.: `"container":"{:type=>:zip}"`
     // let container": null,
+
+    /// Possible model for https://github.com/Homebrew/brew/issues/12786
+//    private let files: [FileItem]?
+//    private struct FileItem : Equatable, Decodable {
+//        /// E.g., "arm64" or "x86"
+//        let arch: String?
+//        let url: String?
+//        let sha256: String?
+//    }
 }
 
 
