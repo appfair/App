@@ -30,3 +30,4 @@ SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
 DEVELOPMENT_TEAM = 2HFBY6N8ZN
+
