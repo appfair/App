@@ -714,6 +714,10 @@ extension CaskManager {
             // analytics are keyed on the un-expanded name
             let downloads = analyticsMap[cask.full_token]?.first?.installCount
 
+            // currently no way to get this
+            let impressions = 0
+            let views = 0
+
             let name = cask.name.first ?? id
 
             //if let _ = installed {
@@ -732,7 +736,7 @@ extension CaskManager {
 
             let categories: [String]? = nil // sadly, casks are un-categorized
 
-            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: nil, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
+            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: nil, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, impressionCount: impressions, viewCount: views, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
 
             var plist: Plist? = nil
             if let installed = installed {
