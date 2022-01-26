@@ -1,0 +1,20 @@
+name: "Configure App"
+# Configure App sets up the app with the correct name and version.
+#
+# See: https://www.appfair.net
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'     
+        required: true
+        default: '0.0.1'
+
+jobs:
+  call-workflow:
+    uses: fair-ground/Fair/.github/workflows/configure_app.yml@main
+    with:
+      fairground: appfair
+      version: ${{ github.event.inputs.version }}
+
+
