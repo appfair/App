@@ -132,8 +132,8 @@ extension AppManager {
             return dbg("could not locate current app in app list")
         }
 
-        if Bundle.main.bundleURL.deletingLastPathComponent() != Self.applicationsFolderURL {
-            return dbg("skipping update to catalog app since it is not installed in applications folder:", Self.applicationsFolderURL.path)
+        if Bundle.main.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
+            return dbg("skipping update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
 
         dbg("updating:", Bundle.main.bundleURL.path, "from installed:", catalogApp.installedVersionString, "to:", catalogApp.releasedVersion?.versionString)
