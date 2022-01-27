@@ -33,11 +33,11 @@ struct CatalogItemView: View {
 
     private var currentOperation: CatalogOperation? {
         get {
-            appManager.operations[info.release.bundleIdentifier]
+            appManager.operations[info.id]
         }
 
         nonmutating set {
-            appManager.operations[info.release.bundleIdentifier] = newValue
+            appManager.operations[info.id] = newValue
         }
     }
 

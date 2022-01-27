@@ -95,7 +95,7 @@ struct HomebrewSettingsView: View {
                 Toggle(isOn: $caskManager.enableBrewSelfUpdate) {
                     Text(atx: "Enable Homebrew self-update")
                 }
-                    .help(Text("Allow Homebrew to send telemetry to Google about the packages you install and update."))
+                    .help(Text("Allow Homebrew to update itself while installing other packages."))
 
                 Toggle(isOn: $caskManager.enableBrewAnalytics) {
                     Text(atx: "Enable installation telemetry")
@@ -178,22 +178,23 @@ struct HomebrewSettingsView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct FairAppsSettingsView: View {
-    @AppStorage("showPreReleases") private var showPreReleases = false
-    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+    @EnvironmentObject var fairManager: FairManager
+    @EnvironmentObject var appManager: AppManager
+
     @State var hoverRisk: AppRisk? = nil
 
     var body: some View {
         Form {
             HStack(alignment: .top) {
-                AppRiskPicker(risk: $riskFilter, hoverRisk: $hoverRisk)
-                (hoverRisk ?? riskFilter).riskSummaryText(bold: true)
+                AppRiskPicker(risk: $appManager.riskFilter, hoverRisk: $hoverRisk)
+                (hoverRisk ?? appManager.riskFilter).riskSummaryText(bold: true)
                     .textSelection(.enabled)
                     .font(.body)
                     .frame(height: 150, alignment: .top)
                     .frame(maxWidth: .infinity)
             }
 
-            Toggle(isOn: $showPreReleases) {
+            Toggle(isOn: $appManager.showPreReleases) {
                 Text("Show Pre-Releases")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
@@ -311,14 +312,30 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 Toggle(isOn: $fairManager.enableInstallWarning) {
-                    Text(atx: "Require App Install Confirmation")
+                    Text(atx: "Require app install confirmation")
                 }
-                .toggleStyle(.switch)
+                .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation."))
+                .toggleStyle(.checkbox)
 
                 Toggle(isOn: $fairManager.enableDeleteWarning) {
-                    Text(atx: "Require App Delete Confirmation")
+                    Text(atx: "Require app delete confirmation")
                 }
-                .toggleStyle(.switch)
+                .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation."))
+                .toggleStyle(.checkbox)
+
+                Divider()
+
+                Toggle(isOn: $appManager.autoUpdateCatalogApp) {
+                    Text(atx: "Keep catalog app up to date")
+                }
+                .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))
+                .toggleStyle(.checkbox)
+
+                Toggle(isOn: $appManager.relaunchUpdatedApps) {
+                    Text("Re-launch updated apps")
+                }
+                    .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
+
 
                 Divider()
 

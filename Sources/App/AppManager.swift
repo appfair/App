@@ -39,7 +39,11 @@ protocol InstallationManager where Self : ObservableObject {
 
     @AppStorage("showPreReleases") var showPreReleases = false
 
-    @AppStorage("riskFilter") private var riskFilter = AppRisk.risky
+    @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = true
+
+    @AppStorage("riskFilter") var riskFilter = AppRisk.risky
+
+    @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = true
 
     @Published public var errors: [AppError] = []
 
@@ -97,6 +101,9 @@ extension AppManager {
             self.catalog = catalog.apps
             let end = CFAbsoluteTimeGetCurrent()
             dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
+            if autoUpdateCatalogApp == true {
+                try await updateCatalogApp()
+            }
         } catch {
             Task { // otherwise warnings about accessing off of the main thread
                 // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
@@ -108,6 +115,32 @@ extension AppManager {
                     self.reportError(error)
                 }
             }
+        }
+    }
+
+    /// The app info for the current app (which is the catalog browser app)
+    var catalogAppInfo: AppInfo? {
+        appInfoItems(includePrereleases: false).first(where: { info in
+            info.release.bundleIdentifier.rawValue == Bundle.main.bundleIdentifier
+        })
+    }
+
+    /// If the catalog app is updated,
+    private func updateCatalogApp() async throws {
+        // auto-update the App Fair app itself to the latest non-pre-release version
+        guard let catalogApp = catalogAppInfo else {
+            return dbg("could not locate current app in app list")
+        }
+
+        if Bundle.main.bundleURL.deletingLastPathComponent() != Self.applicationsFolderURL {
+            return dbg("skipping update to catalog app since it is not installed in applications folder:", Self.applicationsFolderURL.path)
+        }
+
+        dbg("updating:", Bundle.main.bundleURL.path, "from installed:", catalogApp.installedVersionString, "to:", catalogApp.releasedVersion?.versionString)
+
+        // if the release version is greater than the installed version, download and install it automatically
+        if (catalogApp.releasedVersion ?? .min) > (catalogApp.installedVersion ?? .max) {
+            try await install(item: catalogApp.release, progress: nil, update: true)
         }
     }
 
@@ -342,7 +375,6 @@ extension AppManager {
         }
     }
 
-
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
         //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
@@ -424,8 +456,10 @@ extension AppManager {
             parentProgress.completedUnitCount = parentProgress.totalUnitCount
         }
 
-        dbg("re-launching app:", item.bundleIdentifier)
-        terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
+        if self.relaunchUpdatedApps == true {
+            dbg("re-launching app:", item.bundleIdentifier)
+            terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
+        }
     }
 
     private func trash(_ fileURL: URL) throws {
@@ -447,11 +481,11 @@ extension AppManager {
             let pid = runningApp.processIdentifier
 
             // spawn a script that waits for the pid to die and then re-launches it
-            // we need to do this prior to attempting termination, since we may be terminating outself
+            // we need to do this prior to attempting termination, since we may be terminating ourself
             let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\(path)\") &"
             Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", relaunch])
 
-            // Note: “Sandboxed applications can’t use this method to terminate other applciations. This method returns false when called from a sandboxed application.”
+            // Note: “Sandboxed applications can’t use this method to terminate other applciations [sic]. This method returns false when called from a sandboxed application.”
             let terminated = force ? runningApp.forceTerminate() : runningApp.terminate()
             dbg(terminated ? "successful" : "unsuccessful", "termination")
         } else {
