@@ -1,6 +1,8 @@
 .*.swp
-#*.xcworkspace
-#*.xcodeproj
+_site/
+Gemfile
+Gemfile.lock
+.jekyll-cache 
 .DS_Store
 .build
 xcuserdata/
