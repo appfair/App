@@ -1,4 +1,5 @@
 ---
+title: The App Fair
 layout: fairapp
 appname: App-Fair
 appurl: "https://github.com/App-Fair/App"
@@ -46,9 +47,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 <br />
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
-Using App Fair.app, you can browse and install native macOS applications from a vast selection of both free and commercial sources. The App Fair supports browsing and installing third-party applications from the Homebrew [Casks](https://formulae.brew.sh/cask/) tap, as well as accessing the free and open-source apps through the [appfair.net](https://appfair.net) distribution platform.
-
-
+With the App Fair.app, you can browse and install native macOS applications from a vast selection of both free and commercial sources. The App Fair supports browsing and installing third-party applications from the homebrew [casks](https://formulae.brew.sh/cask/) tap, as well as accessing the free and open-source apps through the [appfair.net](https://appfair.net) distribution platform.
 
 <br />
 <br />
@@ -56,5 +55,24 @@ Using App Fair.app, you can browse and install native macOS applications from a 
 <br />
 <br />
 <br />
+
+
+<!-- 
+<img style="width: 50%;" align="left" src="screenshots/screenshot_03-mac-dark-2878x2120.png" />
+<h4>About the App Fair</h4>
+
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br /> 
+-->
 
 <hr />
