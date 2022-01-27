@@ -311,6 +311,17 @@ struct AdvancedSettingsView: View {
     var body: some View {
         VStack {
             Form {
+                Toggle(isOn: $appManager.relaunchUpdatedApps) {
+                    Text("Re-launch updated apps")
+                }
+                    .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
+
+                Toggle(isOn: $appManager.autoUpdateCatalogApp) {
+                    Text(atx: "Keep catalog app up to date")
+                }
+                .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))
+                .toggleStyle(.checkbox)
+
                 Toggle(isOn: $fairManager.enableInstallWarning) {
                     Text(atx: "Require app install confirmation")
                 }
@@ -325,19 +336,8 @@ struct AdvancedSettingsView: View {
 
                 Divider()
 
-                Toggle(isOn: $appManager.autoUpdateCatalogApp) {
-                    Text(atx: "Keep catalog app up to date")
-                }
-                .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))
-                .toggleStyle(.checkbox)
 
-                Toggle(isOn: $appManager.relaunchUpdatedApps) {
-                    Text("Re-launch updated apps")
-                }
-                    .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
-
-
-                Divider()
+                Divider().padding()
 
                 HStack {
                     TextField("Hub Host", text: fairManager.$hubProvider)
