@@ -81,7 +81,7 @@ extension InstallationManager where Self : CaskManager {
     @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = true
 
     /// The minimum number of downloads for a Cask to be visible in the list
-    @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 100
+    @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 0
 
     /// The arranged list of app info items
     @Published private(set) var appInfos: [AppInfo] = []
