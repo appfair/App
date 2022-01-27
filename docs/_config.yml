@@ -1,1 +1,5 @@
 remote_theme: appfair/fairapp-theme
+
+plugins:
+  - jekyll-remote-theme
+

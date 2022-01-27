@@ -1,14 +1,10 @@
----
-layout: fairapp
----
-
-<!--
+I"{<!--
 https://appfair.app/fair#app/App-Fair
 -->
 
 <center>
 <div style="text-align: center; user-select: none;">
-    <a style="text-decoration: none;" href="{{ appurl }}/releases/latest/download/{{ appname }}-macOS.zip">
+    <a style="text-decoration: none;" href="/releases/latest/download/-macOS.zip">
         <button style="background-color: #2171A1; color: #FFFFFF; border: none; padding: 20px 20px; text-decoration: none; display: inline-block; cursor: pointer; border-radius: 20px; user-select: none; display: flex; flex-direction: row;">
         <div style="margin-top: auto; margin-bottom: auto;">
         <svg width="44px" height="44px" viewBox="0 0 44 44" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -20,8 +16,8 @@ https://appfair.app/fair#app/App-Fair
         </svg>
         </div>
         <div style="margin-top: -10px; margin-bottom: -10px; padding-left: 16px; padding-right: 16px;">
-            <span style="font-size: 30px; color: #FFFFFF; font-weight: bold; font-family: ui-rounded, system-ui, Arial Rounded MT Bold, HelveticaNeue, Helvetica Neue;">Download {{ apptitle }}.app</span>
-            <hr style="padding: 0px; margin-top: 4px; margin-bottom: 4px; border: 0.2px solid white; margin-left: 20px; margin-right: 20px;"/>
+            <span style="font-size: 30px; color: #FFFFFF; font-weight: bold; font-family: ui-rounded, system-ui, Arial Rounded MT Bold, HelveticaNeue, Helvetica Neue;">Download .app</span>
+            <hr style="padding: 0px; margin-top: 4px; margin-bottom: 4px; border: 0.2px solid white; margin-left: 20px; margin-right: 20px;" />
             <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">for macOS 12</span>
         </div>
     </button>
@@ -29,5 +25,4 @@ https://appfair.app/fair#app/App-Fair
 </div>   
 </center>
 
-
-
+:ET

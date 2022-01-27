@@ -280,6 +280,7 @@ extension AppManager {
 
     static func createInstallFolder() throws {
         // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
+        // FIXME: this will always fail, since the ownership & permissions of /Applications/ cannot be changed
         try withPermission(installFolderURL.deletingLastPathComponent()) { _ in
             try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
         }
@@ -423,7 +424,7 @@ extension AppManager {
 
         try Task.checkCancellation()
 
-        // perform as much validation before we perform the install
+        // perform as much validation as possible before we attempt the install
         try self.validate(appPath: expandedAppPath, forItem: item)
 
         let installPath = Self.appInstallPath(for: item)

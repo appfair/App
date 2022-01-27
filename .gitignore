@@ -3,6 +3,7 @@
 #*.xcodeproj
 *.xcscheme
 xcshareddata/
+Gemfile
 .DS_Store
 .build
 staging/
