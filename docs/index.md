@@ -81,14 +81,22 @@ Browse, download and install Mac applications from a vast catalog of both free a
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign tools = '
-<a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
 <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
+<a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
 <a href="https://appfair.app/fair#cask/docker">Docker</a>
 ' | strip | split: ";" | sample: 3 %}
 
+{% assign design = '
+<a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
+' | strip | split: ";" | sample: 3 %}
+
+{% assign games = '
+<a href="https://appfair.app/fair#cask/minecraft">Minecraft</a>;
+<a href="https://appfair.app/fair#cask/steam">Steam</a>;
+' | strip | split: ";" | sample: 3 %}
 
 
-From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day.
+From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day. 
 
 ## Straight from the Creators
 

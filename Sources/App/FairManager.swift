@@ -23,6 +23,10 @@ import FairApp
     ///
     @AppStorage("hubToken") public var hubToken = ""
 
+    // list rendering on ARM (but not Intel!) is very slow when there are more than 1000 results, so just show the first few
+    @AppStorage("maxDisplayItems") public var maxDisplayItems = ProcessInfo.isArmMac ? wip(500) : 5_000
+
+
     required internal init() {
         super.init()
 

@@ -3,8 +3,8 @@ import SwiftUI
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
-    case fairapps
     case homebrew
+    case fairapps
 }
 
 extension AppSource : Identifiable {
@@ -402,8 +402,6 @@ public struct RootView : View {
     }
 }
 
-//typealias SidebarSelection = AppManager.SidebarItem
-
 struct SidebarSelection : Hashable {
     let source: AppSource
     let item: AppManager.SidebarItem
@@ -421,7 +419,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: .fairapps, item: .all)
+    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .all)
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -830,19 +828,26 @@ struct SidebarView: View {
 
     var body: some View {
         List {
-            Section("Fairground") {
-                item(.fairapps, .all).keyboardShortcut("1")
-                item(.fairapps, .recent).keyboardShortcut("2")
-                item(.fairapps, .installed).keyboardShortcut("3")
-                item(.fairapps, .updated).keyboardShortcut("4")
-            }
+            ForEach(AppSource.allCases, id: \.self) { source in
+                switch source {
+                case .homebrew:
+                    if caskManager.enableHomebrew {
+                        Section("Homebrew") {
+                            item(.homebrew, .all).keyboardShortcut("1")
+                            // item(.homebrew, .recent) // casks don't have a last-updated date
+                            item(.homebrew, .installed).keyboardShortcut("2")
+                            item(.homebrew, .updated).keyboardShortcut("3")
+                        }
+                    }
 
-            if caskManager.enableHomebrew {
-                Section("Homebrew") {
-                    item(.homebrew, .all).keyboardShortcut("5")
-                    // item(.homebrew, .recent) // casks don't have a last-updated date
-                    item(.homebrew, .installed).keyboardShortcut("6")
-                    item(.homebrew, .updated).keyboardShortcut("7")
+                case .fairapps:
+                    Section("Fairground") {
+                        item(.fairapps, .all).keyboardShortcut("4")
+                        item(.fairapps, .recent).keyboardShortcut("5")
+                        item(.fairapps, .installed).keyboardShortcut("6")
+                        item(.fairapps, .updated).keyboardShortcut("7")
+                    }
+
                 }
             }
 

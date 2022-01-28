@@ -56,56 +56,56 @@ struct HomebrewSettingsView: View {
     @EnvironmentObject var caskManager: CaskManager
 
     var body: some View {
-        let installedVersion = try? caskManager.installedBrewVersion()
 
         Form {
             HStack {
                 Toggle(isOn: $caskManager.enableHomebrew) {
-                    Text(atx: "Homebrew Casks:")
+                    Text(atx: "Homebrew Casks")
                 }
-                if let installedVersion = installedVersion {
-                    (Text("Installed version: \(installedVersion.version)")
-                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
-                        .foregroundColor(.secondary)
-                        .textSelection(.enabled)
-                } else {
-                    Text("Not Installed")
-                }
+
+//                let installedVersion = try? caskManager.installedBrewVersion()
+//                if let installedVersion = installedVersion {
+//                    (Text("Installed version: \(installedVersion.version)")
+//                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
+//                        .foregroundColor(.secondary)
+//                        .textSelection(.enabled)
+//                } else {
+//                    Text("Not Installed")
+//                }
             }
             .toggleStyle(.switch)
             .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Group {
-                Toggle(isOn: $caskManager.requireCaskChecksum) {
-                    Text(atx: "Authenticate downloads")
+                Toggle(isOn: $caskManager.manageCaskDownloads) {
+                    Text(atx: "Use integrated download manager")
                 }
-                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
+                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
                 Toggle(isOn: $caskManager.quarantineCasks) {
                     Text(atx: "Quarantine installed apps")
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-                Toggle(isOn: $caskManager.manageCaskDownloads) {
-                    Text(atx: "Use integrated download manager")
+                Toggle(isOn: $caskManager.forceInstallCasks) {
+                    Text(atx: "Install overwrites previous app installation")
                 }
-                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use the curl command for downloads."))
-
+                    .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
                 Toggle(isOn: $caskManager.enableBrewSelfUpdate) {
                     Text(atx: "Enable Homebrew self-update")
                 }
                     .help(Text("Allow Homebrew to update itself while installing other packages."))
 
+                Toggle(isOn: $caskManager.requireCaskChecksum) {
+                    Text(atx: "Require cask checksum")
+                }
+                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
+
                 Toggle(isOn: $caskManager.enableBrewAnalytics) {
                     Text(atx: "Enable installation telemetry")
                 }
                     .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
-
-                Toggle(isOn: $caskManager.forceInstallCasks) {
-                    Text(atx: "Install overwrites pre-existing Cask apps")
-                }
-                    .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
             }
             .disabled(caskManager.enableHomebrew == false)
 
@@ -121,32 +121,32 @@ struct HomebrewSettingsView: View {
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
 
-                        if let _ = installedVersion {
-                            Text("Check for Homebrew updates")
-                                .button {
-                                    do {
-                                        // check for updates
-                                        try await caskManager.manageInstallation(install: false)
-                                    } catch {
-                                        fairManager.appManager.reportError(error)
-                                    }
-                                }
-                                .help("This action will open a new Terminal.app window and issue the command: brew update")
-
-                            //commandText("brew update")
-                        } else {
-                            Text("Install Homebrew")
-                                .button {
-                                    do {
-                                        try await caskManager.manageInstallation(install: true)
-                                    } catch {
-                                        fairManager.appManager.reportError(error)
-                                    }
-                                }
-                                .help("This action will open a new Terminal.app window and issue the command: \(CaskManager.installCommand)")
-
-                            //commandText(CaskManager.installCommand)
-                        }
+//                        if let _ = installedVersion {
+//                            Text("Check for Homebrew updates")
+//                                .button {
+//                                    do {
+//                                        // check for updates
+//                                        try await caskManager.manageInstallation(install: false)
+//                                    } catch {
+//                                        fairManager.appManager.reportError(error)
+//                                    }
+//                                }
+//                                .help("This action will open a new Terminal.app window and issue the command: brew update")
+//
+//                            //commandText("brew update")
+//                        } else {
+//                            Text("Install Homebrew")
+//                                .button {
+//                                    do {
+//                                        try await caskManager.manageInstallation(install: true)
+//                                    } catch {
+//                                        fairManager.appManager.reportError(error)
+//                                    }
+//                                }
+//                                .help("This action will open a new Terminal.app window and issue the command: \(CaskManager.installCommand)")
+//
+//                            //commandText(CaskManager.installCommand)
+//                        }
 
                     }
                     .frame(maxWidth: .infinity)

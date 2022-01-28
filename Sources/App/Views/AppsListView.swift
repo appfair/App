@@ -29,11 +29,12 @@ struct AppsListView : View {
     var body : some View {
         ScrollViewReader { proxy in
             List {
-                ForEach(items) { item in
+                ForEach(items.prefix(fairManager.maxDisplayItems)) { item in
                     NavigationLink(tag: item.id, selection: $selection, destination: {
                         CatalogItemView(info: item)
                     }, label: {
                         label(for: item)
+                            //.frame(minHeight: 44, maxHeight: 44) // attempt to speed up list rendering (doesn't seem to help)
                     })
                 }
             }

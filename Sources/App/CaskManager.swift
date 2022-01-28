@@ -24,8 +24,13 @@ extension InstallationManager where Self : CaskManager {
         URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
     }
 
-    static var defaultBrewPath: URL {
+    @available(*, deprecated, message: "use local brew path instead")
+    static var globalBrewPath: URL {
         URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
+    }
+
+    static var localBrewPath: URL {
+        localBrewFolder
     }
 }
 
@@ -46,11 +51,16 @@ extension InstallationManager where Self : CaskManager {
     private static let caskStats365 = URL(string: "365d.json", relativeTo: caskStatsBase)!
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
-    private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/archive/refs/heads/master.zip")!
+    private static let brewArchiveURL = URL(string: "https://github.com/Homebrew/brew/zipball/HEAD")! // same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
 
+    /// The recommended install script from https://brew.sh
+    private static let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
+
+    /// The recommended install command from https://brew.sh
+    static let installCommand = "/bin/bash -c \"$(curl -fsSL \(CaskManager.installScript.absoluteString))\""
 
     /// Whether to enable Homebrew Cask installation
-    @AppStorage("enableHomebrew") var enableHomebrew = CaskManager.isHomebrewInstalled(at: CaskManager.defaultBrewPath) {
+    @AppStorage("enableHomebrew") var enableHomebrew = true {
         didSet {
             Task {
                 // whenever the enableHomebrew setting is changed, perform a scan of the casks
@@ -60,13 +70,13 @@ extension InstallationManager where Self : CaskManager {
     }
 
     /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
-    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.defaultBrewPath
+    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.localBrewPath // CaskManager.globalBrewPath
 
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
 
-    /// Whether to require a checksum before downloading
-    @AppStorage("requireCaskChecksum") var requireCaskChecksum = true
+    /// Whether to require a checksum before downloading; many brew casks don't publish a checksum, so disabled by default
+    @AppStorage("requireCaskChecksum") var requireCaskChecksum = false
 
     /// Whether to force overwrite other installations
     @AppStorage("forceInstallCasks") var forceInstallCasks = false
@@ -77,8 +87,8 @@ extension InstallationManager where Self : CaskManager {
     /// Whether to permit the `brew` command to send activitiy analytics. This controls whether to set Homebrew's flag [HOMEBREW_NO_ANALYTICS](https://docs.brew.sh/Analytics#opting-out)
     @AppStorage("enableBrewAnalytics") var enableBrewAnalytics = false
 
-    /// Allow bre to update itself when performing operations
-    @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = true
+    /// Allow brew to update itself when performing operations
+    @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = false
 
     /// The minimum number of downloads for a Cask to be visible in the list
     @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 0
@@ -107,6 +117,24 @@ extension InstallationManager where Self : CaskManager {
         ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
     }
 
+    private static func cacheFolder(named name: String) -> URL {
+        URL(fileURLWithPath: name, isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+    }
+
+    /// ~/Library/Caches/appfair-homebrew/
+    static let localCacheFolder: URL = cacheFolder(named: "appfair-homebrew/")
+
+    /// ~/Library/Caches/Homebrew/downlods/
+    static let downloadCacheFolder: URL = cacheFolder(named: "Homebrew/downloads/")
+
+    /// ~/Library/Caches/Homebrew/Cask/
+    static let caskCacheFolder: URL = cacheFolder(named: "Homebrew/Cask/")
+
+    /// ~/Library/Caches/appfair-homebrew/Homebrew/
+    static let localBrewFolder: URL = {
+        URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: localCacheFolder)
+    }()
+
     /// The path where cask metadata and links are stored
     var localCaskroom: URL {
         URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
@@ -125,6 +153,7 @@ extension InstallationManager where Self : CaskManager {
     /// Returns the currently installed version of Homebrew, simply by scanning the git tags folder and using the most recent element.
     ///
     /// For example, `3.1.7` will be returned for the latest tag: `"/opt/homebrew/./.git/refs/tags/3.1.7"`
+    @available(*, deprecated, message: "only works when brew is installed with .git folder")
     func installedBrewVersion() throws -> (version: String, updated: Date)? {
         // from brew.sh:
         // HOMEBREW_VERSION="$("${HOMEBREW_GIT}" -C "${HOMEBREW_REPOSITORY}" describe --tags --dirty --abbrev=7 2>/dev/null)"
@@ -146,27 +175,7 @@ extension InstallationManager where Self : CaskManager {
     private var fsobserver: FileSystemObserver? = nil
 
     internal init() {
-        setupBrewObserver()
-    }
-
-    func setupBrewObserver() {
-        if Self.isHomebrewInstalled(at: self.brewInstallRoot) == true &&
-            FileManager.default.isDirectory(url: self.localCaskroom) == true {
-
-            dbg("checking brew observer for:", try? self.installedBrewVersion()?.version)
-
-            // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
-            self.fsobserver = FileSystemObserver(URL: self.localCaskroom, queue: .main) {
-                dbg("changes detected in cask folder:", self.localCaskroom.path)
-                // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
-                for delay in [0, 1, 5] {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
-                        try? self.scanInstalledCasks()
-                    }
-                }
-            }
-        }
-
+        watchCaskroomFolder()
     }
 
     /// The path to the `homebrew` command
@@ -246,17 +255,9 @@ extension InstallationManager where Self : CaskManager {
         self.installedCasks = tokenVersions
     }
 
-    /// The recommended install script from https://brew.sh
-    private static let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
-
-    /// The recommended install command from https://brew.sh
-    static let installCommand = "/bin/bash -c \"$(curl -fsSL \(CaskManager.installScript.absoluteString))\""
-
     /// Performs a homebrew installation action by launching a Terminal.app window and issuing a shell command.
     func manageInstallation(install: Bool, downloadInstallerScript: Bool = true) async throws {
-
-        let cacheFolder = try URL(fileURLWithPath: "appfair-homebrew", relativeTo: FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
-        try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
+        let cacheFolder = Self.localCacheFolder
 
         let cmdFile = URL(fileURLWithPath: "homebrew-" + (install ? "installer" : "updater"), relativeTo: cacheFolder).appendingPathExtension("sh")
 
@@ -348,7 +349,7 @@ extension InstallationManager where Self : CaskManager {
 
             Enter the password only if you trust this application to perform system-level installation operations.
 
-            Alternatively, you can manually run the command in a Terminal.app shell.
+            Alternatively, you can manually run the above command in a Terminal.app shell.
             """
 
             let askPassScript = """
@@ -445,7 +446,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
          ```
          2022-01-07 01:04:17.410937-0500 App Fair[95350:5086973] CaskManager:221 install: moved: ~/Library/Caches/46E58C89-3E59-4EEC-B0A5-8DA962DFFA17/iTerm2-3_4_15.zip to: ~/Library/Caches/Homebrew/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip
-         2022-01-07 01:04:19.556840-0500 App Fair[95350:5086973] AppManager:718 fork: successfully executed script: /opt/homebrew/bin/brew reinstall --force --verbose --quarantine --casks homebrew/cask/iterm2
+         2022-01-07 01:04:19.556840-0500 App Fair[95350:5086973] AppManager:718 fork: successfully executed script: /opt/homebrew/bin/brew install --force --verbose --quarantine --casks homebrew/cask/iterm2
          2022-01-07 01:04:19.556906-0500 App Fair[95350:5086973] CaskManager:238 install: result: ==> Downloading https://iterm2.com/downloads/stable/iTerm2-3_4_15.zip
          Already downloaded: ~/Library/Caches/Homebrew/downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip
          ==> Verifying checksum for cask 'iterm2'
@@ -455,24 +456,13 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
          ```
          */
 
+        // make sure Homebrew is installed; if not, download and install it locally
+        async let installed = installHomebrew()
+
         // default config is to use: HOMEBREW_CACHE=$HOME/Library/Caches/Homebrew
-        // TODO: should be have our own separate caches folder? That would allow us to avoid interfering with simultaneous non-App-Fair `brew` commands, but OTOH it would mean that the two behaviors of the tool would not be kept in sync with regards to caching
-        let cachePaths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-        let cacheDir = cachePaths
-            .map {
-                URL(fileURLWithPath: "Homebrew/downloads", relativeTo: $0)
-            }
-            .first {
-                FileManager.default.isDirectory(url: $0) == true
-            }
 
-        if manageDownloads == true, let cacheDir = cacheDir {
+        if manageDownloads == true {
             try Task.checkCancellation()
-            // iterate through all the user cache directories (I've never seen more than one, but maybe it's possible)
-            dbg("checking cache:", cacheDir.path)
-
-            /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
-            let targetURL = URL(fileURLWithPath: item.cacheBasePath, relativeTo: cacheDir)
 
             // TODO: should we try to replicate Homebrew's curl command? It looks something like:
             // /opt/homebrew/Library/Homebrew/shims/shared/curl --disable --cookie /dev/null --globoff --show-error --user-agent 'Homebrew/3.3.9 (Macintosh; arm64 Mac OS X 12.1) curl/7.77.0' --header 'Accept-Language: en' --fail --silent --retry 3 --location --remote-time --output ~/Library/Caches/Homebrew/downloads/'2eea097118f44268d2fe62d69e2a7fb1d8d4d7f29c2da0ec262061199b600525--Wireshark 3.6.1 Arm 64.dmg.incomplete' 'https://2.na.dl.wireshark.org/osx/Wireshark 3.6.1 Arm 64.dmg'
@@ -483,7 +473,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             ]
 
             let downloadURL = item.downloadURL
-            dbg("downloading:", downloadURL.absoluteString, "to cache target:", targetURL.path)
+            dbg("downloading:", downloadURL.absoluteString)
 
 
             let expectedHash = item.sha256
@@ -494,9 +484,20 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
             //dbg("fetchExpectedContentLength:", size)
 
-            let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
+            async let (downloadedArtifact, downloadSha256) = await downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
 
-            let actualHash = downloadSha256.hex()
+            let cacheDir = Self.downloadCacheFolder
+            dbg("checking cache:", cacheDir.path)
+            try? FileManager.default.createDirectory(at: Self.caskCacheFolder, withIntermediateDirectories: true, attributes: nil)
+            try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Caches/Homebrew/Cask/iterm2--3.4.15.zip`
+
+            /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
+            let targetURL = URL(fileURLWithPath: item.cacheBasePath, relativeTo: cacheDir)
+
+
+            let _ = try await installed // also install Homebrew itself at the same time
+
+            let actualHash = try await downloadSha256.hex()
             dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
             if let expectedHash = expectedHash, expectedHash != actualHash {
                 throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
@@ -504,9 +505,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
             // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
             // overwrite any previous cached version
+            let artifact = try await downloadedArtifact
             let _ = try? FileManager.default.trash(url: targetURL)
-            try FileManager.default.moveItem(at: downloadedArtifact, to: targetURL)
-            dbg("moved:", downloadedArtifact.path, "to:", targetURL.path)
+            try FileManager.default.moveItem(at: artifact, to: targetURL)
+            dbg("moved:", artifact.path, "to:", targetURL.path)
             try Task.checkCancellation()
         }
 
@@ -550,7 +552,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
          */
         var cmd = self.localBrewCommand.path
 
-        let op = update ? "upgrade" : "reinstall"
+        let op = update ? "upgrade" : "install" // could use "reinstall", but it doesn't seem to work with `HOMEBREW_INSTALL_FROM_API` when there is no local .git checkout
         cmd += " " + op
         if force { cmd += " --force" }
         if verbose { cmd += " --verbose" }
@@ -564,12 +566,16 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd += " --require-sha"
         }
 
-        cmd += " --casks " + item.id.rawValue
+        let caskToken = item.id.caskToken ?? item.id.rawValue // need to drop the "homebrew/cask/" or else `brew delete` doesn't work when using the API
+        cmd += " --cask " + caskToken
+
+        let _ = try await installed // ensure that Homebrew is installed
+
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: item)
         dbg("result of command:", cmd, ":", result)
     }
 
-    func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = true, verbose: Bool = true) async throws {
+    func delete(item: AppCatalogItem, update: Bool = true, zap: Bool = false, force: Bool = false, verbose: Bool = true) async throws {
         dbg(item.id)
         var cmd = localBrewCommand.path
         let op = "remove"
@@ -577,7 +583,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         if force { cmd += " --force" }
         if verbose { cmd += " --verbose" }
         if zap { cmd += " --zap" }
-        cmd += " --casks " + item.id.rawValue
+        let caskToken = item.id.caskToken ?? item.id.rawValue // need to drop the "homebrew/cask/" or else `brew delete` doesn't work when using the API
+        cmd += " --cask " + caskToken
         let result = try await run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: item)
         dbg("result:", result)
     }
@@ -670,25 +677,74 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
     }
 
+    /// Downloads and installs Homebrew from the source zip
+    /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
+    func installHomebrew() async throws -> Bool {
+        if FileManager.default.isDirectory(url: Self.localBrewFolder) != true {
+            let cacheFolder = Self.localCacheFolder
+            try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
+            try await installBrew(to: Self.localBrewFolder)
+            return true
+        } else {
+            return false
+        }
+    }
+
     // NOTE: the docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”
-    @available(*, deprecated, message: "not yet implemented")
-    static func installBrew(at rootURL: URL) async throws {
-        // 1. Download and unzip: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
-        let request = URLRequest(url: brewArchiveURL)
+    private func installBrew(to brewHome: URL) async throws {
+        let fm = FileManager.default
+        let request = URLRequest(url: Self.brewArchiveURL)
 
         let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
 
         dbg("downloaded brew package from:", request, "response:", response)
 
-        try FileManager.default.unzipItem(at: downloadedArtifact, to: rootURL)
+        try? fm.removeItem(at: brewHome) // clear any previous installation
 
-        dbg("unpackaged brew package at:", rootURL)
+        let extractURL = downloadedArtifact.appendingPathExtension(".extract")
+        try fm.unzipItem(at: downloadedArtifact, to: extractURL)
 
-        // 2. execute: `eval "$(homebrew/bin/brew shellenv)"`
+        let children = try extractURL.fileChildren(deep: false, skipHidden: true)
 
-        // 3. execute: `brew update --force --quiet`
+        // e.g., ~/Library/Caches/appfair-homebrew/Homebrew-brew-fc8fbd6
+        guard let installRoot = children.first, children.count == 1 else {
+            throw AppError("Homebrew package did not have a single ")
+        }
+
+        try fm.moveItem(at: installRoot, to: brewHome)
+
+        dbg("extracted brew package to:", brewHome)
+
+        // no re-start the FS watcher for the new folders
+        watchCaskroomFolder()
     }
 
+    /// Setup a watch for the cache folder
+    private func watchCaskroomFolder() {
+        if Self.isHomebrewInstalled(at: self.brewInstallRoot) == true {
+            let caskroomFolder = self.localCaskroom
+
+            try? FileManager.default.createDirectory(at: caskroomFolder, withIntermediateDirectories: true, attributes: nil)
+
+            if FileManager.default.isDirectory(url: caskroomFolder) != true {
+                return dbg("not a folder:", caskroomFolder.path)
+            }
+
+            dbg("checking brew observer in:", caskroomFolder.path)
+
+            // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
+            self.fsobserver = FileSystemObserver(URL: caskroomFolder, queue: .main) {
+                dbg("changes detected in cask folder:", caskroomFolder.path)
+                // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
+                for delay in [0, 1, 5] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
+                        try? self.scanInstalledCasks()
+                    }
+                }
+            }
+        }
+
+    }
 }
 
 extension CaskManager {
@@ -839,7 +895,7 @@ extension CaskManager {
     }
 }
 
-private extension ProcessInfo {
+extension ProcessInfo {
     /// Returns `true` if we are running on an ARM Mac, even if we are running under Rosetta emulation
     static let isArmMac: Bool = {
         var cpu_type: cpu_type_t = 0
