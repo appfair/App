@@ -23,6 +23,10 @@ a, a:visited {
 a:hover {
     color: red;
 }
+
+code {
+    background: #333333;
+}
 </style>
 
 <!--
@@ -56,23 +60,51 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
 
-Browse, download and install Mac applications from a vast catalog of both free and commercial native apps. The App Fair enables the discovery of third-party applications from the homebrew [casks](https://formulae.brew.sh/cask/) tap, as well as accessing free and open-source apps through the [appfair.net](https://appfair.net) distribution platform.
+Browse, download and install Mac applications from a vast catalog of both free and commercial native apps. The App Fair enables the discovery of third-party applications from the community “[homebrew casks](https://formulae.brew.sh/cask/)” catalog, as well as accessing free and open-source apps published on the autonomous [appfair.net](https://appfair.net) distribution platform.
 
-{% assign browsers = '<a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>, <a href="https://appfair.app/fair#cask/firefox">Firefox</a>, <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>' | split: ", " | sample: 3 %}
-   
-{% assign messengers = '<a href="https://appfair.app/fair#cask/signal">Signal</a>, <a href="https://appfair.app/fair#cask/zoom">Zoom</a>, <a href="https://appfair.app/fair#cask/discord">Discord</a>' | split: ", " | sample: 3  %}
-    
-{% assign players = '<a href="https://appfair.app/fair#cask/spotify">Spotify</a>, <a href="https://appfair.app/fair#cask/tidal">TIDAL</a>, <a href="https://appfair.app/fair#cask/vlc">VLC</a>' | split: ", " | sample: 3 %}
-        
-{% assign tools = '<a href="https://appfair.app/fair#cask/sketch">Sketch</a>, <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>, <a href="https://appfair.app/fair#cask/docker">Docker</a>' | split: ", " | sample: 3 %}
+{% assign browsers = '
+<a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
+<a href="https://appfair.app/fair#cask/firefox">Firefox</a>;
+<a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>
+' | strip | split: ";" | sample: 3 %}
+
+{% assign messengers = '
+<a href="https://appfair.app/fair#cask/signal">Signal</a>;
+<a href="https://appfair.app/fair#cask/zoom">Zoom</a>;
+<a href="https://appfair.app/fair#cask/discord">Discord</a>
+' | strip | split: ";" | sample: 3 %}
+
+{% assign players = '
+<a href="https://appfair.app/fair#cask/spotify">Spotify</a>;
+<a href="https://appfair.app/fair#cask/tidal">TIDAL</a>;
+<a href="https://appfair.app/fair#cask/vlc">VLC</a>
+' | strip | split: ";" | sample: 3 %}
+
+{% assign tools = '
+<a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
+<a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
+<a href="https://appfair.app/fair#cask/docker">Docker</a>
+' | strip | split: ";" | sample: 3 %}
+
+
 
 From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day.
-<br />
-<br />
-Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> now, or, for existing homebrew users, run:
+
+## Straight from the Creators
+
+Apps acquired through the App Fair come straight from their creators, with no intermediaries. They are granted the full protection of macOS's built-in security features like MRT & XProtect, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
+
+<!-- App Fair.app has access to catalogs from:
+
+  * [brew.sh](https://brew.sh): Homebrew is the “Missing Package Manager for macOS”
+  * [appfair.net](https://appfair.net): -->
+
+## Enter the App Fair
+
+Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:
 
 <pre style="background: darkgreen;">
-$ brew install appfair/app/app-fair
+$ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 </pre>
 
 <br />
