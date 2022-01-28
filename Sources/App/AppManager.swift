@@ -58,14 +58,18 @@ protocol InstallationManager where Self : ObservableObject {
 
     internal init() {
         if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
-            try? Self.createInstallFolder()
+            Task {
+                try? await Self.createInstallFolder()
+            }
         }
 
         // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
         if FileManager.default.isDirectory(url: Self.installFolderURL) == true {
             self.fsobserver = FileSystemObserver(URL: Self.installFolderURL, queue: .main) {
                 dbg("changes detected in app folder:", Self.installFolderURL.path)
-                self.scanInstalledApps()
+                Task {
+                    await self.scanInstalledApps()
+                }
             }
         }
     }
@@ -278,10 +282,10 @@ extension AppManager {
         Set(installedApps.values.compactMap(\.successValue).compactMap(\.CFBundleIdentifier))
     }
 
-    static func createInstallFolder() throws {
+    static func createInstallFolder() async throws {
         // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
         // FIXME: this will always fail, since the ownership & permissions of /Applications/ cannot be changed
-        try withPermission(installFolderURL.deletingLastPathComponent()) { _ in
+        try await withPermission(installFolderURL.deletingLastPathComponent()) { _ in
             try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
         }
     }
@@ -296,11 +300,11 @@ extension AppManager {
         }
     }
 
-    func scanInstalledApps() {
+    func scanInstalledApps() async {
         dbg()
         do {
             let start = CFAbsoluteTimeGetCurrent()
-            try? Self.createInstallFolder()
+            try? await Self.createInstallFolder()
             var installPathContents = try FileManager.default.contentsOfDirectory(at: Self.installFolderURL, includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
             installPathContents.append(Self.catalogAppURL)
 
@@ -346,14 +350,14 @@ extension AppManager {
                 throw Errors.appNotInstalled(item)
             }
 
-            try trash(installPath)
+            try await trash(installPath)
         } catch {
             dbg("error performing trash for:", item.name, "error:", error)
             self.reportError(error)
         }
 
         // always re-scan after altering apps
-        scanInstalledApps()
+        await scanInstalledApps()
     }
 
     /// Reveals the local installed copy of this app using the finder
@@ -437,13 +441,13 @@ extension AppManager {
         if update && FileManager.default.isDirectory(url: destinationURL) == true {
             // TODO: first rename based on the old version number
             dbg("trashing:", destinationURL.path)
-            try trash(destinationURL)
+            try await trash(destinationURL)
         }
 
         try Task.checkCancellation()
 
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
-        try Self.withPermission(installFolderURL) { installFolderURL in
+        try await Self.withPermission(installFolderURL) { installFolderURL in
             try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
         }
         if let parentProgress = parentProgress {
@@ -451,7 +455,7 @@ extension AppManager {
         }
 
         // always re-scan after altering apps
-        scanInstalledApps()
+        await scanInstalledApps()
 
         if let parentProgress = parentProgress {
             parentProgress.completedUnitCount = parentProgress.totalUnitCount
@@ -463,9 +467,9 @@ extension AppManager {
         }
     }
 
-    private func trash(_ fileURL: URL) throws {
+    private func trash(_ fileURL: URL) async throws {
         // perform privilege escalation if needed
-        let trashedURL = try Self.withPermission(fileURL) { fileURL in
+        let trashedURL = try await Self.withPermission(fileURL) { fileURL in
             try FileManager.default.trash(url: fileURL)
         }
         dbg("trashed:", fileURL.path, "to:", trashedURL?.path)
@@ -496,19 +500,19 @@ extension AppManager {
     }
 
     /// Performs the given operation, and if it fails, try again after attempting a privileged operation to change the owner of the file to the current user.
-    private static func withPermission<T>(_ fileURL: URL, recursive: Bool = false, block: (URL) throws -> T) throws -> T {
+    private static func withPermission<T>(_ fileURL: URL, recursive: Bool = false, block: (URL) throws -> T) async throws -> T {
         do {
             // attempt the operation without any privilege escalation first
             return try block(fileURL)
         } catch {
             #if os(macOS)
-            func reauthorize(_ error: Error) throws -> T {
+            func reauthorize(_ error: Error) async throws -> T {
                 // we have a few options here:
                 // 1. [SMJobBless](https://developer.apple.com/documentation/servicemanagement/1431078-smjobbless) and an XPC helper; cumbersome, and has inherent security flaws as discussed at: [](https://blog.obdev.at/what-we-have-learned-from-a-vulnerability/)
                 // 2. [AuthorizationExecuteWithPrivileges](https://developer.apple.com/documentation/security/1540038-authorizationexecutewithprivileg) deprecated and un-available in swift (although the symbol can be manually coerced)
                 // 3. NSAppleScript using "with administrator privileges"
 
-                let output = try NSAppleScript.fork(command: "/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'", admin: true)
+                let output = try await NSAppleScript.fork(command: "/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'", admin: true)
                 dbg("successfully executed script:", output)
                 // now try-try the operation with the file's permissions corrected
                 return try block(fileURL)
@@ -519,7 +523,7 @@ extension AppManager {
                     || error.code == .fileWriteNoPermission {
                     // e.g.: withPermission: file permission error: CocoaError(_nsError: Error Domain=NSCocoaErrorDomain Code=513 "“Pan Opticon.app” couldn’t be moved to the trash because you don’t have permission to access it." UserInfo={NSURL=./Pan%20Opticon.app/ -- file:///Applications/App%20Fair/, NSUserStringVariant=(Trash), NSUnderlyingError=0x600001535680 {Error Domain=NSOSStatusErrorDomain Code=-5000 "afpAccessDenied: Insufficient access privileges for operation "}})
                     dbg("file permission error: \(error)")
-                    return try reauthorize(error)
+                    return try await reauthorize(error)
                 } else {
                     dbg("non-file permission error: \(error)")
                     // should we reauth for any error? E.g., `.fileWriteFileExists`? For now, be conservative and only attempt to change the permissions when we are sure the failure was due to a system file read/write error

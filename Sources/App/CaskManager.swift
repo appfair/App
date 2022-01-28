@@ -375,10 +375,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
-        // TODO: user async/await with NSUserAppleScriptTask (or NSUserUnixTask)
         let scriptURL: URL? = nil // write out the script here and execute it
         if let scriptURL = scriptURL {
-            //let task = try NSUserAppleScriptTask(url: scriptURL)
             let task = try NSUserUnixTask(url: scriptURL)
             try await task.execute(withArguments: [])
             let response = task.standardOutput?.availableData
@@ -386,7 +384,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         } else {
             dbg("performing command:", cmd)
             do {
-                guard let result = try NSAppleScript.fork(command: cmd) else {
+                guard let result = try await NSAppleScript.fork(command: cmd) else {
                     throw AppError("No output from brew command")
                 }
 
