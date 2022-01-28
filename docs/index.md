@@ -8,12 +8,20 @@ showicon: false
 
 <style>
 body {
-    background: black;
+    background: #000000FF;
     color: white;
 }
 
 hr {
     color: #AAAAAA;
+}
+
+a, a:visited {
+    color: #3A6F9D;
+}
+
+a:hover {
+    color: red;
 }
 </style>
 
@@ -60,6 +68,13 @@ Browse, download and install Mac applications from a vast catalog of both free a
 
 From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day.
 <br />
+<br />
+Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> now, or, for existing homebrew users, run:
+
+<pre style="background: darkgreen;">
+$ brew install appfair/app/app-fair
+</pre>
+
 <br />
 <br />
 <br />
