@@ -47,11 +47,18 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 <br />
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
-Browse, download and install native macOS applications from a vast selection of both free and commercial apps. The App Fair supports the discovery of third-party applications from the homebrew [casks](https://formulae.brew.sh/cask/) tap, as well as accessing free and open-source apps through the [appfair.net](https://appfair.net) distribution platform.
 
-From world-class web browsers like <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>, <a href="https://appfair.app/fair#cask/firefox">Firefox</a>, and <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>, to popular messaging apps like <a href="https://appfair.app/fair#cask/signal">Signal</a>, <a href="https://appfair.app/fair#cask/zoom">Zoom</a>, and <a href="https://appfair.app/fair#cask/discord">Discord</a>, and from media players like <a href="https://appfair.app/fair#cask/vlc">VLC</a> and <a href="https://appfair.app/fair#cask/spotify">Spotify</a> to essential tech tools like <a href="https://appfair.app/fair#cask/sketch">Sketch</a>, <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>, and <a href="https://appfair.app/fair#cask/docker">Docker</a>, the App Fair is your missing source for all the Mac apps that you need and use each and every day.
-<br />
-<br />
+Browse, download and install Mac applications from a vast catalog of both free and commercial native apps. The App Fair enables the discovery of third-party applications from the homebrew [casks](https://formulae.brew.sh/cask/) tap, as well as accessing free and open-source apps through the [appfair.net](https://appfair.net) distribution platform.
+
+{% assign browsers = '<a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>, <a href="https://appfair.app/fair#cask/firefox">Firefox</a>, <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>' | split: ", " | sample: 3 %}
+   
+{% assign messengers = '<a href="https://appfair.app/fair#cask/signal">Signal</a>, <a href="https://appfair.app/fair#cask/zoom">Zoom</a>, <a href="https://appfair.app/fair#cask/discord">Discord</a>' | split: ", " | sample: 3  %}
+    
+{% assign players = '<a href="https://appfair.app/fair#cask/spotify">Spotify</a>, <a href="https://appfair.app/fair#cask/tidal">TIDAL</a>, <a href="https://appfair.app/fair#cask/vlc">VLC</a>' | split: ", " | sample: 3 %}
+        
+{% assign tools = '<a href="https://appfair.app/fair#cask/sketch">Sketch</a>, <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>, <a href="https://appfair.app/fair#cask/docker">Docker</a>' | split: ", " | sample: 3 %}
+
+From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day.
 <br />
 <br />
 <br />
@@ -77,3 +84,5 @@ From world-class web browsers like <a href="https://appfair.app/fair#cask/micros
 -->
 
 <hr />
+
+<center>Screenshots</center>
