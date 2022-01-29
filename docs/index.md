@@ -7,6 +7,10 @@ showicon: false
 ---
 
 <style>
+header {
+  display: none;
+}
+
 XXXbody {
     background: #000000FF;
     color: white;
@@ -61,7 +65,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
 
-Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair enables the discovery of third-party applications from the community “[homebrew casks](https://formulae.brew.sh/cask/)” catalog, as well as accessing free and open-source apps published through the autonomous [appfair.net](https://appfair.net) distribution platform.
+Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair enables the discovery of third-party applications from the community homebrew [casks](https://formulae.brew.sh/cask/) catalog, as well as accessing free and open-source apps published through the [appfair.net](https://appfair.net) distribution platform.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;

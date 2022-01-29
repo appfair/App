@@ -2,4 +2,6 @@ remote_theme: appfair/fairapp-theme
 
 plugins:
   - jekyll-remote-theme
+  - jekyll-seo-tag
+
 
