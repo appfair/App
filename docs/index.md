@@ -1,7 +1,6 @@
 ---
-name: AppFair.app
-title: The App Fair
 layout: fairapp
+title: The App Fair
 appname: App-Fair
 appurl: "https://github.com/App-Fair/App"
 showicon: false
