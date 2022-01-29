@@ -117,7 +117,14 @@ struct HomebrewSettingsView: View {
                     VStack {
                         Text("""
                             Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.
+
+                            Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+
+                            Read more at: [https://brew.sh](https://brew.sh)
+                            Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
+
                             """)
+                            .textSelection(.enabled)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -148,17 +155,18 @@ struct HomebrewSettingsView: View {
 //                            //commandText(CaskManager.installCommand)
 //                        }
 
+//                        Text("""
+//                        Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
+//
+//                        Read more at: [https://brew.sh](https://brew.sh)
+//                        Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
+//                        """)
+//                            .padding()
+//                            .multilineTextAlignment(.leading)
+//                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity)
 
-                    Text("""
-                        Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
-
-                        Read more at: [https://brew.sh](https://brew.sh)
-                        Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-                        """)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

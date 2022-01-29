@@ -7,26 +7,27 @@ showicon: false
 ---
 
 <style>
-body {
+XXXbody {
     background: #000000FF;
     color: white;
 }
 
-hr {
+XXXhr {
     color: #AAAAAA;
 }
 
-a, a:visited {
-    color: #3A6F9D;
+XXXa, XXXa:visited {
+    color: green;
 }
 
-a:hover {
+XXXa:hover {
     color: red;
 }
 
-code {
+XXXcode {
     background: #333333;
 }
+
 </style>
 
 <!--
@@ -37,7 +38,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <div>
 <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">
-<button style="margin-left: auto; margin-right: auto; text-align: center; user-select: none; background-color: #2171A1; color: #FFFFFF; border: none; padding: 20px 20px; text-decoration: none; display: inline-block; cursor: pointer; border-radius: 20px; user-select: none; display: flex; flex-direction: row;">
+<button style="margin-left: auto; margin-right: auto; text-align: center; user-select: none; background-color: #2171A1; color: #FFFFFF; border: none; padding: 12px 12px; text-decoration: none; display: inline-block; cursor: pointer; border-radius: 15px; user-select: none; display: flex; flex-direction: row;">
     <div style="margin-top: auto; margin-bottom: auto;">
     <svg width="44px" height="44px" viewBox="0 0 44 44" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -60,7 +61,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
 
-Browse, download and install Mac applications from a vast catalog of both free and commercial native apps. The App Fair enables the discovery of third-party applications from the community “[homebrew casks](https://formulae.brew.sh/cask/)” catalog, as well as accessing free and open-source apps published through the autonomous [appfair.net](https://appfair.net) distribution platform.
+Browse, download and install Mac apps from a vast catalog of both free and commercial native apps. The App Fair enables the discovery of third-party applications from the community “[homebrew casks](https://formulae.brew.sh/cask/)” catalog, as well as accessing free and open-source apps published through the autonomous [appfair.net](https://appfair.net) distribution platform.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
@@ -96,7 +97,7 @@ Browse, download and install Mac applications from a vast catalog of both free a
 ' | strip | split: ";" | sample: 3 %}
 
 
-From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to popular messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to essential tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every single day. 
+From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to critical tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every day. 
 
 ## Straight from the Creators
 
@@ -109,9 +110,9 @@ Apps acquired through the App Fair come straight from their creators, with no in
 
 ## Enter the App Fair
 
-Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:
+Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can also be installed and launched by running the following command from Terminal.app:
 
-<pre style="background: darkgreen;">
+<pre>
 $ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 </pre>
 
