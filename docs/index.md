@@ -105,7 +105,7 @@ From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ 
 
 ## Straight from the Makers
 
-The apps you acquire through the App Fair come straight from their creators, with no intermediaries. They are granted the full protection of macOS's built-in security features like MRT & XProtect, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
+The apps you get through the App Fair come straight from their creators, with no intermediaries. They benefit from the full protection of macOS's built-in security features like MRT & XProtect, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
 
 <!-- App Fair.app has access to catalogs from:
 

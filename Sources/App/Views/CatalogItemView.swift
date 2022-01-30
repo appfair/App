@@ -825,7 +825,7 @@ struct CatalogItemView: View {
     func installMessage() -> some View {
         if info.isCask {
             return Text(atx: """
-                This will use Homebrew to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
+                This will use the Homebrew package manager to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
 
                 [\(info.release.downloadURL.absoluteString)](\(info.release.downloadURL.absoluteString))
 

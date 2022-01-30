@@ -55,8 +55,17 @@ struct HomebrewSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var caskManager: CaskManager
 
-    var body: some View {
+    @State private var homebrewOperationInProgress = false
+    @State private var homebrewInstalled: Bool? = nil
 
+    var body: some View {
+        settingsForm
+            .task {
+                self.homebrewInstalled = caskManager.isHomebrewInstalled()
+            }
+    }
+
+    var settingsForm: some View {
         Form {
             HStack {
                 Toggle(isOn: $caskManager.enableHomebrew) {
@@ -122,48 +131,41 @@ struct HomebrewSettingsView: View {
 
                             Read more at: [https://brew.sh](https://brew.sh)
                             Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-
+                            Location: \((caskManager.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
+                            Installed: \(isBrewInstalled ? "yes" : "no")
                             """)
                             .textSelection(.enabled)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
 
-//                        if let _ = installedVersion {
-//                            Text("Check for Homebrew updates")
-//                                .button {
-//                                    do {
-//                                        // check for updates
-//                                        try await caskManager.manageInstallation(install: false)
-//                                    } catch {
-//                                        fairManager.appManager.reportError(error)
-//                                    }
-//                                }
-//                                .help("This action will open a new Terminal.app window and issue the command: brew update")
-//
-//                            //commandText("brew update")
-//                        } else {
-//                            Text("Install Homebrew")
-//                                .button {
-//                                    do {
-//                                        try await caskManager.manageInstallation(install: true)
-//                                    } catch {
-//                                        fairManager.appManager.reportError(error)
-//                                    }
-//                                }
-//                                .help("This action will open a new Terminal.app window and issue the command: \(CaskManager.installCommand)")
-//
-//                            //commandText(CaskManager.installCommand)
-//                        }
+                        HStack {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .controlSize(.small)
+                                .frame(height: 12)
+                                .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
 
-//                        Text("""
-//                        Homebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.
-//
-//                        Read more at: [https://brew.sh](https://brew.sh)
-//                        Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-//                        """)
-//                            .padding()
-//                            .multilineTextAlignment(.leading)
-//                            .fixedSize(horizontal: false, vertical: true)
+                            Text(isBrewInstalled ? "Reset Homebrew" : "Setup Homebrew")
+                                .button {
+                                    homebrewOperationInProgress = true
+                                    do {
+                                        if isBrewInstalled {
+                                            try await caskManager.uninstallHomebrew()
+                                            dbg("caskManager.uninstallHomebrew success")
+                                        } else {
+                                            try await caskManager.installHomebrew()
+                                            dbg("caskManager.installHomebrew success")
+                                        }
+                                        self.homebrewInstalled = caskManager.isHomebrewInstalled()
+                                    } catch {
+                                        self.fairManager.appManager.reportError(error)
+                                    }
+                                    self.homebrewOperationInProgress = false
+                                }
+                                .disabled(self.homebrewOperationInProgress)
+                                .help(isBrewInstalled ? "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards." : "Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system.")
+                                .padding()
+                        }
                     }
                     .frame(maxWidth: .infinity)
 
@@ -172,15 +174,12 @@ struct HomebrewSettingsView: View {
         }
     }
 
-    func commandText(_ cmd: String) -> some View {
-        Text("""
-            Opens `Terminal.app` and issues the command:
-
-              `\(cmd)`
-            """)
-            .frame(minHeight: 50, alignment: .top)
-            .textSelection(.enabled)
-
+    var isBrewInstalled: Bool {
+        // override locally so we can control state
+        if let homebrewInstalled = homebrewInstalled {
+            return homebrewInstalled
+        }
+        return caskManager.isHomebrewInstalled()
     }
 }
 
