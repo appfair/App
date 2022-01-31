@@ -116,16 +116,11 @@ The apps you get through the App Fair come straight from their creators, with no
 
 ## Free and Fair
 
-Every line of code in the App Fair.app itself is open-source, released under the GNU AGPL license, and available to browse feely on [GitHub](https://github.com/App-Fair/App.git). The build process is completely transparent and verified by [appfair.net reproducible builds](https://www.appfair.net/#what-are-reproducible-builds).
-
-<!-- App Fair.app has access to catalogs from:
-
-  * [brew.sh](https://brew.sh): Homebrew is the “Missing Package Manager for macOS”
-  * [appfair.net](https://appfair.net): -->
+Every line of code in the App Fair.app itself is open-source, released under the GNU AGPL license, and available to browse freely on [GitHub](https://github.com/App-Fair/App.git). The build process is completely transparent and the artifacts are verified by [appfair.net reproducible builds](https://www.appfair.net/#what-are-reproducible-builds).
 
 ## Enter the App Fair
 
-Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can also be installed and launched by running the following command from Terminal.app:
+Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:
 
 <pre>
 brew install appfair/app/app-fair && open /Applications/'App Fair.app'
@@ -135,25 +130,6 @@ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 <br />
 <br />
 
-
-<!-- 
-<img style="width: 50%;" align="left" src="screenshots/screenshot_03-mac-dark-2878x2120.png" />
-<h4>About the App Fair</h4>
-
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br /> 
--->
-
 <hr />
 
-<center>Screenshots</center>
+<h3><center>Screenshots</center></h3>
