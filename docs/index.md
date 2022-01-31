@@ -70,49 +70,50 @@ Browse, download and install Mac apps from a vast catalog of both free and comme
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
 <a href="https://appfair.app/fair#cask/firefox">Firefox</a>;
+<a href="https://appfair.app/fair#cask/opera">Opera</a>;
 <a href="https://appfair.app/fair#cask/brave">Brave</a>;
 <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 {% assign messengers = '
 <a href="https://appfair.app/fair#cask/signal">Signal</a>;
 <a href="https://appfair.app/fair#cask/zoom">Zoom</a>;
 <a href="https://appfair.app/fair#cask/telegram">Telegram</a>;
 <a href="https://appfair.app/fair#cask/discord">Discord</a>
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 {% assign players = '
 <a href="https://appfair.app/fair#cask/spotify">Spotify</a>;
 <a href="https://appfair.app/fair#cask/tidal">TIDAL</a>;
 <a href="https://appfair.app/fair#cask/plex">Plex</a>;
 <a href="https://appfair.app/fair#cask/vlc">VLC</a>
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 {% assign tools = '
 <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
 <a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
 <a href="https://appfair.app/fair#cask/unison">Unison</a>;
 <a href="https://appfair.app/fair#cask/docker">Docker</a>
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 {% assign design = '
 <a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
 <a href="https://appfair.app/fair#cask/figma">Figma</a>;
 <a href="https://appfair.app/fair#cask/blender">Blender</a>
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 {% assign games = '
 <a href="https://appfair.app/fair#cask/minecraft">Minecraft</a>;
 <a href="https://appfair.app/fair#cask/steam">Steam</a>;
 <a href="https://appfair.app/fair#cask/league-of-legends">League of Legends</a>;
-' | strip | split: ";" | sample: 3 %}
+' | strip | split: ";" | sample: 99 %}
 
 
-From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to critical tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
+From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to crucial technologies like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
 
 ## Straight from the Makers
 
-The apps you get through the App Fair come straight from their creators, with no intermediaries. They may be free applications, or they may be commercial software with their own licensing and purchase mechanisms. They all benefit from the full protection of macOS's built-in security features like _Gatekeeper_ and _XProtect_, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
+The apps you get through the App Fair come straight from their creators, with no intermediaries. They may be free applications, or they may be commercial software with their own licensing and purchase mechanisms. They all benefit from the full protection of macOS's built-in security features like _Gatekeeper_ and _XProtect_, while at the same time remaining unconstrained by many of the limitations that can hobble apps installed through other channels. 
 
 ## Free and Fair
 
