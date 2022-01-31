@@ -111,6 +111,13 @@ struct HomebrewSettingsView: View {
                 }
                     .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
 
+                // switching between the system-installed brew and locally cached brew doesn't yet work
+//                Toggle(isOn: $caskManager.useSystemHomebrew) {
+//                    Text(atx: "Use system Homebrew installation")
+//                }
+//                    .help(Text("Use the system-installed Homebrew installation"))
+//                    .disabled(!CaskManager.globalBrewInstalled)
+
                 Toggle(isOn: $caskManager.enableBrewAnalytics) {
                     Text(atx: "Enable installation telemetry")
                 }
@@ -139,11 +146,19 @@ struct HomebrewSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         HStack {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .controlSize(.small)
-                                .frame(height: 12)
-                                .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
+                            if isBrewInstalled {
+                                Text("Reveal")
+                                    .button {
+                                        NSWorkspace.shared.activateFileViewerSelecting([caskManager.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
+                                    }
+                                    .help(Text("Browse the Homebrew installation folder using the Finder"))
+                            } else {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .controlSize(.small)
+                                    .frame(height: 12)
+                                    .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
+                            }
 
                             Text(isBrewInstalled ? "Reset Homebrew" : "Setup Homebrew")
                                 .button {

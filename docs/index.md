@@ -112,7 +112,11 @@ From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ 
 
 ## Straight from the Makers
 
-The apps you get through the App Fair come straight from their creators, with no intermediaries. They benefit from the full protection of macOS's built-in security features like Gatekeeper & XProtect, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
+The apps you get through the App Fair come straight from their creators, with no intermediaries. They may be free applications, or they may be commercial software with their own licensing and purchase mechanisms. They all benefit from the full protection of macOS's built-in security features like _Gatekeeper_ and _XProtect_, while at the same time remaining unconstrained by many of the restrictions that can hobble apps installed through other channels. 
+
+## Free and Fair
+
+Every line of code in the App Fair.app itself is open-source, released under the GNU AGPL license, and available to browse feely on [GitHub](https://github.com/App-Fair/App.git). The build process is completely transparent and verified by [appfair.net reproducible builds](https://www.appfair.net/#what-are-reproducible-builds).
 
 <!-- App Fair.app has access to catalogs from:
 

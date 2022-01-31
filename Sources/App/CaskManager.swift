@@ -9,11 +9,6 @@ let minimumSearchLength = 1
 /// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
 private extension InstallationManager where Self : CaskManager {
 
-    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
-    ///
-    /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
-    /// var brewInstallRoot: URL { URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local") }
-
     /// Installation is check simply by seeing if the brew install root exists.
     /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
     static func homebrewCommandExists(at brewInstallRoot: URL) -> Bool {
@@ -27,10 +22,13 @@ private extension InstallationManager where Self : CaskManager {
         URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
     }
 
-    @available(*, deprecated, message: "use local brew path instead")
+    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
+    ///
+    /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
     static var globalBrewPath: URL {
         URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
     }
+
 }
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
@@ -51,7 +49,10 @@ private extension InstallationManager where Self : CaskManager {
     @AppStorage("caskAPIEndpoint") var caskAPIEndpoint = URL(string: "https://formulae.brew.sh/api/")!
 
     /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
-    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.localBrewFolder // CaskManager.globalBrewPath
+    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.localBrewFolder
+
+    /// Whether to use the system-installed Homebrew
+    @AppStorage("useSystemHomebrew") var useSystemHomebrew = false
 
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
@@ -131,6 +132,11 @@ private extension InstallationManager where Self : CaskManager {
         URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
     }
 
+    /// Whether there is a global installation of Homebrew available
+    static var globalBrewInstalled: Bool {
+        FileManager.default.isExecutableFile(atPath: brewCommand(at: globalBrewPath).path)
+    }
+
     /// Whether the configured location is installed
     func isInstalled() -> Bool {
         FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
@@ -179,7 +185,7 @@ private extension InstallationManager where Self : CaskManager {
 
     /// The path to the `homebrew` command
     var localBrewCommand: URL {
-        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+        URL(fileURLWithPath: "bin/brew", relativeTo: useSystemHomebrew ? Self.globalBrewPath : brewInstallRoot)
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
