@@ -91,14 +91,14 @@ Browse, download and install Mac apps from a vast catalog of both free and comme
 {% assign tools = '
 <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
 <a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
-<a href="https://appfair.app/fair#cask/ableton-live-standard">Ableton Live</a>;
+<a href="https://appfair.app/fair#cask/unison">Unison</a>;
 <a href="https://appfair.app/fair#cask/docker">Docker</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign design = '
 <a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
 <a href="https://appfair.app/fair#cask/figma">Figma</a>;
-<a href="https://appfair.app/fair#cask/blender">Blender</a>;
+<a href="https://appfair.app/fair#cask/blender">Blender</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign games = '
