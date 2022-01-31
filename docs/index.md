@@ -65,43 +65,50 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
 
-Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair enables the discovery of third-party applications from the community homebrew [casks](https://formulae.brew.sh/cask/) catalog, as well as accessing free and open-source apps published through the [appfair.net](https://appfair.net) distribution platform.
+Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair enables the discovery of third-party applications from the community homebrew [casks](https://formulae.brew.sh/cask/) catalog, as well as accessing free and open-source apps published through the [appfair.net](https://appfair.net) distribution network.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
 <a href="https://appfair.app/fair#cask/firefox">Firefox</a>;
+<a href="https://appfair.app/fair#cask/brave">Brave</a>;
 <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign messengers = '
 <a href="https://appfair.app/fair#cask/signal">Signal</a>;
 <a href="https://appfair.app/fair#cask/zoom">Zoom</a>;
+<a href="https://appfair.app/fair#cask/telegram">Telegram</a>;
 <a href="https://appfair.app/fair#cask/discord">Discord</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign players = '
 <a href="https://appfair.app/fair#cask/spotify">Spotify</a>;
 <a href="https://appfair.app/fair#cask/tidal">TIDAL</a>;
+<a href="https://appfair.app/fair#cask/plex">Plex</a>;
 <a href="https://appfair.app/fair#cask/vlc">VLC</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign tools = '
 <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
 <a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
+<a href="https://appfair.app/fair#cask/ableton-live-standard">Ableton Live</a>;
 <a href="https://appfair.app/fair#cask/docker">Docker</a>
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign design = '
 <a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
+<a href="https://appfair.app/fair#cask/figma">Figma</a>;
+<a href="https://appfair.app/fair#cask/blender">Blender</a>;
 ' | strip | split: ";" | sample: 3 %}
 
 {% assign games = '
 <a href="https://appfair.app/fair#cask/minecraft">Minecraft</a>;
 <a href="https://appfair.app/fair#cask/steam">Steam</a>;
+<a href="https://appfair.app/fair#cask/league-of-legends">League of Legends</a>;
 ' | strip | split: ";" | sample: 3 %}
 
 
-From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }}, to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}, and from media players like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to critical tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}, the App Fair is your missing source for all the Mac apps that you need and use every day. 
+From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to critical tech tools like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
 
 ## Straight from the Makers
 
@@ -117,7 +124,7 @@ The apps you get through the App Fair come straight from their creators, with no
 Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can also be installed and launched by running the following command from Terminal.app:
 
 <pre>
-$ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
+brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 </pre>
 
 <br />
