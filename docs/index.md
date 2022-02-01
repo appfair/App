@@ -69,7 +69,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2324x1738.png" />
 
-Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the appfair.net distribution network.
+Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's fair-ground distribution network.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
@@ -138,7 +138,7 @@ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 
 Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder, although this can vary depending on the Cask.
 
-Apps installed from the appfair.net catalog will always be placed in the `/Applications/App Fair/` folder.
+Apps installed from the Fairground App catalog will always be placed in the `/Applications/App Fair/` folder.
 
 #### What does the "app already exists" error mean during installation?
 
@@ -150,7 +150,7 @@ You can remove an app with the “Delete” button on the catalog entry for that
 
 #### Are the apps native and universal?
 
-All apps published through the appfair.net catalog are native SwiftUI apps that are compiled for both ARM and Intel chips, resulting in a "universal" binary that makes optimal use of your Mac's hardware.
+All apps published through the Fairground App catalog are native SwiftUI apps that are compiled for both ARM and Intel chips, resulting in a "universal" binary that makes optimal use of your Mac's hardware.
 
 Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and run under Rosetta, or they may not be compiled at all) nor native (they may use Electron, Qt, or Java instead of the system-native frameworks).
 
