@@ -136,13 +136,15 @@ brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 
 #### Where does App Fair.app install apps?
 
-Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder. Apps from the appfair.net catalog will always be placed in the `/Applications/App Fair/` folder.
+Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder, although this can vary depending on the Cask).
 
-#### What does the "app already exists" error mean when installing an app?
+Apps installed from the appfair.net catalog will always be placed in the `/Applications/App Fair/` folder.
+
+#### What does the "app already exists" error mean during installation?
 
 You may have already installed the app by downloading it directly or installing it through another mechanism. By default, the App Fair.app won't overwrite an existing app when attempting to install it. You can either remove the app manually by placing it in the Trash, or else enable the “Install overwrites previous app installation” checkbox in the "Homebrew" preference panel of App Fair.app.
 
-#### How do I remove an app installed using App Fair.app?
+#### How do I un-install an app?
 
 You can remove an app with the “Delete” button on the catalog entry for that app. You can also simply delete the app from the `/Applications/` folder, but note that for apps obtained from the Homebrew Casks catalog this will not necessarily run all the cleanup steps (like halting daemons and disabling launch services for the app), so it is always recommended that your use the “Delete” button to remove apps.
 
@@ -152,13 +154,30 @@ All apps published through the appfair.net catalog are native SwiftUI apps that 
 
 Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and run under Rosetta) nor native (they may use Electron, Qt, or Java instead of the system UI frameworks).
 
-#### Are App Fair apps safe?
+#### Can I purchase apps with App Fair.app?
+
+The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing system. The free open-source apps published through the Fairground Apps catalog may have options for patronage or sponsorship.
+
+#### How safe are the apps?
 
 App Fair apps are granted the same system-level protections as all the other apps on your Mac. This includes both proactive defenses like _Gatekeeper_ and _XProtect_, and they also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
 
 Apps acquired through the Homebrew Casks catalog are typically “notarized” which means the app is from a developer with a paid subscription and has been scanned for malware. These apps may or may not be “sandboxed”.
 
-Apps acquired from the appfair.net catalog are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the decision to install an app or not.
+Apps acquired from the Fairground Apps are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the decision to install an app or not.
+
+#### What permissions do I need to install apps?
+
+To install apps from the Fairground Apps, the current user needs permission to write to the `/Applications/App Fair/` folder. In the event this is not writable by the current user, the app will attempt to escalate permissions to perform the installation, which will require an administrator password.
+
+Apps installed through the Homebrew Casks catalog typically just require the ability to write to the `/Applications/` folder, but for system-level apps or extensions, the installation process may request an administrator password to complete the installation.
+
+#### How can I update App Fair.app?
+
+If the "Keep catalog app up to date" checkbox is enabled in the App Fair preferences, App Fair.app will automatically install any updates to the catalog app, provided it is installed in the `/Applications/` folder.
+
+
+
 
 ### App Creator FAQs
 
@@ -166,8 +185,8 @@ Apps acquired from the appfair.net catalog are always “sandboxed”, which mea
 
 The App Fair.app supports two separate catalog channels:
 
-1. [Homebrew Casks](https://brew.sh): this community-driven project publishes an index of third-party apps and information about how to download and install them. 
-2. [appfair.net](https://www.appfair.net): this autonomous service indexes the open-source forks of a base SwiftUI app repository and provides links to their validated release binaries.
+1. **Homebrew Casks**: this community-driven project publishes an index of third-party apps and information about how to download and install them. You can learn more at [  https://brew.sh](https://brew.sh).
+2. **Fairground Apps**: these open-source SwiftUI apps are included in an index of the forks of a base SwiftUI app repository. Learn more at [https://appfair.net](https://appfair.net).
 
 If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as automatic builds, landing page generation, support for issues and discussions, and default icon generation, you can publish a starter app in under an hour using only your web browser with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
 
@@ -183,7 +202,9 @@ If you would like to add your app to the Casks list, and if your app meets their
 
 If your app is visible on App Fair.app but is lacking an icon and other metadata, you can provide an enhanced app catalog entry with app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app.
 
+#### Can I distribute an iOS app with the App Fair?
 
+Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their distribution.
 
 
 <br />
