@@ -67,7 +67,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 <br />
 <br />
 
-<img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
+<img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-dark-2324x1738.png" />
 
 Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party applications from the community “Homebrew Casks” catalog, as well as accessing free and open-source apps published through the appfair.net distribution network.
 

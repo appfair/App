@@ -779,6 +779,7 @@ extension CaskManager {
                 continue
             }
 
+            // TODO: we should de-proritize the privilidged domains so the publisher fork will always take precedence
             let appcask = appcaskInfo[CaskIdentifier(cask.token)]?.first { item in
                 item.homepage?.host == "appfair.app"
                 || item.homepage?.host == "www.appfair.app"
