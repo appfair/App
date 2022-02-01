@@ -5,12 +5,12 @@ import Foundation
 
 #if os(macOS)
 let displayExtensions: Set<String>? = ["zip"]
-let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-macos.json")!
+let catalogURL: URL = appfairCatalogURLMacOS
 #endif
 
 #if os(iOS)
 let displayExtensions: Set<String>? = ["ipa"]
-let catalogURL: URL = URL(string: "https://www.appfair.net/fairapps-ios.json")!
+let catalogURL: URL = appfairCatalogURLIOS
 #endif
 
 protocol InstallationManager where Self : ObservableObject {
@@ -223,7 +223,7 @@ extension AppManager {
                 || item.release.bundleIdentifier.rawValue.localizedCaseInsensitiveContains(searchText) == true
                 || item.release.name.localizedCaseInsensitiveContains(searchText) == true
                 || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
-                || item.release.localizedDescription.localizedCaseInsensitiveContains(searchText) == true)
+                || item.release.localizedDescription?.localizedCaseInsensitiveContains(searchText) == true)
     }
 
     /// The main folder for apps

@@ -1,5 +1,6 @@
 import FairApp
 import Foundation
+import TabularData
 
 
 
@@ -86,6 +87,9 @@ private extension InstallationManager where Self : CaskManager {
 
     /// The latest statistics about the apps
     @Published private(set) var stats: CaskStats? { didSet { updateAppInfo() } }
+
+    /// Enhanced metadata about individual apps
+    @Published private(set) var appcasks: FairAppCatalog? { didSet { updateAppInfo() } }
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
@@ -194,10 +198,16 @@ private extension InstallationManager where Self : CaskManager {
             dbg("skipping cask refresh because not isEnabled")
             return
         }
-        async let a1: Void = try fetchCasks()
-        async let a2: Void = try fetchStats()
-        async let a3 = Task { try await scanInstalledCasks() }
-        let (_, _, _) = try await (a1, a2, a3) // execute them all at the same time
+        async let casks: Void = try fetchCasks()
+        async let stats: Void = try fetchStats()
+        async let appcasks: Void = try fetchAppCasks() // we let this one slide (although we should log an error)
+        async let scanned = Task { try await scanInstalledCasks() }
+        let (_, _, _) = try await (casks, stats, scanned) // execute them all at the same time
+        do {
+            let _ = try await appcasks
+        } catch {
+            dbg("error accessing appcasks:", error)
+        }
     }
 
     /// Fetches the cask list and populates it in the `casks` property
@@ -218,6 +228,15 @@ private extension InstallationManager where Self : CaskManager {
 
         dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
         try self.stats = CaskStats(json: data)
+    }
+
+    func fetchAppCasks() async throws {
+        dbg("loading appcasks")
+        let url = appfairCaskAppsURL
+        let data = try await URLRequest(url: url).fetch()
+        dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
+        self.appcasks = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
+        dbg("loaded", self.casks.count, "casks")
     }
 
     func scanInstalledCasks() throws {
@@ -561,7 +580,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
             let icon = NSWorkspace.shared.icon(forFile: path.path)
             Image(uxImage: icon).resizable()
-        } else if let baseURL = URL(string: item.developerName) {
+        } else if let _ = item.iconURL {
+            item.iconImage() // use the icon URL if it has been set (e.g., using appcasks metadata)
+        } else if let baseURL = item.developerName.flatMap(URL.init(string:)) {
+            // otherwise fallback to using the favicon for the home page
             FaviconImage(baseURL: baseURL)
         } else {
             FairSymbol.questionmark_square_dashed
@@ -729,6 +751,9 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 extension CaskManager {
     /// Re-builds the AppInfo collection.
     private func updateAppInfo() {
+        // an index if [id: extraInfo]
+        let appcaskInfo: [CaskIdentifier: [AppCatalogItem]] = appcasks?.apps.grouping(by: \.id) ?? [:]
+
         let analyticsMap = stats?.formulae ?? [:]
 
         // dbg("casks:", caskMap.keys.sorted())
@@ -749,29 +774,22 @@ extension CaskManager {
             // analytics are keyed on the un-expanded name
             let downloads = analyticsMap[cask.full_token]?.first?.installCount
 
-            // currently no way to get this
-            let impressions = 0
-            let views = 0
-
-            let name = cask.name.first ?? id
-
-            //if let _ = installed {
-            // dbg("found installed cask:", id, name, cask.version)
-            //}
-
-            // dbg("downloads for:", name, downloads)
-
-            let homepage = cask.homepage.flatMap(URL.init(string:))
-            guard let homepage = homepage else {
+            guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
                 dbg("skipping cask with no home page:", cask.homepage)
                 continue
             }
 
+            let appcask = appcaskInfo[CaskIdentifier(cask.token)]?.first { item in
+                item.homepage?.host == "appfair.app"
+                || item.homepage?.host == "www.appfair.app"
+                || item.homepage?.host == caskHomepage.host
+            }
+
+            let name = cask.name.first ?? id
+
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
-            let categories: [String]? = nil // sadly, casks are un-categorized
-
-            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: homepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: nil, screenshotURLs: [], versionDescription: nil, tintColor: nil, beta: false, sourceIdentifier: nil, categories: categories, downloadCount: downloads, impressionCount: impressions, viewCount: views, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL)
+            let item = AppCatalogItem(name: name, bundleIdentifier: CaskIdentifier(id), subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL, homepage: caskHomepage)
 
             var plist: Plist? = nil
             if let installed = installed {
@@ -826,10 +844,10 @@ extension CaskManager {
         return txt.count < minimumSearchLength
         || item.cask?.tapToken.localizedCaseInsensitiveContains(searchText) == true
         || item.release.name.localizedCaseInsensitiveContains(txt) == true
-        || item.release.developerName.localizedCaseInsensitiveContains(txt) == true
+        || item.release.developerName?.localizedCaseInsensitiveContains(txt) == true
         || item.cask?.homepage?.localizedCaseInsensitiveContains(txt) == true
         || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
-        || item.release.localizedDescription.localizedCaseInsensitiveContains(txt) == true
+        || item.release.localizedDescription?.localizedCaseInsensitiveContains(txt) == true
     }
 
     func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {

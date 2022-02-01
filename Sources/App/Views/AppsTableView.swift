@@ -86,10 +86,11 @@ struct AppsTableView : View, ItemTableView {
                 let installedColumn = ostrColumn(named: "Installed", path: \AppInfo.installedVersionString)
                 installedColumn.width(ideal: 60)
 
-                let sizeColumn = TableColumn("Size", value: \AppInfo.release.size) { item in
-                    Text(item.release.size.localizedByteCount())
+                let sizeColumn = TableColumn("Size", value: \AppInfo.release.size, comparator: optionalComparator(0)) { item in
+                    Text((item.release.size ?? 0).localizedByteCount())
                         .multilineTextAlignment(.trailing)
                 }
+
                 sizeColumn.width(ideal: 60)
 
 //                let coreSizeColumn = onumColumn(named: "Core Size", path: \AppInfo.release.coreSize)
@@ -125,7 +126,7 @@ struct AppsTableView : View, ItemTableView {
                 let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.release.primaryCategoryIdentifier?.rawValue)
                 catgoryColumn
 
-                let authorColumn = strColumn(named: "Author", path: \AppInfo.release.developerName)
+                let authorColumn = ostrColumn(named: "Author", path: \AppInfo.release.developerName)
                 authorColumn.width(ideal: 200)
             }
         }, rows: { self })

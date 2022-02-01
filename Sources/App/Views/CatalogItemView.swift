@@ -406,14 +406,14 @@ struct CatalogItemView: View {
                     previewView()
                 }
                 .overlay(Group {
-                    if info.isCask {
-                        Text("Screenshots unavailable for Homebrew Casks")
+                    if item.screenshotURLs?.isEmpty != false {
+                        Text("No screenshots available")
                             .label(image: unavailableIcon)
                             .padding()
                             .lineLimit(1)
                             .font(Font.callout)
                             .foregroundColor(.secondary)
-                            .help(Text("Screenshots are not available for Homebrew Casks"))
+                            .help(Text("This app has not published any screenshots"))
                     }
                 })
             }
@@ -652,10 +652,11 @@ struct CatalogItemView: View {
 
     func catalogAuthorRow() -> some View {
         Group {
-            if info.release.developerName.isEmpty {
+            let devName = info.release.developerName ?? ""
+            if devName.isEmpty {
                 Text("Unknown")
             } else {
-                Text(info.release.developerName)
+                Text(devName)
             }
         }
     }
@@ -700,7 +701,7 @@ struct CatalogItemView: View {
                 Text(item.name)
                     .font(Font.largeTitle)
                     .truncationMode(.middle)
-                Text(item.subtitle ?? item.localizedDescription)
+                Text(item.subtitle ?? item.localizedDescription ?? "")
                     .font(Font.title2)
                     .truncationMode(.tail)
 //                catalogAuthorRow()
@@ -825,7 +826,7 @@ struct CatalogItemView: View {
     func installMessage() -> some View {
         if info.isCask {
             return Text(atx: """
-                This will use the Homebrew package manager to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
+                This will use the Homebrew package manager to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName ?? "")” at:
 
                 [\(info.release.downloadURL.absoluteString)](\(info.release.downloadURL.absoluteString))
 
@@ -835,7 +836,7 @@ struct CatalogItemView: View {
                 """)
         } else {
             return Text(atx: """
-                This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName)” at:
+                This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName ?? "")” at:
 
                 \(info.release.sourceURL?.absoluteString ?? "")
 

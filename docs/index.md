@@ -11,6 +11,10 @@ header {
   display: none;
 }
 
+h1, h2, h3, h4, h5 {
+  font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, system-ui, Arial, sans-serif;
+}
+
 XXXbody {
     background: #000000FF;
     color: white;
