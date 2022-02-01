@@ -69,7 +69,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2324x1738.png" />
 
-Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party applications from the community “Homebrew Casks” catalog, as well as accessing free and open-source apps published through the appfair.net distribution network.
+Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the appfair.net distribution network.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
@@ -156,13 +156,13 @@ Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to
 
 #### Can I purchase apps with App Fair.app?
 
-The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing system. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
+The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
 
 #### How safe are the apps?
 
 Apps installed using the App Fair.app are granted the same system-level protections as all the other apps on your Mac, regardless of how they were acquired. This includes both proactive defenses like _Gatekeeper_ and _XProtect_, and they also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
 
-Apps acquired through the Homebrew Casks catalog are typically “notarized” which means the app is from a developer with a paid subscription and has been scanned for malware. These apps may or may not be “sandboxed”.
+Apps acquired through the Homebrew Casks catalog are typically “notarized” which means the app is from a registered developer and has been scanned for malware. These apps may or may not be “sandboxed”.
 
 Apps acquired from the Fairground Apps are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the user's decision whether to install an app or not.
 
