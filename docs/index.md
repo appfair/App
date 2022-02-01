@@ -69,7 +69,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <img style="width: 50%;" align="right" src="screenshots/screenshot_01-mac-2484x1742.png" />
 
-Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair enables the discovery of third-party applications from the community homebrew [casks](https://formulae.brew.sh/cask/) catalog, as well as accessing free and open-source apps published through the [appfair.net](https://appfair.net) distribution network.
+Browse, download and install Mac apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party applications from the community “Homebrew Casks” catalog, as well as accessing free and open-source apps published through the appfair.net distribution network.
 
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
@@ -130,6 +130,61 @@ Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/late
 <pre>
 brew install appfair/app/app-fair && open /Applications/'App Fair.app'
 </pre>
+
+
+## Frequently Asked Questions
+
+#### Where does App Fair.app install apps?
+
+Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder. Apps from the appfair.net catalog will always be placed in the `/Applications/App Fair/` folder.
+
+#### What does the "app already exists" error mean when installing an app?
+
+You may have already installed the app by downloading it directly or installing it through another mechanism. By default, the App Fair.app won't overwrite an existing app when attempting to install it. You can either remove the app manually by placing it in the Trash, or else enable the “Install overwrites previous app installation” checkbox in the "Homebrew" preference panel of App Fair.app.
+
+#### How do I remove an app installed using App Fair.app?
+
+You can remove an app with the “Delete” button on the catalog entry for that app. You can also simply delete the app from the `/Applications/` folder, but note that for apps obtained from the Homebrew Casks catalog this will not necessarily run all the cleanup steps (like halting daemons and disabling launch services for the app), so it is always recommended that your use the “Delete” button to remove apps.
+
+#### Are the apps native and universal?
+
+All apps published through the appfair.net catalog are native SwiftUI apps that are compiled for both ARM and Intel chips, resulting in a "universal" binary that makes optimal use of your Mac's hardware.
+
+Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and run under Rosetta) nor native (they may use Electron, Qt, or Java instead of the system UI frameworks).
+
+#### Are App Fair apps safe?
+
+App Fair apps are granted the same system-level protections as all the other apps on your Mac. This includes both proactive defenses like _Gatekeeper_ and _XProtect_, and they also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
+
+Apps acquired through the Homebrew Casks catalog are typically “notarized” which means the app is from a developer with a paid subscription and has been scanned for malware. These apps may or may not be “sandboxed”.
+
+Apps acquired from the appfair.net catalog are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the decision to install an app or not.
+
+### App Creator FAQs
+
+#### How can I get my app in the App Fair?
+
+The App Fair.app supports two separate catalog channels:
+
+1. [Homebrew Casks](https://brew.sh): this community-driven project publishes an index of third-party apps and information about how to download and install them. 
+2. [appfair.net](https://www.appfair.net): this autonomous service indexes the open-source forks of a base SwiftUI app repository and provides links to their validated release binaries.
+
+If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as automatic builds, landing page generation, support for issues and discussions, and default icon generation, you can publish a starter app in under an hour using only your web browser with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
+
+If, on the other hand, you already having an existing notarized Mac app that you are distributing, you can add it to the Homebrew Casks index by referring to their [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook).
+
+#### How can I add, update, or remove my app's "Cask" information?
+
+The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [Casks list](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a pull request to update or remove it.
+
+If you would like to add your app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a Pull Request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
+
+#### How can I customize how my app appears in the App Fair.app?
+
+If your app is visible on App Fair.app but is lacking an icon and other metadata, you can provide an enhanced app catalog entry with app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app.
+
+
+
 
 <br />
 <br />
