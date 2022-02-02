@@ -158,11 +158,15 @@ Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to
 
 The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
 
+#### How are apps ranked in the catalogs?
+
+Apps are sorted descending by relative download count.
+
 #### How safe are the apps?
 
-Apps installed using the App Fair.app are granted the same system-level protections as all the other apps on your Mac, regardless of how they were acquired. This includes both proactive defenses like _Gatekeeper_ and _XProtect_, and they also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
+Apps installed using the App Fair.app are granted the same system-level protections as all the other apps on your Mac, regardless of how they were acquired. This includes proactive defenses like _Gatekeeper_ and _XProtect_. They also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
 
-Apps acquired through the Homebrew Casks catalog are typically “notarized” which means the app is from a registered developer and has been scanned for malware. These apps may or may not be “sandboxed”.
+Apps acquired through the Homebrew Casks catalog are typically “notarized”, which means the app is from a registered developer and has been subject to scanning and compliance assessment. These apps, while signed, may or may not be “sandboxed”, and so may affect your system with elevated permissions.
 
 Apps acquired from the Fairground Apps are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the user's decision whether to install an app or not.
 
@@ -174,8 +178,7 @@ Apps installed through the Homebrew Casks catalog typically just require the abi
 
 #### How can I update App Fair.app?
 
-If the "Keep catalog app up to date" checkbox is enabled in the App Fair preferences, App Fair.app will automatically install any updates to the catalog app, provided it is installed in the `/Applications/` folder.
-
+If the "Keep catalog app up to date" checkbox is enabled in the App Fair preferences, App Fair.app will automatically install any updates to the catalog app, provided it is installed in the `/Applications/` folder. This will happen the next time the catalog is refreshed, either manually or when the app is next launched.
 
 
 
