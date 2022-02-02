@@ -71,39 +71,40 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's fair-ground distribution network.
 
+
 {% assign browsers = '
 <a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
 <a href="https://appfair.app/fair#cask/firefox">Firefox</a>;
 <a href="https://appfair.app/fair#cask/opera">Opera</a>;
 <a href="https://appfair.app/fair#cask/brave">Brave</a>;
-<a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>
+<a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign messengers = '
 <a href="https://appfair.app/fair#cask/signal">Signal</a>;
 <a href="https://appfair.app/fair#cask/zoom">Zoom</a>;
 <a href="https://appfair.app/fair#cask/telegram">Telegram</a>;
-<a href="https://appfair.app/fair#cask/discord">Discord</a>
+<a href="https://appfair.app/fair#cask/discord">Discord</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign players = '
 <a href="https://appfair.app/fair#cask/spotify">Spotify</a>;
 <a href="https://appfair.app/fair#cask/tidal">TIDAL</a>;
 <a href="https://appfair.app/fair#cask/plex">Plex</a>;
-<a href="https://appfair.app/fair#cask/vlc">VLC</a>
+<a href="https://appfair.app/fair#cask/vlc">VLC</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign tools = '
 <a href="https://appfair.app/fair#cask/visual-studio-code">VS Code</a>;
 <a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
 <a href="https://appfair.app/fair#cask/unison">Unison</a>;
-<a href="https://appfair.app/fair#cask/docker">Docker</a>
+<a href="https://appfair.app/fair#cask/docker">Docker</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign design = '
 <a href="https://appfair.app/fair#cask/sketch">Sketch</a>;
 <a href="https://appfair.app/fair#cask/figma">Figma</a>;
-<a href="https://appfair.app/fair#cask/blender">Blender</a>
+<a href="https://appfair.app/fair#cask/blender">Blender</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign games = '
@@ -111,7 +112,6 @@ Browse, download and install macOS apps from a vast catalog of both free and com
 <a href="https://appfair.app/fair#cask/steam">Steam</a>;
 <a href="https://appfair.app/fair#cask/league-of-legends">League of Legends</a>;
 ' | strip | split: ";" | sample: 99 %}
-
 
 From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to crucial technologies like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
 
@@ -199,7 +199,15 @@ If you would like to add your existing app to the Casks list, and if your app me
 
 #### How can I customize how my app appears in the App Fair.app?
 
-If your app is visible on App Fair.app but is lacking an icon and other metadata, you can provide an enhanced app catalog entry with app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. Release assets you create in this forked repository will be automatically included in the app's catalog representation in the App Fair.app. 
+If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide an enhanced app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 
+
+Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
+
+#### How can I link to my app's catalog item?
+
+Create a link formatted as `https://www.appfair.app/fair#cask/<token>`, where `<token>` is your cask's [token](https://docs.brew.sh/Cask-Cookbook#token-reference). This will take the user to a landing page that then tries to launch the `App Fair.app` and display the catalog item as well as offering the user a link to install the app directly. 
+
+For example, a link that directs the user to install Minecraft is: `https://appfair.app/fair#cask/minecraft`.
 
 #### Can I distribute an iOS app with the App Fair?
 
