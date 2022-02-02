@@ -150,17 +150,13 @@ You can remove an app with the “Delete” button on the catalog entry for that
 
 #### Are the apps native and universal?
 
-All apps published through the Fairground App catalog are native SwiftUI apps that are compiled for both ARM and Intel chips, resulting in a "universal" binary that makes optimal use of your Mac's hardware.
+All apps published through the Fairground App catalog are native SwiftUI apps that are compiled for both ARM and Intel processors, resulting in a "universal" binary that makes optimal use of your Mac's hardware.
 
-Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and run under Rosetta, or they may not be compiled at all) nor native (they may use Electron, Qt, or Java instead of the system-native frameworks).
+Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and emulated under Rosetta, or they may not be compiled at all) nor native (they may use Electron, Qt, or Java instead of the system-native frameworks).
 
 #### Can I purchase apps with App Fair.app?
 
 The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
-
-#### How are apps ranked in the catalogs?
-
-Apps are sorted descending by relative download count.
 
 #### How safe are the apps?
 
@@ -168,7 +164,7 @@ Apps installed using the App Fair.app are granted the same system-level protecti
 
 Apps acquired through the Homebrew Casks catalog are typically “notarized”, which means the app is from a registered developer and has been subject to scanning and compliance assessment. These apps, while signed, may or may not be “sandboxed”, and so may affect your system with elevated permissions.
 
-Apps acquired from the Fairground Apps are always “sandboxed”, which means they are restricted in the activities that can be performed. The permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app, and which informs the user's decision whether to install an app or not.
+Apps acquired through the Fairground Apps catalog are always “sandboxed”, which means they are restricted in the activities that can be performed. Any ability to access your documents, photos, network, or peripherals will be identified in the app's description. The sum of the permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app. This rating informs a user's decision whether to trust and install an app or not, and thus provide full disclosure to users of the potential impact of installing an app.
 
 #### What permissions do I need to install apps?
 
