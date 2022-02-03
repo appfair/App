@@ -99,6 +99,7 @@ Browse, download and install macOS apps from a vast catalog of both free and com
 <a href="https://appfair.app/fair#cask/dropbox">Dropbox</a>;
 <a href="https://appfair.app/fair#cask/unison">Unison</a>;
 <a href="https://appfair.app/fair#cask/docker">Docker</a>;
+<a href="https://appfair.app/fair#cask/obs">OBS</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 {% assign design = '
