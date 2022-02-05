@@ -121,16 +121,19 @@ struct HomebrewSettingsView: View {
                     .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
 
                 // switching between the system-installed brew and locally cached brew doesn't yet work
-//                Toggle(isOn: $caskManager.useSystemHomebrew) {
-//                    Text(atx: "Use system Homebrew installation")
-//                }
-//                    .help(Text("Use the system-installed Homebrew installation"))
-//                    .disabled(!CaskManager.globalBrewInstalled)
-
+                #if DEBUG
+                #if false
+                Toggle(isOn: $caskManager.useSystemHomebrew) {
+                    Text(atx: "Use system Homebrew installation")
+                }
+                    .help(Text("Use the system-installed Homebrew installation"))
+                    .disabled(!CaskManager.globalBrewInstalled)
+                #endif
                 Toggle(isOn: $caskManager.enableBrewAnalytics) {
                     Text(atx: "Enable installation telemetry")
                 }
                     .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
+                #endif
             }
             .disabled(caskManager.enableHomebrew == false)
 
@@ -155,20 +158,19 @@ struct HomebrewSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         HStack {
-                            if isBrewInstalled {
-                                Text("Reveal")
-                                    .button {
-                                        NSWorkspace.shared.activateFileViewerSelecting([caskManager.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
-                                    }
-                                    .help(Text("Browse the Homebrew installation folder using the Finder"))
-                            } else {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .controlSize(.small)
-                                    .frame(height: 12)
-                                    .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
-                            }
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .controlSize(.small)
+                                .frame(height: 12)
+                                .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
+                            Text("Reveal")
+                                .button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([caskManager.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
+                                }
+                                .disabled(isBrewInstalled == false)
+                                .help(Text("Browse the Homebrew installation folder using the Finder"))
 
+                            #if DEBUG
                             Text(isBrewInstalled ? "Reset Homebrew" : "Setup Homebrew")
                                 .button {
                                     homebrewOperationInProgress = true
@@ -177,7 +179,7 @@ struct HomebrewSettingsView: View {
                                             try await caskManager.uninstallHomebrew()
                                             dbg("caskManager.uninstallHomebrew success")
                                         } else {
-                                            try await caskManager.installHomebrew()
+                                            try await caskManager.installHomebrew(retainCasks: false)
                                             dbg("caskManager.installHomebrew success")
                                         }
                                         self.homebrewInstalled = caskManager.isHomebrewInstalled()
@@ -189,6 +191,7 @@ struct HomebrewSettingsView: View {
                                 .disabled(self.homebrewOperationInProgress)
                                 .help(isBrewInstalled ? "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards." : "Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system.")
                                 .padding()
+                            #endif
                         }
                     }
                     .frame(maxWidth: .infinity)

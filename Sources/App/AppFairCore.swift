@@ -455,10 +455,17 @@ struct NavigationRootView : View {
                     DisplayModePicker(mode: $displayMode)
                 }
             }
-            .task(priority: .high) {
-                dbg("scanning installed apps")
+            .task(priority: .userInitiated) {
+                dbg("refreshing fairground")
                 await fairManager.trying {
                     try await fairManager.refresh()
+                }
+            }
+            .task(priority: .low) {
+                do {
+                    try await caskManager.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
+                } catch {
+                    dbg("error unpacking homebrew in local cache:", error)
                 }
             }
             .onChange(of: fairManager.updateCount()) { updateCount in

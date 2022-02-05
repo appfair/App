@@ -337,10 +337,18 @@ private extension InstallationManager where Self : CaskManager {
     func caskEnvironment() -> String {
         var cmd = ""
 
+        //#if DEBUG // always leave on debugging output to help with error reporting
+        cmd += "HOMEBREW_DEBUG=1 "
+        //#endif
+
+        // we always use the API for fetching casks to avoid having to check out the entire cask repo
         cmd += "HOMEBREW_INSTALL_FROM_API=1 "
 
         // don't lookup failure reasons on GitHub
         cmd += "HOMEBREW_NO_GITHUB_API=1 "
+
+        // don't be cute
+        cmd += "HOMEBREW_NO_EMOJI=1 "
 
         if self.requireCaskChecksum == true {
             // this probably only affects curl options for non-integrated downloading
@@ -474,7 +482,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         var caskArg = cask.token
 
         // make sure Homebrew is installed; if not, install it locally from the embedded brew.zip
-        let _ = try await installHomebrew()
+        let _ = try await installHomebrew(retainCasks: true)
 
         // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
         if let sourceURL = cask.sourceURL {
@@ -557,7 +565,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
            let caskURL = URL(string: caskURLString) {
             if candidateURL != caskURL {
                 // we parsed a different URL, which suggests that the system varies from the default catalog (usually arm vs. intel, but possibly also language)
-                dbg("downloading:", caskURL.absoluteString, "instead of:", candidateURL)
+                dbg("downloading:", caskURL.absoluteString, "(\(installCask.checksum ?? "no checksum"))", "instead of:", candidateURL, "(\(sha256 ?? "no checksum"))")
                 candidateURL = caskURL
                 sha256 = installCask.checksum
                 caskArg = caskPath.path
@@ -677,11 +685,11 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
     /// Downloads and installs Homebrew from the source zip
     /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
-    @discardableResult func installHomebrew() async throws -> Bool {
-        if FileManager.default.isDirectory(url: Self.localBrewFolder) != true {
+    @discardableResult func installHomebrew(force: Bool = false, fromLocalOnly: Bool = false, retainCasks: Bool) async throws -> Bool {
+        if force || (FileManager.default.isDirectory(url: Self.localBrewFolder) != true) {
             let cacheFolder = Self.localCacheFolder
             try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
-            try await installBrew(to: Self.localBrewFolder)
+            try await installBrew(to: Self.localBrewFolder, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
             return true
         } else {
             return false
@@ -689,40 +697,41 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     /// The docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”, but downloading to a local cache URL seems to work fine.
-    private func installBrew(to brewHome: URL) async throws {
+    /// - Parameters:
+    ///   - brewHome: the home into which to install brew
+    ///   - fromLocalOnly: whether to only permit using the local cache of the brew archive zip
+    ///   - retainCasks: whether to retain existing casks when updating to a new brew version
+    private func installBrew(to brewHome: URL, fromLocalOnly: Bool, retainCasks: Bool) async throws {
         let fm = FileManager.default
 
         let fromURL, downloadedArtifact: URL
+        let removeArtifact: Bool
         if let localURL = self.brewArchiveURLLocal, FileManager.default.fileExists(atPath: localURL.path) {
             fromURL = localURL
             downloadedArtifact = localURL
+            removeArtifact = false
+        } else if fromLocalOnly {
+            throw AppError("Could not install from local artifact")
         } else {
             fromURL = self.brewArchiveURLRemote
             let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
             dbg("received download response:", response)
             downloadedArtifact = downloaded
+            removeArtifact = true
         }
 
-        dbg("unpacked brew package from:", fromURL, downloadedArtifact.fileSize()?.localizedByteCount()) // "response:", response)
+        dbg("unpacked brew package from:", fromURL.absoluteString, downloadedArtifact.fileSize()?.localizedByteCount()) // "response:", response)
 
-
-        try? fm.removeItem(at: brewHome) // clear any previous installation
-
-        let extractURL = downloadedArtifact.appendingPathExtension(".extract")
-        try fm.unzipItem(at: downloadedArtifact, to: extractURL)
-
-        let children = try extractURL.fileChildren(deep: false, skipHidden: true)
-
-        // e.g., ~/Library/Caches/appfair-homebrew/Homebrew-brew-fc8fbd6
-        guard let installRoot = children.first, children.count == 1 else {
-            throw AppError("Homebrew package did not have a single ")
+        if retainCasks == false && FileManager.default.isDirectory(url: brewHome) == true {
+            try fm.removeItem(at: brewHome) // clear any previous installation
         }
 
-        try fm.moveItem(at: installRoot, to: brewHome)
-
+        try fm.unzipItem(at: downloadedArtifact, to: brewHome, trimBasePath: true, overwrite: retainCasks == true)
         dbg("extracted brew package to:", brewHome)
-        
-        // try fm.removeItem(at: downloadedArtifact) // don't remove the local artifact, since we may need it later
+
+        if removeArtifact {
+            try fm.removeItem(at: downloadedArtifact) // don't remove the local artifact, since we may need it later
+        }
 
         // no re-start the FS watcher for the new folders
         watchCaskroomFolder()
