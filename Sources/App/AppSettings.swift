@@ -71,6 +71,15 @@ struct HomebrewSettingsView: View {
                 Toggle(isOn: $caskManager.enableHomebrew) {
                     Text(atx: "Homebrew Casks")
                 }
+                .onChange(of: caskManager.enableHomebrew) { enabled in
+                    if enabled == false {
+                        // un-install the local homebrew cache if we ever disable it; this makes it so we don't need a local cache location
+                        Task {
+                            try await caskManager.uninstallHomebrew()
+                            self.homebrewInstalled = caskManager.isHomebrewInstalled()
+                        }
+                    }
+                }
 
 //                let installedVersion = try? caskManager.installedBrewVersion()
 //                if let installedVersion = installedVersion {

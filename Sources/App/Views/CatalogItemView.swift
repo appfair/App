@@ -1074,8 +1074,8 @@ struct CatalogItemView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         await appManager.trying {
-            if info.isCask == true {
-                try await caskManager.install(item: item, progress: startProgress(), update: false)
+            if let cask = info.cask {
+                try await caskManager.install(cask: cask, progress: startProgress(), update: false)
             } else {
                 try await appManager.install(item: item, progress: startProgress(), update: false)
             }
@@ -1096,8 +1096,8 @@ struct CatalogItemView: View {
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         await appManager.trying {
-            if info.isCask == true {
-                try await caskManager.install(item: item, progress: startProgress(), update: true)
+            if let cask = info.cask {
+                try await caskManager.install(cask: cask, progress: startProgress(), update: true)
             } else {
                 try await appManager.install(item: item, progress: startProgress(), update: true)
             }
@@ -1117,9 +1117,9 @@ struct CatalogItemView: View {
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
-        if info.isCask == true {
+        if let cask = info.cask {
             return await fairManager.trying {
-                try await caskManager.delete(item: item)
+                try await caskManager.delete(cask: cask)
             }
         } else {
             await appManager.trash(item: item)
@@ -1144,12 +1144,24 @@ private extension CatalogActivity {
     }
 }
 
+///// Internal cache to prevent icons from needing to reload so much
+//private let iconCache = NSCache<NSURL, ImageInfo>()
+//
+//private final class ImageInfo {
+//    let image: SwiftUI.Image
+//
+//    init(image: SwiftUI.Image) {
+//        self.image = image
+//    }
+//}
+
 extension AppCatalogItem {
     @ViewBuilder func iconImage() -> some View {
         if let iconURL = self.iconURL {
             AsyncImage(url: iconURL) { phase in
                 switch phase {
                 case .success(let image):
+                    //let _ = iconCache.setObject(ImageInfo(image: image), forKey: iconURL as NSURL)
                     image
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
@@ -1158,8 +1170,14 @@ extension AppCatalogItem {
                         .grayscale(0.9)
                         .help(error.localizedDescription)
                 case .empty:
-                    fallbackIcon()
-                        .grayscale(1.0)
+//                    if let image = iconCache.object(forKey: iconURL as NSURL) {
+//                        image.image
+//                            .resizable(resizingMode: .stretch)
+//                            .aspectRatio(contentMode: .fit)
+//                    } else {
+                        fallbackIcon()
+                            .grayscale(1.0)
+//                    }
                 @unknown default:
                     fallbackIcon()
                         .grayscale(0.8)

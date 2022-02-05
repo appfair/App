@@ -966,47 +966,25 @@ extension FocusedValues {
 
 
 #if os(macOS)
-extension NSAppleScript {
+extension NSUserScriptTask {
     /// Performs the given shell command and returns the output via an `NSAppleScript` operation
     /// - Parameters:
     ///   - command: the command to execute
     ///   - async: whether to fork async using `NSUserAppleScriptTask` as opposed to synchronously with `NSAppleScript`
     ///   - admin: whether to execute the script `with administrator privileges`
     /// - Returns: the string contents of the response
-    public static func fork(command: String, async: Bool = true, admin: Bool = false) async throws -> String? {
+    public static func fork(command: String, admin: Bool = false) async throws -> String? {
         let withAdmin = admin ? " with administrator privileges" : ""
 
         let cmd = "do shell script \"\(command)\"" + withAdmin
 
-        let output: NSAppleEventDescriptor
-        if async {
-            let scriptURL = URL.tmpdir
-                .appendingPathComponent("scriptcmd-" + UUID().uuidString)
-                .appendingPathExtension("scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
-            try cmd.write(to: scriptURL, atomically: true, encoding: .utf8)
-            dbg("running NSUserAppleScriptTask in:", scriptURL.path, "command:", cmd)
-            let task = try NSUserAppleScriptTask(url: scriptURL)
-            output = try await task.execute(withAppleEvent: nil)
-        } else {
-            guard let script = NSAppleScript(source: cmd) else {
-                throw CocoaError(.coderReadCorrupt)
-            }
-
-            var errorDict: NSDictionary?
-            output = script.executeAndReturnError(&errorDict)
-
-            if var errorDict = errorDict as? [String: Any] {
-                dbg("script execution error:", errorDict) // e.g.: script execution error: { NSAppleScriptErrorAppName = "App Fair"; NSAppleScriptErrorBriefMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorMessage = "chmod: /Applications/App Fair/Pan Opticon.app: No such file or directory"; NSAppleScriptErrorNumber = 1; NSAppleScriptErrorRange = "NSRange: {0, 106}"; }
-
-                // also: ["NSAppleScriptErrorMessage": User canceled., "NSAppleScriptErrorAppName": App Fair, "NSAppleScriptErrorNumber": -128, "NSAppleScriptErrorBriefMessage": User canceled., "NSAppleScriptErrorRange": NSRange: {0, 115}]
-
-                // should we re-throw the original error (which would help explain the root cause of the problem), or the script failure error (which will be more vague but will include the information about why the re-auth failed)?
-                errorDict[NSLocalizedFailureReasonErrorKey] = errorDict["NSAppleScriptErrorMessage"]
-                errorDict[NSLocalizedDescriptionKey] = errorDict["NSAppleScriptErrorBriefMessage"]
-
-                throw NSError(domain: "", code: 0, userInfo: errorDict)
-            }
-        }
+        let scriptURL = URL.tmpdir
+            .appendingPathComponent("scriptcmd-" + UUID().uuidString)
+            .appendingPathExtension("scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
+        try cmd.write(to: scriptURL, atomically: true, encoding: .utf8)
+        dbg("running NSUserAppleScriptTask in:", scriptURL.path, "command:", cmd)
+        let task = try NSUserAppleScriptTask(url: scriptURL)
+        let output = try await task.execute(withAppleEvent: nil)
         dbg("successfully executed script:", command)
         return output.stringValue
     }

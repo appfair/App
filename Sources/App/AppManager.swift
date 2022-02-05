@@ -180,7 +180,7 @@ extension AppManager {
     /// The items arranged for the given category with the specifed sort order and search text
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
-            .appInfoItems(includePrereleases: showPreReleases)
+            .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.item == .installed)
             .filter({ matchesExtension(item: $0) })
             .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
@@ -512,7 +512,7 @@ extension AppManager {
                 // 2. [AuthorizationExecuteWithPrivileges](https://developer.apple.com/documentation/security/1540038-authorizationexecutewithprivileg) deprecated and un-available in swift (although the symbol can be manually coerced)
                 // 3. NSAppleScript using "with administrator privileges"
 
-                let output = try await NSAppleScript.fork(command: "/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'", admin: true)
+                let output = try await NSUserScriptTask.fork(command: "/usr/sbin/chown \(recursive ? "-R" : "") $USER '\(fileURL.path)'", admin: true)
                 dbg("successfully executed script:", output)
                 // now try-try the operation with the file's permissions corrected
                 return try block(fileURL)
