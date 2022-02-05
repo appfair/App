@@ -414,9 +414,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             guard let result = try await NSUserScriptTask.fork(command: cmd) else {
                 throw AppError("No output from brew command")
             }
-
             dbg("command output:", result)
-
             return result
         } catch {
             dbg("error performing command:", cmd, error)
@@ -424,23 +422,35 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
-    /// Processes the installed apps (too slow)
-    @available(*, deprecated, message: "")
-    func refreshInstalledApps() async throws {
-        dbg("loading installed casks")
-        // outputs the installed apps list
+    func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
+        dbg("downloading:", downloadURL.absoluteString)
 
-        // annoyingly, this will return both the `formulae` and `casks` properties, even when we request it to only show casks; we ignore the property, but it can make the command take a long time to execute when there are a lot of formulae installed
-        let cmd = self.localBrewCommand.path + " info --quiet --installed --json=v2 --casks"
-        let json = try await run(command: cmd, toolName: .init("refresher"))
+        let cacheDir = Self.downloadCacheFolder
+        dbg("checking cache:", cacheDir.path)
+        try? FileManager.default.createDirectory(at: Self.caskCacheFolder, withIntermediateDirectories: true, attributes: nil)
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Caches/Homebrew/Cask/iterm2--3.4.15.zip`
 
-        struct BrewInstallOutput : Decodable {
-            // var formulae: [Formulae] // unused but seems to always be included
-            var casks: [CaskItem]
+        /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
+        let targetURL = URL(fileURLWithPath: cask.cacheBasePath(for: candidateURL), relativeTo: cacheDir)
+
+        //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
+        //dbg("fetchExpectedContentLength:", size)
+
+        async let (downloadedArtifact, downloadSha256) = downloadArtifact(url: downloadURL, headers: [:], progress: progress)
+        let actualHash = try await downloadSha256.hex()
+
+        dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
+        if let expectedHash = expectedHash, expectedHash != actualHash {
+            throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
         }
 
-        let _ = try BrewInstallOutput(json: json.utf8Data)
-        // self.installed = output.casks
+        // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
+        // overwrite any previous cached version
+        let artifact = try await downloadedArtifact
+        let _ = try? FileManager.default.trash(url: targetURL)
+        try FileManager.default.moveItem(at: artifact, to: targetURL)
+        dbg("moved:", artifact.path, "to:", targetURL.path)
+        try Task.checkCancellation()
     }
 
     /// Installs the given `AppCatalogItem` using the `brew` command. The release must be a valid Homebrew release.
@@ -457,53 +467,19 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg(cask)
 
         // fetch the cask info so we can determine the actual URL to download (the catalog URL will not always contain the correct URL and checksum due to https://github.com/Homebrew/brew/issues/12786)
-        guard var url = cask.url.flatMap(URL.init) else {
+        guard var candidateURL = cask.url.flatMap(URL.init) else {
             return dbg("no URL for cask")
         }
         var sha256 = cask.checksum
-
+        var caskArg = cask.token
 
         // make sure Homebrew is installed; if not, install it locally from the embedded brew.zip
-        let installed = try await installHomebrew()
+        let _ = try await installHomebrew()
 
         // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
         if let sourceURL = cask.sourceURL {
             do {
-                // HOMEBREW_NO_GITHUB_API=1 HOMEBREW_NO_ANALYTICS=1 ./bin/brew info --debug --verbose --json=v2 --cask /opt/src/github/appfair/brew/Library/Taps/homebrew/homebrew-cask/Casks/iterm2.rb
-
-                // must be downloaded here or `brew --info --cask <path>` will fail
-                let downloadFolder = URL(fileURLWithPath: "Library/Taps/homebrew/homebrew-cask/Casks", relativeTo: brewInstallRoot)
-                try FileManager.default.createDirectory(at: downloadFolder, withIntermediateDirectories: true, attributes: nil) // ensure it exists
-
-                // the cask path is the same as down download name
-                let caskPath = URL(fileURLWithPath: sourceURL.lastPathComponent, relativeTo: downloadFolder)
-
-                dbg("downloading cask info from:", sourceURL.absoluteString, "to:", caskPath.path)
-                try await URLSession.shared.data(from: sourceURL).0.write(to: caskPath)
-                defer { try? FileManager.default.removeItem(at: caskPath) }
-
-                var cmd = localBrewCommand.path
-                cmd += " info --json=v2 --cask "
-                cmd += caskPath.path
-                let result = try await run(command: cmd, toolName: .init("info"), askPassAppInfo: cask)
-                dbg("brew info result:", result)
-
-                struct BrewInstallOutput : Decodable {
-                    // var formulae: [Formulae] // unused but seems to always be included
-                    var casks: [CaskItem]
-                }
-
-                let installInfo = try BrewInstallOutput(json: result.utf8Data)
-                if let installCask = installInfo.casks.first,
-                   let caskURLString = installCask.url,
-                   let caskURL = URL(string: caskURLString) {
-                    if url != caskURL {
-                        // we parsed a different URL, which suggests that the system varies from the default catalog (usually arm vs. intel, but possibly also language)
-                        dbg("downloading:", caskURL.absoluteString, "instead of:", url)
-                        url = caskURL
-                        sha256 = installCask.checksum
-                    }
-                }
+                try await fetchCaskInfo(sourceURL, cask, &candidateURL, &sha256, &caskArg)
             } catch {
                 // this is non-fatal: we will just use the default URL
                 dbg("error trying to fetch and parse cask info:", error)
@@ -514,7 +490,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let force = force ?? self.forceInstallCasks
         let manageDownloads = manageDownloads ?? self.manageCaskDownloads
 
-        let (downloadURL, expectedHash) = (url, sha256)
+        let (downloadURL, expectedHash) = (candidateURL, sha256)
 
         if expectedHash == nil && self.requireCaskChecksum == true {
             throw AppError("Missing cryptographic checksum", failureReason: "The download has no SHA-256 checksum set and so its authenticity cannot be verified.")
@@ -524,47 +500,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         if manageDownloads == true {
             try Task.checkCancellation()
-
-            // TODO: should we try to replicate Homebrew's curl command? It looks something like:
-            // /opt/homebrew/Library/Homebrew/shims/shared/curl --disable --cookie /dev/null --globoff --show-error --user-agent 'Homebrew/3.3.9 (Macintosh; arm64 Mac OS X 12.1) curl/7.77.0' --header 'Accept-Language: en' --fail --silent --retry 3 --location --remote-time --output ~/Library/Caches/Homebrew/downloads/'2eea097118f44268d2fe62d69e2a7fb1d8d4d7f29c2da0ec262061199b600525--Wireshark 3.6.1 Arm 64.dmg.incomplete' 'https://2.na.dl.wireshark.org/osx/Wireshark 3.6.1 Arm 64.dmg'
-
-            let headers: [String: String] = [
-                :
-                //"User-Agent" : "Homebrew/3.3.9 (Macintosh; arm64 Mac OS X 12.1) curl/7.77.0",
-            ]
-
-            dbg("downloading:", downloadURL.absoluteString)
-
-            let cacheDir = Self.downloadCacheFolder
-            dbg("checking cache:", cacheDir.path)
-            try? FileManager.default.createDirectory(at: Self.caskCacheFolder, withIntermediateDirectories: true, attributes: nil)
-            try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Caches/Homebrew/Cask/iterm2--3.4.15.zip`
-
-            /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
-            let targetURL = URL(fileURLWithPath: cask.cacheBasePath(for: url), relativeTo: cacheDir)
-
-            //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
-            //dbg("fetchExpectedContentLength:", size)
-
-            async let (downloadedArtifact, downloadSha256) = downloadArtifact(url: downloadURL, headers: headers, progress: parentProgress)
-            let _ = try await installed // also install Homebrew at the same time we are downloading the artifact
-            let actualHash = try await downloadSha256.hex()
-
-            dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
-            if let expectedHash = expectedHash, expectedHash != actualHash {
-                throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
-            }
-
-            // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
-            // overwrite any previous cached version
-            let artifact = try await downloadedArtifact
-            let _ = try? FileManager.default.trash(url: targetURL)
-            try FileManager.default.moveItem(at: artifact, to: targetURL)
-            dbg("moved:", artifact.path, "to:", targetURL.path)
-            try Task.checkCancellation()
+            try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
         }
-
-        let _ = try await installed // ensure that Homebrew has been installed locally even if we aren't using the integrated download manager
 
         var cmd = self.localBrewCommand.path
 
@@ -582,11 +519,52 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd += " --require-sha"
         }
 
-        cmd += " --cask " + cask.token
+        cmd += " --cask " + caskArg
 
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
         dbg("result of command:", cmd, ":", result)
     }
+
+    /// Downloads the cash info for the given URL and parses it, extracting the `url` and `checksum` properties.
+    fileprivate func fetchCaskInfo(_ sourceURL: URL, _ cask: CaskItem, _ candidateURL: inout URL, _ sha256: inout String?, _ caskArg: inout String) async throws {
+        // must be downloaded exactly here or `brew --info --cask <path>` will fail
+        let downloadFolder = URL(fileURLWithPath: "Library/Taps/homebrew/homebrew-cask/Casks/", isDirectory: true, relativeTo: brewInstallRoot)
+        try FileManager.default.createDirectory(at: downloadFolder, withIntermediateDirectories: true, attributes: nil) // ensure it exists
+
+        // the cask path is the same as down download name
+        let caskPath = URL(fileURLWithPath: sourceURL.lastPathComponent, relativeTo: downloadFolder)
+
+        dbg("downloading cask info from:", sourceURL.absoluteString, "to:", caskPath.path)
+        try await URLSession.shared.data(from: sourceURL).0.write(to: caskPath)
+
+        // don't delete the local cask, since we want to re-use it for install
+        // defer { try? FileManager.default.removeItem(at: caskPath) }
+
+        var cmd = localBrewCommand.path
+        cmd += " info --json=v2 --cask "
+        cmd += caskPath.path
+        let result = try await run(command: cmd, toolName: .init("info"), askPassAppInfo: cask)
+        dbg("brew info result:", result)
+
+        struct BrewInstallOutput : Decodable {
+            // var formulae: [Formulae] // unused but seems to always be included
+            var casks: [CaskItem]
+        }
+
+        let installInfo = try BrewInstallOutput(json: result.utf8Data)
+        if let installCask = installInfo.casks.first,
+           let caskURLString = installCask.url,
+           let caskURL = URL(string: caskURLString) {
+            if candidateURL != caskURL {
+                // we parsed a different URL, which suggests that the system varies from the default catalog (usually arm vs. intel, but possibly also language)
+                dbg("downloading:", caskURL.absoluteString, "instead of:", candidateURL)
+                candidateURL = caskURL
+                sha256 = installCask.checksum
+                caskArg = caskPath.path
+            }
+        }
+    }
+
 
     func delete(cask: CaskItem, update: Bool = true, zap: Bool = false, force: Bool = false, verbose: Bool = true) async throws {
         dbg(cask.token)
