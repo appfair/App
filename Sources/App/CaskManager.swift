@@ -58,6 +58,9 @@ private extension InstallationManager where Self : CaskManager {
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = true
 
+    /// Whether to ignore casks that mark themselves as "autoupdates" from being shown in the "Updated" section
+    @AppStorage("ignoreAutoUpdatingAppUpdates") var ignoreAutoUpdatingAppUpdates = true
+
     /// Whether to require a checksum before downloading; many brew casks don't publish a checksum, so disabled by default
     @AppStorage("requireCaskChecksum") var requireCaskChecksum = false
 
@@ -106,7 +109,7 @@ private extension InstallationManager where Self : CaskManager {
     private var caskStats365: URL { URL(string: "365d.json", relativeTo: caskStatsBase)! }
 
     /// The local brew archive if it is embedded in the app
-    private let brewArchiveURLLocal = Bundle.module.url(forResource: "brew", withExtension: "zip", subdirectory: "Bundle")
+    private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private let brewArchiveURLRemote = URL(string: "https://github.com/App-Fair/brew/zipball/HEAD")! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
@@ -481,7 +484,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         var sha256 = cask.checksum
         var caskArg = cask.token
 
-        // make sure Homebrew is installed; if not, install it locally from the embedded brew.zip
+        // make sure Homebrew is installed; if not, install it locally from the embedded appfair-homebrew.zip
         let _ = try await installHomebrew(retainCasks: true)
 
         // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
@@ -587,7 +590,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("result:", result)
     }
 
-    @ViewBuilder func icon(for item: AppCatalogItem, useInstalledIcon: Bool) -> some View {
+    @ViewBuilder func icon(for item: AppCatalogItem, useInstalledIcon: Bool = false) -> some View {
         if useInstalledIcon, let path = try? self.installPath(for: item) {
             // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
             let icon = NSWorkspace.shared.icon(forFile: path.path)
@@ -596,7 +599,9 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             item.iconImage() // use the icon URL if it has been set (e.g., using appcasks metadata)
         } else if let baseURL = item.developerName.flatMap(URL.init(string:)) {
             // otherwise fallback to using the favicon for the home page
-            FaviconImage(baseURL: baseURL)
+            FaviconImage(baseURL: baseURL, fallback: {
+                EmptyView()
+            })
         } else {
             FairSymbol.questionmark_square_dashed
         }
@@ -879,15 +884,22 @@ extension CaskManager {
         case .installed:
             return item.installedVersionString != nil
         case .updated:
-            if let releaseVersion = item.release.version,
-               let installedVersions = installedCasks[item.release.id.rawValue] {
-                // dbg(item.release.id, "releaseVersion:", releaseVersion, "installedVersions:", installedVersions)
-                return installedVersions.contains(releaseVersion) == false
-            } else {
-                return false
-            }
+            return appUpdated(item)
         default:
             return true
+        }
+    }
+
+    func appUpdated(_ item: AppInfo) -> Bool {
+        if let releaseVersion = item.release.version,
+           let installedVersions = installedCasks[item.release.id.rawValue] {
+            if self.ignoreAutoUpdatingAppUpdates == true && item.cask?.auto_updates == true {
+                return false // show showing apps that mark themselves as auto-updating
+            }
+            // dbg(item.release.id, "releaseVersion:", releaseVersion, "installedVersions:", installedVersions)
+            return installedVersions.contains(releaseVersion) == false
+        } else {
+            return false
         }
     }
 
@@ -900,9 +912,18 @@ extension CaskManager {
     }
 
     func updateCount() -> Int {
-        return casks.filter({
-            self.versionNotInstalled(cask: $0)
-        }).count
+        return appInfos
+            .filter({ info in
+                if let cask = info.cask {
+                    return self.versionNotInstalled(cask: cask)
+                } else {
+                    return false
+                }
+            })
+            .filter({ info in
+                appUpdated(info)
+            })
+            .count
     }
 
     func badgeCount(for item: AppManager.SidebarItem) -> Text? {

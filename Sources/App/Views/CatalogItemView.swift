@@ -1166,6 +1166,7 @@ extension AppCatalogItem {
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
                 case .failure(let error):
+                    let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error)
                     fallbackIcon()
                         .grayscale(0.9)
                         .help(error.localizedDescription)
@@ -1176,7 +1177,7 @@ extension AppCatalogItem {
 //                            .aspectRatio(contentMode: .fit)
 //                    } else {
                         fallbackIcon()
-                            .grayscale(1.0)
+                        .grayscale(0.5)
 //                    }
                 @unknown default:
                     fallbackIcon()
@@ -1195,8 +1196,9 @@ extension AppCatalogItem {
         //        if id.isCaskApp {
         //            // cask apps use a blank icon
         //        } else {
-        FairIconView("", subtitle: "", iconColor: itemTintColor())
+        //FairIconView(self.name, subtitle: self.id.rawValue, iconColor: itemTintColor())
         //        }
+        Circle().fill(.secondary).opacity(0.5)
     }
 
     /// The specified tint color, falling back on the default tint for the app name

@@ -1,9 +1,10 @@
 import FairApp
 
 /// An image that tried to load the favicon for a given page
-public struct FaviconImage : View {
+public struct FaviconImage<V: View> : View {
     public let baseURL: URL
     @State var faviconImages: [URL] = []
+    let fallback: () -> V
 
     public var body: some View {
         baseImage

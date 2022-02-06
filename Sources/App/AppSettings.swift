@@ -105,6 +105,11 @@ struct HomebrewSettingsView: View {
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
+                Toggle(isOn: $caskManager.ignoreAutoUpdatingAppUpdates) {
+                    Text(atx: "Exclude auto-updating apps from sidebar updates list")
+                }
+                    .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+
                 Toggle(isOn: $caskManager.forceInstallCasks) {
                     Text(atx: "Install overwrites previous app installation")
                 }
