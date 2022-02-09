@@ -5,8 +5,8 @@ import FairApp
 struct AppsListView : View {
     let source: AppSource
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
     var sidebarSelection: SidebarSelection?
@@ -16,9 +16,9 @@ struct AppsListView : View {
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         switch source {
         case .homebrew:
-            return caskManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         case .fairapps:
-            return appManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
@@ -39,7 +39,7 @@ struct AppsListView : View {
                 }
             }
             .onChange(of: scrollToSelection) { scrollToSelection in
-                // sadly, this doesn't work
+                // sadly, this doesn't seem to work
                 if scrollToSelection == true {
                     dbg("scrolling to:", selection)
                     proxy.scrollTo(selection, anchor: nil)
@@ -54,7 +54,7 @@ struct AppsListView : View {
         return HStack(alignment: .center) {
             ZStack {
                 fairManager.iconView(for: item)
-                if let progress = fairManager.appManager.operations[item.id]?.progress {
+                if let progress = fairManager.fairAppInv.operations[item.id]?.progress {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
                         .foregroundStyle(Color.secondary)

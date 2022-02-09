@@ -2,13 +2,11 @@ import FairApp
 import Foundation
 import TabularData
 
-
-
 /// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
 let minimumSearchLength = 1
 
 /// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
-private extension InstallationManager where Self : CaskManager {
+private extension AppInventory where Self : HomebrewInventory {
 
     /// Installation is check simply by seeing if the brew install root exists.
     /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
@@ -34,7 +32,7 @@ private extension InstallationManager where Self : CaskManager {
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class CaskManager: ObservableObject, InstallationManager {
+@MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
 
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = true {
@@ -50,7 +48,7 @@ private extension InstallationManager where Self : CaskManager {
     @AppStorage("caskAPIEndpoint") var caskAPIEndpoint = URL(string: "https://formulae.brew.sh/api/")!
 
     /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
-    @AppStorage("brewInstallRoot") var brewInstallRoot = CaskManager.localBrewFolder
+    @AppStorage("brewInstallRoot") var brewInstallRoot = HomebrewInventory.localBrewFolder
 
     /// Whether to use the system-installed Homebrew
     @AppStorage("useSystemHomebrew") var useSystemHomebrew = false
@@ -79,14 +77,14 @@ private extension InstallationManager where Self : CaskManager {
     /// The minimum number of downloads for a Cask to be visible in the list
     @AppStorage("caskDownloadVisibilityThreshold") var caskDownloadVisibilityThreshold = 0
 
-    /// The arranged list of app info items
+    /// The arranged list of app info itemsl this is synthesized from the `casks`, `stats`, and `appcasks` properties
     @Published private(set) var appInfos: [AppInfo] = []
 
     /// The current catalog of casks
     @Published private(set) var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
 
     /// Map of installed apps from `[token: [versions]]`
-    @Published private(set) var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
+    @Published private(set) var installedVersions: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
 
     /// The latest statistics about the apps
     @Published private(set) var stats: CaskStats? { didSet { updateAppInfo() } }
@@ -96,9 +94,11 @@ private extension InstallationManager where Self : CaskManager {
 
     @Published private var sortOrder = [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)] { didSet { updateAppInfo() } }
 
+    /// Whether the are currently performing an update
+    @Published var updateInProgress = 0
 
-    /// The list of casks (x86 if there are architecture-specific binaries: https://github.com/Homebrew/brew/issues/12786)
-    private var caskList: URL { URL(string: ProcessInfo.isArmMac ? "cask.json" : "cask.json", relativeTo: caskAPIEndpoint)! }
+    /// The list of casks
+    private var caskList: URL { URL(string: "cask.json", relativeTo: caskAPIEndpoint)! }
     private var formulaList: URL { URL(string: "formula.json", relativeTo: caskAPIEndpoint)! }
 
     private var caskSourceBase: URL { URL(string: "cask-source/", relativeTo: caskAPIEndpoint)! }
@@ -143,6 +143,7 @@ private extension InstallationManager where Self : CaskManager {
     }
 
     /// Whether there is a global installation of Homebrew available
+    @available(*, deprecated, message: "use local brew install instead")
     static var globalBrewInstalled: Bool {
         FileManager.default.isExecutableFile(atPath: brewCommand(at: globalBrewPath).path)
     }
@@ -185,7 +186,7 @@ private extension InstallationManager where Self : CaskManager {
         }
     }
 
-    static let `default`: CaskManager = CaskManager()
+    static let `default`: HomebrewInventory = HomebrewInventory()
 
     private var fsobserver: FileSystemObserver? = nil
 
@@ -204,48 +205,53 @@ private extension InstallationManager where Self : CaskManager {
             dbg("skipping cask refresh because not isEnabled")
             return
         }
-        async let casks: Void = try fetchCasks()
-        async let stats: Void = try fetchStats()
-        async let appcasks: Void = try fetchAppCasks() // we let this one slide (although we should log an error)
-        async let scanned = Task { try await scanInstalledCasks() }
-        let (_, _, _) = try await (casks, stats, scanned) // execute them all at the same time
-        do {
-            let _ = try await appcasks
-        } catch {
-            dbg("error accessing appcasks:", error)
-        }
+
+        self.updateInProgress += 1
+        defer { self.updateInProgress -= 1 }
+        async let installedVersions = scanInstalledCasks()
+        async let casks = fetchCasks()
+        async let stats = fetchStats()
+        async let appcasks = fetchAppCasks()
+
+        //(self.stats, self.appcasks, self.installedVersions, self.casks) = try await (stats, appcasks, installedVersions, casks)
+        self.installedVersions = try await installedVersions
+        self.stats = try await stats
+        self.appcasks = try await appcasks
+        self.casks = try await casks
     }
 
     /// Fetches the cask list and populates it in the `casks` property
-    func fetchCasks() async throws {
+    private func fetchCasks() async throws -> Array<CaskItem> {
         dbg("loading cask list")
         let url = self.caskList
         let data = try await URLRequest(url: url).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
-        self.casks = try Array<CaskItem>(json: data)
-        dbg("loaded", self.casks.count, "casks")
+        let casks = try Array<CaskItem>(json: data)
+        dbg("loaded", casks.count, "casks")
+        return casks
     }
 
     /// Fetches the cask stats and populates it in the `stats` property
-    func fetchStats(statsURL: URL? = nil) async throws {
+    func fetchStats(statsURL: URL? = nil) async throws -> CaskStats {
         let url = statsURL ?? self.caskStats90
         dbg("loading cask stats:", url.absoluteString)
         let data = try await URLRequest(url: url).fetch()
 
         dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
-        try self.stats = CaskStats(json: data)
+        return try CaskStats(json: data)
     }
 
-    func fetchAppCasks() async throws {
+    func fetchAppCasks() async throws -> FairAppCatalog {
         dbg("loading appcasks")
         let url = appfairCaskAppsURL
         let data = try await URLRequest(url: url).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
-        self.appcasks = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
-        dbg("loaded", self.casks.count, "casks")
+        let appcasks = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
+        // dbg("loaded", appcasks.count, "casks")
+        return appcasks
     }
 
-    func scanInstalledCasks() throws {
+    func scanInstalledCasks() async throws -> [CaskItem.ID : Set<String>] {
         // manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
         // /opt/homebrew/Caskroom/bon-mot/0.2.25/Bon Mot.app
         // /opt/homebrew/Caskroom/cloud-cuckoo-prerelease/0.8.150/Cloud Cuckoo.app
@@ -282,7 +288,7 @@ private extension InstallationManager where Self : CaskManager {
         }
 
         dbg("scanned installed casks:", tokenVersions.count) // tokenVersions)
-        self.installedCasks = tokenVersions
+        return tokenVersions
     }
 
     /// Performs a homebrew installation action by launching a Terminal.app window and issuing a shell command.
@@ -637,7 +643,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                 for appName in appList {
                     dbg("checking app:", appName)
                     if appName.hasSuffix(".app") {
-                        let appURL = URL(fileURLWithPath: appName, relativeTo: AppManager.applicationsFolderURL)
+                        let appURL = URL(fileURLWithPath: appName, relativeTo: FairAppInventory.applicationsFolderURL)
                         dbg("checking app path:", appURL.path)
                         if FileManager.default.isExecutableFile(atPath: appURL.path) {
                             return appURL
@@ -767,16 +773,18 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         self.fsobserver = FileSystemObserver(URL: caskroomFolder, queue: .main) {
             dbg("changes detected in cask folder:", caskroomFolder.path)
             // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
-            for delay in [0, 1, 5] {
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
-                    try? self.scanInstalledCasks()
+            Task {
+                do {
+                    self.installedVersions = try await self.scanInstalledCasks()
+                } catch {
+                    dbg("error scanning for installed casks:", error)
                 }
             }
         }
     }
 }
 
-extension CaskManager {
+extension HomebrewInventory {
     /// Re-builds the AppInfo collection.
     private func updateAppInfo() {
         // an index if [id: extraInfo]
@@ -788,7 +796,7 @@ extension CaskManager {
 
         var infos: [AppInfo] = []
 
-        //dbg("checking installed casks:", installedCasks.keys.sorted())
+        //dbg("checking installed casks:", installedVersions.keys.sorted())
         //dbg("checking all casks:", casks.map(\.id).sorted())
 
         for cask in self.casks {
@@ -796,7 +804,7 @@ extension CaskManager {
                 continue
             }
             let id = cask.id
-            let installed = installedCasks[id]?.first
+            let installed = installedVersions[id]?.first
             // TODO: extract installed Plist and check bundle identifier?
 
             // analytics are keyed on the un-expanded name
@@ -807,7 +815,7 @@ extension CaskManager {
                 continue
             }
 
-            // TODO: we should de-proritize the privilidged domains so the publisher fork will always take precedence
+            // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
             let appcask = appcaskInfo[CaskIdentifier(cask.token)]?.first { item in
                 item.homepage?.host == "appfair.app"
                 || item.homepage?.host == "www.appfair.app"
@@ -839,9 +847,9 @@ extension CaskManager {
 
         // avoid triggering unnecessary changes
         if self.appInfos != sortedInfos {
-            withAnimation {
+//            withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed
                 self.appInfos = sortedInfos
-            }
+//            }
         }
 
         //        if self.sortOrder != sortOrder {
@@ -892,7 +900,7 @@ extension CaskManager {
 
     func appUpdated(_ item: AppInfo) -> Bool {
         if let releaseVersion = item.release.version,
-           let installedVersions = installedCasks[item.release.id.rawValue] {
+           let installedVersions = installedVersions[item.release.id.rawValue] {
             if self.ignoreAutoUpdatingAppUpdates == true && item.cask?.auto_updates == true {
                 return false // show showing apps that mark themselves as auto-updating
             }
@@ -904,7 +912,7 @@ extension CaskManager {
     }
 
     func versionNotInstalled(cask: CaskItem) -> Bool {
-        if let installedVersions = installedCasks[cask.id] {
+        if let installedVersions = installedVersions[cask.id] {
             return !installedVersions.contains(cask.version)
         } else {
             return false
@@ -926,14 +934,14 @@ extension CaskManager {
             .count
     }
 
-    func badgeCount(for item: AppManager.SidebarItem) -> Text? {
+    func badgeCount(for item: FairAppInventory.SidebarItem) -> Text? {
         switch item {
-        case .all:
+        case .top:
             return nil
         case .updated:
             return Text(updateCount(), format: .number)
         case .installed:
-            return Text(installedCasks.count, format: .number)
+            return Text(installedVersions.count, format: .number)
         case .recent:
             return nil
         case .category(_):

@@ -3,9 +3,9 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairManager: SceneManager {
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    let appManager = AppManager()
+    let fairAppInv = FairAppInventory()
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    let caskManager = CaskManager()
+    let homeBrewInv = HomebrewInventory()
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
@@ -19,13 +19,11 @@ import FairApp
     /// The name of the base repository for the provider
     @AppStorage("hubRepo") public var hubRepo = AppNameValidation.defaultAppName
 
-    /// An optional authorization token for direct API usagefor the organization must
-    ///
+    /// An optional authorization token for direct API usagefor the organization
     @AppStorage("hubToken") public var hubToken = ""
 
     // list rendering on ARM is very slow when there are more than 1000 results, so just show the first few hundred
-    @AppStorage("maxDisplayItems") public var maxDisplayItems = 500
-
+    @AppStorage("maxDisplayItems") public var maxDisplayItems = 1_000
 
     required internal init() {
         super.init()
@@ -43,10 +41,9 @@ import FairApp
     }
 
     func refresh() async throws {
-        async let v0: () = appManager.scanInstalledApps()
-        async let v1: () = appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        async let v2: () = caskManager.refreshAll()
-        let _ = try await (v0, v1, v2) // perform the two refreshes in tandem
+        async let v1: () = fairAppInv.refreshAll()
+        async let v2: () = homeBrewInv.refreshAll()
+        let _ = try await (v1, v2) // perform the two refreshes in tandem
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.
@@ -54,18 +51,18 @@ import FairApp
         do {
             try await block()
         } catch {
-            appManager.errors.append(error as? AppError ?? AppError(error))
+            fairAppInv.errors.append(error as? AppError ?? AppError(error))
         }
     }
 
     func updateCount() -> Int {
-        return appManager.updateCount()
-            + (caskManager.enableHomebrew ? caskManager.updateCount() : 0)
+        return fairAppInv.updateCount()
+            + (homeBrewInv.enableHomebrew ? homeBrewInv.updateCount() : 0)
     }
 
     @ViewBuilder func iconView(for info: AppInfo) -> some View {
         if info.isCask == true {
-            caskManager.icon(for: info.release, useInstalledIcon: false)
+            homeBrewInv.icon(for: info.release, useInstalledIcon: false)
         } else {
             info.release.iconImage()
         }
@@ -74,3 +71,9 @@ import FairApp
 
 }
 
+extension Error {
+    /// Returns true if this error indicates that the user cancelled an operaiton
+    var isURLCancelledError: Bool {
+        (self as NSError).domain == NSURLErrorDomain && (self as NSError).code == -999
+    }
+}

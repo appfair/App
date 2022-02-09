@@ -202,7 +202,7 @@ struct AppFairCommands: Commands {
 
 //        CommandMenu("Fair") {
 //            Button("Find") {
-//                appManager.activateFind()
+//                fairAppInv.activateFind()
 //            }
 //            .keyboardShortcut("F")
 //        }
@@ -397,21 +397,21 @@ public struct RootView : View {
     public var body: some View {
         NavigationRootView()
             .environmentObject(fairManager)
-            .environmentObject(fairManager.appManager)
-            .environmentObject(fairManager.caskManager)
+            .environmentObject(fairManager.fairAppInv)
+            .environmentObject(fairManager.homeBrewInv)
     }
 }
 
 struct SidebarSelection : Hashable {
     let source: AppSource
-    let item: AppManager.SidebarItem
+    let item: FairAppInventory.SidebarItem
 }
 
 @available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
@@ -419,7 +419,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .all)
+    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -430,7 +430,7 @@ struct NavigationRootView : View {
     public var body: some View {
         triptychView
             .frame(minHeight: 600) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
-            .displayingFirstAlert($appManager.errors)
+            .displayingFirstAlert($fairAppInv.errors)
             .toolbar(id: "NavToolbar") {
 //                ToolbarItem(placement: .navigation) {
 //                    Button(action: toggleSidebar) {
@@ -463,7 +463,7 @@ struct NavigationRootView : View {
             }
             .task(priority: .low) {
                 do {
-                    try await caskManager.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
+                    try await homeBrewInv.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
                 } catch {
                     dbg("error unpacking homebrew in local cache:", error)
                 }
@@ -478,7 +478,7 @@ struct NavigationRootView : View {
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
             .onChange(of: sidebarSelection) { selection in
-                if selection?.item != .all { // only clear when switching away from the "popular" tab
+                if selection?.item != .top { // only clear when switching away from the "popular" tab
                     searchText = "" // clear search whenever the sidebar selection changes
                 }
             }
@@ -515,7 +515,7 @@ struct NavigationRootView : View {
 
             // random crashes seem to happen without dispatching to main
             self.searchText = bundleID.rawValue // needed to cause the item to appear
-            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .all)
+            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : .fairapps, item: .top)
 
             // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
             DispatchQueue.main.async {
@@ -547,7 +547,7 @@ struct NavigationRootView : View {
         }
         // warning: this spikes CPU usage when idle
 //        .focusedSceneValue(\.reloadCommand, .constant({
-//            await appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+//            await fairAppInv.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
 //        }))
     }
 }
@@ -815,8 +815,8 @@ public struct EnabledView<V: View> : View {
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
     @Binding var sidebarSelection: SidebarSelection?
@@ -833,28 +833,44 @@ struct SidebarView: View {
         }
     }
 
+    private func sectionHeader(source: AppSource, updating: Bool) -> some View {
+        HStack {
+            source.label.labelStyle(.titleOnly)
+            if updating {
+                Spacer()
+                ProgressView()
+                    .controlSize(.mini)
+                    .padding(.trailing, 18)
+            }
+        }
+    }
+
     var body: some View {
         List {
             ForEach(AppSource.allCases, id: \.self) { source in
                 switch source {
                 case .homebrew:
-                    if caskManager.enableHomebrew {
-                        Section("Homebrew") {
-                            item(.homebrew, .all).keyboardShortcut("1")
+                    if homeBrewInv.enableHomebrew {
+                        Section {
+                            item(.homebrew, .top).keyboardShortcut("1")
                             // item(.homebrew, .recent) // casks don't have a last-updated date
                             item(.homebrew, .installed).keyboardShortcut("2")
                             item(.homebrew, .updated).keyboardShortcut("3")
+                        } header: {
+                            sectionHeader(source: source, updating: homeBrewInv.updateInProgress != 0)
                         }
                     }
 
                 case .fairapps:
-                    Section("Fairground") {
-                        item(.fairapps, .all).keyboardShortcut("4")
+                    Section {
+                        item(.fairapps, .top).keyboardShortcut("4")
                         item(.fairapps, .recent).keyboardShortcut("5")
                         item(.fairapps, .installed).keyboardShortcut("6")
                         item(.fairapps, .updated).keyboardShortcut("7")
-                    }
+                    } header: {
+                        sectionHeader(source: source, updating: fairAppInv.updateInProgress != 0)
 
+                    }
                 }
             }
 
@@ -878,7 +894,7 @@ struct SidebarView: View {
         //.symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
         .toolbar(id: "SidebarView") {
-            tool(.all)
+            tool(.top)
             tool(.recent)
             tool(.updated)
             tool(.installed)
@@ -892,7 +908,7 @@ struct SidebarView: View {
         }
     }
 
-    func item(_ source: AppSource, _ item: AppManager.SidebarItem) -> some View {
+    func item(_ source: AppSource, _ item: FairAppInventory.SidebarItem) -> some View {
         let selection = SidebarSelection(source: source, item: item)
         let label = selection.item.label(for: source)
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
@@ -906,9 +922,9 @@ struct SidebarView: View {
     func badgeCount(for item: SidebarSelection) -> Text? {
         switch item.source {
         case .fairapps:
-            return appManager.badgeCount(for: item.item)
+            return fairAppInv.badgeCount(for: item.item)
         case .homebrew:
-            return caskManager.badgeCount(for: item.item)
+            return homeBrewInv.badgeCount(for: item.item)
         }
     }
 
@@ -923,7 +939,7 @@ struct SidebarView: View {
         }
     }
 
-    func tool(source: AppSource = .fairapps, _ item: AppManager.SidebarItem) -> some CustomizableToolbarContent {
+    func tool(source: AppSource = .fairapps, _ item: FairAppInventory.SidebarItem) -> some CustomizableToolbarContent {
         ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
@@ -935,7 +951,7 @@ struct SidebarView: View {
         }
     }
 
-    func selectItem(_ item: AppManager.SidebarItem) {
+    func selectItem(_ item: FairAppInventory.SidebarItem) {
         dbg("selected:", item.label, item.id)
     }
 }

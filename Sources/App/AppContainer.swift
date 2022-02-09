@@ -26,7 +26,7 @@ public extension AppContainer {
         AppSettingsView()
             .preferredColorScheme(fairManager.themeStyle.colorScheme)
             .environmentObject(fairManager)
-            .environmentObject(fairManager.appManager)
-            .environmentObject(fairManager.caskManager)
+            .environmentObject(fairManager.fairAppInv)
+            .environmentObject(fairManager.homeBrewInv)
     }
 }

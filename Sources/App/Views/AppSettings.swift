@@ -53,7 +53,7 @@ public struct AppSettingsView: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct HomebrewSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     @State private var homebrewOperationInProgress = false
     @State private var homebrewInstalled: Bool? = nil
@@ -61,22 +61,22 @@ struct HomebrewSettingsView: View {
     var body: some View {
         settingsForm
             .task {
-                self.homebrewInstalled = caskManager.isHomebrewInstalled()
+                self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
             }
     }
 
     var settingsForm: some View {
         Form {
             HStack {
-                Toggle(isOn: $caskManager.enableHomebrew) {
+                Toggle(isOn: $homeBrewInv.enableHomebrew) {
                     Text(atx: "Homebrew Casks")
                 }
-                .onChange(of: caskManager.enableHomebrew) { enabled in
+                .onChange(of: homeBrewInv.enableHomebrew) { enabled in
                     if enabled == false {
                         // un-install the local homebrew cache if we ever disable it; this makes it so we don't need a local cache location
                         Task {
-                            try await caskManager.uninstallHomebrew()
-                            self.homebrewInstalled = caskManager.isHomebrewInstalled()
+                            try await homeBrewInv.uninstallHomebrew()
+                            self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
                         }
                     }
                 }
@@ -95,32 +95,32 @@ struct HomebrewSettingsView: View {
             .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Group {
-                Toggle(isOn: $caskManager.manageCaskDownloads) {
+                Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
                     Text(atx: "Use integrated download manager")
                 }
                     .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
-                Toggle(isOn: $caskManager.quarantineCasks) {
+                Toggle(isOn: $homeBrewInv.quarantineCasks) {
                     Text(atx: "Quarantine installed apps")
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-                Toggle(isOn: $caskManager.ignoreAutoUpdatingAppUpdates) {
+                Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
                     Text(atx: "Exclude auto-updating apps from sidebar updates list")
                 }
                     .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
 
-                Toggle(isOn: $caskManager.forceInstallCasks) {
+                Toggle(isOn: $homeBrewInv.forceInstallCasks) {
                     Text(atx: "Install overwrites previous app installation")
                 }
                     .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
-                Toggle(isOn: $caskManager.enableBrewSelfUpdate) {
+                Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
                     Text(atx: "Enable Homebrew self-update")
                 }
                     .help(Text("Allow Homebrew to update itself while installing other packages."))
 
-                Toggle(isOn: $caskManager.requireCaskChecksum) {
+                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
                     Text(atx: "Require cask checksum")
                 }
                     .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
@@ -128,19 +128,19 @@ struct HomebrewSettingsView: View {
                 // switching between the system-installed brew and locally cached brew doesn't yet work
                 #if DEBUG
                 #if false
-                Toggle(isOn: $caskManager.useSystemHomebrew) {
+                Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
                     Text(atx: "Use system Homebrew installation")
                 }
                     .help(Text("Use the system-installed Homebrew installation"))
-                    .disabled(!CaskManager.globalBrewInstalled)
+                    .disabled(!HomebrewInventory.globalBrewInstalled)
                 #endif
-                Toggle(isOn: $caskManager.enableBrewAnalytics) {
+                Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
                     Text(atx: "Enable installation telemetry")
                 }
                     .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
                 #endif
             }
-            .disabled(caskManager.enableHomebrew == false)
+            .disabled(homeBrewInv.enableHomebrew == false)
 
 
             Divider().padding()
@@ -155,7 +155,7 @@ struct HomebrewSettingsView: View {
 
                             Read more at: [https://brew.sh](https://brew.sh)
                             Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-                            Location: \((caskManager.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
+                            Location: \((homeBrewInv.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
                             Installed: \(isBrewInstalled ? "yes" : "no")
                             """)
                             .textSelection(.enabled)
@@ -170,7 +170,7 @@ struct HomebrewSettingsView: View {
                                 .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
                             Text("Reveal")
                                 .button {
-                                    NSWorkspace.shared.activateFileViewerSelecting([caskManager.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
+                                    NSWorkspace.shared.activateFileViewerSelecting([homeBrewInv.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
                                 }
                                 .disabled(isBrewInstalled == false)
                                 .help(Text("Browse the Homebrew installation folder using the Finder"))
@@ -181,15 +181,15 @@ struct HomebrewSettingsView: View {
                                     homebrewOperationInProgress = true
                                     do {
                                         if isBrewInstalled {
-                                            try await caskManager.uninstallHomebrew()
+                                            try await homeBrewInv.uninstallHomebrew()
                                             dbg("caskManager.uninstallHomebrew success")
                                         } else {
-                                            try await caskManager.installHomebrew(retainCasks: false)
+                                            try await homeBrewInv.installHomebrew(retainCasks: false)
                                             dbg("caskManager.installHomebrew success")
                                         }
-                                        self.homebrewInstalled = caskManager.isHomebrewInstalled()
+                                        self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
                                     } catch {
-                                        self.fairManager.appManager.reportError(error)
+                                        self.fairManager.fairAppInv.reportError(error)
                                     }
                                     self.homebrewOperationInProgress = false
                                 }
@@ -211,29 +211,29 @@ struct HomebrewSettingsView: View {
         if let homebrewInstalled = homebrewInstalled {
             return homebrewInstalled
         }
-        return caskManager.isHomebrewInstalled()
+        return homeBrewInv.isHomebrewInstalled()
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
 struct FairAppsSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
 
     @State var hoverRisk: AppRisk? = nil
 
     var body: some View {
         Form {
             HStack(alignment: .top) {
-                AppRiskPicker(risk: $appManager.riskFilter, hoverRisk: $hoverRisk)
-                (hoverRisk ?? appManager.riskFilter).riskSummaryText(bold: true)
+                AppRiskPicker(risk: $fairAppInv.riskFilter, hoverRisk: $hoverRisk)
+                (hoverRisk ?? fairAppInv.riskFilter).riskSummaryText(bold: true)
                     .textSelection(.enabled)
                     .font(.body)
                     .frame(height: 150, alignment: .top)
                     .frame(maxWidth: .infinity)
             }
 
-            Toggle(isOn: $appManager.showPreReleases) {
+            Toggle(isOn: $fairAppInv.showPreReleases) {
                 Text("Show Pre-Releases")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
@@ -337,7 +337,7 @@ struct AppRiskPicker: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
 
     func checkButton(_ parts: String...) -> some View {
         EmptyView()
@@ -350,12 +350,12 @@ struct AdvancedSettingsView: View {
     var body: some View {
         VStack {
             Form {
-                Toggle(isOn: $appManager.relaunchUpdatedApps) {
+                Toggle(isOn: $fairAppInv.relaunchUpdatedApps) {
                     Text("Re-launch updated apps")
                 }
                     .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
 
-                Toggle(isOn: $appManager.autoUpdateCatalogApp) {
+                Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
                     Text(atx: "Keep catalog app up to date")
                 }
                 .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))

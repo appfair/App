@@ -9,8 +9,8 @@ import FairApp
 struct AppsTableView : View, ItemTableView {
     typealias TableRowValue = AppInfo
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
     let source: AppSource
     @Binding var selection: AppInfo.ID?
     let sidebarSelection: SidebarSelection?
@@ -20,9 +20,9 @@ struct AppsTableView : View, ItemTableView {
     var items: [AppInfo] {
         switch source {
         case .homebrew:
-            return caskManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         case .fairapps:
-            return appManager.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 

@@ -20,8 +20,8 @@ struct CatalogItemView: View {
     let info: AppInfo
 
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var appManager: AppManager
-    @EnvironmentObject var caskManager: CaskManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
@@ -33,11 +33,11 @@ struct CatalogItemView: View {
 
     private var currentOperation: CatalogOperation? {
         get {
-            appManager.operations[info.id]
+            fairAppInv.operations[info.id]
         }
 
         nonmutating set {
-            appManager.operations[info.id] = newValue
+            fairAppInv.operations[info.id] = newValue
         }
     }
 
@@ -227,7 +227,7 @@ struct CatalogItemView: View {
     }
 
     private func fetchDownloadURLStats() async {
-        if caskManager.manageCaskDownloads == true {
+        if homeBrewInv.manageCaskDownloads == true {
             do {
                 dbg("checking URL HEAD:", item.downloadURL.absoluteString)
                 let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
@@ -535,7 +535,7 @@ struct CatalogItemView: View {
 
 
     @ViewBuilder func readmeSummary() -> some View {
-        let readme = self.appManager.readme(for: self.info.release)
+        let readme = self.fairAppInv.readme(for: self.info.release)
         Text(readme ?? "")
             .redacting(when: readme == nil)
     }
@@ -853,12 +853,12 @@ struct CatalogItemView: View {
 
     /// The plist for the given installed app
     var appPropertyList: Result<Plist, Error>? {
-        let installPath = AppManager.appInstallPath(for: item)
-        let result = appManager.installedApps[installPath]
-        //dbg("install for item:", item, "install path:", AppManager.appInstallPath(for: item).path, "plist:", result != nil, "installedApps:", appManager.installedApps.keys.map(\.path))
+        let installPath = FairAppInventory.appInstallPath(for: item)
+        let result = fairAppInv.installedApps[installPath]
+        //dbg("install for item:", item, "install path:", fairAppInv.appInstallPath(for: item).path, "plist:", result != nil, "installedApps:", fairAppInv.installedApps.keys.map(\.path))
 
         if result == nil {
-            //dbg("install path not found:", installPath, "in keys:", appManager.installedApps.keys)
+            //dbg("install path not found:", installPath, "in keys:", fairAppInv.installedApps.keys)
         }
         return result
     }
@@ -885,7 +885,7 @@ struct CatalogItemView: View {
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
         if info.isCask {
-            return caskManager.installedCasks[info.id.rawValue]?.isEmpty == false
+            return homeBrewInv.installedVersions[info.id.rawValue]?.isEmpty == false
         }
 
         return appPropertyList?.successValue?.bundleID == info.id.rawValue
@@ -895,7 +895,7 @@ struct CatalogItemView: View {
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
         if info.isCask {
-            let versions = caskManager.installedCasks[info.id.rawValue] ?? []
+            let versions = homeBrewInv.installedVersions[info.id.rawValue] ?? []
             return info.release.version.flatMap(versions.contains) != true
         }
 
@@ -1073,11 +1073,11 @@ struct CatalogItemView: View {
 
     func installButtonTapped() async {
         dbg("installButtonTapped")
-        await appManager.trying {
+        await fairAppInv.trying {
             if let cask = info.cask {
-                try await caskManager.install(cask: cask, progress: startProgress(), update: false)
+                try await homeBrewInv.install(cask: cask, progress: startProgress(), update: false)
             } else {
-                try await appManager.install(item: item, progress: startProgress(), update: false)
+                try await fairAppInv.install(item: item, progress: startProgress(), update: false)
             }
         }
     }
@@ -1086,20 +1086,20 @@ struct CatalogItemView: View {
         dbg("launchButtonTapped")
         if info.isCask == true {
             await fairManager.trying {
-                try await caskManager.launch(item: item)
+                try await homeBrewInv.launch(item: item)
             }
         } else {
-            await appManager.launch(item: item)
+            await fairAppInv.launch(item: item)
         }
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
-        await appManager.trying {
+        await fairAppInv.trying {
             if let cask = info.cask {
-                try await caskManager.install(cask: cask, progress: startProgress(), update: true)
+                try await homeBrewInv.install(cask: cask, progress: startProgress(), update: true)
             } else {
-                try await appManager.install(item: item, progress: startProgress(), update: true)
+                try await fairAppInv.install(item: item, progress: startProgress(), update: true)
             }
         }
     }
@@ -1108,10 +1108,10 @@ struct CatalogItemView: View {
         dbg("revealButtonTapped")
         if info.isCask == true {
             await fairManager.trying {
-                try await caskManager.reveal(item: item)
+                try await homeBrewInv.reveal(item: item)
             }
         } else {
-            await appManager.reveal(item: item)
+            await fairAppInv.reveal(item: item)
         }
     }
 
@@ -1119,10 +1119,10 @@ struct CatalogItemView: View {
         dbg("deleteButtonTapped")
         if let cask = info.cask {
             return await fairManager.trying {
-                try await caskManager.delete(cask: cask)
+                try await homeBrewInv.delete(cask: cask)
             }
         } else {
-            await appManager.trash(item: item)
+            await fairAppInv.trash(item: item)
         }
     }
 }
@@ -1158,7 +1158,7 @@ private extension CatalogActivity {
 extension AppCatalogItem {
     @ViewBuilder func iconImage() -> some View {
         if let iconURL = self.iconURL {
-            AsyncImage(url: iconURL) { phase in
+            AsyncImage(url: iconURL, scale: 1.0, transaction: Transaction(animation: .easeIn)) { phase in
                 switch phase {
                 case .success(let image):
                     //let _ = iconCache.setObject(ImageInfo(image: image), forKey: iconURL as NSURL)
@@ -1166,7 +1166,7 @@ extension AppCatalogItem {
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
                 case .failure(let error):
-                    let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error)
+                    let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
                     fallbackIcon()
                         .grayscale(0.9)
                         .help(error.localizedDescription)
@@ -1176,7 +1176,7 @@ extension AppCatalogItem {
 //                            .resizable(resizingMode: .stretch)
 //                            .aspectRatio(contentMode: .fit)
 //                    } else {
-                        fallbackIcon()
+                    fallbackIcon()
                         .grayscale(0.5)
 //                    }
                 @unknown default:
@@ -1184,7 +1184,6 @@ extension AppCatalogItem {
                         .grayscale(0.8)
                 }
             }
-            .transition(.slide)
         } else {
             fallbackIcon()
                 .grayscale(1.0)
@@ -1292,7 +1291,7 @@ extension ButtonStyle where Self == ZoomableButtonStyle {
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(release: AppCatalogItem.sample))
-            .environmentObject(AppManager())
+            .environmentObject(FairAppInventory())
             .frame(width: 700)
             .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))

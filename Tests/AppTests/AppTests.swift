@@ -27,27 +27,27 @@ import FairCore
     }
 
     func testCaskList() async throws {
-        let caskManager = CaskManager()
-        XCTAssertEqual(caskManager.casks.count, 0)
-        try await caskManager.fetchCasks()
-        let casks = caskManager.casks
+        let homeBrewInv = HomebrewInventory()
+        XCTAssertEqual(homeBrewInv.casks.count, 0)
+        try await homeBrewInv.fetchCasks()
+        let casks = homeBrewInv.casks
         XCTAssertGreaterThan(casks.count, 1000)
     }
 
     func testCaskStats() async throws {
-        let caskManager = CaskManager()
-        XCTAssertNil(caskManager.stats)
-        try await caskManager.fetchStats()
-        let stats = try XCTUnwrap(caskManager.stats)
+        let homeBrewInv = HomebrewInventory()
+        XCTAssertNil(homeBrewInv.stats)
+        try await homeBrewInv.fetchStats()
+        let stats = try XCTUnwrap(homeBrewInv.stats)
         XCTAssertGreaterThan(stats.total_count, 1000) // e.g.: 894812
         XCTAssertGreaterThan(stats.formulae.values.joined().count, 1000) // e.g.: 6190
     }
 
     func testInstalledApps() throws {
-//        let caskManager = CaskManager()
-//        XCTAssertEqual(0, caskManager.installed.count)
-//        try caskManager.refreshInstalledApps()
-//        XCTAssertNotEqual(0, caskManager.installed.count, "assuming homebrew is installed, there should have been more than one installation")
+//        let homeBrewInv = CaskManager()
+//        XCTAssertEqual(0, homeBrewInv.installed.count)
+//        try homeBrewInv.refreshInstalledApps()
+//        XCTAssertNotEqual(0, homeBrewInv.installed.count, "assuming homebrew is installed, there should have been more than one installation")
     }
 }
 

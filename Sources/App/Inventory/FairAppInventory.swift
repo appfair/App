@@ -13,15 +13,9 @@ let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = appfairCatalogURLIOS
 #endif
 
-protocol InstallationManager where Self : ObservableObject {
-    // Static method 'installedPath(for:)' isolated to global actor 'MainActor' can not satisfy corresponding requirement from protocol 'InstallationManager'
-    // static func installedPath(for item: AppCatalogItem) -> URL?
-
-}
-
-/// The manager for the current app fair
+/// The manager for installing App Fair apps
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class AppManager: ObservableObject, InstallationManager {
+@MainActor public final class FairAppInventory: ObservableObject, AppInventory {
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
@@ -36,6 +30,9 @@ protocol InstallationManager where Self : ObservableObject {
 
     /// The fetched readmes for the apps
     @Published private var readmes: [URL: Result<AttributedString, Error>] = [:]
+
+    /// Whether the are currently performing an update
+    @Published var updateInProgress = 0
 
     @AppStorage("showPreReleases") var showPreReleases = false
 
@@ -52,7 +49,7 @@ protocol InstallationManager where Self : ObservableObject {
         errors.append(error as? AppError ?? AppError(error))
     }
 
-    static let `default`: AppManager = AppManager()
+    static let `default`: FairAppInventory = FairAppInventory()
 
     private var fsobserver: FileSystemObserver? = nil
 
@@ -72,6 +69,15 @@ protocol InstallationManager where Self : ObservableObject {
                 }
             }
         }
+    }
+
+    func refreshAll() async throws {
+        self.updateInProgress += 1
+        defer { self.updateInProgress -= 1 }
+
+        async let v0: () = scanInstalledApps()
+        async let v1: () = fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+        let _ = await (v0, v1)
     }
 }
 
@@ -96,7 +102,7 @@ enum CatalogActivity : CaseIterable, Equatable {
 
 
 @available(macOS 12.0, iOS 15.0, *)
-extension AppManager {
+extension FairAppInventory {
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         do {
             dbg("loading catalog")
@@ -113,8 +119,7 @@ extension AppManager {
                 // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
                 dbg("received error:", error)
                 // we tolerate a "cancelled" error because it can happen when a view that is causing a catalog load is changed and its request gets automaticallu cancelled
-                if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == -999 {
-
+                if error.isURLCancelledError {
                 } else {
                     self.reportError(error)
                 }
@@ -136,6 +141,7 @@ extension AppManager {
             return dbg("could not locate current app in app list")
         }
 
+        // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This avoids issues around app translocation 
         if Bundle.main.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
             return dbg("skipping update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
@@ -192,7 +198,7 @@ extension AppManager {
         switch category {
         case .none:
             return []
-        case .all:
+        case .top:
             return [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
         case .recent:
             return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
@@ -605,7 +611,7 @@ extension AppManager {
     }
 }
 
-extension InstallationManager {
+extension AppInventory {
 
     /// Downloads the artifact for the given catalog item.
     func downloadArtifact(url: URL, cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy, timeoutInterval: TimeInterval = 60.0, headers: [String: String] = [:], progress parentProgress: Progress?) async throws -> (downloadedArtifact: URL, sha256: Data) {
@@ -631,7 +637,7 @@ extension InstallationManager {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-extension AppManager {
+extension FairAppInventory {
     typealias Item = URL
 
     func activateFind() {
@@ -647,7 +653,7 @@ extension AppManager {
 
     func badgeCount(for item: SidebarItem) -> Text? {
         switch item {
-        case .all:
+        case .top:
             return nil // Text(123.localizedNumber(style: .decimal))
         case .recent:
             return nil // Text(11.localizedNumber(style: .decimal))
@@ -666,7 +672,7 @@ extension AppManager {
     }
 
     enum SidebarItem : Hashable {
-        case all
+        case top
         case updated
         case installed
         case recent
@@ -675,8 +681,8 @@ extension AppManager {
         /// The persistent identifier for this grouping
         var id: String {
             switch self {
-            case .all:
-                return "all"
+            case .top:
+                return "top"
             case .updated:
                 return "updated"
             case .installed:
@@ -692,7 +698,7 @@ extension AppManager {
             switch source {
             case .fairapps:
                 switch self {
-                case .all:
+                case .top:
                     return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
                 case .recent:
                     return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
@@ -705,7 +711,7 @@ extension AppManager {
                 }
             case .homebrew:
                 switch self {
-                case .all:
+                case .top:
                     return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
                 case .installed:
                     return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
@@ -727,7 +733,7 @@ extension AppManager {
                 return true
             case .installed:
                 return true
-            case .all:
+            case .top:
                 return false
             case .recent:
                 return false
@@ -739,10 +745,10 @@ extension AppManager {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-extension AppManager.SidebarItem {
+extension FairAppInventory.SidebarItem {
     func matches(item: AppInfo) -> Bool {
         switch self {
-        case .all:
+        case .top:
             return true
         case .updated:
             return item.appUpdated
