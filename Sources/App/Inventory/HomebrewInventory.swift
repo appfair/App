@@ -251,7 +251,7 @@ private extension AppInventory where Self : HomebrewInventory {
         return appcasks
     }
 
-    func scanInstalledCasks() async throws -> [CaskItem.ID : Set<String>] {
+    func scanInstalledCasks() throws -> [CaskItem.ID : Set<String>] {
         // manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
         // /opt/homebrew/Caskroom/bon-mot/0.2.25/Bon Mot.app
         // /opt/homebrew/Caskroom/cloud-cuckoo-prerelease/0.8.150/Cloud Cuckoo.app
@@ -391,10 +391,13 @@ private extension AppInventory where Self : HomebrewInventory {
         var cmd = command
         var scpt: URL? = nil
 
-        if let askPassAppName = askPassAppInfo?.name {
+        if let askPassAppInfo = askPassAppInfo {
+            let appName = askPassAppInfo.name.first ?? askPassAppInfo.token
+
             let title = "Administrator Password Required (Homebrew)"
+                .replacingOccurrences(of: "\"", with: "'")
             let prompt = """
-            The Homebrew \(toolName) for the “\(askPassAppName)” package needs an administrator password to complete the requested operation:
+            The Homebrew \(toolName) for the “\(appName)” package needs an administrator password to complete the requested operation:
 
               \(command)
 
@@ -402,11 +405,14 @@ private extension AppInventory where Self : HomebrewInventory {
 
             Alternatively, you can manually run the above command in a Terminal.app shell.
             """
+                .replacingOccurrences(of: "\"", with: "'")
 
             let askPassScript = """
 #!/usr/bin/osascript
 return text returned of (display dialog "\(prompt)" with title "\(title)" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
 """
+
+            dbg("creating sudo script:", askPassScript)
             let scriptFile = URL.tmpdir
                 .appendingPathComponent("askpass-" + cmd.utf8Data.sha256().hex())
                 .appendingPathExtension("scpt")
@@ -520,7 +526,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
         }
 
-        var cmd = self.localBrewCommand.path
+        var cmd = (self.localBrewCommand.path as NSString).abbreviatingWithTildeInPath
 
         let op = update ? "upgrade" : "install" // could use "reinstall", but it doesn't seem to work with `HOMEBREW_INSTALL_FROM_API` when there is no local .git checkout
         cmd += " " + op
@@ -745,7 +751,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
 
         // no re-start the FS watcher for the new folders
-        watchCaskroomFolder()
+        // we do this mutliple times because the install process creates the folder eagerly before the install starts, and so it will be subject to the amount of time the install takes
+        watchCaskroomFolder(delays: [0, 1, 2, 5, 10, 30])
     }
 
     /// Returns whether Homebrew is installed in the expected local path
@@ -754,7 +761,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     /// Setup a watch for the cache folder
-    private func watchCaskroomFolder() {
+    private func watchCaskroomFolder(delays: [Int] = [0]) {
         if !self.isHomebrewInstalled() {
             return dbg("homebrew not installed")
         }
@@ -763,6 +770,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         try? FileManager.default.createDirectory(at: caskroomFolder, withIntermediateDirectories: true, attributes: nil)
 
+        // directory must exist or `DispatchSource.makeFileSystemObjectSource` will crash
         if FileManager.default.isDirectory(url: caskroomFolder) != true {
             return dbg("not a folder:", caskroomFolder.path)
         }
@@ -773,11 +781,13 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         self.fsobserver = FileSystemObserver(URL: caskroomFolder, queue: .main) {
             dbg("changes detected in cask folder:", caskroomFolder.path)
             // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
-            Task {
-                do {
-                    self.installedVersions = try await self.scanInstalledCasks()
-                } catch {
-                    dbg("error scanning for installed casks:", error)
+            for delay in delays {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
+                    do {
+                        self.installedVersions = try self.scanInstalledCasks()
+                    } catch {
+                        dbg("error scanning for installed casks:", error)
+                    }
                 }
             }
         }

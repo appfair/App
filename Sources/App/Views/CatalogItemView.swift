@@ -421,16 +421,26 @@ struct CatalogItemView: View {
     }
 
     func descriptionSection() -> some View {
-        groupBox(title: info.isCask ? Text("Cask Formula") : Text("App Summary"), trailing: EmptyView()) {
+        groupBox(title: Text("App Summary"), trailing: EmptyView()) {
             ScrollView {
                 Group {
-                    if let cask = info.cask {
-                        caskSummary(cask)
-                            .font(Font.body.monospaced())
-                    } else {
-                        readmeSummary()
-                            .font(Font.body)
-                    }
+                    readmeSummary()
+                        .font(Font.body)
+                }
+                .textSelection(.enabled)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: .infinity)
+        }
+    }
+
+    func formulaSection(cask: CaskItem) -> some View {
+        groupBox(title: Text("Cask Formula"), trailing: EmptyView()) {
+            ScrollView {
+                Group {
+                    caskSummary(cask)
+                        .font(Font.body.monospaced())
                 }
                 .textSelection(.enabled)
                 .multilineTextAlignment(.leading)
@@ -467,12 +477,16 @@ struct CatalogItemView: View {
         if rowMajor {
             VStack {
                 HStack {
-                    detailsSection()
                     descriptionSection()
+                    detailsSection()
                 }
                 HStack {
                     versionSection()
-                    riskSection()
+                    if let cask = info.cask {
+                        formulaSection(cask: cask)
+                    } else {
+                        riskSection()
+                    }
                 }
             }
         } else {
