@@ -111,8 +111,10 @@ private extension AppInventory where Self : HomebrewInventory {
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
 
+    private static let appfairBase = URL(string: "https://github.com/App-Fair/")
+
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
-    private let brewArchiveURLRemote = URL(string: "https://github.com/App-Fair/brew/zipball/HEAD")! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
+    private let brewArchiveURLRemote = URL(string: "brew/zipball/HEAD", relativeTo: HomebrewInventory.appfairBase)! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
 
     /// The source to the cask ruby definition file
     private func caskSource(name: String) -> URL? {
@@ -221,7 +223,7 @@ private extension AppInventory where Self : HomebrewInventory {
     }
 
     /// Fetches the cask list and populates it in the `casks` property
-    private func fetchCasks() async throws -> Array<CaskItem> {
+    func fetchCasks() async throws -> Array<CaskItem> {
         dbg("loading cask list")
         let url = self.caskList
         let data = try await URLRequest(url: url).fetch()
@@ -545,6 +547,13 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         cmd += " --cask " + caskArg
 
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
+
+        // count the install
+        if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: Self.appfairBase) {
+            dbg("counting install:", installCounter)
+            let _ = try? await URLSession.shared.fetchHEAD(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+        }
+
         dbg("result of command:", cmd, ":", result)
     }
 
