@@ -7,5 +7,5 @@ import FairApp
 ///         App customization should be done in `AppContainer.swift`
 @available(macOS 12.0, iOS 15.0, *)
 @main public enum AppContainer : FairApp.FairContainer {
-    public static func main() throws { try launch(bundle: Bundle.module) }
+    public static func main() async throws { try await launch(bundle: Bundle.module) }
 }
