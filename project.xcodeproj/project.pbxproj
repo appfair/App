@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		491763402773E08000FBB28B /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* AppMain.swift */; };
+		491763402773E08000FBB28B /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* App.swift */; };
 		491763412773E08500FBB28B /* App in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		4973D0E1275C1ADF00ED915A /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 4973D0E0275C1ADF00ED915A /* App */; };
@@ -59,7 +59,7 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
-				4917633F2773E08000FBB28B /* AppMain.swift */,
+				4917633F2773E08000FBB28B /* App.swift */,
 				498E852827597DA100EE6F8C /* AppFairApp.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
@@ -186,7 +186,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				491763402773E08000FBB28B /* AppMain.swift in Sources */,
+				491763402773E08000FBB28B /* App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
