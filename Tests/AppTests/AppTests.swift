@@ -29,18 +29,8 @@ import FairCore
     func testCaskList() async throws {
         let homeBrewInv = HomebrewInventory()
         XCTAssertEqual(homeBrewInv.casks.count, 0)
-        let _ = try await homeBrewInv.fetchCasks()
-        let casks = homeBrewInv.casks
+        let casks = try await homeBrewInv.fetchCasks()
         XCTAssertGreaterThan(casks.count, 1000)
-    }
-
-    func testCaskStats() async throws {
-        let homeBrewInv = HomebrewInventory()
-        XCTAssertNil(homeBrewInv.stats)
-        let _ = try await homeBrewInv.fetchStats()
-        let stats = try XCTUnwrap(homeBrewInv.stats)
-        XCTAssertGreaterThan(stats.total_count, 1000) // e.g.: 894812
-        XCTAssertGreaterThan(stats.formulae.values.joined().count, 1000) // e.g.: 6190
     }
 
     func testInstalledApps() throws {

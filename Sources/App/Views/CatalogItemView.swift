@@ -421,7 +421,7 @@ struct CatalogItemView: View {
     }
 
     func descriptionSection() -> some View {
-        groupBox(title: Text("App Summary"), trailing: EmptyView()) {
+        groupBox(title: Text("Description"), trailing: EmptyView()) {
             ScrollView {
                 Group {
                     readmeSummary()
@@ -899,7 +899,7 @@ struct CatalogItemView: View {
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
         if info.isCask {
-            return homeBrewInv.installedVersions[info.id.rawValue]?.isEmpty == false
+            return homeBrewInv.installedCasks[info.id.rawValue]?.isEmpty == false
         }
 
         return appPropertyList?.successValue?.bundleID == info.id.rawValue
@@ -909,7 +909,7 @@ struct CatalogItemView: View {
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
         if info.isCask {
-            let versions = homeBrewInv.installedVersions[info.id.rawValue] ?? []
+            let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
             return info.release.version.flatMap(versions.contains) != true
         }
 
