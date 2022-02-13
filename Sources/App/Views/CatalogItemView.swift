@@ -435,11 +435,28 @@ struct CatalogItemView: View {
         }
     }
 
+    /// The accessory on the trailing section of a `groupBox`
+    func progressAccessory(_ fetching: Int) -> some View {
+        ProgressView()
+            .opacity(fetching > 0 ? 1.0 : 0.0).controlSize(.mini)
+            .padding(.trailing, 8)
+            .animation(Animation.easeInOut.delay(1.0), value: fetching)
+    }
+
+    @State var fetchingFormula = 0
+
     func formulaSection(cask: CaskItem) -> some View {
-        groupBox(title: Text("Cask Formula"), trailing: EmptyView()) {
+        groupBox(title: Text("Cask Formula"), trailing: progressAccessory(fetchingFormula)) {
             ScrollView {
                 Group {
-                    caskSummary(cask)
+                    Text(self.caskSummary ?? "")
+                        .task {
+                            fetchingFormula += 1
+                            await fetchCaskSummary()
+                            fetchingFormula -= 1
+                        }
+                        .font(Font.body.monospacedDigit())
+                        .redacting(when: self.caskSummary == nil)
                         .font(Font.body.monospaced())
                 }
                 .textSelection(.enabled)
@@ -538,18 +555,8 @@ struct CatalogItemView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder func caskSummary(_ cask: CaskItem) -> some View {
-        Text(self.caskSummary ?? "")
-            .task {
-                await fetchCaskSummary()
-            }
-            .font(Font.body.monospacedDigit())
-            .redacting(when: self.caskSummary == nil)
-    }
-
-
     @ViewBuilder func readmeSummary() -> some View {
-        let readme = self.fairAppInv.readme(for: self.info.release)
+        let readme = self.fairManager.readme(for: self.info)
         Text(readme ?? "")
             .redacting(when: readme == nil)
     }
@@ -590,7 +597,6 @@ struct CatalogItemView: View {
 
     func previewImage(_ url: URL) -> some View {
         URLImage(url: url, resizable: .fit)
-
     }
 
     func previewView() -> some View {

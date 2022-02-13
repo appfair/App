@@ -25,6 +25,13 @@ import FairApp
     // list rendering on ARM is very slow when there are more than 1000 results, so just show the first few hundred
     @AppStorage("maxDisplayItems") public var maxDisplayItems = 1_000
 
+    /// The fetched readmes for the apps
+    @Published private var readmes: [URL: Result<AttributedString, Error>] = [:]
+
+    private static let readmeRegex = Result {
+        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+    }
+
     required internal init() {
         super.init()
 
@@ -67,6 +74,51 @@ import FairApp
             info.release.iconImage()
         }
     }
+
+    func readme(for info: AppInfo) -> AttributedString? {
+        guard let readmeURL = info.release.readmeURL else {
+            return nil
+        }
+
+        if let result = self.readmes[readmeURL] {
+            switch result {
+            case .success(let string): return string
+            case .failure(let error): return AttributedString("Error: \(error)")
+            }
+        }
+
+        Task {
+            do {
+                dbg("fetching README for:", info.release.id, readmeURL.absoluteString)
+                let data = try await URLRequest(url: readmeURL, cachePolicy: .reloadRevalidatingCacheData)
+                    .fetch(validateFragmentHash: true)
+                var atx = String(data: data, encoding: .utf8) ?? ""
+                // extract the portion of text between the "# Description" and following "#" sections
+                if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+                    atx = (atx as NSString).substring(with: match)
+                } else {
+                    if !info.isCask { // casks don't have this requirement; permit full READMEs
+                        atx = ""
+                    }
+                }
+
+                // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
+
+                // note this this differs with casks
+                let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
+                self.readmes[readmeURL] = Result {
+                    try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+                }
+            } catch {
+                dbg("error handling README:", error)
+                self.readmes[readmeURL] = .failure(error)
+            }
+        }
+
+        return nil
+    }
+
+
 
 
 }

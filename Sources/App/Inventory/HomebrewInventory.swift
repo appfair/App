@@ -826,14 +826,15 @@ extension HomebrewInventory {
             let caskTokenFull = cask.id
             let caskid = CaskIdentifier(caskTokenFull)
 
-            // dbg("caskToken:", caskTokenShort, "id:", id)
+            let caskInfo = appcaskInfo[caskTokenShort]
 
+            let downloads = caskInfo?.first?.downloadCount
+            let readmeURL = caskInfo?.first?.readmeURL
+            
             // TODO: extract installed Plist and check bundle identifier?
             let installed = installedCasks[caskTokenShort]?.first
             //dbg("installed info for:", caskTokenShort, installed)
 
-            // analytics are keyed on the un-expanded token name
-            let downloads = appcaskInfo[caskTokenShort]?.first?.downloadCount
             //dbg("download count for:", caskid, downloads)
             guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
                 dbg("skipping cask with no home page:", cask.homepage)
@@ -841,18 +842,19 @@ extension HomebrewInventory {
             }
 
             // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
-            let appcask = appcaskInfo[caskTokenShort]?.first { item in
+            let appcask = caskInfo?.first { item in
                 item.homepage?.host == "appfair.app"
                 || item.homepage?.host == "www.appfair.app"
                 || item.homepage?.host == caskHomepage.host
             }
+
             //dbg("appcaskInfo for:", caskid, appcask)
 
             let name = cask.name.first ?? caskTokenShort
 
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
-            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: cask.sourceURL, homepage: caskHomepage)
+            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: readmeURL, homepage: caskHomepage)
 
             var plist: Plist? = nil
             if let installed = installed {
