@@ -819,15 +819,21 @@ extension HomebrewInventory {
                 continue
             }
 
-            let id = cask.id
-            let caskid = CaskIdentifier(id)
+            // the short cask token (e.g. "firefox")
+            let caskTokenShort = cask.token
+
+            // the long cask token (e.g. "homebrew/cask/firefox")
+            let caskTokenFull = cask.id
+            let caskid = CaskIdentifier(caskTokenFull)
+
+            // dbg("caskToken:", caskTokenShort, "id:", id)
 
             // TODO: extract installed Plist and check bundle identifier?
-            let installed = installedCasks[cask.token]?.first
-            //dbg("installed info for:", cask.token, installed)
+            let installed = installedCasks[caskTokenShort]?.first
+            //dbg("installed info for:", caskTokenShort, installed)
 
             // analytics are keyed on the un-expanded token name
-            let downloads = appcaskInfo[cask.token]?.first?.downloadCount
+            let downloads = appcaskInfo[caskTokenShort]?.first?.downloadCount
             //dbg("download count for:", caskid, downloads)
             guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
                 dbg("skipping cask with no home page:", cask.homepage)
@@ -835,14 +841,14 @@ extension HomebrewInventory {
             }
 
             // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
-            let appcask = appcaskInfo[cask.token]?.first { item in
+            let appcask = appcaskInfo[caskTokenShort]?.first { item in
                 item.homepage?.host == "appfair.app"
                 || item.homepage?.host == "www.appfair.app"
                 || item.homepage?.host == caskHomepage.host
             }
             //dbg("appcaskInfo for:", caskid, appcask)
 
-            let name = cask.name.first ?? id
+            let name = cask.name.first ?? caskTokenShort
 
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
@@ -851,7 +857,7 @@ extension HomebrewInventory {
             var plist: Plist? = nil
             if let installed = installed {
                 plist = Plist(rawValue: [
-                    InfoPlistKey.CFBundleIdentifier.rawValue: id, // not really a bundle ID!
+                    InfoPlistKey.CFBundleIdentifier.rawValue: caskTokenFull, // not really a bundle ID!
                     InfoPlistKey.CFBundleShortVersionString.rawValue: installed,
                 ])
             }
