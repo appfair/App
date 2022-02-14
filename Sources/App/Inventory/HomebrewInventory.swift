@@ -269,7 +269,7 @@ private extension AppInventory where Self : HomebrewInventory {
             }
         }
 
-        dbg("scanned installed casks:", tokenVersions.keys.sorted) // tokenVersions)
+        dbg("scanned installed casks:", tokenVersions.keys.sorted()) // tokenVersions)
         return tokenVersions
     }
 
@@ -830,7 +830,7 @@ extension HomebrewInventory {
 
             let downloads = caskInfo?.first?.downloadCount
             let readmeURL = caskInfo?.first?.readmeURL
-            
+
             // TODO: extract installed Plist and check bundle identifier?
             let installed = installedCasks[caskTokenShort]?.first
             //dbg("installed info for:", caskTokenShort, installed)
@@ -897,9 +897,9 @@ extension HomebrewInventory {
 
         // avoid triggering unnecessary changes
         if self.appInfos != sortedInfos {
-            // withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed
+             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed
                 self.appInfos = sortedInfos
-            // }
+             }
         }
     }
 
@@ -936,7 +936,7 @@ extension HomebrewInventory {
     func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
         switch sidebarSelection?.item {
         case .installed:
-            return item.installedVersionString != nil
+            return installedCasks[item.release.id.rawValue] != nil
         case .updated:
             return appUpdated(item)
         default:
