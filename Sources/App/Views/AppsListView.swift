@@ -13,29 +13,11 @@ struct AppsListView : View {
     @State var sortOrder: [KeyPathComparator<AppInfo>] = []
     @Binding var searchText: String
 
-    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        switch source {
-        case .homebrew:
-            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        case .fairapps:
-            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        }
-    }
-
-    var items: [AppInfo] {
-        arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-    }
-
-    var body : some View {
+    @ViewBuilder var body : some View {
         ScrollViewReader { proxy in
             List {
-                ForEach(items.prefix(fairManager.maxDisplayItems)) { item in
-                    NavigationLink(tag: item.id, selection: $selection, destination: {
-                        CatalogItemView(info: item)
-                    }, label: {
-                        label(for: item)
-                            //.frame(minHeight: 44, maxHeight: 44) // attempt to speed up list rendering (doesn't seem to help)
-                    })
+                ForEach(AppListSection.allCases) { section in
+                    appListSection(section: section)
                 }
             }
             .onChange(of: scrollToSelection) { scrollToSelection in
@@ -47,6 +29,68 @@ struct AppsListView : View {
                 }
             }
             .searchable(text: $searchText)
+        }
+    }
+
+    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        switch source {
+        case .homebrew:
+            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        case .fairapps:
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        }
+    }
+
+    enum AppListSection : CaseIterable, Identifiable, Hashable {
+        case top
+        case all
+
+        var id: Self { self }
+
+        var localizedTitle: Text {
+            switch self {
+            case .top: return Text("Top Apps")
+            case .all: return Text("All Apps")
+            }
+        }
+    }
+
+    func items(section: AppListSection?) -> [AppInfo] {
+        arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            .filter({
+                if section == nil { return true } // nil sections means unfiltered
+
+                let hasScreenshots = ($0.release.screenshotURLs ?? []).isEmpty == false
+                let hasCategory = ($0.release.categories ?? []).isEmpty == false
+                // an app is in the "top" apps iff it has at least one screenshot
+                return (section == .top) == (hasScreenshots && hasCategory)
+            })
+    }
+
+    @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
+        let items = items(section: section)
+        if let section = section {
+            if !items.isEmpty {
+                Section {
+                    appSectionItems(items: items)
+                } header: {
+                    section.localizedTitle
+                }
+            }
+        } else {
+            // nil section means don't sub-divide
+            appSectionItems(items: items)
+        }
+    }
+
+    @ViewBuilder func appSectionItems(items: [AppInfo]) -> some View {
+        ForEach(items.prefix(fairManager.maxDisplayItems)) { item in
+            NavigationLink(tag: item.id, selection: $selection, destination: {
+                CatalogItemView(info: item)
+            }, label: {
+                label(for: item)
+                //.frame(minHeight: 44, maxHeight: 44) // attempt to speed up list rendering (doesn't seem to help)
+            })
         }
     }
 

@@ -198,6 +198,7 @@ The App Fair uses the Homebrew casks API directly as the app list presented to u
 
 If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a Pull Request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
 
+<a name="customize_app" />
 #### How can I customize how my app appears in the App Fair.app?
 
 If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide an enhanced app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 

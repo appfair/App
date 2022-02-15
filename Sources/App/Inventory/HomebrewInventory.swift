@@ -56,6 +56,9 @@ private extension AppInventory where Self : HomebrewInventory {
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = false
 
+    /// Whether delete apps should be "zapped"
+    @AppStorage("zapDeletedCasks") var zapDeletedCasks = false
+
     /// Whether to ignore casks that mark themselves as "autoupdates" from being shown in the "Updated" section
     @AppStorage("ignoreAutoUpdatingAppUpdates") var ignoreAutoUpdatingAppUpdates = true
 
@@ -578,14 +581,14 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
 
-    func delete(cask: CaskItem, update: Bool = true, zap: Bool = false, force: Bool = false, verbose: Bool = true) async throws {
+    func delete(cask: CaskItem, update: Bool = true, verbose: Bool = true) async throws {
         dbg(cask.token)
         var cmd = localBrewCommand.path
         let op = "remove"
         cmd += " " + op
-        if force { cmd += " --force" }
+        if self.forceInstallCasks { cmd += " --force" }
+        if self.zapDeletedCasks { cmd += " --zap" }
         if verbose { cmd += " --verbose" }
-        if zap { cmd += " --zap" }
         cmd += " --cask " + cask.token
         let result = try await run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: cask)
         dbg("result:", result)

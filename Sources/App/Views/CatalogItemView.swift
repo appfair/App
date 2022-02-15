@@ -70,32 +70,31 @@ struct CatalogItemView: View {
 
 
     var body: some View {
-        catalogStack()
-            .onAppear {
-                // transfer the progress so we can watch the operation
-                progress.progress = currentOperation?.progress ?? progress.progress
-            }
+        ZStack {
+            catalogStack()
+            screenshotPreviewOverlay()
+        }
+        .onAppear {
+            // transfer the progress so we can watch the operation
+            progress.progress = currentOperation?.progress ?? progress.progress
+        }
     }
 
     func catalogStack() -> some View {
-        ZStack {
-            VStack {
-                VStack(spacing: 0) {
-                    catalogHeader()
-                        .padding(.vertical)
-                        .background(Material.ultraThinMaterial)
-                    Divider()
-                }
-                catalogActionButtons()
-                    .frame(height: buttonHeight + 12)
+        VStack {
+            VStack(spacing: 0) {
+                catalogHeader()
+                    .padding(.vertical)
+                    .background(Material.ultraThinMaterial)
                 Divider()
-                catalogSummaryCards()
-                    .frame(height: 40)
-                Divider()
-                catalogOverview()
             }
-
-            screenshotPreviewOverlay()
+            catalogActionButtons()
+                .frame(height: buttonHeight + 12)
+            Divider()
+            catalogSummaryCards()
+                .frame(height: 40)
+            Divider()
+            catalogOverview()
         }
     }
 
@@ -401,13 +400,14 @@ struct CatalogItemView: View {
     func catalogOverview() -> some View {
         VStack {
             catalogColumns()
+
             groupBox(title: Text("Preview"), trailing: EmptyView()) {
                 ScrollView(.horizontal) {
                     previewView()
                 }
                 .overlay(Group {
                     if item.screenshotURLs?.isEmpty != false {
-                        Text("No screenshots available")
+                        Text("No screenshots available ([contribute…](https://www.appfair.app/#customize_app))")
                             .label(image: unavailableIcon)
                             .padding()
                             .lineLimit(1)

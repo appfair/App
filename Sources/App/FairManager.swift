@@ -22,7 +22,7 @@ import FairApp
     /// An optional authorization token for direct API usagefor the organization
     @AppStorage("hubToken") public var hubToken = ""
 
-    // list rendering on ARM is very slow when there are more than 1000 results, so just show the first few hundred
+    // list rendering is very slow when there are more than 1000 results, so just show the first few hundred
     @AppStorage("maxDisplayItems") public var maxDisplayItems = 1_000
 
     /// The fetched readmes for the apps
