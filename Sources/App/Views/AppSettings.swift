@@ -100,15 +100,20 @@ struct HomebrewSettingsView: View {
                 }
                     .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
-                Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                    Text(atx: "Quarantine installed apps")
-                }
-                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
-
                 Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
                     Text(atx: "Exclude auto-updating apps from sidebar updates list")
                 }
                     .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+
+                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
+                    Text(atx: "Require cask checksum")
+                }
+                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+
+                Toggle(isOn: $homeBrewInv.quarantineCasks) {
+                    Text(atx: "Quarantine installed apps")
+                }
+                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run. Launching a quarantined app may be used to track your activitiy, and so is disabled by default."))
 
                 Toggle(isOn: $homeBrewInv.forceInstallCasks) {
                     Text(atx: "Install overwrites previous app installation")
@@ -119,11 +124,6 @@ struct HomebrewSettingsView: View {
                     Text(atx: "Enable Homebrew self-update")
                 }
                     .help(Text("Allow Homebrew to update itself while installing other packages."))
-
-                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                    Text(atx: "Require cask checksum")
-                }
-                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog."))
 
                 // switching between the system-installed brew and locally cached brew doesn't yet work
                 #if DEBUG

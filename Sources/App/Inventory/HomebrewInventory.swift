@@ -54,7 +54,7 @@ private extension AppInventory where Self : HomebrewInventory {
     @AppStorage("useSystemHomebrew") var useSystemHomebrew = false
 
     /// Whether the quarantine flag should be applied to newly-installed casks
-    @AppStorage("quarantineCasks") var quarantineCasks = true
+    @AppStorage("quarantineCasks") var quarantineCasks = false
 
     /// Whether to ignore casks that mark themselves as "autoupdates" from being shown in the "Updated" section
     @AppStorage("ignoreAutoUpdatingAppUpdates") var ignoreAutoUpdatingAppUpdates = true
