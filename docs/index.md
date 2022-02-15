@@ -67,7 +67,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 <br />
 <br />
 
-<img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2480x2038.png" />
+<a href="#screenshots"><img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2480x2038.png" /></a>
 
 Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's fair-ground distribution network.
 
@@ -224,4 +224,5 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 
 <hr />
 
+<a name="screenshots" />
 <h3><center>Screenshots</center></h3>
