@@ -67,7 +67,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 <br />
 <br />
 
-<img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2324x1738.png" />
+<img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2480x2038.png" />
 
 Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's fair-ground distribution network.
 
@@ -201,9 +201,11 @@ If you would like to add your existing app to the Casks list, and if your app me
 <a name="customize_app" />
 #### How can I customize how my app appears in the App Fair.app?
 
-If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide an enhanced app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 
+If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide a supplementary app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 
 
 Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
+
+To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather. The file must contain only a single newline and be 1 byte in size. That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
 
 #### How can I link to my app's catalog item?
 
