@@ -113,7 +113,7 @@ struct HomebrewSettingsView: View {
                 Toggle(isOn: $homeBrewInv.quarantineCasks) {
                     Text(atx: "Quarantine installed apps")
                 }
-                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run. Launching a quarantined app may be used to track your activitiy, and so is disabled by default."))
+                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
                 Toggle(isOn: $homeBrewInv.forceInstallCasks) {
                     Text(atx: "Install overwrites previous app installation")

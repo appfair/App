@@ -1106,7 +1106,8 @@ struct CatalogItemView: View {
         dbg("launchButtonTapped")
         if info.isCask == true {
             await fairManager.trying {
-                try await homeBrewInv.launch(item: item)
+                // TODO: if the gatekeeper check fails, prompt the user whether they would like to remove the remove the quarantine flag and re-launch
+                try await homeBrewInv.launch(item: item, gatekeeperCheck: false)
             }
         } else {
             await fairAppInv.launch(item: item)

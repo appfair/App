@@ -54,7 +54,7 @@ private extension AppInventory where Self : HomebrewInventory {
     @AppStorage("useSystemHomebrew") var useSystemHomebrew = false
 
     /// Whether the quarantine flag should be applied to newly-installed casks
-    @AppStorage("quarantineCasks") var quarantineCasks = false
+    @AppStorage("quarantineCasks") var quarantineCasks = true
 
     /// Whether delete apps should be "zapped"
     @AppStorage("zapDeletedCasks") var zapDeletedCasks = false
@@ -664,10 +664,17 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
-    func launch(item: AppCatalogItem) async throws {
+    func launch(item: AppCatalogItem, gatekeeperCheck: Bool) async throws {
         let installPath = try self.installPath(for: item)
         dbg(item.id, installPath?.path)
         if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
+            if gatekeeperCheck == true {
+                do {
+                    try Process.spctlAssess(appURL: installPath)
+                } catch {
+                    dbg("gatekeeper check failed:", error)
+                }
+            }
             dbg("launching:", installPath.path)
 
             let cfg = NSWorkspace.OpenConfiguration()
