@@ -105,16 +105,6 @@ struct HomebrewSettingsView: View {
                 }
                     .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
 
-                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                    Text(atx: "Require cask checksum")
-                }
-                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
-
-                Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                    Text(atx: "Quarantine installed apps")
-                }
-                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
-
                 Toggle(isOn: $homeBrewInv.forceInstallCasks) {
                     Text(atx: "Install overwrites previous app installation")
                 }
@@ -125,6 +115,16 @@ struct HomebrewSettingsView: View {
                         //.label(.bolt)
                 }
                     .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This opetion is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
+
+                Toggle(isOn: $homeBrewInv.quarantineCasks) {
+                    Text(atx: "Quarantine installed apps")
+                }
+                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+
+                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
+                    Text(atx: "Require cask checksum")
+                }
+                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
 
                 Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
                     Text(atx: "Enable Homebrew self-update")

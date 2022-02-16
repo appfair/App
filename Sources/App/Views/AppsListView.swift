@@ -16,8 +16,13 @@ struct AppsListView : View {
     @ViewBuilder var body : some View {
         ScrollViewReader { proxy in
             List {
-                ForEach(AppListSection.allCases) { section in
-                    appListSection(section: section)
+                if sidebarSelection?.item == .top {
+                    ForEach(AppListSection.allCases) { section in
+                        appListSection(section: section)
+                    }
+                } else {
+                    // installed & updated don't use sections
+                    appListSection(section: nil)
                 }
             }
             .onChange(of: scrollToSelection) { scrollToSelection in

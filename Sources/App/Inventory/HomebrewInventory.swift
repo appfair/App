@@ -533,8 +533,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         // count the install
         if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: Self.appfairBase) {
-            dbg("counting install:", installCounter)
-            let _ = try? await URLSession.shared.fetchHEAD(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+            dbg("counting install:", installCounter.absoluteString)
+            let _ = try? await URLSession.shared.fetch(request: URLRequest(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 600))
         }
 
         dbg("result of command:", cmd, ":", result)
