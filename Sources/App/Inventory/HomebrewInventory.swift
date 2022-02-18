@@ -102,6 +102,7 @@ private extension AppInventory where Self : HomebrewInventory {
     private var formulaList: URL { URL(string: "formula.json", relativeTo: caskAPIEndpoint)! }
 
     private var caskSourceBase: URL { URL(string: "cask-source/", relativeTo: caskAPIEndpoint)! }
+    private var caskMetadataBase: URL { URL(string: "cask/", relativeTo: caskAPIEndpoint)! }
 
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
@@ -112,8 +113,12 @@ private extension AppInventory where Self : HomebrewInventory {
     private let brewArchiveURLRemote = URL(string: "brew/zipball/HEAD", relativeTo: HomebrewInventory.appfairBase)! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
 
     /// The source to the cask ruby definition file
-    private func caskSource(name: String) -> URL? {
-        URL(string: name, relativeTo: caskSourceBase)!.appendingPathExtension("rb")
+    func caskSource(name: String) -> URL? {
+        URL(string: name, relativeTo: caskSourceBase)?.appendingPathExtension("rb")
+    }
+
+    func caskMetadata(name: String) -> URL? {
+        URL(string: name, relativeTo: caskMetadataBase)?.appendingPathExtension("json")
     }
 
     private static func cacheFolder(named name: String) -> URL {
@@ -485,7 +490,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let _ = try await installHomebrew(retainCasks: true)
 
         // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
-        if let sourceURL = cask.sourceURL {
+        if let sourceURL = self.caskSource(name: cask.token) {
             do {
                 try await fetchCaskInfo(sourceURL, cask, &candidateURL, &sha256, &caskArg)
             } catch {
@@ -864,7 +869,7 @@ extension HomebrewInventory {
 
             let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
 
-            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: cask.metadataURL, readmeURL: readmeURL, homepage: caskHomepage)
+            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: self.caskMetadata(name: cask.token), readmeURL: readmeURL, homepage: caskHomepage)
 
             var plist: Plist? = nil
             if let installed = installed {
@@ -1193,22 +1198,7 @@ extension CaskItem : Identifiable {
             return nil
         }
     }
-
-    /// TODO: harmoize with AppStorage
-    private var caskAPIEndpoint: URL { URL(string: "https://formulae.brew.sh/api/")! }
-
-    /// https://formulae.brew.sh/docs/api/#get-formula-metadata-for-a-cask-formula
-    var metadataURL: URL? {
-        URL(string: "cask/\(token).json", relativeTo: caskAPIEndpoint)
-    }
-
-    /// https://formulae.brew.sh/docs/api/#get-the-source-code-for-a-cask-in-homebrewhomebrew-cask
-    var sourceURL: URL? {
-        URL(string: "cask-source/\(token).rb", relativeTo: caskAPIEndpoint)
-    }
-
 }
-
 
 extension CaskItem {
     /// The basename of the local cache file for this item's download URL
@@ -1219,7 +1209,6 @@ extension CaskItem {
         return cachePath
     }
 }
-
 
 /// A unique identifier for a bundle. Note that this overloads the "BundleIdentifier" concept, which may make more sense
 typealias CaskIdentifier = BundleIdentifier

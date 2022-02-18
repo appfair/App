@@ -199,9 +199,8 @@ struct CatalogItemView: View {
         }
     }
 
-
     private func fetchCaskSummary(jsonSource: Bool = false) async {
-        if let cask = self.info.cask, self.caskSummary == nil, let url = jsonSource ? cask.metadataURL : cask.sourceURL {
+        if let cask = self.info.cask, self.caskSummary == nil, let url = jsonSource ? homeBrewInv.caskMetadata(name: cask.token) : homeBrewInv.caskSource(name: cask.token) {
             // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)

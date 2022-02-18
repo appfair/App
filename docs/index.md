@@ -176,9 +176,23 @@ Apps installed through the Homebrew Casks catalog typically just require the abi
 
 #### What identifying information does App Fair.app track or transmit?
 
-Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code]((https://github.com/App-Fair/App.git).
+Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code](https://github.com/App-Fair/App.git).
 
 Since App Fair.app downloads apps directly from the app creator's servers, those servers will see a requestor's IP address (e.g., _255.0.198.255_), their primary language (e.g., _"Accept-Language: en-US"_), and their app version (e.g., _"User-Agent: App Fair/622 CFNetwork/1329 Darwin/21.3.0"_), from which an approximate geographical location could be inferred. While no cookies or personally identifying information is transmitted by App Fair.app, an intermediary (such as an ISP) may be able to infer that, say, someone at address 255.0.198.255 in Lilliput downloaded Signal.app. If this is a concern, you may wish to use a VPN when running App Fair.app.
+
+<!--
+#### How to resolve the error that the app “cannot be opened because the developer cannot be verified”?
+
+Apps installed from the Homebrew Casks catalog are expected to be “notarized”, which means that the creator holds a paid subscription to the macOS developer program. Some applications, often from students or non-profit organizations, cannot afford to maintain this subscription or are unable to accept the attendant terms and conditions. In these cases, the applications are distributed without being notarized.
+
+The system's warning message that “macOS cannot verify that this app is free from malware” is inaccurate. These apps are indeed still subject to the built-in protections afforded by macOS such as XProtect and the Malware Removal Tool. If you have installed an app from a trusted source that exhibits this warning dialog, there are two possible solutions:
+
+1. Disable the "Quarantine installed apps" checkbox in the "Homebrew" preferences pane, and then delete and re-install the app. Once the app has been installed, you can re-enable the default quarantining behavior.
+2. "Reveal" the app in the Finder, then right-click on the app and select "Open". You will need to perform this action *twice* for it to take effect.
+
+More information about this issue can be read at 
+
+-->
 
 #### How can I update App Fair.app?
 
@@ -227,7 +241,7 @@ For apps distributed through Homebrew Casks, updates can be registered by follow
 
 #### Can I distribute an iOS app with the App Fair?
 
-Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their distribution. This is expected to change in the near future.
+Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their installation on iOS devices. This is expected to change in the near future.
 
 
 <br />
