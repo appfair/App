@@ -59,7 +59,7 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
     <div style="padding-left: 16px; padding-right: 16px;">
         <span style="font-size: 30px; color: #FFFFFF; font-weight: bold; font-family: ui-rounded, Arial Rounded MT Bold, system-ui, HelveticaNeue, Helvetica Neue;">Download {{ apptitle }}.app</span>
         <br />
-        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">6.7MB – requires macOS 12+</span>
+        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">6.8MB – requires macOS 12+</span>
     </div>
 </button>
 </a>
@@ -69,7 +69,8 @@ Launch Link (required): https://appfair.app/fair#app/App-Fair
 
 <a href="#screenshots"><img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_01-mac-dark-2480x2038.png" /></a>
 
-Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's fair-ground distribution network.
+
+Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's own fair-ground distribution network.
 
 
 {% assign browsers = '
@@ -129,7 +130,7 @@ Every line of code in the App Fair.app itself is open-source, released under the
 Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:
 
 <pre>
-brew install appfair/app/app-fair && open /Applications/'App Fair.app'
+brew install appfair/app/app-fair && open "/Applications/App Fair.app"
 </pre>
 
 
@@ -173,10 +174,15 @@ To install apps from the Fairground Apps, the current user needs permission to w
 
 Apps installed through the Homebrew Casks catalog typically just require the ability to write to the `/Applications/` folder, but for system-level apps or extensions, the installation process may request an administrator password to complete the installation.
 
+#### What identifying information does App Fair.app track or transmit?
+
+Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code]((https://github.com/App-Fair/App.git).
+
+Since App Fair.app downloads apps directly from the app creator's servers, those servers will see a requestor's IP address (e.g., _255.0.198.255_), their primary language (e.g., _"Accept-Language: en-US"_), and their app version (e.g., _"User-Agent: App Fair/622 CFNetwork/1329 Darwin/21.3.0"_), from which an approximate geographical location could be inferred. While no cookies or personally identifying information is transmitted by App Fair.app, an intermediary (such as an ISP) may be able to infer that, say, someone at address 255.0.198.255 in Lilliput downloaded Signal.app. If this is a concern, you may wish to use a VPN when running App Fair.app.
+
 #### How can I update App Fair.app?
 
 If the "Keep catalog app up to date" checkbox is enabled in the App Fair preferences, App Fair.app will automatically install any updates to the catalog app, provided it is installed in the `/Applications/` folder. This will happen the next time the catalog is refreshed, either manually or when the app is next launched.
-
 
 
 ### App Creator FAQs
@@ -194,9 +200,9 @@ If, on the other hand, you already having an existing notarized Mac app that you
 
 #### How can I add, update, or remove my app's "Cask" information?
 
-The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [Casks list](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a pull request to update or remove it.
+The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [list of availabele casks](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a [pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request) to update or remove it.
 
-If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a Pull Request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
+If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
 
 <a name="customize_app" />
 #### How can I customize how my app appears in the App Fair.app?
@@ -213,9 +219,15 @@ Create a link formatted as `https://www.appfair.app/fair#cask/<token>`, where `<
 
 For example, a link that directs the user to install Minecraft is: `https://appfair.app/fair#cask/minecraft`.
 
+#### How can I submit an update to my app?
+
+Apps that are distributed through [appfair.net](https://www.appfair.net) will have their updates automatically reflected in the catalog the next time it is generated (hourly).
+
+For apps distributed through Homebrew Casks, updates can be registered by following [these instructions](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#submit-a-new-version-of-an-existing-cask).
+
 #### Can I distribute an iOS app with the App Fair?
 
-Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their distribution.
+Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their distribution. This is expected to change in the near future.
 
 
 <br />
