@@ -358,10 +358,60 @@ public extension View {
         })
 
         let firstError = errorBinding.wrappedValue.first
-        return alert(isPresented: presented, error: firstError, actions: {
-            EmptyView()
-            //Button(wip("ERROR")) { dbg("XXX") }
-        })
+
+        return sheet(isPresented: presented) {
+            VStack(alignment: .center, spacing: 16) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 55, height: 55, alignment: .center)
+                    .padding()
+
+                if let errorDescription = firstError?.errorDescription {
+                    Text(errorDescription)
+                        .font(Font.headline)
+                        .textSelection(.enabled)
+                        .lineLimit(1)
+                }
+
+                if let failureReason = firstError?.failureReason {
+                    Text(failureReason)
+                        .font(Font.subheadline)
+                        .textSelection(.enabled)
+                        .lineLimit(5)
+                }
+
+                if let recoverySuggestion = firstError?.recoverySuggestion {
+                    Text(recoverySuggestion)
+                        .font(Font.subheadline)
+                        .textSelection(.enabled)
+                        .lineLimit(5)
+                }
+
+                if let underlyingError = (firstError as NSError?)?.underlyingErrors.first
+                ?? (firstError as? AppError)?.underlyingError {
+                    DisclosureGroup {
+                        TextEditor(text: .constant(underlyingError.localizedDescription))
+                            .textSelection(.disabled)
+                            .font(Font.body.monospaced())
+                            .focusable(false)
+                            .frame(maxHeight: 200)
+                    } label: {
+                        Text("More Info")
+                    }
+                }
+
+                Button {
+                    errorBinding.wrappedValue.removeFirst()
+                } label: {
+                    Text("OK").padding()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+            .frame(width: 250)
+            .padding()
+//            .background(Material.thin)
+            //.alert(Text(title), isPresented: .constant(true), actions: { EmptyView() }, message: { Text(message) })
+        }
     }
 }
 

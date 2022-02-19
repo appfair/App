@@ -381,9 +381,8 @@ private extension AppInventory where Self : HomebrewInventory {
         var cmd = command
         var scpt: URL? = nil
 
-        if let askPassAppInfo = askPassAppInfo {
-            let appName = askPassAppInfo.name.first ?? askPassAppInfo.token
-
+        let appName = askPassAppInfo?.name.first ?? askPassAppInfo?.token ?? "the app"
+        if askPassAppInfo != nil {
             let title = "Administrator Password Required (Homebrew)"
                 .replacingOccurrences(of: "\"", with: "'")
             let prompt = """
@@ -430,8 +429,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             dbg("command output:", result)
             return result
         } catch {
-            dbg("error performing command:", cmd, error)
-            throw error
+            throw AppError(loc("Error running \(toolName)"), failureReason: loc("The \(toolName) for \(appName) failed to complete successfully."), underlyingError: error)
         }
     }
 
@@ -499,6 +497,16 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
+        // also download any dependencies; note that this only traverses a single level of cask dependencies, so casks with dependencies like sonarr-menu.rb -> sonarr.rb -> mono-mdk.rb will still fail
+        for depToken in (cask.depends_on?.cask ?? []) {
+            let downloadFolder = self.caskInfoFolder
+            if let depURL = self.caskSource(name: depToken) {
+                dbg("downloading dependency token:", depToken, "from:", depURL.absoluteString)
+                let caskDepPath = URL(fileURLWithPath: depURL.lastPathComponent, relativeTo: downloadFolder)
+                try await URLSession.shared.fetch(request: URLRequest(url: depURL)).data.write(to: caskDepPath)
+            }
+        }
+
         let quarantine = quarantine ?? self.quarantineCasks
         let force = force ?? self.forceInstallCasks
         let manageDownloads = manageDownloads ?? self.manageCaskDownloads
@@ -545,17 +553,22 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("result of command:", cmd, ":", result)
     }
 
+    /// The folder that will store cask information so that `brew info` will be able to find it
+    fileprivate var caskInfoFolder: URL {
+        URL(fileURLWithPath: "Library/Taps/homebrew/homebrew-cask/Casks/", isDirectory: true, relativeTo: brewInstallRoot)
+    }
+
     /// Downloads the cash info for the given URL and parses it, extracting the `url` and `checksum` properties.
-    fileprivate func fetchCaskInfo(_ sourceURL: URL, _ cask: CaskItem, _ candidateURL: inout URL, _ sha256: inout String?, _ caskArg: inout String) async throws {
+    fileprivate func fetchCaskInfo(_ sourceURL: URL, _ cask: CaskItem?, _ candidateURL: inout URL, _ sha256: inout String?, _ caskArg: inout String) async throws {
         // must be downloaded exactly here or `brew --info --cask <path>` will fail
-        let downloadFolder = URL(fileURLWithPath: "Library/Taps/homebrew/homebrew-cask/Casks/", isDirectory: true, relativeTo: brewInstallRoot)
+        let downloadFolder = caskInfoFolder
         try FileManager.default.createDirectory(at: downloadFolder, withIntermediateDirectories: true, attributes: nil) // ensure it exists
 
-        // the cask path is the same as down download name
+        // the cask path is the same as the download name
         let caskPath = URL(fileURLWithPath: sourceURL.lastPathComponent, relativeTo: downloadFolder)
 
         dbg("downloading cask info from:", sourceURL.absoluteString, "to:", caskPath.path)
-        try await URLSession.shared.data(from: sourceURL).0.write(to: caskPath)
+        try await URLSession.shared.fetch(request: URLRequest(url: sourceURL)).data.write(to: caskPath)
 
         // don't delete the local cask, since we want to re-use it for install
         // defer { try? FileManager.default.removeItem(at: caskPath) }
@@ -1150,8 +1163,15 @@ struct CaskItem : Equatable, Decodable {
         //let signal: Array<SignalItem>?
     }
 
-    /// E.g., `{"macos":{">=":["10.12"]}}`
-    // let depends_on": {},
+    /// `depends_on` is used to declare dependencies and requirements for a Cask. `depends_on` is not consulted until install is attempted.
+    let depends_on: DependsOn?
+
+    struct DependsOn : Equatable, Decodable {
+        let cask: [String]?
+
+        /// E.g., `{"macos":{">=":["10.12"]}}`
+        // let macOS: XOr<Array<String>>.Or<String>?
+    }
 
     /// E.g.: `"conflicts_with":{"cask":["homebrew/cask-versions/1password-beta"]}`
     // let conflicts_with: null
