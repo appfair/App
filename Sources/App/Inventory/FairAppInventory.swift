@@ -13,6 +13,16 @@ let displayExtensions: Set<String>? = ["ipa"]
 let catalogURL: URL = appfairCatalogURLIOS
 #endif
 
+/// Whether to remember the response to a prompt or not;
+enum PromptSuppression : Int, CaseIterable {
+    /// The user has not specified whether to remember the response
+    case unset
+    /// The user specified that the the response should always the confirmation response
+    case confirmation
+    /// The user specified that the the response should always be the destructive response
+    case destructive
+}
+
 /// The manager for installing App Fair apps
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairAppInventory: ObservableObject, AppInventory {
@@ -38,6 +48,9 @@ let catalogURL: URL = appfairCatalogURLIOS
     @AppStorage("riskFilter") var riskFilter = AppRisk.risky
 
     @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = true
+
+    /// Whether to automatically re-launch the catalog app when it has updated itself
+    @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = PromptSuppression.unset
 
     @Published public var errors: [AppError] = []
 
@@ -466,8 +479,27 @@ extension FairAppInventory {
 
         if self.relaunchUpdatedApps == true {
             dbg("re-launching app:", item.bundleIdentifier)
-            terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
+            @MainActor func relaunch() {
+                terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
+            }
+
+            let isCatalogApp = item.bundleIdentifier.rawValue == Bundle.main.bundleID
+            if !isCatalogApp {
+                // automatically re-launch any app that isn't a catalog app
+                relaunch()
+            } else {
+                // if this is the catalog app, prompt the user to re-launch
+                prompt(Text("This catalog app has been updated to the latest version. Would you like to re-launch?"), accept: Text("Re-launch app"), refuse: Text("Later"), suppressionKey: $relaunchUpdatedCatalogApp) {
+                    relaunch()
+                }
+            }
         }
+    }
+
+    @available(*, deprecated, message: "TODO: implement")
+    func prompt(_ title: Text, accept: Text = Text("OK"), refuse: Text = Text("Cancel"), suppressionKey: Binding<PromptSuppression>?, action: @escaping () -> ()) {
+        // TODO: implement
+        action()
     }
 
     private func trash(_ fileURL: URL) async throws {

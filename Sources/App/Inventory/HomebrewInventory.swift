@@ -78,16 +78,19 @@ private extension AppInventory where Self : HomebrewInventory {
     @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = false
 
     /// The arranged list of app info itemsl this is synthesized from the `casks`, `stats`, and `appcasks` properties
-    @Published private(set) var appInfos: [AppInfo] = []
+    @Published private var appInfos: [AppInfo] = []
 
     /// The current catalog of casks
-    @Published private(set) var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+    @Published private var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+
+    /// The download stats for cask tokens
+    @Published private var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
 
     /// Map of installed apps from `[token: [versions]]`
     @Published private(set) var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
 
     /// Enhanced metadata about individual apps
-    @Published private(set) var appcasks: FairAppCatalog? { didSet { updateAppInfo() } }
+    @Published private var appcasks: FairAppCatalog? { didSet { updateAppInfo() } }
 
     @Published private var sortOrder: [KeyPathComparator<AppInfo>] = [
         // don't have any initial sort so we can sort by the ranking
@@ -103,6 +106,12 @@ private extension AppInventory where Self : HomebrewInventory {
 
     private var caskSourceBase: URL { URL(string: "cask-source/", relativeTo: caskAPIEndpoint)! }
     private var caskMetadataBase: URL { URL(string: "cask/", relativeTo: caskAPIEndpoint)! }
+
+    private var caskStatsBase: URL { URL(string: "analytics/cask-install/homebrew-cask/", relativeTo: caskAPIEndpoint)! }
+
+    private var caskStats30: URL { URL(string: "30d.json", relativeTo: caskStatsBase)! }
+    private var caskStats90: URL { URL(string: "90d.json", relativeTo: caskStatsBase)! }
+    private var caskStats365: URL { URL(string: "365d.json", relativeTo: caskStatsBase)! }
 
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
@@ -213,15 +222,17 @@ private extension AppInventory where Self : HomebrewInventory {
         async let installedCasks = scanInstalledCasks()
         async let casks = fetchCasks()
         async let appcasks = fetchAppCasks()
+        async let appstats = fetchAppStats()
 
         //(self.stats, self.appcasks, self.installedCasks, self.casks) = try await (stats, appcasks, installedCasks, casks)
         self.installedCasks = try await installedCasks
         self.appcasks = try await appcasks
         self.casks = try await casks
+        self.appstats = try await appstats
     }
 
     /// Fetches the cask list and populates it in the `casks` property
-    func fetchCasks() async throws -> Array<CaskItem> {
+    fileprivate func fetchCasks() async throws -> Array<CaskItem> {
         dbg("loading cask list")
         let url = self.caskList
         let data = try await URLRequest(url: url).fetch()
@@ -231,7 +242,17 @@ private extension AppInventory where Self : HomebrewInventory {
         return casks
     }
 
-    func fetchAppCasks() async throws -> FairAppCatalog {
+    /// Fetches the cask stats and populates it in the `stats` property
+    fileprivate func fetchAppStats(statsURL: URL? = nil) async throws -> CaskStats {
+        let url = statsURL ?? self.caskStats365
+        dbg("loading cask stats:", url.absoluteString)
+        let data = try await URLRequest(url: url).fetch()
+
+        dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
+        return try CaskStats(json: data)
+    }
+
+    fileprivate func fetchAppCasks() async throws -> FairAppCatalog {
         dbg("loading appcasks")
         let url = appfairCaskAppsURL
         let data = try await URLRequest(url: url).fetch()
@@ -829,6 +850,8 @@ extension HomebrewInventory {
         let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
             .grouping(by: \.abbreviatedToken)
 
+        let ancillaryStats = appstats?.formulae ?? [:]
+
         // the position of the cask in the ranks, which is used to control the initial sort order
         let caskRanks: [String : Int] = (appcasks?.apps ?? [])
             .enumerated()
@@ -840,6 +863,10 @@ extension HomebrewInventory {
 
         //dbg("checking installed casks:", installedCasks.keys.sorted())
         //dbg("checking all casks:", casks.map(\.id).sorted())
+
+        func downloadStatsCount(for token: String) -> Int? {
+            ancillaryStats[token]?.first?.count
+        }
 
         for cask in self.casks {
             // skips casks that don't have any download URL
@@ -856,7 +883,13 @@ extension HomebrewInventory {
 
             let caskInfo = appcaskInfo[caskTokenShort]
 
-            let downloads = caskInfo?.first?.downloadCount
+            let downloadCount = caskInfo?.first?.downloadCount
+            let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
+            // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
+
+            // downloads from the UI itself boost the count by 1K; this is a stopgap effort to phase out the reliance on the cask-based analytics that we don't participate in by default
+            let downloads = ((downloadCount ?? 0) * 1000) + (ancillaryDownloadCount ?? 0)
+
             let readmeURL = caskInfo?.first?.readmeURL
 
             // TODO: extract installed Plist and check bundle identifier?
@@ -907,6 +940,13 @@ extension HomebrewInventory {
 
                 let rank1 = caskRanks[id1]
                 let rank2 = caskRanks[id2]
+
+                // un-ranked casks fall back to being sorted by the download stats
+                if rank1 == nil && rank2 == nil {
+                    let dl1 = downloadStatsCount(for: id1)
+                    let dl2 = downloadStatsCount(for: id2)
+                    return (dl1 ?? 0) > (dl2 ?? 0)
+                }
 
                 guard let rank1 = rank1 else {
                     return rank2 == nil
@@ -1054,6 +1094,59 @@ extension ProcessInfo {
             return false
         }
     }()
+}
+
+/// ```{"category":"cask_install","total_items":6190,"start_date":"2021-12-05","end_date":"2022-01-04","total_count":894812,"items":[{"number":1,"cask":"google-chrome","count":"34,530","percent":"3.86"},{"number":2,"cask":"iterm2","count":"31,096","percent":"3.48"},{"number":6190,"cask":"zulufx11","count":"1","percent":"0"}]}```
+/// https://formulae.brew.sh/docs/api/#list-analytics-events-for-all-cask-formulae
+private struct CaskStats : Equatable, Decodable {
+    /// E.g., `cask_install`
+    let category: String
+
+    /// E.g., `6190`
+    let total_items: Int
+
+    /// E.g., `2021-12-05`
+    let start_date: String
+
+    /// E.g., `2022-01-04`
+    let end_date: String
+
+    /// E.g., `894812`
+    let total_count: Int
+
+    /// Note that the docs call this `items`(see [API Docs](https://formulae.brew.sh/docs/api/#response-5)), but the API returns `formulae`.
+    let formulae: [String: [Stat]]
+
+    /// `{"number":1,"cask":"google-chrome","count":"34,530","percent":"3.86"}`
+    struct Stat : Equatable, Decodable {
+        let cask: String
+        let count: Int
+
+        init(from decoder: Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            self.cask = try values.decode(String.self, forKey: .cask)
+            /// The `count` field should be a number, but is appears to be a numeric string (US localized with commas), but since it ought to be a number and maybe someday will be, also permit a number
+            do {
+                self.count = try values.decode(Int.self, forKey: .count)
+            } catch {
+                let stringCount = try values.decode(String.self, forKey: .count)
+                self.count = Self.formatter.number(from: stringCount)?.intValue ?? 0
+            }
+        }
+
+        enum CodingKeys : String, CodingKey {
+            case cask
+            case count
+        }
+
+        private static let formatter: NumberFormatter = {
+            let fmt = NumberFormatter()
+            fmt.numberStyle = .decimal
+            fmt.isLenient = true
+            fmt.locale = Locale(identifier: "en_US")
+            return fmt
+        }()
+    }
 }
 
 /*

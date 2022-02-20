@@ -370,7 +370,7 @@ public extension View {
                     Text(errorDescription)
                         .font(Font.headline)
                         .textSelection(.enabled)
-                        .lineLimit(1)
+                        .lineLimit(4)
                 }
 
                 if let failureReason = firstError?.failureReason {

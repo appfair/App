@@ -75,6 +75,7 @@ import FairApp
         }
     }
 
+    @available(*, deprecated, message: "invoked multiple times per view")
     func readme(for info: AppInfo) -> AttributedString? {
         guard let readmeURL = info.release.readmeURL else {
             return nil
@@ -117,10 +118,6 @@ import FairApp
 
         return nil
     }
-
-
-
-
 }
 
 extension Error {

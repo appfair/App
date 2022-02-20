@@ -239,10 +239,13 @@ Apps that are distributed through [appfair.net](https://www.appfair.net) will ha
 
 For apps distributed through Homebrew Casks, updates can be registered by following [these instructions](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#submit-a-new-version-of-an-existing-cask).
 
+<!--
+
 #### Can I distribute an iOS app with the App Fair?
 
 Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their installation on iOS devices. This is expected to change in the near future.
 
+-->
 
 <br />
 <br />
