@@ -23,6 +23,54 @@ enum PromptSuppression : Int, CaseIterable {
     case destructive
 }
 
+extension ObservableObject {
+    /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
+    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = loc("OK"), refuse: String = loc("Cancel"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>?) async -> Bool {
+
+        let window = sheetWindow ?? NSApp.currentEvent?.window
+
+        if let suppressionKey = suppressionKey {
+            switch suppressionKey.wrappedValue {
+            case .confirmation: return true
+            case .destructive: return false
+            case .unset: break // show prompt
+            }
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = style
+        alert.messageText = messageText
+        if let informativeText = informativeText {
+            alert.informativeText = informativeText
+        }
+        alert.addButton(withTitle: accept)
+        alert.addButton(withTitle: refuse)
+
+        if let suppressionTitle = suppressionTitle {
+            alert.suppressionButton?.title = suppressionTitle
+        }
+        alert.showsSuppressionButton = suppressionKey != nil
+
+        let response: NSApplication.ModalResponse
+        if let window = window {
+            response = await alert.beginSheetModal(for: window)
+        } else {
+            response = alert.runModal()
+        }
+
+        // remember the response if we have prompted to do so
+        if let suppressionKey = suppressionKey, alert.suppressionButton?.state == .on {
+            switch response {
+            case .alertFirstButtonReturn: suppressionKey.wrappedValue = .confirmation
+            case .alertSecondButtonReturn: suppressionKey.wrappedValue = .destructive
+            default: break
+            }
+        }
+
+        return response == .alertFirstButtonReturn
+    }
+}
+
 /// The manager for installing App Fair apps
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairAppInventory: ObservableObject, AppInventory {
@@ -35,24 +83,35 @@ enum PromptSuppression : Int, CaseIterable {
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
-    /// The item that should be prompted to quit before updating
-    // @Published var promptForAppQuit: AppCatalogItem? = nil
-
-    /// Whether the are currently performing an update
+    /// Whether the app is currently performing an update
     @Published var updateInProgress = 0
 
-    @AppStorage("showPreReleases") var showPreReleases = false
+    @AppStorage("showPreReleases") var showPreReleases = FairAppInventory.showPreReleasesDefault
+    static let showPreReleasesDefault = false
 
-    @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = true
+    @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = FairAppInventory.relaunchUpdatedAppsDefault
+    static let relaunchUpdatedAppsDefault = true
 
-    @AppStorage("riskFilter") var riskFilter = AppRisk.risky
+    @AppStorage("riskFilter") var riskFilter = FairAppInventory.riskFilterDefault
+    static let riskFilterDefault = AppRisk.risky
 
-    @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = true
+    @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = FairAppInventory.autoUpdateCatalogAppDefault
+    static let autoUpdateCatalogAppDefault = true
 
     /// Whether to automatically re-launch the catalog app when it has updated itself
-    @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = PromptSuppression.unset
+    @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = FairAppInventory.relaunchUpdatedCatalogAppDefault
+    static let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
     @Published public var errors: [AppError] = []
+
+    /// Resets all of the `@AppStorage` properties to their default values
+    func resetAppStorage() {
+        self.showPreReleases = Self.showPreReleasesDefault
+        self.relaunchUpdatedApps = Self.relaunchUpdatedAppsDefault
+        self.riskFilter = Self.riskFilterDefault
+        self.autoUpdateCatalogApp = Self.autoUpdateCatalogAppDefault
+        self.relaunchUpdatedCatalogApp = Self.relaunchUpdatedCatalogAppDefault
+    }
 
     /// Register that an error occurred with the app manager
     func reportError(_ error: Error) {
@@ -398,7 +457,7 @@ extension FairAppInventory {
 
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
-        //let isCatalogBrowserApp = item.bundleIdentifier == Bundle.mainBundleID
+        let window = NSApp.currentEvent?.window
 
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
@@ -478,28 +537,25 @@ extension FairAppInventory {
         }
 
         if self.relaunchUpdatedApps == true {
-            dbg("re-launching app:", item.bundleIdentifier)
             @MainActor func relaunch() {
+                dbg("re-launching app:", item.bundleIdentifier)
                 terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
             }
 
+            // the catalog app is special, since re-launching requires quitting the current app
             let isCatalogApp = item.bundleIdentifier.rawValue == Bundle.main.bundleID
             if !isCatalogApp {
                 // automatically re-launch any app that isn't a catalog app
                 relaunch()
             } else {
                 // if this is the catalog app, prompt the user to re-launch
-                prompt(Text("This catalog app has been updated to the latest version. Would you like to re-launch?"), accept: Text("Re-launch app"), refuse: Text("Later"), suppressionKey: $relaunchUpdatedCatalogApp) {
+                let response = await prompt(window: window, messageText: loc("App Fair has been updated"), informativeText: loc("This app has been updated to the latest version. Would you like to re-launch it?"), accept: loc("Re-launch"), refuse: loc("Later"), suppressionKey: $relaunchUpdatedCatalogApp)
+                dbg("prompt response:", response)
+                if response == true {
                     relaunch()
                 }
             }
         }
-    }
-
-    @available(*, deprecated, message: "TODO: implement")
-    func prompt(_ title: Text, accept: Text = Text("OK"), refuse: Text = Text("Cancel"), suppressionKey: Binding<PromptSuppression>?, action: @escaping () -> ()) {
-        // TODO: implement
-        action()
     }
 
     private func trash(_ fileURL: URL) async throws {
