@@ -25,7 +25,6 @@ struct CatalogItemView: View {
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
 
-    @State private var caskSummary: String? = nil
     @State private var caskURLFileSize: Int64? = nil
     @State private var caskURLModifiedDate: Date? = nil
 
@@ -204,7 +203,7 @@ struct CatalogItemView: View {
             // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)
-                let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData))
+                let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
                 if jsonSource {
                     do {
                         let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
@@ -419,12 +418,26 @@ struct CatalogItemView: View {
         }
     }
 
+    // MARK: README
+
+    @State var readmeText: Result<AttributedString, Error>? = nil
+    @State var fetchingReadme = 0
+
     func descriptionSection() -> some View {
-        groupBox(title: Text("Description"), trailing: EmptyView()) {
+        groupBox(title: Text("Description"), trailing: progressAccessory(fetchingReadme)) {
             ScrollView {
                 Group {
-                    readmeSummary()
+                    Text(readmeText?.successValue ?? "")
+                        .task {
+                            if fetchingReadme == 0 {
+                                fetchingReadme += 1
+                                await fetchReadme()
+                                fetchingReadme -= 1
+                            }
+                        }
                         .font(Font.body)
+                        .redacting(when: self.readmeText == nil)
+                        .font(Font.body.monospaced())
                 }
                 .textSelection(.enabled)
                 .multilineTextAlignment(.leading)
@@ -434,14 +447,54 @@ struct CatalogItemView: View {
         }
     }
 
+    private static let readmeRegex = Result {
+        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+    }
+
+    private func fetchReadme() async {
+        let readmeURL = info.release.readmeURL
+        do {
+            dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
+            if let readmeURL = readmeURL {
+                let data = try await URLRequest(url: readmeURL, cachePolicy: .reloadRevalidatingCacheData)
+                    .fetch(validateFragmentHash: true)
+                var atx = String(data: data, encoding: .utf8) ?? ""
+                // extract the portion of text between the "# Description" and following "#" sections
+                if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+                    atx = (atx as NSString).substring(with: match)
+                } else {
+                    if !info.isCask { // casks don't have this requirement; permit full READMEs
+                        atx = ""
+                    }
+                }
+
+                // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
+
+                // note this this differs with casks
+                let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
+                self.readmeText = Result {
+                    try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+                }
+            }
+        } catch {
+            dbg("error handling README:", error)
+            if let readmeURL = readmeURL {
+                self.readmeText = .failure(error)
+            }
+        }
+    }
+
     /// The accessory on the trailing section of a `groupBox`
-    func progressAccessory(_ fetching: Int) -> some View {
+    @ViewBuilder func progressAccessory(_ fetching: Int) -> some View {
         ProgressView()
             .opacity(fetching > 0 ? 1.0 : 0.0).controlSize(.mini)
             .padding(.trailing, 8)
-            .animation(Animation.easeInOut.delay(1.0), value: fetching)
+            .animation(Animation.easeInOut, value: fetching)
     }
 
+    // MARK: Description / Summary
+
+    @State var caskSummary: String? = nil
     @State var fetchingFormula = 0
 
     func formulaSection(cask: CaskItem) -> some View {
@@ -450,9 +503,11 @@ struct CatalogItemView: View {
                 Group {
                     Text(self.caskSummary ?? "")
                         .task {
-                            fetchingFormula += 1
-                            await fetchCaskSummary()
-                            fetchingFormula -= 1
+                            if fetchingFormula == 0 {
+                                fetchingFormula += 1
+                                await fetchCaskSummary()
+                                fetchingFormula -= 1
+                            }
                         }
                         .font(Font.body.monospacedDigit())
                         .redacting(when: self.caskSummary == nil)
@@ -554,12 +609,6 @@ struct CatalogItemView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder func readmeSummary() -> some View {
-        let readme = self.fairManager.readme(for: self.info)
-        Text(readme ?? "")
-            .redacting(when: readme == nil)
-    }
-
     func permissionListItem(permission: AppPermission) -> some View {
         let entitlement = permission.type
 
@@ -615,7 +664,6 @@ struct CatalogItemView: View {
         }
     }
 
-
     func screenshotPreviewOverlay() -> some View {
         ZStack {
             if self.previewScreenshot != nil {
@@ -655,6 +703,7 @@ struct CatalogItemView: View {
                     }
 
                 }
+                .prefersDefaultFocus(in: namespace)
                 .onTapGesture {
                     // tapping anywhere in the view will close the preview
                     withAnimation {
