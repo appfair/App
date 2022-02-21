@@ -86,20 +86,20 @@ extension ObservableObject {
     /// Whether the app is currently performing an update
     @Published var updateInProgress = 0
 
-    @AppStorage("showPreReleases") var showPreReleases = FairAppInventory.showPreReleasesDefault
+    @AppStorage("showPreReleases") var showPreReleases = showPreReleasesDefault
     static let showPreReleasesDefault = false
 
-    @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = FairAppInventory.relaunchUpdatedAppsDefault
+    @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = relaunchUpdatedAppsDefault
     static let relaunchUpdatedAppsDefault = true
 
-    @AppStorage("riskFilter") var riskFilter = FairAppInventory.riskFilterDefault
+    @AppStorage("riskFilter") var riskFilter = riskFilterDefault
     static let riskFilterDefault = AppRisk.risky
 
-    @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = FairAppInventory.autoUpdateCatalogAppDefault
+    @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = autoUpdateCatalogAppDefault
     static let autoUpdateCatalogAppDefault = true
 
     /// Whether to automatically re-launch the catalog app when it has updated itself
-    @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = FairAppInventory.relaunchUpdatedCatalogAppDefault
+    @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = relaunchUpdatedCatalogAppDefault
     static let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
     @Published public var errors: [AppError] = []

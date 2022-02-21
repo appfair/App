@@ -509,9 +509,8 @@ struct CatalogItemView: View {
                                 fetchingFormula -= 1
                             }
                         }
-                        .font(Font.body.monospacedDigit())
-                        .redacting(when: self.caskSummary == nil)
                         .font(Font.body.monospaced())
+                        .redacting(when: self.caskSummary == nil)
                 }
                 .textSelection(.enabled)
                 .multilineTextAlignment(.leading)
@@ -1332,7 +1331,7 @@ public struct TitleAndIconFlippedLabelStyle : LabelStyle {
     public func makeBody(configuration: TitleAndIconLabelStyle.Configuration) -> some View {
         HStack(alignment: .firstTextBaseline) {
             configuration.title
-            configuration.icon
+            configuration.icon.frame(width: 16) // otherwise, icons are not aligned
         }
     }
 }

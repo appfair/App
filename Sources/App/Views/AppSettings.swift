@@ -115,6 +115,11 @@ struct HomebrewSettingsView: View {
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
+                Toggle(isOn: $homeBrewInv.installDependencies) {
+                    Text(atx: "Automatically install dependencies")
+                }
+                    .help(Text("Automatically attempt to install any required dependencies for a cask."))
+
                 Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
                     Text(atx: "Clear all app info on delete")
                         //.label(.bolt)
