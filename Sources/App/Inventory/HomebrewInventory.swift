@@ -100,7 +100,7 @@ private extension AppInventory where Self : HomebrewInventory {
     @Published private var appInfos: [AppInfo] = []
 
     /// The current catalog of casks
-    @Published private var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+    @Published var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
 
     /// The download stats for cask tokens
     @Published private var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
@@ -261,7 +261,7 @@ private extension AppInventory where Self : HomebrewInventory {
     }
 
     /// Fetches the cask list and populates it in the `casks` property
-    fileprivate func fetchCasks() async throws -> Array<CaskItem> {
+    func fetchCasks() async throws -> Array<CaskItem> {
         dbg("loading cask list")
         let url = self.caskList
         let data = try await URLRequest(url: url).fetch()
@@ -753,11 +753,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
 
         // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
-        if gatekeeperCheck == true {
+        if try gatekeeperCheck
+            && (FileManager.default.isQuarantined(at: installPath)) == true {
             do {
-                let isQuarantined = try FileManager.default.isQuarantined(at: installPath)
-
-                dbg("performing gatekeeper check for:", installPath.path, "quarantined:", isQuarantined)
+                dbg("performing gatekeeper check for quarantined path:", installPath.path)
                 let result = try Process.spctlAssess(appURL: installPath)
                 if result.exitCode == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
                     dbg("gatekeeper check failed:", result)
