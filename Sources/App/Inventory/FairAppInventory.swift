@@ -25,7 +25,7 @@ enum PromptSuppression : Int, CaseIterable {
 
 extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
-    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = loc("OK"), refuse: String = loc("Cancel"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>?) async -> Bool {
+    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = loc("OK"), refuse: String = loc("Cancel"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
 
         let window = sheetWindow ?? NSApp.currentEvent?.window
 

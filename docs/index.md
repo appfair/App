@@ -214,7 +214,7 @@ If, on the other hand, you already having an existing notarized Mac app that you
 
 #### How can I add, update, or remove my app's "Cask" information?
 
-The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [list of availabele casks](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a [pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request) to update or remove it.
+The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [list of available casks](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a [pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request) to update or remove it.
 
 If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
 

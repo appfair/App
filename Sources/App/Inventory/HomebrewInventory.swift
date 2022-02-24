@@ -741,21 +741,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     func launch(item: AppCatalogItem, gatekeeperCheck: Bool) async throws {
         let installPath = try self.installPath(for: item)
         dbg(item.id, installPath?.path)
-        if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
-            if gatekeeperCheck == true {
-                do {
-                    try Process.spctlAssess(appURL: installPath)
-                } catch {
-                    dbg("gatekeeper check failed:", error)
-                }
-            }
-            dbg("launching:", installPath.path)
-
-            let cfg = NSWorkspace.OpenConfiguration()
-            cfg.activates = true
-
-            try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
-        } else {
+        guard let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) else {
             // only packages that contain dmg/zips of .app files are linked to the /Applications/Name.app; applications installed using package installers don't reference their target app installation, except possibly in the delete stanza of the my-app.rb file. E.g.:
             // pkg "My App.pkg"
             // uninstall pkgutil: "app.MyApp.plist",
@@ -766,6 +752,40 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             throw AppError("Could not find install path for “\(item.name)”")
         }
 
+        // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
+        if gatekeeperCheck == true {
+            do {
+                let isQuarantined = try FileManager.default.isQuarantined(at: installPath)
+
+                dbg("performing gatekeeper check for:", installPath.path, "quarantined:", isQuarantined)
+                let result = try Process.spctlAssess(appURL: installPath)
+                if result.exitCode == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
+                    dbg("gatekeeper check failed:", result)
+                    if (await prompt(.warning, messageText: loc("Unidentified Developer"), informativeText: loc("The app “\(item.name)” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at \(item.homepage?.absoluteString ?? ""), you may override the quarantine for this app in order to launch it."), accept: loc("Launch"))) == false {
+                        dbg("cancelling launch due to unidentified developer")
+                        return
+                    }
+
+                    // ideally, we would white-list the app with spctl, but gatekeeper seems to randomly reject the request, and even when it succeeds, it seems to randomly reset the permission again in the futurel
+                    //try Process.spctlEnable(appURL: installPath)
+                    //try Process.removeQuarantine(appURL: installPath)
+
+                    // so instead, take the nuclear option and just clear the quarantine bits on the app
+                    try FileManager.default.clearQuarantine(at: installPath)
+                }
+            } catch {
+                dbg("gatekeeper check failed:", error)
+                // try to proceed anyway
+            }
+
+        }
+
+        dbg("launching:", installPath.path)
+
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.promptsUserIfNeeded = true
+        cfg.activates = true
+        try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
     }
 
     /// Un-installs the local copy of Homebrew (by simply deleting the local install root)
