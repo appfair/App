@@ -10,7 +10,7 @@ let package = Package(
         // the Fair main branch must be the *first* dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
-        .package(name: "AudioKit", url: "https://github.com/AudioKit/AudioKit.git", from: "5.2.2"),
+        .package(name: "AudioKit", url: "https://github.com/AudioKit/AudioKit.git", from: "5.3.1"),
     ],
     targets: [
         .target(name: "App", dependencies: [ 
