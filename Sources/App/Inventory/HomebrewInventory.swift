@@ -331,58 +331,6 @@ private extension AppInventory where Self : HomebrewInventory {
         return tokenVersions
     }
 
-    /// Performs a homebrew installation action by launching a Terminal.app window and issuing a shell command.
-    func manageInstallation(install: Bool, downloadInstallerScript: Bool = true) async throws {
-        let cacheFolder = Self.localCacheFolder
-
-        let cmdFile = URL(fileURLWithPath: "homebrew-" + (install ? "installer" : "updater"), relativeTo: cacheFolder).appendingPathExtension("sh")
-
-        if install == true {
-            let installScript = URL(string: "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")!
-            if downloadInstallerScript {
-                // download the installer script directly and execute it; perhaps a little safer than forking `curl`
-                let scriptData = try await URLRequest(url: installScript).fetch()
-                try scriptData.write(to: cmdFile)
-            } else {
-                // otherwise use the complete download command, which uses `curl` to execute the script
-                /// The recommended install command from https://brew.sh
-                let cmd = "/bin/bash -c \"$(curl -fsSL \(installScript.absoluteString))\""
-                try (cmd + "\n").write(to: cmdFile, atomically: true, encoding: .utf8)
-            }
-        } else { // update
-            let cmd = self.localBrewCommand.path + " update"
-            try (cmd + "\n").write(to: cmdFile, atomically: true, encoding: .utf8)
-        }
-
-        try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: cmdFile.path) // set the executable bit
-
-        // (echo 'tell application "com.apple.Terminal"'; echo ' do script("echo hello")'; echo 'end tell') | osascript
-        let scriptFile = URL(fileURLWithPath: "homebrew-script.scpt", relativeTo: cacheFolder)
-
-        // we might like "with administrator privileges" for the initial homebrew install, but it doesn't seem to work with tell to the terminal, so we would need to 
-        /// `do shell script \"\(command)\" with administrator privileges`
-
-        // otherwise, the script will prompt for sudo password if needed
-
-        let script = """
-        tell application "Terminal"
-            activate
-            do script("\(cmdFile.path)")
-        end tell
-        """
-
-        dbg("running script:", script)
-        
-        try script.write(to: scriptFile, atomically: false, encoding: .utf8)
-
-        // defer { try? FileManager.default.removeItem(at: scriptFile) }
-
-        dbg("wrote to:", scriptFile.path)
-        let task = try NSUserAppleScriptTask(url: scriptFile)
-        let desc: NSAppleEventDescriptor = try await task.execute(withAppleEvent: nil)
-        dbg("executed:", desc)
-    }
-
     func caskEnvironment() -> String {
         var cmd = ""
 
@@ -390,7 +338,7 @@ private extension AppInventory where Self : HomebrewInventory {
         cmd += "HOMEBREW_DEBUG=1 "
         //#endif
 
-        // we always use the API for fetching casks to avoid having to check out the entire cask repo
+        // we always use the API for fetching casks to avoid having to clone the whole cask repo
         cmd += "HOMEBREW_INSTALL_FROM_API=1 "
 
         // don't lookup failure reasons on GitHub
@@ -685,27 +633,47 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
+    fileprivate func findAppLink(in children: [URL]) -> URL? {
+        for appURL in children {
+            dbg("checking install child:", appURL.path)
+            if appURL.pathExtension == "app"
+                && FileManager.default.isExecutableFile(atPath: appURL.path) {
+                // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
+                let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
+                dbg("executable:", appURL.path, linkPath)
+
+                if let linkPath = linkPath {
+                    return URL(fileURLWithPath: linkPath)
+                } else {
+                    return appURL
+                }
+            }
+        }
+
+        return nil
+    }
+
     func installPath(for item: AppCatalogItem) throws -> URL? {
         let token = item.bundleIdentifier.caskToken ?? ""
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) == true {
             let children = try versionDir.fileChildren(deep: false, skipHidden: true)
-            for appURL in children {
-                dbg("checking install child:", appURL.path)
-                if appURL.pathExtension == "app"
-                    && FileManager.default.isExecutableFile(atPath: appURL.path) {
-                    // try to resolve the symbolic link (e.g., /opt/homebrew/Caskroom/discord/0.0.264/Discord.app -> /Applications/Discord.app so revealing the app will show it in the destination context
-                    let linkPath = try? FileManager.default.destinationOfSymbolicLink(atPath: appURL.path)
-                    dbg("executable:", appURL.path, linkPath)
+            if let link = findAppLink(in: children) {
+                return link
+            }
 
-                    if let linkPath = linkPath {
-                        return URL(fileURLWithPath: linkPath)
-                    } else {
-                        return appURL
+            // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Caches/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
+            for child in children {
+                if FileManager.default.isDirectory(url: child) == true {
+                    dbg("checking sub-clild:", child.path)
+                    let subChildren = try child.fileChildren(deep: false, skipHidden: true)
+                    if let link = findAppLink(in: subChildren) {
+                        return link
                     }
                 }
             }
+
             dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
         }
 

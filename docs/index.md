@@ -247,6 +247,27 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 
 -->
 
+<!--
+
+### Advanced User FAQs
+
+#### How does the App Fair co-exist with an existing Homebrew installation?
+
+The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Caches/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the enture cask repository.
+
+marc@zap Fair % ~/Library/Caches/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
+
+#### Can I remove an app using the command line?
+
+
+marc@zap Fair % ~/Library/Caches/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
+==> Uninstalling Cask rectangle
+==> Backing App 'Rectangle.app' up to '/Users/marc/Library/Caches/appfair-homebr
+==> Removing App '/Applications/Rectangle.app'
+==> Purging files for version 0.51,57 of Cask rectangle
+-->
+
+
 <br />
 <br />
 <br />
