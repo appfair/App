@@ -1020,16 +1020,17 @@ extension HomebrewInventory {
         }
 
         func matches(_ string: String?) -> Bool {
-            string?.localizedCaseInsensitiveContains(searchText) == true
+            string?.localizedCaseInsensitiveContains(txt) == true
         }
 
         if matches(item.cask?.tapToken) { return true }
-        if matches(item.release.name) { return true }
-        if matches(item.release.developerName) { return true }
         if matches(item.cask?.homepage) { return true }
+
+        if matches(item.release.name) { return true }
         if matches(item.release.subtitle) { return true }
+        if matches(item.release.developerName) { return true }
         if matches(item.release.localizedDescription) { return true }
-        
+
         return false
     }
 

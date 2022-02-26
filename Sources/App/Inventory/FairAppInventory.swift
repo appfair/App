@@ -294,11 +294,18 @@ extension FairAppInventory {
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (txt.count < minimumSearchLength
-                || item.release.bundleIdentifier.rawValue.localizedCaseInsensitiveContains(searchText) == true
-                || item.release.name.localizedCaseInsensitiveContains(searchText) == true
-                || item.release.subtitle?.localizedCaseInsensitiveContains(searchText) == true
-                || item.release.localizedDescription?.localizedCaseInsensitiveContains(searchText) == true)
+        func matches(_ string: String?) -> Bool {
+            string?.localizedCaseInsensitiveContains(txt) == true
+        }
+
+        if matches(item.release.bundleIdentifier.rawValue) { return true }
+        
+        if matches(item.release.name) { return true }
+        if matches(item.release.subtitle) { return true }
+        if matches(item.release.developerName) { return true }
+        if matches(item.release.localizedDescription) { return true }
+        
+        return false
     }
 
     /// The main folder for apps
