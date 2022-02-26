@@ -1093,7 +1093,7 @@ struct CatalogItemView: View {
         //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
-        let img = item.appCategories.first?.groupings.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
+        let img = item.appCategories.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
         let baseColor = item.itemTintColor()
         return ZStack {
             Circle()
@@ -1263,8 +1263,11 @@ extension AppCatalogItem {
         //            // cask apps use a blank icon
         //        } else {
         //FairIconView(self.name, subtitle: self.id.rawValue, iconColor: itemTintColor())
-        //        }
-        Circle().fill(.secondary).opacity(0.5)
+        //
+        let baseColor = itemTintColor()
+        Circle()
+            .fill(baseColor)
+            .opacity(0.5)
     }
 
     /// The specified tint color, falling back on the default tint for the app name

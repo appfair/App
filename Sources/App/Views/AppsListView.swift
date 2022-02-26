@@ -118,10 +118,12 @@ struct AppsListView : View {
                     .font(.headline)
                     .lineLimit(1)
                 HStack {
-                    if let group = item.release.appCategories.first?.groupings.first {
-                        group.tintedLabel
+                    if let category = item.release.appCategories.first {
+                        // category.tintedLabel
+                        TintedLabel(title: category.text, systemName: category.symbol.symbolName, tint: item.release.itemTintColor(), mode: .hierarchical)
+                            .symbolVariant(.fill)
                             .labelStyle(.iconOnly)
-                            .help(group.text)
+                            .help(category.text)
                             .frame(width: 20)
                     }
                     Text(verbatim: item.release.subtitle ?? "")

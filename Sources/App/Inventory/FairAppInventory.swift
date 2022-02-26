@@ -294,6 +294,11 @@ extension FairAppInventory {
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if txt.count < minimumSearchLength {
+            return true
+        }
+
         func matches(_ string: String?) -> Bool {
             string?.localizedCaseInsensitiveContains(txt) == true
         }
@@ -702,9 +707,12 @@ extension FairAppInventory {
     func badgeCount(for item: SidebarItem) -> Text? {
         switch item {
         case .top:
-            return nil // Text(123.localizedNumber(style: .decimal))
+            return Text(appInfoItems(includePrereleases: showPreReleases).count, format: .number)
         case .recent:
-            return nil // Text(11.localizedNumber(style: .decimal))
+            return Text(appInfoItems(includePrereleases: showPreReleases)
+            .filter {
+                ($0.release.versionDate ?? .distantPast) > (Date() - (60 * 60 * 24 * 30))
+            }.count, format: .number)
         case .updated:
             return Text(updateCount(), format: .number)
         case .installed:
@@ -724,7 +732,7 @@ extension FairAppInventory {
         case updated
         case installed
         case recent
-        case category(_ group: AppCategory.Grouping)
+        case category(_ category: AppCategory)
 
         /// The persistent identifier for this grouping
         var id: String {
@@ -737,8 +745,8 @@ extension FairAppInventory {
                 return "installed"
             case .recent:
                 return "recent"
-            case .category(let grouping):
-                return "category:" + grouping.rawValue
+            case .category(let category):
+                return "category:" + category.rawValue
             }
         }
 
@@ -754,8 +762,8 @@ extension FairAppInventory {
                     return TintedLabel(title: Text("Installed"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
                 case .updated:
                     return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
-                case .category(let grouping):
-                    return grouping.tintedLabel
+                case .category(let category):
+                    return category.tintedLabel
                 }
             case .homebrew:
                 switch self {
@@ -765,10 +773,10 @@ extension FairAppInventory {
                     return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
                 case .recent: // not supported with casks
                     return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
-                case .category(let grouping):
-                    return grouping.tintedLabel
                 case .updated:
                     return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
+                case .category(let category):
+                    return category.tintedLabel
                 }
             }
 
@@ -805,7 +813,7 @@ extension FairAppInventory.SidebarItem {
         case .recent:
             return true
         case .category(let category):
-            return Set(category.categories).intersection(item.release.appCategories).isEmpty == false
+            return item.release.appCategories.contains(category)
         }
     }
 }

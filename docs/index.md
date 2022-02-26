@@ -253,7 +253,7 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 
 #### How does the App Fair co-exist with an existing Homebrew installation?
 
-The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Caches/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the enture cask repository.
+The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Caches/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository.
 
 marc@zap Fair % ~/Library/Caches/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
 

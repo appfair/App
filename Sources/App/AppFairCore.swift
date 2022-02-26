@@ -25,9 +25,9 @@ public extension AppSource {
     var symbol: FairSymbol {
         switch self {
         case .fairapps:
-            return .ticket_fill
+            return .ticket
         case .homebrew:
-            return .shippingbox
+            return .shippingbox_fill
         }
     }
 }
@@ -703,145 +703,268 @@ extension SwiftUI.Color {
     }
 }
 public extension AppCategory {
-    /// The grouping for an app category
-    enum Grouping : String, CaseIterable, Hashable {
-        case create
-        case research
-        case communicate
-        case entertain
-        case live
-        case game
-        case work
+    @available(macOS 12.0, iOS 15.0, *)
+    var text: Text {
+        switch self {
+        case .business:
+            return Text("Business")
+        case .developertools:
+            return Text("Developer Tools")
+        case .education:
+            return Text("Education")
+        case .entertainment:
+            return Text("Entertainment")
+        case .finance:
+            return Text("Finance")
+        case .graphicsdesign:
+            return Text("Graphics Design")
+        case .healthcarefitness:
+            return Text("Health & Fitness")
+        case .lifestyle:
+            return Text("Lifestyle")
+        case .medical:
+            return Text("Medical")
+        case .music:
+            return Text("Music")
+        case .news:
+            return Text("News")
+        case .photography:
+            return Text("Photography")
+        case .productivity:
+            return Text("Productivity")
+        case .reference:
+            return Text("Reference")
+        case .socialnetworking:
+            return Text("Social Networking")
+        case .sports:
+            return Text("Sports")
+        case .travel:
+            return Text("Travel")
+        case .utilities:
+            return Text("Utilities")
+        case .video:
+            return Text("Video")
+        case .weather:
+            return Text("Weather")
 
-        /// All the categories that belong to this grouping
-        public var symbol: FairSymbol {
-            switch self {
-            case .create: return FairSymbol.puzzlepiece
-            case .research: return FairSymbol.book
-            case .communicate: return FairSymbol.envelope
-            case .entertain: return FairSymbol.sparkles_tv
-            case .live: return FairSymbol.house
-            case .game: return FairSymbol.circle_hexagongrid
-            case .work: return FairSymbol.briefcase
-            }
+        case .games:
+            return Text("Games")
+        case .actiongames:
+            return Text("Action Games")
+        case .adventuregames:
+            return Text("Adventure Games")
+        case .arcadegames:
+            return Text("Arcade Games")
+        case .boardgames:
+            return Text("Board Games")
+        case .cardgames:
+            return Text("Card Games")
+        case .casinogames:
+            return Text("Casino Games")
+        case .dicegames:
+            return Text("Dice Games")
+        case .educationalgames:
+            return Text("Educational Games")
+        case .familygames:
+            return Text("Family Games")
+        case .kidsgames:
+            return Text("Kids Games")
+        case .musicgames:
+            return Text("Music Games")
+        case .puzzlegames:
+            return Text("Puzzle Games")
+        case .racinggames:
+            return Text("Racing Games")
+        case .roleplayinggames:
+            return Text("Role Playing Games")
+        case .simulationgames:
+            return Text("Simulation Games")
+        case .sportsgames:
+            return Text("Sports Games")
+        case .strategygames:
+            return Text("Strategy Games")
+        case .triviagames:
+            return Text("Trivia Games")
+        case .wordgames:
+            return Text("Word Games")
         }
-
-        /// All the categories that belong to this grouping
-        public var symbolName: String {
-            symbol.symbolName
-        }
-
-        /// All the categories that belong to this grouping
-        @available(macOS 12.0, iOS 15.0, *)
-        public var tintColor: Color {
-            switch self {
-            case .create: return .cyan
-            case .research: return .green
-            case .communicate: return .pink
-            case .entertain: return .teal
-            case .live: return .mint
-            case .game: return .yellow
-            case .work: return .brown
-            }
-        }
-
-
-        @available(macOS 12.0, iOS 15.0, *)
-        public var tintedLabel: TintedLabel {
-            TintedLabel(title: text, systemName: symbolName, tint: tintColor)
-        }
-
-        @available(macOS 12.0, iOS 15.0, *)
-        public var text: Text {
-            switch self {
-            case .create:
-                return Text("Arts & Crafts")
-            case .research:
-                return Text("Knowledge")
-            case .communicate:
-                return Text("Communication")
-            case .entertain:
-                return Text("Entertainment")
-            case .live:
-                return Text("Health & Lifestyle")
-            case .game:
-                return Text("Diversion")
-            case .work:
-                return Text("Work")
-            }
-        }
-
-        /// All the categories that belong to this grouping
-        public var categories: [AppCategory] {
-            switch self {
-            case .create: return Self.createCategories
-            case .research: return Self.researchCategories
-            case .communicate: return Self.communicateCategories
-            case .entertain: return Self.entertainCategories
-            case .live: return Self.liveCategories
-            case .game: return Self.gameCategories
-            case .work: return Self.workCategories
-            }
-        }
-
-        private static let createCategories = AppCategory.allCases.filter({ $0.groupings.contains(.create) })
-        private static let researchCategories = AppCategory.allCases.filter({ $0.groupings.contains(.research) })
-        private static let communicateCategories = AppCategory.allCases.filter({ $0.groupings.contains(.communicate) })
-        private static let entertainCategories = AppCategory.allCases.filter({ $0.groupings.contains(.entertain) })
-        private static let liveCategories = AppCategory.allCases.filter({ $0.groupings.contains(.live) })
-        private static let gameCategories = AppCategory.allCases.filter({ $0.groupings.contains(.game) })
-        private static let workCategories = AppCategory.allCases.filter({ $0.groupings.contains(.work) })
     }
 
-    var groupings: Set<Grouping> {
+    @available(macOS 12.0, iOS 15.0, *)
+    var symbol: FairSymbol {
         switch self {
-        case .graphicsdesign: return [.create]
-        case .photography: return [.create]
-        case .productivity: return [.create]
-        case .video: return [.create]
-        case .developertools: return [.create]
+        case .business:
+            return .building_2
+        case .developertools:
+            return .keyboard
+        case .education:
+            return .graduationcap
+        case .entertainment:
+            return .tv
+        case .finance:
+            return .diamond
+        case .graphicsdesign:
+            return .paintpalette
+        case .healthcarefitness:
+            return .figure_walk
+        case .lifestyle:
+            return .suitcase
+        case .medical:
+            return .cross_case
+        case .music:
+            return .radio
+        case .news:
+            return .newspaper
+        case .photography:
+            return .camera
+        case .productivity:
+            return .puzzlepiece
+        case .reference:
+            return .books_vertical
+        case .socialnetworking:
+            return .person_3
+        case .sports:
+            return .rosette
+        case .travel:
+            return .suitcase
+        case .utilities:
+            return .crown
+        case .video:
+            return .film
+        case .weather:
+            return .cloud
 
-        case .business: return [.work]
-        case .finance: return [.work]
-        case .utilities: return [.work]
-
-        case .education: return [.research]
-        case .weather: return [.research]
-        case .reference: return [.research]
-        case .news: return [.research]
-
-        case .socialnetworking: return [.communicate]
-
-        case .healthcarefitness: return [.live]
-        case .lifestyle: return [.live]
-        case .medical: return [.live]
-        case .travel: return [.live]
-
-        case .sports: return [.entertain]
-        case .entertainment: return [.entertain]
-
-        case .games: return [.game]
-        case .actiongames: return [.game]
-        case .adventuregames: return [.game]
-        case .arcadegames: return [.game]
-        case .boardgames: return [.game]
-        case .cardgames: return [.game]
-        case .casinogames: return [.game]
-        case .dicegames: return [.game]
-        case .educationalgames: return [.game]
-        case .familygames: return [.game]
-        case .kidsgames: return [.game]
-        case .musicgames: return [.game]
-        case .puzzlegames: return [.game]
-        case .racinggames: return [.game]
-        case .roleplayinggames: return [.game]
-        case .simulationgames: return [.game]
-        case .sportsgames: return [.game]
-        case .strategygames: return [.game]
-        case .triviagames: return [.game]
-        case .wordgames: return [.game]
-        case .music: return [.game]
+        case .games:
+            return .gamecontroller
+            
+        case .actiongames:
+            return .gamecontroller
+        case .adventuregames:
+            return .gamecontroller
+        case .arcadegames:
+            return .gamecontroller
+        case .boardgames:
+            return .gamecontroller
+        case .cardgames:
+            return .gamecontroller
+        case .casinogames:
+            return .gamecontroller
+        case .dicegames:
+            return .gamecontroller
+        case .educationalgames:
+            return .gamecontroller
+        case .familygames:
+            return .gamecontroller
+        case .kidsgames:
+            return .gamecontroller
+        case .musicgames:
+            return .gamecontroller
+        case .puzzlegames:
+            return .gamecontroller
+        case .racinggames:
+            return .gamecontroller
+        case .roleplayinggames:
+            return .gamecontroller
+        case .simulationgames:
+            return .gamecontroller
+        case .sportsgames:
+            return .gamecontroller
+        case .strategygames:
+            return .gamecontroller
+        case .triviagames:
+            return .gamecontroller
+        case .wordgames:
+            return .gamecontroller
         }
+    }
+
+    var tint: Color {
+        switch self {
+        case .business:
+            return Color.green
+        case .developertools:
+            return Color.gray
+        case .education:
+            return Color.blue
+        case .entertainment:
+            return Color.purple
+        case .finance:
+            return Color.green
+        case .graphicsdesign:
+            return Color.teal
+        case .healthcarefitness:
+            return Color.mint
+        case .lifestyle:
+            return Color.orange
+        case .medical:
+            return Color.white
+        case .music:
+            return Color.yellow
+        case .news:
+            return Color.brown
+        case .photography:
+            return Color.pink
+        case .productivity:
+            return Color.cyan
+        case .reference:
+            return Color.white
+        case .socialnetworking:
+            return Color.yellow
+        case .sports:
+            return Color.teal
+        case .travel:
+            return Color.indigo
+        case .utilities:
+            return Color.purple
+        case .video:
+            return Color.yellow
+        case .weather:
+            return Color.blue
+        case .games:
+            return Color.red
+        case .actiongames:
+            return Color.red
+        case .adventuregames:
+            return Color.red
+        case .arcadegames:
+            return Color.red
+        case .boardgames:
+            return Color.red
+        case .cardgames:
+            return Color.red
+        case .casinogames:
+            return Color.red
+        case .dicegames:
+            return Color.red
+        case .educationalgames:
+            return Color.red
+        case .familygames:
+            return Color.red
+        case .kidsgames:
+            return Color.red
+        case .musicgames:
+            return Color.red
+        case .puzzlegames:
+            return Color.red
+        case .racinggames:
+            return Color.red
+        case .roleplayinggames:
+            return Color.red
+        case .simulationgames:
+            return Color.red
+        case .sportsgames:
+            return Color.red
+        case .strategygames:
+            return Color.red
+        case .triviagames:
+            return Color.red
+        case .wordgames:
+            return Color.red
+        }
+    }
+
+    var tintedLabel: TintedLabel {
+        TintedLabel(title: text, systemName: symbol.symbolName, tint: tint)
     }
 }
 
@@ -872,19 +995,9 @@ struct SidebarView: View {
     @Binding var displayMode: TriptychOrient
     @Binding var searchText: String
 
-    func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
-        let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
-        if index > 9 || index < 0 {
-            return KeyboardShortcut("0") // otherwise: Fatal error: Can't form a Character from a String containing more than one extended grapheme cluster
-        } else {
-            let key = Character("\(index)") // the first three are taken by favorites
-            return KeyboardShortcut(KeyEquivalent(key))
-        }
-    }
-
-    private func sectionHeader(source: AppSource, updating: Bool) -> some View {
+    private func sectionHeader(label: Label<Text, Image>, updating: Bool) -> some View {
         HStack {
-            source.label.labelStyle(.titleOnly)
+            label.labelStyle(.titleOnly)
             if updating {
                 Spacer()
                 ProgressView()
@@ -905,9 +1018,10 @@ struct SidebarView: View {
                             // item(.homebrew, .recent) // casks don't have a last-updated date
                             item(.homebrew, item: .installed).keyboardShortcut("2")
                             item(.homebrew, item: .updated).keyboardShortcut("3")
+                                .symbolVariant(.fill)
                         } header: {
-                            sectionHeader(source: source, updating: homeBrewInv.updateInProgress != 0)
-                        }
+                            sectionHeader(label: source.label, updating: homeBrewInv.updateInProgress != 0)
+                         }
                     }
 
                 case .fairapps:
@@ -917,24 +1031,28 @@ struct SidebarView: View {
                         item(.fairapps, item: .installed).keyboardShortcut("6")
                         item(.fairapps, item: .updated).keyboardShortcut("7")
                     } header: {
-                        sectionHeader(source: source, updating: fairAppInv.updateInProgress != 0)
+                        sectionHeader(label: source.label, updating: fairAppInv.updateInProgress != 0)
 
                     }
                 }
+
+
             }
 
-//            Section("Categories") {
-//                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
-//                    item(.fairapps, .category(grouping))
-//                        .keyboardShortcut(shortCut(for: grouping, offset: 5))
-//                }
-//            }
-
-//            Section("Searches") {
-//                item(.search("Search 1"))
-//                item(.search("Search 2"))
-//                item(.search("Search 3"))
-//            }
+            // categories section
+            // TODO: merge homebrew
+            if homeBrewInv.enableHomebrew {
+                Section {
+                    ForEach(AppCategory.allCases) { cat in
+                        if homeBrewInv.apps(for: cat).isEmpty == false {
+                            item(.homebrew, item: .category(cat))
+                        }
+                    }
+                    .symbolVariant(.fill)
+                } header: {
+                    sectionHeader(label: Label(title: { Text("Categories") }, icon: { FairSymbol.list_dash.image }), updating: homeBrewInv.updateInProgress != 0)
+                }
+            }
         }
         //.symbolVariant(.none)
         .symbolRenderingMode(.hierarchical)
@@ -948,12 +1066,12 @@ struct SidebarView: View {
             tool(.updated)
             tool(.installed)
 
-            tool(.category(.entertain))
-            tool(.category(.research))
-            tool(.category(.create))
-            tool(.category(.game))
-            tool(.category(.live))
-            tool(.category(.work))
+//            tool(.category(.entertain))
+//            tool(.category(.research))
+//            tool(.category(.create))
+//            tool(.category(.game))
+//            tool(.category(.live))
+//            tool(.category(.work))
         }
     }
 

@@ -96,8 +96,11 @@ private extension AppInventory where Self : HomebrewInventory {
     @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = enableBrewSelfUpdateDefault
     static let enableBrewSelfUpdateDefault = false
 
-    /// The arranged list of app info itemsl this is synthesized from the `casks`, `stats`, and `appcasks` properties
-    @Published private var appInfos: [AppInfo] = []
+    /// The arranged list of app info items, synthesized from the `casks`, `stats`, and `appcasks` properties
+    @Published private var appInfos: [AppInfo] = [] { didSet { updateAppCategories() } }
+
+    /// The apps indexed by category
+    @Published private var appCategories: [AppCategory: [AppInfo]] = [:]
 
     /// The current catalog of casks
     @Published var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
@@ -993,6 +996,16 @@ extension HomebrewInventory {
         }
     }
 
+    /// Updates the appCategories index whenever the appInfos property changes
+    func updateAppCategories() {
+        appCategories.removeAll()
+        for app in appInfos {
+            for cat in app.release.appCategories {
+                appCategories[cat, default: []].append(app)
+            }
+        }
+    }
+
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         let infos = appInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
@@ -1040,9 +1053,15 @@ extension HomebrewInventory {
             return installedCasks[item.release.id.rawValue] != nil
         case .updated:
             return appUpdated(item)
+        case .category(let cat):
+            return item.release.categories?.contains(cat.metadataIdentifier) == true
         default:
             return true
         }
+    }
+
+    func apps(for category: AppCategory) -> [AppInfo] {
+        appCategories[category] ?? []
     }
 
     func appUpdated(_ item: AppInfo) -> Bool {
@@ -1084,15 +1103,15 @@ extension HomebrewInventory {
     func badgeCount(for item: FairAppInventory.SidebarItem) -> Text? {
         switch item {
         case .top:
-            return nil
+            return Text(appInfos.count, format: .number)
         case .updated:
             return Text(updateCount(), format: .number)
         case .installed:
             return Text(installedCasks.count, format: .number)
         case .recent:
             return nil
-        case .category(_):
-            return nil
+        case .category(let cat):
+            return Text(apps(for: cat).count, format: .number)
         }
     }
 }
