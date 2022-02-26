@@ -168,13 +168,13 @@ struct SearchCommands: Commands {
             Section {
                 #if os(macOS)
                 Text("Search").button {
+                    dbg("activating search field")
                     if let window = NSApp.currentEvent?.window,
-                       let toolbar = window.toolbar {
+                       let toolbar = window.toolbar,
+                       let searchField = toolbar.visibleItems?.compactMap({ $0 as? NSSearchToolbarItem }).first {
                         // <SwiftUI.AppKitSearchToolbarItem: 0x13a8721a0> identifier = "com.apple.SwiftUI.search"]
-                        if let searchField = toolbar.visibleItems?.first(where: { $0.itemIdentifier.rawValue == "com.apple.SwiftUI.search" }) {
-                            dbg("searchField:", searchField, searchField.view) // view is empty
-                            // window.makeFirstResponder(view)
-                        }
+                        dbg("searchField:", searchField)
+                        window.makeFirstResponder(searchField.searchField)
                     }
                 }
                 .keyboardShortcut("F")
@@ -183,7 +183,6 @@ struct SearchCommands: Commands {
         }
     }
 }
-
 
 @available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
@@ -645,7 +644,7 @@ public struct AppDetailView : View {
 @available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View {
     @Environment(\.colorScheme) var colorScheme
-    public let title: Text
+    public var title: Text
     public let systemName: String
     public var tint: Color? = nil
     public var mode: SymbolRenderingMode? = nil
@@ -902,10 +901,10 @@ struct SidebarView: View {
                 case .homebrew:
                     if homeBrewInv.enableHomebrew {
                         Section {
-                            item(.homebrew, .top).keyboardShortcut("1")
+                            item(.homebrew, item: .top).keyboardShortcut("1")
                             // item(.homebrew, .recent) // casks don't have a last-updated date
-                            item(.homebrew, .installed).keyboardShortcut("2")
-                            item(.homebrew, .updated).keyboardShortcut("3")
+                            item(.homebrew, item: .installed).keyboardShortcut("2")
+                            item(.homebrew, item: .updated).keyboardShortcut("3")
                         } header: {
                             sectionHeader(source: source, updating: homeBrewInv.updateInProgress != 0)
                         }
@@ -913,10 +912,10 @@ struct SidebarView: View {
 
                 case .fairapps:
                     Section {
-                        item(.fairapps, .top).keyboardShortcut("4")
-                        item(.fairapps, .recent).keyboardShortcut("5")
-                        item(.fairapps, .installed).keyboardShortcut("6")
-                        item(.fairapps, .updated).keyboardShortcut("7")
+                        item(.fairapps, item: .top).keyboardShortcut("4")
+                        item(.fairapps, item: .recent).keyboardShortcut("5")
+                        item(.fairapps, item: .installed).keyboardShortcut("6")
+                        item(.fairapps, item: .updated).keyboardShortcut("7")
                     } header: {
                         sectionHeader(source: source, updating: fairAppInv.updateInProgress != 0)
 
@@ -958,12 +957,16 @@ struct SidebarView: View {
         }
     }
 
-    func item(_ source: AppSource, _ item: FairAppInventory.SidebarItem) -> some View {
+    func item(_ source: AppSource, item: FairAppInventory.SidebarItem) -> some View {
         let selection = SidebarSelection(source: source, item: item)
         let label = selection.item.label(for: source)
+        var navtitle = label.title
+        if !searchText.isEmpty {
+            navtitle = navtitle + Text(": ") + Text(searchText)
+        }
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
-                .navigationTitle(label.title)
+                .navigationTitle(navtitle)
         }, label: {
             label.badge(badgeCount(for: selection))
         })

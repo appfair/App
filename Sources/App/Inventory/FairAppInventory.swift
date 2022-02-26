@@ -549,7 +549,7 @@ extension FairAppInventory {
                 relaunch()
             } else {
                 // if this is the catalog app, prompt the user to re-launch
-                let response = await prompt(window: window, messageText: loc("App Fair has been updated"), informativeText: loc("This app has been updated to the latest version. Would you like to re-launch it?"), accept: loc("Re-launch"), refuse: loc("Later"), suppressionKey: $relaunchUpdatedCatalogApp)
+                let response = await prompt(window: window, messageText: loc("App Fair has been updated"), informativeText: loc("This app has been updated from \(Bundle.main.bundleVersionString ?? "?") to the latest version \(item.version ?? "?"). Would you like to re-launch it?"), accept: loc("Re-launch"), refuse: loc("Later"), suppressionKey: $relaunchUpdatedCatalogApp)
                 dbg("prompt response:", response)
                 if response == true {
                     relaunch()

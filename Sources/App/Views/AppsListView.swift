@@ -34,6 +34,7 @@ struct AppsListView : View {
                 }
             }
             .searchable(text: $searchText)
+            .animation(.easeInOut, value: searchText)
         }
     }
 

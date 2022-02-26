@@ -666,7 +666,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Caches/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
             for child in children {
                 if FileManager.default.isDirectory(url: child) == true {
-                    dbg("checking sub-clild:", child.path)
+                    dbg("checking sub-child:", child.path)
                     let subChildren = try child.fileChildren(deep: false, skipHidden: true)
                     if let link = findAppLink(in: subChildren) {
                         return link
@@ -1008,19 +1008,29 @@ extension HomebrewInventory {
     }
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
+        let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
         // searching for a specific cask is an exact match
-        if searchText.hasPrefix("homebrew/cask/") {
-            return item.cask?.tapToken == searchText
+        if txt.hasPrefix("homebrew/cask/") {
+            return item.cask?.tapToken == txt
         }
 
-        let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return txt.count < minimumSearchLength
-        || item.cask?.tapToken.localizedCaseInsensitiveContains(searchText) == true
-        || item.release.name.localizedCaseInsensitiveContains(txt) == true
-        || item.release.developerName?.localizedCaseInsensitiveContains(txt) == true
-        || item.cask?.homepage?.localizedCaseInsensitiveContains(txt) == true
-        || item.release.subtitle?.localizedCaseInsensitiveContains(txt) == true
-        || item.release.localizedDescription?.localizedCaseInsensitiveContains(txt) == true
+        if txt.count < minimumSearchLength {
+            return true
+        }
+
+        func matches(_ string: String?) -> Bool {
+            string?.localizedCaseInsensitiveContains(searchText) == true
+        }
+
+        if matches(item.cask?.tapToken) { return true }
+        if matches(item.release.name) { return true }
+        if matches(item.release.developerName) { return true }
+        if matches(item.cask?.homepage) { return true }
+        if matches(item.release.subtitle) { return true }
+        if matches(item.release.localizedDescription) { return true }
+        
+        return false
     }
 
     func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
