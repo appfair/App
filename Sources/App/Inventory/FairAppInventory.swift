@@ -27,7 +27,7 @@ extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
     @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = loc("OK"), refuse: String = loc("Cancel"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
 
-        let window = sheetWindow ?? NSApp.currentEvent?.window
+        let window = sheetWindow ?? NSApp.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
 
         if let suppressionKey = suppressionKey {
             switch suppressionKey.wrappedValue {
@@ -55,7 +55,7 @@ extension ObservableObject {
         if let window = window {
             response = await alert.beginSheetModal(for: window)
         } else {
-            response = alert.runModal()
+            response = alert.runModal() // note that this tends to crash even when called from the main thread with: Assertion failure in -[NSApplication _commonBeginModalSessionForWindow:relativeToWindow:modalDelegate:didEndSelector:contextInfo:]
         }
 
         // remember the response if we have prompted to do so
