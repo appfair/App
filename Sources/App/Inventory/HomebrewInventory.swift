@@ -683,8 +683,12 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         // fall back to scanning for the app artifact and looking in the /Applications folder
         if let cask = casks.first(where: { $0.token == token }) {
             for appList in (cask.artifacts ?? []).compactMap({ $0.infer() as [String]? }) {
-                for appName in appList {
+                for var appName in appList {
                     dbg("checking app:", appName)
+                    // some artifacts are full paths to the binary, like: /Applications/Nextcloud.app/Contents/MacOS/nextcloudcmd
+                    while appName.count > 1 && !appName.hasSuffix(".app") {
+                        appName = (appName as NSString).deletingLastPathComponent
+                    }
                     if appName.hasSuffix(".app") {
                         let appURL = URL(fileURLWithPath: appName, relativeTo: FairAppInventory.applicationsFolderURL)
                         dbg("checking app path:", appURL.path)
@@ -1101,17 +1105,22 @@ extension HomebrewInventory {
     }
 
     func badgeCount(for item: FairAppInventory.SidebarItem) -> Text? {
+        func fmt(_ number: Int) -> Text? {
+            if number <= 0 { return nil }
+            return Text(number, format: .number)
+        }
+
         switch item {
         case .top:
-            return Text(appInfos.count, format: .number)
+            return fmt(appInfos.count)
         case .updated:
-            return Text(updateCount(), format: .number)
+            return fmt(updateCount())
         case .installed:
-            return Text(installedCasks.count, format: .number)
+            return fmt(installedCasks.count)
         case .recent:
             return nil
         case .category(let cat):
-            return Text(apps(for: cat).count, format: .number)
+            return fmt(apps(for: cat).count)
         }
     }
 }
