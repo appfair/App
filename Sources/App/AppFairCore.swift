@@ -883,7 +883,7 @@ public extension AppCategory {
         case .business:
             return Color.green
         case .developertools:
-            return Color.gray
+            return Color.orange
         case .education:
             return Color.blue
         case .entertainment:
@@ -907,7 +907,7 @@ public extension AppCategory {
         case .productivity:
             return Color.cyan
         case .reference:
-            return Color.white
+            return Color.gray
         case .socialnetworking:
             return Color.yellow
         case .sports:

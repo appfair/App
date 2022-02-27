@@ -990,9 +990,9 @@ extension HomebrewInventory {
 
         // avoid triggering unnecessary changes
         if self.appInfos != sortedInfos {
-             //withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
+             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
                 self.appInfos = sortedInfos
-             //}
+             }
         }
     }
 
