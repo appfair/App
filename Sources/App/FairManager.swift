@@ -44,9 +44,6 @@ import FairApp
         async let v1: () = fairAppInv.refreshAll()
         async let v2: () = homeBrewInv.refreshAll()
         let _ = try await (v1, v2) // perform the two refreshes in tandem
-
-        let response = await fairAppInv.prompt(messageText: wip("XXX"))
-
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.
