@@ -745,6 +745,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                     //try Process.removeQuarantine(appURL: installPath)
 
                     // so instead, take the nuclear option and just clear the quarantine bits on the app
+                    dbg("clearing quarantine attribute from:", installPath.path)
                     try FileManager.default.clearQuarantine(at: installPath)
                 }
             } catch {

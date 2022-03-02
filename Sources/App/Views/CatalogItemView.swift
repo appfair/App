@@ -338,7 +338,7 @@ struct CatalogItemView: View {
                     }
 
                     if let tapToken = cask.tapToken, let tapURL = cask.tapURL {
-                        linkTextField(Text("Cask Token"), icon: FairSymbol.sparkles_rectangle_stack_fill.symbolName, url: tapURL, linkText: tapToken)
+                        linkTextField(Text("Cask Token"), icon: FairSymbol.esim.symbolName, url: tapURL, linkText: tapToken)
                             .help(Text("The page for the Homebrew Cask token"))
                     }
 
@@ -392,20 +392,55 @@ struct CatalogItemView: View {
             .lineLimit(1)
         })
             .groupBoxStyle(.automatic)
-            .padding()
     }
+
+    @State var overviewTab = OverviewTab.description
+
+    enum OverviewTab : CaseIterable, Hashable {
+        case description
+        case version
+
+        var title: Text {
+            switch self {
+            case .description: return Text("Description")
+            case .version: return Text("Version")
+            }
+        }
+    }
+
+    @State var metadataTab = MetadataTab.details
+
+    enum MetadataTab : CaseIterable, Hashable {
+        case details
+        case risk
+        case formula
+        case security
+
+        var title: Text {
+            switch self {
+            case .details: return Text("Details")
+            case .risk: return Text("Risk")
+            case .formula: return Text("Formula")
+            case .security: return Text("Security")
+            }
+        }
+    }
+
 
     func catalogOverview() -> some View {
         VStack {
-            catalogColumns()
+            HStack {
+                overviewTabView()
+                metadataTabView()
+            }
 
-            groupBox(title: Text("Preview"), trailing: EmptyView()) {
+            groupBox(title: Text("Screenshots"), trailing: EmptyView()) {
                 ScrollView(.horizontal) {
                     previewView()
                 }
                 .overlay(Group {
                     if item.screenshotURLs?.isEmpty != false {
-                        Text("No screenshots available ([contribute…](https://www.appfair.app/#customize_app))")
+                        Text("No screenshots available") // ([contribute…](https://www.appfair.app/#customize_app))")
                             .label(image: unavailableIcon)
                             .padding()
                             .lineLimit(1)
@@ -416,6 +451,66 @@ struct CatalogItemView: View {
                 })
             }
         }
+        .padding()
+
+    }
+
+    func overviewTabView() -> some View {
+        TabView(selection: $overviewTab) {
+            ForEach(OverviewTab.allCases, id: \.self) { tab in
+                Group {
+                    switch tab {
+                    case .description:
+                        descriptionSection()
+                    case .version:
+                        versionSection()
+                    }
+                }
+                .tag(tab)
+                .tabItem {
+                    Label {
+                        if tab == .version, let version = item.version, version.count < 16 {
+                            Text(verbatim: version)
+                        } else {
+                            tab.title
+                        }
+                    } icon: {
+                        fetchingReadme > 0 ? FairSymbol.hourglass : FairSymbol.atom
+                    }
+                }
+            }
+        }
+    }
+
+    func metadataTabView() -> some View {
+        TabView(selection: $metadataTab) {
+            ForEach(MetadataTab.allCases, id: \.self) { tab in
+                Group {
+                    switch tab {
+                    case .details:
+                        detailsView()
+                    case .risk:
+                        if info.cask == nil {
+                            riskSection()
+                        }
+                    case .formula:
+                        if let cask = info.cask {
+                            caskFormulaSection(cask: cask)
+                        }
+                    case .security:
+                        artifactSecuritySection()
+                    }
+                }
+                .tag(tab)
+                .tabItem {
+                    Label {
+                        tab.title
+                    } icon: {
+                        fetchingFormula > 0 ? FairSymbol.hourglass : FairSymbol.atom
+                    }
+                }
+            }
+        }
     }
 
     // MARK: README
@@ -424,26 +519,23 @@ struct CatalogItemView: View {
     @State var fetchingReadme = 0
 
     func descriptionSection() -> some View {
-        groupBox(title: Text("Description"), trailing: progressAccessory(fetchingReadme)) {
-            ScrollView {
-                Group {
-                    Text(readmeText?.successValue ?? "")
-                        .task {
-                            if fetchingReadme == 0 {
-                                fetchingReadme += 1
-                                await fetchReadme()
-                                fetchingReadme -= 1
-                            }
+        ScrollView {
+            Group {
+                Text(readmeText?.successValue ?? "")
+                    .task {
+                        if fetchingReadme == 0 {
+                            fetchingReadme += 1
+                            await fetchReadme()
+                            fetchingReadme -= 1
                         }
-                        .font(Font.body)
-                        .redacting(when: self.readmeText == nil)
-                        .font(Font.body.monospaced())
-                }
-                .textSelection(.enabled)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .font(Font.body)
+                    .redacting(when: self.readmeText == nil)
+                    .font(Font.body.monospaced())
             }
-            .frame(maxHeight: .infinity)
+            .textSelection(.enabled)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -497,36 +589,34 @@ struct CatalogItemView: View {
     @State var caskSummary: String? = nil
     @State var fetchingFormula = 0
 
-    func formulaSection(cask: CaskItem) -> some View {
-        groupBox(title: Text("Cask Formula"), trailing: progressAccessory(fetchingFormula)) {
-            ScrollView {
-                Group {
-                    Text(self.caskSummary ?? "")
-                        .task {
-                            if fetchingFormula == 0 {
-                                fetchingFormula += 1
-                                await fetchCaskSummary()
-                                fetchingFormula -= 1
-                            }
-                        }
-                        .font(Font.body.monospaced())
-                        .redacting(when: self.caskSummary == nil)
-                }
+    func caskFormulaSection(cask: CaskItem) -> some View {
+        ScrollView {
+            caskSummaryText()
                 .textSelection(.enabled)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxHeight: .infinity)
         }
+        .frame(maxHeight: .infinity)
+    }
+
+    func caskSummaryText() -> some View {
+        Text(self.caskSummary ?? "")
+            .task {
+                if fetchingFormula == 0 {
+                    fetchingFormula += 1
+                    await fetchCaskSummary()
+                    fetchingFormula -= 1
+                }
+            }
+            .font(Font.body.monospaced())
+            .redacting(when: self.caskSummary == nil)
     }
 
     func versionSection() -> some View {
-        groupBox(title: Text("Version: ") + Text(verbatim: item.version ?? ""), trailing: releaseVersionAccessoryView()) {
-            ScrollView {
-                versionSummary()
-            }
-            .frame(maxHeight: .infinity)
+        ScrollView {
+            versionSummary()
         }
+        .frame(maxHeight: .infinity)
     }
 
     func releaseVersionAccessoryView() -> Text? {
@@ -534,43 +624,6 @@ struct CatalogItemView: View {
             return Text(versionDate, format: .dateTime)
         } else {
             return nil
-        }
-    }
-
-    func detailsSection() -> some View {
-        groupBox(title: Text("Details"), trailing: EmptyView()) {
-            detailsView()
-        }
-    }
-
-    @ViewBuilder func catalogColumns(rowMajor: Bool = true) -> some View {
-        if rowMajor {
-            VStack {
-                HStack {
-                    descriptionSection()
-                    detailsSection()
-                }
-                HStack {
-                    versionSection()
-                    if let cask = info.cask {
-                        formulaSection(cask: cask)
-                    } else {
-                        riskSection()
-                    }
-                }
-            }
-        } else {
-            HStack {
-                VStack {
-                    descriptionSection()
-                    versionSection()
-                }
-
-                VStack {
-                    riskSection()
-                    detailsSection()
-                }
-            }
         }
     }
 
@@ -595,6 +648,66 @@ struct CatalogItemView: View {
                             .help(Text("Risk assessment is only available for App Fair Fairground apps"))
                     }
                 })
+        }
+    }
+
+    @State var securitySummary: String? = nil
+    @State var fetchingSecutiry = 0
+
+    func artifactSecuritySection() -> some View {
+        ScrollView {
+            Text(self.securitySummary ?? "")
+                .task {
+                    if fetchingSecutiry == 0 {
+                        fetchingSecutiry += 1
+                        await fetchArtifactSecurity()
+                        fetchingSecutiry -= 1
+                    }
+                }
+                .font(Font.body.monospaced())
+                .textSelection(.enabled)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    func fetchArtifactSecurity(useFileChecksum: Bool = true) async {
+
+        let url: URL?
+        if useFileChecksum {
+            let sourceURL = self.info.cask?.url ?? self.info.release.downloadURL.absoluteString
+            let urlChecksum = sourceURL.utf8Data.sha256().hex()
+
+            url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
+
+        } else { // use the artifact URL hash
+            guard let checksum = self.info.release.sha256 else {
+                return dbg("no checksum for artifact")
+            }
+
+            url = URL(string: checksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/files/"))?.appendingPathExtension("json") // e.g.: https://www.appfair.net/fairscan/urls/ffea53299849ef43ee26927cbf3ff0342fa6e9a1421059c368fe91a992c9a3a1.json
+        }
+
+        guard let url = url else {
+            return dbg("no URL for info", info.release.name)
+        }
+
+        do {
+
+            dbg("checking security URL:", url.absoluteString)
+            let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
+            do {
+                let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
+                let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                self.securitySummary = pretty.utf8String
+            } catch {
+                self.securitySummary = metadata.data.utf8String
+            }
+        } catch {
+            // errors are not unexpected when the user leaves this view:
+            // NSURLErrorDomain Code=-999 "cancelled"
+            dbg("error checking cask security:", url.absoluteString, "error:", error)
         }
     }
 
