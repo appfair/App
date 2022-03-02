@@ -652,16 +652,31 @@ struct CatalogItemView: View {
     }
 
     @State var securitySummary: String? = nil
-    @State var fetchingSecutiry = 0
+    @State var fetchingSecurity = 0
 
     func artifactSecuritySection() -> some View {
         ScrollView {
             Text(self.securitySummary ?? "")
                 .task {
-                    if fetchingSecutiry == 0 {
-                        fetchingSecutiry += 1
-                        await fetchArtifactSecurity()
-                        fetchingSecutiry -= 1
+                    if fetchingSecurity == 0 && securitySummary == nil {
+                        fetchingSecurity += 1
+                        var summary = ""
+
+                        // the url check doesn't seem to actually scan the file, but rather checks the URL itself for dydgy behavior
+//                        if let urlSec = await fetchArtifactSecurity(checkFileHash: false) {
+//                            summary += urlSec
+//                        }
+
+                        if let hashSec = await fetchArtifactSecurity(checkFileHash: true) {
+                            summary += hashSec
+                        }
+
+                        if summary.isEmpty {
+                            summary = loc("No security information available for artifact")
+                        }
+
+                        self.securitySummary = summary
+                        fetchingSecurity -= 1
                     }
                 }
                 .font(Font.body.monospaced())
@@ -672,42 +687,53 @@ struct CatalogItemView: View {
         .frame(maxHeight: .infinity)
     }
 
-    func fetchArtifactSecurity(useFileChecksum: Bool = true) async {
+    func fetchArtifactSecurity(checkFileHash: Bool = true, reparseJSON: Bool = false) async -> String? {
 
         let url: URL?
-        if useFileChecksum {
+        if checkFileHash == false {
             let sourceURL = self.info.cask?.url ?? self.info.release.downloadURL.absoluteString
             let urlChecksum = sourceURL.utf8Data.sha256().hex()
 
             url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
 
         } else { // use the artifact URL hash
-            guard let checksum = self.info.release.sha256 else {
-                return dbg("no checksum for artifact")
+            guard let checksum = self.info.cask?.checksum ?? self.info.release.sha256 else {
+                dbg("no checksum for artifact")
+                return nil
+            }
+
+            if checksum == "no_check" {
+                dbg("checksum for artifact is no_check")
+                return nil
             }
 
             url = URL(string: checksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/files/"))?.appendingPathExtension("json") // e.g.: https://www.appfair.net/fairscan/urls/ffea53299849ef43ee26927cbf3ff0342fa6e9a1421059c368fe91a992c9a3a1.json
         }
 
         guard let url = url else {
-            return dbg("no URL for info", info.release.name)
+            dbg("no URL for info", info.release.name)
+            return nil
         }
 
         do {
-
             dbg("checking security URL:", url.absoluteString)
-            let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
-            do {
-                let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
-                let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
-                self.securitySummary = pretty.utf8String
-            } catch {
-                self.securitySummary = metadata.data.utf8String
+            let scanResult = try await URLSession.shared.fetch(request: URLRequest(url: url))
+            if !reparseJSON {
+                return scanResult.data.utf8String
+            } else {
+                do {
+                    let ob = try JSONSerialization.jsonObject(with: scanResult.data, options: .topLevelDictionaryAssumed)
+                    let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                    return pretty.utf8String
+                } catch {
+                    return scanResult.data.utf8String
+                }
             }
         } catch {
             // errors are not unexpected when the user leaves this view:
             // NSURLErrorDomain Code=-999 "cancelled"
             dbg("error checking cask security:", url.absoluteString, "error:", error)
+            return nil
         }
     }
 
