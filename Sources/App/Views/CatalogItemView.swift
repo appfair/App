@@ -208,17 +208,18 @@ struct CatalogItemView: View {
                     do {
                         let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
                         let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
-                        self.caskSummary = pretty.utf8String
+                        self.caskSummary = .success(AttributedString(pretty.utf8String ?? ""))
                     } catch {
-                        self.caskSummary = metadata.data.utf8String
+                        self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
                     }
                 } else {
-                    self.caskSummary = metadata.data.utf8String
+                    self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
                 }
             } catch {
                 // errors are not unexpected when the user leaves this view:
                 // NSURLErrorDomain Code=-999 "cancelled"
                 dbg("error checking cask metadata:", url.absoluteString, "error:", error)
+                self.caskSummary = .failure(error)
             }
         }
     }
@@ -258,6 +259,40 @@ struct CatalogItemView: View {
         }
         //.frame(height: 54)
     }
+
+    private func textBox(_ text: Result<AttributedString, Error>?) -> some View {
+        let astr: AttributedString
+        switch text {
+        case .none: astr = AttributedString()
+        case .success(let str): astr = str
+        case .failure(let error): astr = AttributedString(error.localizedDescription, attributes: .init([NSAttributedString.Key.obliqueness: 8]))
+        }
+
+        return ZStack {
+            ScrollView {
+                Text(astr)
+                    .textSelection(.enabled)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: .infinity)
+
+            if text == nil {
+                ProgressView()
+                    .controlSize(.small)
+            }
+        }
+    }
+
+
+    /// The accessory on the trailing section of a `groupBox`
+    @ViewBuilder func progressAccessory(_ fetching: Int) -> some View {
+        ProgressView()
+            .opacity(fetching > 0 ? 1.0 : 0.0).controlSize(.mini)
+            .padding(.trailing, 8)
+            .animation(Animation.easeInOut, value: fetching)
+    }
+
 
     func linkTextField(_ title: Text, icon: String, url: URL?, linkText: String? = nil) -> some View {
         // the text winds up being un-aligned vertically when rendered like this
@@ -313,7 +348,7 @@ struct CatalogItemView: View {
 
     }
 
-    func detailsView() -> some View {
+    func detailsListView() -> some View {
         ScrollView {
             Form {
                 if let cask = info.cask {
@@ -399,11 +434,13 @@ struct CatalogItemView: View {
     enum OverviewTab : CaseIterable, Hashable {
         case description
         case version
+        case caveats
 
         var title: Text {
             switch self {
             case .description: return Text("Description")
             case .version: return Text("Version")
+            case .caveats: return Text("Caveats")
             }
         }
     }
@@ -464,6 +501,10 @@ struct CatalogItemView: View {
                         descriptionSection()
                     case .version:
                         versionSection()
+                    case .caveats:
+                        if let cask = info.cask, let caveats = cask.caveats {
+                            textBox(.success(AttributedString(caveats)))
+                        }
                     }
                 }
                 .tag(tab)
@@ -488,7 +529,7 @@ struct CatalogItemView: View {
                 Group {
                     switch tab {
                     case .details:
-                        detailsView()
+                        detailsListView()
                     case .risk:
                         if info.cask == nil {
                             riskSection()
@@ -519,28 +560,39 @@ struct CatalogItemView: View {
     @State var fetchingReadme = 0
 
     func descriptionSection() -> some View {
-        ScrollView {
-            Group {
-                Text(readmeText?.successValue ?? "")
-                    .task {
-                        if fetchingReadme == 0 {
-                            fetchingReadme += 1
-                            await fetchReadme()
-                            fetchingReadme -= 1
-                        }
-                    }
-                    .font(Font.body)
-                    .redacting(when: self.readmeText == nil)
-                    .font(Font.body.monospaced())
+        textBox(self.readmeText)
+            .font(Font.body)
+            .task {
+                if fetchingReadme == 0 {
+                    fetchingReadme += 1
+                    await fetchReadme()
+                    fetchingReadme -= 1
+                }
             }
-            .textSelection(.enabled)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
     }
 
     private static let readmeRegex = Result {
         try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+    }
+
+    private func fetchMarkdownResource(url: URL) async throws -> AttributedString{
+        let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
+            .fetch(validateFragmentHash: true)
+        let atx = String(data: data, encoding: .utf8) ?? ""
+//        // extract the portion of text between the "# Description" and following "#" sections
+//        if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+//            atx = (atx as NSString).substring(with: match)
+//        } else {
+//            if !info.isCask { // casks don't have this requirement; permit full READMEs
+//                atx = ""
+//            }
+//        }
+
+        // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
+
+        // note this this differs with casks
+        let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
+        return try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
     }
 
     private func fetchReadme() async {
@@ -548,25 +600,7 @@ struct CatalogItemView: View {
         do {
             dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
             if let readmeURL = readmeURL {
-                let data = try await URLRequest(url: readmeURL, cachePolicy: .reloadRevalidatingCacheData)
-                    .fetch(validateFragmentHash: true)
-                var atx = String(data: data, encoding: .utf8) ?? ""
-                // extract the portion of text between the "# Description" and following "#" sections
-                if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
-                    atx = (atx as NSString).substring(with: match)
-                } else {
-                    if !info.isCask { // casks don't have this requirement; permit full READMEs
-                        atx = ""
-                    }
-                }
-
-                // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
-
-                // note this this differs with casks
-                let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
-                self.readmeText = Result {
-                    try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
-                }
+                try self.readmeText = await .success(fetchMarkdownResource(url: readmeURL))
             }
         } catch {
             dbg("error handling README:", error)
@@ -576,31 +610,14 @@ struct CatalogItemView: View {
         }
     }
 
-    /// The accessory on the trailing section of a `groupBox`
-    @ViewBuilder func progressAccessory(_ fetching: Int) -> some View {
-        ProgressView()
-            .opacity(fetching > 0 ? 1.0 : 0.0).controlSize(.mini)
-            .padding(.trailing, 8)
-            .animation(Animation.easeInOut, value: fetching)
-    }
-
     // MARK: Description / Summary
 
-    @State var caskSummary: String? = nil
+    @State var caskSummary: Result<AttributedString, Error>? = nil
     @State var fetchingFormula = 0
 
     func caskFormulaSection(cask: CaskItem) -> some View {
-        ScrollView {
-            caskSummaryText()
-                .textSelection(.enabled)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxHeight: .infinity)
-    }
-
-    func caskSummaryText() -> some View {
-        Text(self.caskSummary ?? "")
+        textBox(self.caskSummary)
+            .font(Font.body.monospaced())
             .task {
                 if fetchingFormula == 0 {
                     fetchingFormula += 1
@@ -608,15 +625,40 @@ struct CatalogItemView: View {
                     fetchingFormula -= 1
                 }
             }
-            .font(Font.body.monospaced())
-            .redacting(when: self.caskSummary == nil)
     }
 
-    func versionSection() -> some View {
-        ScrollView {
-            versionSummary()
+    @State var releaseNotesText: Result<AttributedString, Error>? = nil
+    @State var fetchingReleaseNotes = 0
+
+    @ViewBuilder func versionSection() -> some View {
+//        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
+        textBox(self.releaseNotesText)
+            .font(.body)
+            .task {
+                if fetchingReleaseNotes == 0 {
+                    fetchingReleaseNotes += 1
+                    await fetchReleaseNotes()
+                    fetchingReleaseNotes -= 1
+                }
+            }
+    }
+
+    func fetchReleaseNotes() async {
+        let releaseNotesURL = info.release.releaseNotesURL
+        do {
+            dbg("fetching release notes for:", info.release.id, releaseNotesURL?.absoluteString)
+            if let releaseNotesURL = releaseNotesURL {
+                try self.releaseNotesText = await .success(fetchMarkdownResource(url: releaseNotesURL))
+            } else {
+                self.releaseNotesText = .success(AttributedString("No release notes"))
+
+            }
+        } catch {
+            dbg("error handling release notes:", error)
+            //if let readmeURL = readmeURL {
+                self.releaseNotesText = .failure(error)
+            //}
         }
-        .frame(maxHeight: .infinity)
     }
 
     func releaseVersionAccessoryView() -> Text? {
@@ -651,43 +693,23 @@ struct CatalogItemView: View {
         }
     }
 
-    @State var securitySummary: String? = nil
+    @State var securitySummary: Result<AttributedString, Error>? = nil
     @State var fetchingSecurity = 0
 
     func artifactSecuritySection() -> some View {
-        ScrollView {
-            Text(self.securitySummary ?? "")
-                .task {
-                    if fetchingSecurity == 0 && securitySummary == nil {
-                        fetchingSecurity += 1
-                        var summary = ""
-
-                        // the url check doesn't seem to actually scan the file, but rather checks the URL itself for dydgy behavior
-//                        if let urlSec = await fetchArtifactSecurity(checkFileHash: false) {
-//                            summary += urlSec
-//                        }
-
-                        if let hashSec = await fetchArtifactSecurity(checkFileHash: true) {
-                            summary += hashSec
-                        }
-
-                        if summary.isEmpty {
-                            summary = loc("No security information available for artifact")
-                        }
-
-                        self.securitySummary = summary
-                        fetchingSecurity -= 1
-                    }
+        textBox(self.securitySummary)
+            .font(Font.body.monospaced())
+            .task {
+                if fetchingSecurity == 0 && securitySummary == nil {
+                    fetchingSecurity += 1
+                    self.securitySummary = await fetchArtifactSecurity(checkFileHash: true)
+                    fetchingSecurity -= 1
                 }
-                .font(Font.body.monospaced())
-                .textSelection(.enabled)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxHeight: .infinity)
+            }
+
     }
 
-    func fetchArtifactSecurity(checkFileHash: Bool = true, reparseJSON: Bool = false) async -> String? {
+    func fetchArtifactSecurity(checkFileHash: Bool = true, reparseJSON: Bool = false) async -> Result<AttributedString, Error>? {
 
         let url: URL?
         if checkFileHash == false {
@@ -719,32 +741,22 @@ struct CatalogItemView: View {
             dbg("checking security URL:", url.absoluteString)
             let scanResult = try await URLSession.shared.fetch(request: URLRequest(url: url))
             if !reparseJSON {
-                return scanResult.data.utf8String
+                return .success(AttributedString(scanResult.data.utf8String ?? ""))
             } else {
                 do {
                     let ob = try JSONSerialization.jsonObject(with: scanResult.data, options: .topLevelDictionaryAssumed)
                     let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
-                    return pretty.utf8String
+                    return .success(AttributedString(pretty.utf8String ?? ""))
                 } catch {
-                    return scanResult.data.utf8String
+                    return .success(AttributedString(scanResult.data.utf8String ?? ""))
                 }
             }
         } catch {
             // errors are not unexpected when the user leaves this view:
             // NSURLErrorDomain Code=-999 "cancelled"
             dbg("error checking cask security:", url.absoluteString, "error:", error)
-            return nil
+            return .failure(error)
         }
-    }
-
-    func versionSummary() -> some View {
-        // casks don't report their versions, so instead we use any caveats in the metadata
-        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
-        return Text(atx: desc ?? "")
-            .font(.body)
-            .textSelection(.enabled)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     func permissionListItem(permission: AppPermission) -> some View {
