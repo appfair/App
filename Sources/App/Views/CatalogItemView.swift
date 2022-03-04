@@ -377,8 +377,8 @@ struct CatalogItemView: View {
                             .help(Text("The page for the Homebrew Cask token"))
                     }
 
-                    linkTextField(Text("Auto-Updates"), icon: FairSymbol.sparkle.symbolName, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
-                        .help(Text("Whether this app handles updating itself"))
+//                    linkTextField(Text("Auto-Updates"), icon: FairSymbol.sparkle.symbolName, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
+//                        .help(Text("Whether this app handles updating itself"))
 
                 } else {
                     if let landingPage = info.release.landingPage {
