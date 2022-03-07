@@ -601,6 +601,9 @@ struct CatalogItemView: View {
             dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
             if let readmeURL = readmeURL {
                 try self.readmeText = await .success(fetchMarkdownResource(url: readmeURL))
+            } else {
+                // throw AppError(loc("No description found."))
+                self.readmeText = .success(AttributedString(info.release.localizedDescription ?? loc("No description found")))
             }
         } catch {
             dbg("error handling README:", error)
