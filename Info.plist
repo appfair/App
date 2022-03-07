@@ -41,6 +41,14 @@
 		<string>This app needs to read and write files in order to…</string>
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
+		<key>com.apple.security.network.server</key>
+		<string>This app needs to access the network in order to download books</string>
+		<key>com.apple.security.device.usb</key>
+		<string>This app needs to access USB devices</string>
+		<key>com.apple.security.application-groups</key>
+		<string>This app needs to access application groups</string>
+		<key>com.apple.security.temporary-exception.sbpl</key>
+		<string>This app needs access to USB resources</string>
 	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
