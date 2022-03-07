@@ -1,4 +1,5 @@
 import FairApp
+import Busq
 
 /// The main content view for the app.
 public struct ContentView: View {

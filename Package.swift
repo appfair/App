@@ -10,10 +10,12 @@ let package = Package(
         // the Fair main branch must be the *first* dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
+        .package(name: "Busq", url: "https://github.com/Blunder-Busq/Busq.git", .branch("main")),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
+            .product(name: "Busq", package: "Busq"),
         ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
