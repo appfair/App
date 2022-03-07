@@ -6,13 +6,75 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        VStack {
-            Text("Welcome to **\(Bundle.main.bundleName!)**")
-                .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)")
-                .font(.headline)
+        NavigationView {
+            List {
+                ForEach(self.deviceList) { device in
+                    NavigationLink {
+                        DeviceView(device: Result {
+                            try Device(udid: device.udid, options: device.connectionType == .network ? .network : .usbmux)
+                        })
+                    } label: {
+                        Text(device.udid)
+                            .label(image: device.connectionType == .usbmuxd ? FairSymbol.cable_connector_horizontal : FairSymbol.wifi)
+
+                    }
+                }
+            }
+            .listStyle(.automatic)
+
+            Text("No Device Selected")
+                .font(.title)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    var deviceList: [DeviceInfo] {
+        do {
+            return try MobileDevice.getDeviceListExtended()
+        } catch {
+            dbg("error getting device list:", error)
+            return []
+        }
+    }
+}
+
+extension DeviceInfo : Identifiable, Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(udid)
+        hasher.combine(connectionType)
+    }
+
+    public static func == (lhs: DeviceInfo, rhs: DeviceInfo) -> Bool {
+        lhs.udid == rhs.udid && lhs.connectionType == rhs.connectionType
+    }
+
+    public var id: Self {
+        self
+    }
+}
+
+struct DeviceView : View {
+    let device: Result<Device, Error>
+
+    var body: some View {
+        switch device {
+        case .failure(let error):
+            Text(error.localizedDescription)
+                .font(Font.headline.monospaced())
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+    case .success(let dev):
+            deviceView(dev)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    func deviceView(_ dev: Device) -> some View {
+        Form {
+            Text("Handle:")
+            Text(try! dev.getHandle(), format: .number)
+        }
     }
 }
 
