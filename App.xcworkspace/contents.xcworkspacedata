@@ -8,9 +8,6 @@
       location = "group:">
    </FileRef>
    <FileRef
-      location = "group:../Fair">
-   </FileRef>
-   <FileRef
       location = "group:../Busq">
    </FileRef>
 </Workspace>

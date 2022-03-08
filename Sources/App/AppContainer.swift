@@ -8,21 +8,43 @@ public struct ContentView: View {
     public var body: some View {
         NavigationView {
             List {
-                ForEach(self.deviceList) { device in
-                    NavigationLink {
-                        DeviceView(device: Result {
-                            try Device(udid: device.udid, options: device.connectionType == .network ? .network : .usbmux)
-                        })
-                    } label: {
-                        Text(device.udid)
-                            .label(image: device.connectionType == .usbmuxd ? FairSymbol.cable_connector_horizontal : FairSymbol.wifi)
+                Section {
+                    ForEach(self.deviceList) { device in
+                        let client = Result {
+                            try Device(udid: device.udid, options: device.connectionType == .network ? .network : .usbmux).createLockdownClient()
+                        }
 
+                        NavigationLink {
+                            if let client = client.successValue,
+                               let iproxy = try? client.createInstallationProxy(),
+                               let appsList = try? iproxy.getAppList(type: .any) {
+                                AppsListView(client: client, proxy: iproxy, apps: appsList)
+                            }
+                        } label: {
+                            Label {
+                                VStack(alignment: .leading) {
+                                    Text((try? client.successValue?.deviceName) ?? "Unknown Name")
+                                    Text((try? client.successValue?.productVersion) ?? "Unknown Version")
+                                        .foregroundColor(Color.secondary)
+                                        .font(Font.caption)
+                                    // Text((try? client.successValue?.uniqueDeviceID) ?? "Unknown")
+                                }
+                            } icon: {
+                                device.connectionType == .usbmuxd ? FairSymbol.cable_connector_horizontal : FairSymbol.wifi
+                            }
+                        }
                     }
+                } header: {
+                    Text("Devices")
                 }
             }
             .listStyle(.automatic)
 
-            Text("No Device Selected")
+            List {
+                Text("No Apps")
+            }
+
+            Text("No App Selected")
                 .font(.title)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -55,25 +77,74 @@ extension DeviceInfo : Identifiable, Hashable {
     }
 }
 
-struct DeviceView : View {
-    let device: Result<Device, Error>
+struct AppsListView : View {
+    let client: LockdownClient
+    let proxy: InstallationProxy
+    let apps: [InstalledAppInfo]
 
     var body: some View {
-        switch device {
-        case .failure(let error):
-            Text(error.localizedDescription)
-                .font(Font.headline.monospaced())
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-    case .success(let dev):
-            deviceView(dev)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        List {
+            ForEach(apps.sorting(by: \.CFBundleDisplayName), id: \.CFBundleIdentifier) { app in
+                NavigationLink {
+                    AppInfoView(appInfo: app)
+                } label: {
+                    Label {
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Text(app.CFBundleDisplayName ?? "")
+                                    .lineLimit(1)
+                                    .allowsTightening(true)
+
+                                if app.CFBundleName != app.CFBundleDisplayName {
+                                    Text("(" + (app.CFBundleName ?? "") + ")")
+                                        .lineLimit(1)
+                                        .allowsTightening(true)
+                                }
+
+                                Text(app.CFBundleShortVersionString ?? "")
+                                    .lineLimit(1)
+                                    .allowsTightening(true)
+                                    .foregroundColor(Color.secondary)
+                            }
+                            HStack {
+                                Text(app.CFBundleIdentifier ?? "")
+                                    .lineLimit(1)
+                                    .allowsTightening(true)
+                                    //.font(Font.body.monospaced())
+                                    .foregroundColor(Color.secondary)
+
+//                                Text(app.SignerIdentity ?? "")
+//                                    .lineLimit(1)
+//                                    .allowsTightening(true)
+//                                    .font(Font.caption.monospaced())
+//                                    .foregroundColor(Color.secondary)
+                            }
+                        }
+                    } icon: {
+                        switch app.ApplicationType {
+                        case "System":
+                            FairSymbol.app_badge
+                        case "User":
+                            FairSymbol.app_gift
+                        case "Internal":
+                            FairSymbol.app_badge_checkmark
+                        default:
+                            FairSymbol.case
+                        }
+                    }
+                }
+            }
         }
     }
 
-    func deviceView(_ dev: Device) -> some View {
+}
+
+struct AppInfoView : View {
+    let appInfo: InstalledAppInfo
+
+    var body: some View {
         Form {
-            Text("Handle:")
-            Text(try! dev.getHandle(), format: .number)
+            Text(appInfo.CFBundleDisplayName ?? "")
         }
     }
 }
