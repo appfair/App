@@ -1,6 +1,41 @@
 import FairApp
 import Busq
 
+/// The shared app environment
+@MainActor public final class Store: SceneManager {
+    @AppStorage("someToggle") public var someToggle = false
+    @Published var deviceList: [DeviceConnectionInfo] = []
+    var deviceEventSubscription: Disposable?
+
+    func subscribeToDeviceEvents() {
+        do {
+            self.deviceEventSubscription = try DeviceManager.eventSubscribe { event in
+                dbg("event:", event)
+                self.refreshDeviceList()
+            }
+        } catch {
+            dbg("error subscribing to event:", error)
+        }
+    }
+
+    func refreshDeviceList() {
+        do {
+            let devices = try DeviceManager.getDeviceListExtended()
+            DispatchQueue.main.async {
+                withAnimation {
+                    self.deviceList = devices
+                }
+            }
+        } catch {
+            dbg("error getting device list:", error)
+            withAnimation {
+                self.deviceList = []
+            }
+
+        }
+    }
+}
+
 /// The main content view for the app.
 public struct ContentView: View {
     @EnvironmentObject var store: Store
@@ -9,28 +44,16 @@ public struct ContentView: View {
         NavigationView {
             List {
                 Section {
-                    ForEach(self.deviceList) { device in
+                    ForEach(store.deviceList) { info in
                         let client = Result {
-                            try Device(udid: device.udid, options: device.connectionType == .network ? .network : .usbmux).createLockdownClient()
+                            try Device(udid: info.udid, options: info.connectionType == .network ? .network : .usbmux).createLockdownClient()
                         }
 
-                        NavigationLink {
-                            if let client = client.successValue,
-                               let iproxy = try? client.createInstallationProxy(),
-                               let appsList = try? iproxy.getAppList(type: .any) {
-                                AppsListView(client: client, proxy: iproxy, apps: appsList)
-                            }
-                        } label: {
-                            Label {
-                                VStack(alignment: .leading) {
-                                    Text((try? client.successValue?.deviceName) ?? "Unknown Name")
-                                    Text((try? client.successValue?.productVersion) ?? "Unknown Version")
-                                        .foregroundColor(Color.secondary)
-                                        .font(Font.caption)
-                                    // Text((try? client.successValue?.uniqueDeviceID) ?? "Unknown")
-                                }
-                            } icon: {
-                                device.connectionType == .usbmuxd ? FairSymbol.cable_connector_horizontal : FairSymbol.wifi
+                        if let client = client.successValue {
+                            NavigationLink {
+                                LockdownClientAppListView(client: client)
+                            } label: {
+                                clientLabel(client, info: info)
                             }
                         }
                     }
@@ -49,25 +72,48 @@ public struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task {
+            store.subscribeToDeviceEvents()
+        }
     }
 
-    var deviceList: [DeviceInfo] {
-        do {
-            return try MobileDevice.getDeviceListExtended()
-        } catch {
-            dbg("error getting device list:", error)
-            return []
+    func clientLabel(_ client: LockdownClient, info: DeviceConnectionInfo) -> some View {
+        Label {
+            VStack(alignment: .leading) {
+                Text((try? client.deviceName) ?? "Unknown Name")
+                HStack {
+                    let deviceName = (try? client.deviceClass) ?? "Unknown Device"
+                    let batteryLevel = (try? client.batteryLevel) ?? 0
+                    let batteryIcon = batteryLevel > 90 ? FairSymbol.battery_100
+                        : batteryLevel > 60 ? .battery_75
+                        : batteryLevel > 40 ? .battery_50
+                        : batteryLevel > 10 ? .battery_25
+                        : .battery_0
+                    Text(deviceName)
+                        .label(image: batteryIcon)
+                        .foregroundColor(Color.secondary)
+                        .font(Font.caption)
+                        .help("Battery level: \(batteryLevel)%")
+                    Text((try? client.productVersion) ?? "Unknown Version")
+                        .foregroundColor(Color.secondary)
+                        .font(Font.caption)
+                }
+
+                // Text((try? client.uniqueDeviceID) ?? "Unknown")
+            }
+        } icon: {
+            info.connectionType == .usbmuxd ? FairSymbol.cable_connector_horizontal : FairSymbol.wifi
         }
     }
 }
 
-extension DeviceInfo : Identifiable, Hashable {
+extension DeviceConnectionInfo : Identifiable, Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(udid)
         hasher.combine(connectionType)
     }
 
-    public static func == (lhs: DeviceInfo, rhs: DeviceInfo) -> Bool {
+    public static func == (lhs: DeviceConnectionInfo, rhs: DeviceConnectionInfo) -> Bool {
         lhs.udid == rhs.udid && lhs.connectionType == rhs.connectionType
     }
 
@@ -76,10 +122,30 @@ extension DeviceInfo : Identifiable, Hashable {
     }
 }
 
+struct LockdownClientAppListView : View {
+    let client: LockdownClient
+    @State var apps: [InstalledAppInfo] = []
+
+    var body: some View {
+        if let iproxy = try? client.createInstallationProxy(),
+           let sbcient = try? client.createSpringboardServiceClient() {
+            AppsListView(client: client, proxy: iproxy, springboard: sbcient, apps: $apps)
+                .task {
+                    do {
+                        self.apps = try iproxy.getAppList(type: .any)
+                    } catch {
+                        dbg("error getting app list:", error)
+                    }
+                }
+        }
+    }
+}
+
 struct AppsListView : View {
     let client: LockdownClient
     let proxy: InstallationProxy
-    let apps: [InstalledAppInfo]
+    let springboard: SpringboardServiceClient
+    @Binding var apps: [InstalledAppInfo]
 
     var body: some View {
         List {
@@ -185,16 +251,30 @@ struct AppsListView : View {
                             }
                         }
                     } icon: {
-                        switch app.ApplicationType {
-                        case "User":
-                            FairSymbol.star_circle
-                        case "System":
-                            FairSymbol.rosette
-                        case "Internal":
-                            FairSymbol.flag_2_crossed
-                        default:
-                            FairSymbol.case
+                        if let bundleID = app.CFBundleIdentifier {
+//                            do {
+                            if let pngData = try? springboard.getIconPNGData(bundleIdentifier: bundleID) {
+                                if let img = UXImage(data: pngData) {
+                                    Image(uxImage: img)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                }
+                            }
+//                            } catch {
+//                                dbg("error getting PNG data for app:", bundleID, error)
+//                            }
                         }
+
+//                        switch app.ApplicationType {
+//                        case "User":
+//                            FairSymbol.star_circle
+//                        case "System":
+//                            FairSymbol.rosette
+//                        case "Internal":
+//                            FairSymbol.flag_2_crossed
+//                        default:
+//                            FairSymbol.case
+//                        }
                     }
                 }
             }
@@ -225,7 +305,7 @@ struct AppInfoView : View {
                         row(title: "Version", value: appInfo.CFBundleShortVersionString)
                         row(title: "Path", value: appInfo.Path)
                         row(title: "Bundle ID", value: appInfo.CFBundleIdentifier)
-                        row(title: "Signer Identity", value: appInfo.SignerIdentity)
+                        row(title: "Signer", value: appInfo.SignerIdentity)
                     }
                 } header: {
                     Text(appInfo.CFBundleDisplayName ?? "")
@@ -294,13 +374,6 @@ struct AppInfoView : View {
         .textSelection(.disabled)
 
     }
-
-
-}
-
-/// The shared app environment
-@MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
 }
 
 public extension AppContainer {
