@@ -1,12 +1,32 @@
 import FairApp
 import Busq
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
+    @Published var selection: DeviceConnectionInfo?
     @Published var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
+    /// Errors to be shown at the top level
+    @Published var errors: [Error] = []
     var deviceEventSubscription: Disposable?
+
+    /// Whether to display an initial error
+    var presentedError: Binding<Bool> {
+        Binding {
+            self.errors.isEmpty == false
+        } set: { newValue in
+            if newValue == false && !self.errors.isEmpty {
+                let _ = self.errors.removeFirst()
+            }
+        }
+    }
+    /// Returns the connection infos as will be displayed by the UI
+    var connectionInfos: [DeviceConnectionInfo] {
+        // TODO: sort by name, or something other than the udid
+        deviceMap.keys.sorting(by: \.udid)
+    }
 
     func subscribeToDeviceEvents() {
         do {
@@ -32,6 +52,10 @@ import SwiftUI
             DispatchQueue.main.async {
                 withAnimation {
                     self.deviceMap = dmap
+                    // behaves really wierd
+//                    DispatchQueue.main.async {
+//                        self.ensureSelection() // select the first available device
+//                    }
                 }
             }
         } catch {
@@ -42,18 +66,102 @@ import SwiftUI
 
         }
     }
+
+    func importIPA(_ urls: [URL]) {
+        dbg("importing:", urls, "into:", selection)
+        guard let selection = selection,
+              let client = deviceMap[selection]?.successValue else {
+                  return dbg("no device selected")
+              }
+
+        dbg("importing into:", client)
+
+        do {
+            let iproxy = try client.createInstallationProxy()
+        } catch {
+            dbg("error installing IPA:", error)
+            self.errors.append(error)
+        }
+    }
+
+    /// Ensure that at least one item is selected
+    @discardableResult func ensureSelection() -> Bool {
+        if self.deviceMap.isEmpty {
+            return false
+        }
+
+        if let selection = self.selection, self.deviceMap.keys.contains(selection) {
+            return true
+        }
+
+        self.selection = self.connectionInfos.first
+        return self.selection != nil
+    }
 }
+
+let ipaType = UTType("com.apple.itunes.ipa")!
 
 /// The main content view for the app.
 public struct ContentView: View {
     @EnvironmentObject var store: Store
-    @State var selection: DeviceConnectionInfo?
+    @State var showFileImporter = false
 
     public var body: some View {
+        navigationView
+            .sheet(isPresented: store.presentedError) {
+                Text("ERROR: \(store.errors.first.debugDescription)")
+            }
+            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [ipaType], allowsMultipleSelection: false) { result in
+                switch result {
+                case .failure(let error):
+                    dbg("error importing file:", error)
+                case .success(let urls):
+                    store.importIPA(urls)
+                }
+            }
+            .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open IPA files
+            .onOpenURL { url in
+                if store.ensureSelection() {
+                    store.importIPA([url])
+                }
+            }
+            .onDrop(of: [ipaType], isTargeted: nil) { providers in
+                dbg("dropped:", providers)
+                for provider in providers {
+                    provider.loadInPlaceFileRepresentation(forTypeIdentifier: ipaType.identifier) { url, inPlace, error in
+                        if let error = error {
+                            dbg("error loading file representation:", error)
+                        } else if let url = url {
+                            if store.ensureSelection() {
+                                store.importIPA([url])
+                            }
+                        }
+                    }
+                }
+                return !providers.isEmpty
+            }
+            .toolbar(id: "ImportToolbar") {
+                ToolbarItem(id: "ImportIPA", placement: .navigation, showsByDefault: true) {
+                    Text("Import")
+                        .label(image: FairSymbol.arrow_down_app_fill)
+                        .button {
+                            if store.ensureSelection() {
+                                showFileImporter = true
+                            }
+                        }
+                        .hoverSymbol(activeVariant: .none)
+                        .help(Text("Import an IPA file"))
+                        .keyboardShortcut("O")
+                        //.disabled(selection == nil) // instead we select the first available device if none is already selected
+                }
+            }
+    }
+
+    var navigationView: some View {
         NavigationView {
-            List(selection: $selection) {
+            List(selection: $store.selection) {
                 Section {
-                    ForEach(store.deviceMap.keys.sorting(by: \.udid)) { info in
+                    ForEach(store.connectionInfos.enumerated().array(), id: \.element) { (index, info) in
                         if let client = store.deviceMap[info]?.successValue {
                             NavigationLink {
                                 DeviceAppListSplitView()
@@ -61,6 +169,7 @@ public struct ContentView: View {
                             } label: {
                                 clientLabel(client, info: info)
                             }
+                            .keyboardShortcut(KeyEquivalent((index + 1).description.first ?? "?"))
                         }
                     }
                 } header: {
@@ -74,7 +183,7 @@ public struct ContentView: View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            DeviceInfoView(selection: selection)
+            DeviceInfoView(selection: store.selection)
                 .frame(idealWidth: 200)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -99,7 +208,7 @@ public struct ContentView: View {
                         .label(image: batteryIcon)
                         .foregroundColor(Color.secondary)
                         .font(Font.caption)
-                        .help("Battery level: \(batteryLevel)%")
+                        //.help("Battery level: \(batteryLevel)%")
                     Text((try? client.productVersion) ?? "Unknown Version")
                         .foregroundColor(Color.secondary)
                         .font(Font.caption)
@@ -387,15 +496,6 @@ struct DeviceAppListSplitView : View {
     }
 }
 
-extension SpringboardServiceClient : ObservableObject {
-}
-
-extension InstallationProxy : ObservableObject {
-}
-
-extension LockdownClient : ObservableObject {
-}
-
 struct AppsListView : View {
     @EnvironmentObject var client: LockdownClient
     @EnvironmentObject var proxy: InstallationProxy
@@ -468,7 +568,7 @@ struct AppItemLabel : View {
                         .aspectRatio(contentMode: .fit)
                 } else {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color.secondary)
+                        .fill(Color.accentColor.opacity(0.2))
                 }
             }
             .frame(width: 35, height: 35)
@@ -604,7 +704,7 @@ struct AppInfoView : View {
                 } header: {
                     TextField(text: .constant(appInfo.CFBundleDisplayName ?? ""), prompt: Text("Unknown")) {
                         icon.aspectRatio(contentMode: .fit)
-                            .frame(height: 25)
+                            .frame(width: 60, height: 60)
                     }
                     .font(Font.largeTitle)
                     .textFieldStyle(.plain)
@@ -682,6 +782,15 @@ public extension AppContainer {
         WindowGroup {
             ContentView().environmentObject(store)
         }
+        .commands {
+            SidebarCommands()
+            ToolbarCommands()
+        }
+        .commands {
+            CommandGroup(replacing: CommandGroupPlacement.newItem) {
+                // only permit a single window
+            }
+        }
     }
 
     /// The app-wide settings view
@@ -699,4 +808,17 @@ public struct AppSettingsView : View {
         }
         .padding()
     }
+}
+
+
+/// Extension to permit passing as an `@EnvironmentObject`
+extension SpringboardServiceClient : ObservableObject {
+}
+
+/// Extension to permit passing as an `@EnvironmentObject`
+extension InstallationProxy : ObservableObject {
+}
+
+/// Extension to permit passing as an `@EnvironmentObject`
+extension LockdownClient : ObservableObject {
 }
