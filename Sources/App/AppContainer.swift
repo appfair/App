@@ -340,6 +340,12 @@ struct DeviceInfoView: View {
 
 }
 
+#if os(iOS)
+typealias VSplit = VStack // VSplitView unavailable on iOS
+#else
+typealias VSplit = VSplitView
+#endif
+
 /// A vertical split view containing a list of apps for the device, below which is the information about the selected app
 /// This uses the undocumented behavior of a NavigationLink such that it will use the next available split for displaying the destination of the link.
 struct DeviceAppListSplitView : View {
@@ -348,7 +354,7 @@ struct DeviceAppListSplitView : View {
 
     var body: some View {
         // this split view allows us to override the 3-panel navigation behavior such that selecting an item from the list will make its navigation destination appear here (below the list) rather than in the panel on the right
-        VSplitView {
+        VSplit {
             appListView
             Text("No App Selected")
                 .font(.title)
@@ -666,7 +672,7 @@ struct AppInfoView : View {
         TextField(text: .constant(value ?? ""), prompt: Text("Unknown")) {
             Text(title) + Text(":")
         }
-        .textFieldStyle(.squareBorder)
+        // .textFieldStyle(.squareBorder) // not on iOS
         .textSelection(.enabled)
     }
 }
