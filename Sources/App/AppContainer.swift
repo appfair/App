@@ -1,10 +1,11 @@
 import FairApp
 import Busq
+import SwiftUI
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
-    @Published var deviceList: [DeviceConnectionInfo] = []
+    @Published var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
     var deviceEventSubscription: Disposable?
 
     func subscribeToDeviceEvents() {
@@ -20,16 +21,23 @@ import Busq
 
     func refreshDeviceList() {
         do {
-            let devices = try DeviceManager.getDeviceListExtended()
+            let deviceInfos = try DeviceManager.getDeviceListExtended()
+            var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
+            for deviceInfo in deviceInfos {
+                deviceMap[deviceInfo] = Result {
+                    try Device(udid: deviceInfo.udid, options: deviceInfo.connectionType == .network ? .network : .usbmux).createLockdownClient()
+                }
+            }
+            let dmap = deviceMap // else error: “Reference to captured var 'deviceMap' in concurrently-executing code”
             DispatchQueue.main.async {
                 withAnimation {
-                    self.deviceList = devices
+                    self.deviceMap = dmap
                 }
             }
         } catch {
             dbg("error getting device list:", error)
             withAnimation {
-                self.deviceList = []
+                self.deviceMap = [:]
             }
 
         }
@@ -39,19 +47,17 @@ import Busq
 /// The main content view for the app.
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    @State var selection: DeviceConnectionInfo?
 
     public var body: some View {
         NavigationView {
-            List {
+            List(selection: $selection) {
                 Section {
-                    ForEach(store.deviceList) { info in
-                        let client = Result {
-                            try Device(udid: info.udid, options: info.connectionType == .network ? .network : .usbmux).createLockdownClient()
-                        }
-
-                        if let client = client.successValue {
+                    ForEach(store.deviceMap.keys.sorting(by: \.udid)) { info in
+                        if let client = store.deviceMap[info]?.successValue {
                             NavigationLink {
-                                LockdownClientAppListView(client: client)
+                                DeviceAppListSplitView()
+                                    .environmentObject(client)
                             } label: {
                                 clientLabel(client, info: info)
                             }
@@ -63,13 +69,13 @@ public struct ContentView: View {
             }
             .listStyle(.automatic)
 
-            List {
-            }
-
-            Text("No App Selected")
+            Text("No Device Selected")
                 .font(.title)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            DeviceInfoView(selection: selection)
+                .frame(idealWidth: 200)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
@@ -122,29 +128,272 @@ extension DeviceConnectionInfo : Identifiable, Hashable {
     }
 }
 
-struct LockdownClientAppListView : View {
-    let client: LockdownClient
+/// The righmost panel containing a lsit of the properties for the selected device
+struct DeviceInfoView: View {
+    @EnvironmentObject var store: Store
+    var selection: DeviceConnectionInfo?
+
+    @ViewBuilder var body: some View {
+        ScrollView {
+            if let selection = selection {
+                switch store.deviceMap[selection] {
+                case .none:
+                    Text("No Device Selected")
+                        .font(.title)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                case .some(.failure(let error)):
+                    Text("Error: \(error.localizedDescription)")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                case .some(.success(let client)):
+                    appDeviceInfoView(client)
+                }
+            } else {
+                Spacer()
+            }
+        }
+    }
+
+    /// A list of properties of a device
+    func appDeviceInfoView(_ client: LockdownClient) -> some View {
+        func keyRow(domain: String? = nil, _ key: String) -> some View {
+            let value: Busq.Plist?
+            let accessError: Error?
+
+            do {
+                value = try client.getValue(domain: domain, key: key)
+                accessError = nil
+            } catch {
+                accessError = error
+                value = nil
+            }
+
+            switch value?.nodeType {
+            case nil:
+                return row(title: key, value: accessError?.localizedDescription)
+            case .boolean:
+                return row(title: key, value: value?.bool?.description)
+            case .uint:
+                return row(title: key, value: value?.uint?.description)
+            case .real:
+                return row(title: key, value: value?.real?.description)
+            case .string:
+                return row(title: key, value: value?.string?.description)
+            case .array:
+                return row(title: key, value: "Array")
+            case .dict:
+                return row(title: key, value: "Dictionary")
+            case .date:
+                return row(title: key, value: value?.date?.description)
+            case .data:
+                return row(title: key, value: value?.data?.description)
+            case .key:
+                return row(title: key, value: value?.key?.description)
+            case .uid:
+                return row(title: key, value: value?.uid?.description)
+            case .some(.none):
+                return row(title: key, value: "None")
+            }
+        }
+
+
+        return Form {
+            Group {
+                HStack {
+                    Text("Device Info")
+                        .font(.headline)
+                }
+                Group {
+                    keyRow("DeviceName")
+                    keyRow("DeviceClass")
+                    keyRow("ProductName")
+                    keyRow("ProductType")
+                    keyRow("ProductVersion")
+                }
+
+                Group {
+                    keyRow("ModelNumber")
+                    keyRow("PasswordProtected")
+                    keyRow(domain: "com.apple.mobile.battery", "BatteryCurrentCapacity")
+                    keyRow(domain: "com.apple.mobile.battery", "BatteryIsCharging")
+                    keyRow("CPUArchitecture")
+                }
+
+                Group {
+                    keyRow("ActiveWirelessTechnology")
+                    keyRow("AirplaneMode")
+                    //keyRow("assistant")
+                    keyRow("BasebandCertId")
+                    keyRow("BasebandChipId")
+                    keyRow("BasebandPostponementStatus")
+                    keyRow("BasebandStatus")
+                }
+
+                Group {
+                    keyRow("BluetoothAddress")
+                    keyRow("BoardId")
+                    keyRow("BootNonce")
+                    keyRow("BuildVersion")
+                    keyRow("CertificateProductionStatus")
+                    keyRow("CertificateSecurityMode")
+                    keyRow("ChipID")
+                    keyRow("CompassCalibrationDictionary")
+                }
+            }
+
+            Group {
+                Text("Extended Info")
+                    .font(.headline)
+
+                Group {
+                    keyRow("DeviceColor")
+                    keyRow("DeviceEnclosureColor")
+                    //keyRow("DeviceEnclosureRGBColor")
+                    //keyRow("DeviceRGBColor")
+                    keyRow("DeviceSupportsFaceTime")
+                    keyRow("DeviceVariant")
+                    keyRow("DeviceVariantGuess")
+                }
+
+                Group {
+                    //keyRow("DiagData")
+                    //keyRow("dictation")
+                    //keyRow("DiskUsage")
+                    keyRow("EffectiveProductionStatus")
+                    keyRow("EffectiveProductionStatusAp")
+                    keyRow("EffectiveProductionStatusSEP")
+                    // keyRow("EffectiveSecurityMode")
+                    keyRow("EffectiveSecurityModeAp")
+                    keyRow("EffectiveSecurityModeSEP")
+                }
+
+                Group {
+                    keyRow("FirmwarePreflightInfo")
+                    keyRow("FirmwareVersion")
+                    //keyRow("FrontFacingCameraHFRCapability")
+                    keyRow("HardwarePlatform")
+                    keyRow("HasSEP")
+                    // keyRow("HWModelStr")
+                    keyRow("Image4Supported")
+                    // keyRow("InternalBuild")
+                    // keyRow("InverseDeviceID")
+                }
+
+                Group {
+                    // keyRow("ipad")
+                    keyRow("MixAndMatchPrevention")
+                    keyRow("MLBSerialNumber")
+                    keyRow("MobileSubscriberCountryCode")
+                    keyRow("MobileSubscriberNetworkCode")
+                    keyRow("PartitionType")
+                }
+            }
+
+            Group {
+                Group {
+                    // keyRow("ProximitySensorCalibrationDictionary")
+                    //keyRow("RearFacingCameraHFRCapability")
+                    keyRow("RegionCode")
+                    keyRow("RegionInfo")
+                    //keyRow("SDIOManufacturerTuple")
+                    //keyRow("SDIOProductInfo")
+                    keyRow("SerialNumber")
+                    keyRow("SIMTrayStatus")
+                    keyRow("SoftwareBehavior")
+                }
+
+                Group {
+                    keyRow("SoftwareBundleVersion")
+                    keyRow("SupportedDeviceFamilies")
+                    //keyRow("SupportedKeyboards")
+                    //keyRow("telephony")
+                    keyRow("UniqueChipID")
+                    keyRow("UniqueDeviceID")
+                    //keyRow("UserAssignedDeviceName")
+                    //keyRow("wifi")
+                    keyRow("WifiVendor")
+                }
+            }
+        }
+        .controlSize(.small)
+        .padding()
+
+    }
+
+    @ViewBuilder func row(title: String, value: String?) -> some View {
+        TextField(text: .constant(value ?? ""), prompt: Text("Unknown")) {
+            (Text(title) + Text(":"))
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(Text(title))
+                .layoutPriority(0)
+        }
+        .layoutPriority(1)
+        .textFieldStyle(.plain)
+        .textSelection(.enabled)
+    }
+
+
+}
+
+/// A vertical split view containing a list of apps for the device, below which is the information about the selected app
+/// This uses the undocumented behavior of a NavigationLink such that it will use the next available split for displaying the destination of the link.
+struct DeviceAppListSplitView : View {
+    @EnvironmentObject var client: LockdownClient
     @State var apps: [InstalledAppInfo] = []
 
     var body: some View {
+        // this split view allows us to override the 3-panel navigation behavior such that selecting an item from the list will make its navigation destination appear here (below the list) rather than in the panel on the right
+        VSplitView {
+            appListView
+            Text("No App Selected")
+                .font(.title)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    @ViewBuilder var appListView: some View {
         if let iproxy = try? client.createInstallationProxy(),
            let sbcient = try? client.createSpringboardServiceClient() {
-            AppsListView(client: client, proxy: iproxy, springboard: sbcient, apps: $apps)
+            AppsListView(apps: $apps)
+                .environmentObject(sbcient)
+                .environmentObject(iproxy)
                 .task {
-                    do {
-                        self.apps = try iproxy.getAppList(type: .any)
-                    } catch {
-                        dbg("error getting app list:", error)
+                    DispatchQueue.global().async {
+                        do {
+                            let appList = try iproxy.getAppList(type: .any)
+                            DispatchQueue.main.async {
+                                withAnimation {
+                                    self.apps = appList
+                                }
+                            }
+                        } catch {
+                            dbg("error getting app list:", error)
+                        }
                     }
                 }
         }
     }
 }
 
+extension SpringboardServiceClient : ObservableObject {
+}
+
+extension InstallationProxy : ObservableObject {
+}
+
+extension LockdownClient : ObservableObject {
+}
+
 struct AppsListView : View {
-    let client: LockdownClient
-    let proxy: InstallationProxy
-    let springboard: SpringboardServiceClient
+    @EnvironmentObject var client: LockdownClient
+    @EnvironmentObject var proxy: InstallationProxy
+    @EnvironmentObject var springboard: SpringboardServiceClient
     @Binding var apps: [InstalledAppInfo]
 
     var body: some View {
@@ -164,139 +413,178 @@ struct AppsListView : View {
         let apps = apps.filter { app in
             app.ApplicationType == type.rawValue
         }
+
         Section {
-            ForEach(apps.sorting(by: \.CFBundleDisplayName), id: \.CFBundleIdentifier) { app in
-                NavigationLink {
-                    AppInfoView(appInfo: app)
-                } label: {
-                    Label {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Group {
-                                    Text(app.CFBundleDisplayName ?? "")
-                                        .lineLimit(1)
-                                        .allowsTightening(true)
+            ForEach(apps.sorting(by: \.CFBundleDisplayName), id: \.CFBundleIdentifier) { appInfo in
+                AppInfoLink(appInfo: appInfo)
+            }
+        } header: {
+            Text(type.rawValue) + Text(" ") + Text("Apps") + Text(" (") + Text(apps.count, format: .number) + Text(")")
+        }
+    }
+}
 
-                                    if app.CFBundleName != app.CFBundleDisplayName {
-                                        Text("(" + (app.CFBundleName ?? "") + ")")
-                                            .lineLimit(1)
-                                            .allowsTightening(true)
-                                    }
-                                }
-                                .frame(minWidth: 20)
-                                // .frame(minWidth: 45) // expands short text too much
-                                .layoutPriority(1)
+struct AppInfoLink : View {
+    let appInfo: InstalledAppInfo
+    @State var icon: Image?
+    @EnvironmentObject var springboard: SpringboardServiceClient
 
-                                Spacer()
-
-                                Text(app.CFBundleShortVersionString ?? "")
-                                    .lineLimit(1)
-                                    .allowsTightening(true)
-                                    .foregroundColor(Color.secondary)
-                                    .font(Font.body.monospacedDigit())
-                            }
-                            HStack {
-                                Text(app.CFBundleIdentifier ?? "")
-                                    .lineLimit(1)
-                                    .allowsTightening(true)
-                                    //.font(Font.body.monospaced())
-                                    .truncationMode(.middle)
-                                    .foregroundColor(Color.secondary)
-
-                                Spacer()
-
-                                HStack(spacing: 2) {
-                                    Group {
-                                        icon(app.NSAppleEventsUsageDescription, .scroll)
-                                        icon(app.NSBluetoothUsageDescription, .cable_connector)
-                                        icon(app.NSLocationAlwaysUsageDescription, .location)
-                                        icon(app.NSVideoSubscriberAccountUsageDescription, .sparkles_tv)
-                                        icon(app.NSFocusStatusUsageDescription, .eyeglasses)
-                                        icon(app.NFCReaderUsageDescription, .barcode_viewfinder)
-                                        icon(app.NSHomeKitUsageDescription, .house)
-                                        icon(app.NSRemindersUsageDescription, .lightbulb)
-                                    }
-
-                                    Group {
-                                        icon(app.NSLocationTemporaryUsageDescriptionDictionary, .location_magnifyingglass)
-                                        icon(app.NSSiriUsageDescription, .ear)
-                                        icon(app.NSHealthShareUsageDescription, .stethoscope)
-                                        icon(app.NSHealthUpdateUsageDescription, .stethoscope_circle)
-                                        icon(app.NSSpeechRecognitionUsageDescription, .waveform)
-                                        icon(app.NSLocationUsageDescription, .location)
-                                        icon(app.NSMotionUsageDescription, .gyroscope)
-                                        icon(app.NSLocalNetworkUsageDescription, .network)
-                                    }
-
-                                    Group {
-                                        icon(app.NSAppleMusicUsageDescription, .music_note)
-                                        icon(app.NSLocationAlwaysAndWhenInUseUsageDescription, .location_fill_viewfinder)
-                                        icon(app.NSUserTrackingUsageDescription, .magnifyingglass)
-                                        icon(app.NSBluetoothAlwaysUsageDescription, .cable_connector_horizontal)
-                                        icon(app.NSFaceIDUsageDescription, .viewfinder)
-                                        icon(app.NSBluetoothPeripheralUsageDescription, .printer)
-                                        icon(app.NSCalendarsUsageDescription, .calendar)
-                                    }
-
-                                    Group {
-                                        icon(app.NSContactsUsageDescription, .person_text_rectangle)
-                                        icon(app.NSMicrophoneUsageDescription, .mic_circle)
-                                        icon(app.NSPhotoLibraryAddUsageDescription, .photo_on_rectangle)
-                                        icon(app.NSPhotoLibraryUsageDescription, .photo)
-                                        icon(app.NSCameraUsageDescription, .camera)
-                                        icon(app.NSLocationWhenInUseUsageDescription, .location_circle)
-                                    }
-                                }
-                                .symbolRenderingMode(.hierarchical)
-                            }
-                        }
-                    } icon: {
-                        if let bundleID = app.CFBundleIdentifier {
-//                            do {
-                            if let pngData = try? springboard.getIconPNGData(bundleIdentifier: bundleID) {
-                                if let img = UXImage(data: pngData) {
-                                    Image(uxImage: img)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                }
-                            }
-//                            } catch {
-//                                dbg("error getting PNG data for app:", bundleID, error)
-//                            }
-                        }
-
-//                        switch app.ApplicationType {
-//                        case "User":
-//                            FairSymbol.star_circle
-//                        case "System":
-//                            FairSymbol.rosette
-//                        case "Internal":
-//                            FairSymbol.flag_2_crossed
-//                        default:
-//                            FairSymbol.case
-//                        }
+    var body: some View {
+        NavigationLink {
+            AppInfoView(appInfo: appInfo, icon: $icon)
+        } label: {
+            AppItemLabel(appInfo: appInfo, icon: $icon)
+        }
+        .task {
+            if let bundleID = appInfo.CFBundleIdentifier {
+                if let pngData = try? springboard.getIconPNGData(bundleIdentifier: bundleID) {
+                    if let img = UXImage(data: pngData) {
+                        self.icon = Image(uxImage: img)
+                            .resizable()
                     }
                 }
             }
-        } header: {
-            Text(type.rawValue)
+        }
+
+    }
+}
+
+struct AppItemLabel : View {
+    let appInfo: InstalledAppInfo
+    @Binding var icon: Image?
+
+    var body: some View {
+        HStack {
+            Group {
+                if let icon = icon {
+                    icon
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.secondary)
+                }
+            }
+            .frame(width: 35, height: 35)
+
+            VStack(alignment: .leading) {
+                HStack {
+                    Group {
+                        Text(appInfo.CFBundleDisplayName ?? "")
+                            .lineLimit(1)
+                            .allowsTightening(true)
+
+                        if appInfo.CFBundleName != appInfo.CFBundleDisplayName {
+                            Text("(" + (appInfo.CFBundleName ?? "") + ")")
+                                .lineLimit(1)
+                                .allowsTightening(true)
+                        }
+                    }
+                    .frame(minWidth: 20)
+                    // .frame(minWidth: 45) // expands short text too much
+                    .layoutPriority(1)
+
+                    Spacer()
+
+                    Text(appInfo.CFBundleShortVersionString ?? "")
+                        .lineLimit(1)
+                        .allowsTightening(true)
+                        .foregroundColor(Color.secondary)
+                        .font(Font.body.monospacedDigit())
+                }
+                HStack {
+                    Text(appInfo.CFBundleIdentifier ?? "")
+                        .lineLimit(1)
+                        .allowsTightening(true)
+                        //.font(Font.body.monospaced())
+                        .truncationMode(.middle)
+                        .foregroundColor(Color.secondary)
+
+                    Spacer()
+
+                    appCapabilityIcons()
+                        .symbolRenderingMode(.hierarchical)
+                }
+            }
         }
     }
 
-    @ViewBuilder func icon(_ value: String?, _ symbol: FairSymbol) -> some View {
+    func appCapabilityIcons() -> some View {
+        HStack(spacing: 2) {
+            Group { // voice
+                icon(appInfo.NSSiriUsageDescription, "Siri", .ear)
+                icon(appInfo.NSSpeechRecognitionUsageDescription, "Speech Recognition", .waveform)
+            }
+            .foregroundStyle(Color.cyan)
+
+            Group { // hardware
+                icon(appInfo.NSMicrophoneUsageDescription, "Microphone", .mic_circle)
+                icon(appInfo.NSCameraUsageDescription, "Camera", .camera)
+                icon(appInfo.NSMotionUsageDescription, "Motion", .gyroscope)
+                icon(appInfo.NFCReaderUsageDescription, "NFC Reader", .barcode_viewfinder)
+                icon(appInfo.NSBluetoothUsageDescription, "Bluetooth", .cable_connector)
+                icon(appInfo.NSBluetoothAlwaysUsageDescription, "Bluetooth (Always)", .cable_connector_horizontal)
+                icon(appInfo.NSBluetoothPeripheralUsageDescription, "Bluetooth (peripheral)", .printer)
+            }
+            .foregroundStyle(Color.mint)
+
+            Group { // databases
+                icon(appInfo.NSRemindersUsageDescription, "Reminders", .text_badge_checkmark)
+                icon(appInfo.NSContactsUsageDescription, "Contacts", .person_text_rectangle)
+                icon(appInfo.NSCalendarsUsageDescription, "Calendars", .calendar)
+                icon(appInfo.NSPhotoLibraryAddUsageDescription, "Photo Library Add", .text_below_photo_fill)
+                icon(appInfo.NSPhotoLibraryUsageDescription, "Photo Library", .photo)
+            }
+            .foregroundStyle(Color.green)
+
+            Group { // services
+                icon(appInfo.NSAppleMusicUsageDescription, "Apple Music", .music_note)
+                icon(appInfo.NSHomeKitUsageDescription, "HomeKit", .house)
+                icon(appInfo.NSVideoSubscriberAccountUsageDescription, "Video Subscriber Account Usage", .sparkles_tv)
+                icon(appInfo.NSHealthShareUsageDescription, "Health Sharing", .stethoscope)
+                icon(appInfo.NSHealthUpdateUsageDescription, "Health Update", .stethoscope_circle)
+            }
+            .foregroundStyle(Color.mint)
+
+            Group { // misc
+                icon(appInfo.NSAppleEventsUsageDescription, "Apple Events", .scroll)
+                icon(appInfo.NSFocusStatusUsageDescription, "Focus Status", .eyeglasses)
+                icon(appInfo.NSLocalNetworkUsageDescription, "Local Network", .network)
+                icon(appInfo.NSFaceIDUsageDescription, "Face ID", .viewfinder)
+            }
+            .foregroundStyle(Color.gray)
+
+            Group { // location
+                icon(appInfo.NSLocationUsageDescription, "Location", .location_magnifyingglass)
+                icon(appInfo.NSLocationAlwaysUsageDescription, "Location (Always)", .location_fill)
+                icon(appInfo.NSLocationTemporaryUsageDescriptionDictionary, "Location (Temporary)", .location)
+                icon(appInfo.NSLocationWhenInUseUsageDescription, "Location (When in use)", .location_north)
+                icon(appInfo.NSLocationAlwaysAndWhenInUseUsageDescription, "Location (Always and when in use)", .location_fill_viewfinder)
+            }
+            .foregroundStyle(Color.blue)
+
+            Group { // tracking
+                icon(appInfo.NSUserTrackingUsageDescription, "User Tracking", .eyes)
+            }
+            .foregroundStyle(Color.pink)
+        }
+        .symbolRenderingMode(SwiftUI.SymbolRenderingMode.palette)
+    }
+
+
+    @ViewBuilder func icon(_ value: String?, _ desc: String, _ symbol: FairSymbol) -> some View {
         if let value = value {
             symbol
-                .help(value)
+                .help(Text(desc) + Text(": ") + Text(value))
         }
     }
-
 }
 
 struct AppInfoView : View {
     let appInfo: InstalledAppInfo
+    @Binding var icon: Image?
 
     var body: some View {
-
         ScrollView {
             Form {
                 Section {
@@ -305,11 +593,18 @@ struct AppInfoView : View {
                         row(title: "Version", value: appInfo.CFBundleShortVersionString)
                         row(title: "Path", value: appInfo.Path)
                         row(title: "Bundle ID", value: appInfo.CFBundleIdentifier)
-                        row(title: "Signer", value: appInfo.SignerIdentity)
+                        row(title: "Signer Identity", value: appInfo.SignerIdentity)
                     }
                 } header: {
-                    Text(appInfo.CFBundleDisplayName ?? "")
-                        .font(Font.largeTitle)
+                    TextField(text: .constant(appInfo.CFBundleDisplayName ?? ""), prompt: Text("Unknown")) {
+                        icon.aspectRatio(contentMode: .fit)
+                            .frame(height: 25)
+                    }
+                    .font(Font.largeTitle)
+                    .textFieldStyle(.plain)
+                    .textSelection(.enabled)
+                    //.disabled(true)
+                    //.frame(alignment: .center)
                 }
 
                 Divider()
@@ -371,8 +666,8 @@ struct AppInfoView : View {
         TextField(text: .constant(value ?? ""), prompt: Text("Unknown")) {
             Text(title) + Text(":")
         }
-        .textSelection(.disabled)
-
+        .textFieldStyle(.squareBorder)
+        .textSelection(.enabled)
     }
 }
 
