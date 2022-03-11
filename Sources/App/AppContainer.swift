@@ -720,35 +720,56 @@ extension InstalledAppInfo {
 }
 
 enum UsageDescriptionKeys : String, CaseIterable {
-    case NSAppleEventsUsageDescription
-    case NSBluetoothUsageDescription
-    case NSLocationAlwaysUsageDescription
-    //case NSVideoSubscriberAccountUsageDescription // tvOS only
-    case NSFocusStatusUsageDescription
-    case NFCReaderUsageDescription
-    case NSHomeKitUsageDescription
-    case NSRemindersUsageDescription
-    case NSLocationTemporaryUsageDescriptionDictionary
+
+    // MARK: voice
+
     case NSSiriUsageDescription
-    case NSHealthShareUsageDescription
-    case NSHealthUpdateUsageDescription
     case NSSpeechRecognitionUsageDescription
-    case NSLocationUsageDescription // macOS
-    case NSMotionUsageDescription
-    case NSLocalNetworkUsageDescription
-    case NSAppleMusicUsageDescription
-    case NSLocationAlwaysAndWhenInUseUsageDescription
-    case NSUserTrackingUsageDescription
-    case NSBluetoothAlwaysUsageDescription
-    case NSFaceIDUsageDescription
-    case NSBluetoothPeripheralUsageDescription
-    case NSCalendarsUsageDescription
-    case NSContactsUsageDescription
+
+    // MARK: hardware
+
     case NSMicrophoneUsageDescription
+    case NSCameraUsageDescription
+    case NSMotionUsageDescription
+    case NFCReaderUsageDescription
+    case NSBluetoothUsageDescription
+    case NSBluetoothAlwaysUsageDescription
+    case NSBluetoothPeripheralUsageDescription
+
+    // MARK: databases
+
+    case NSRemindersUsageDescription
+    case NSContactsUsageDescription
+    case NSCalendarsUsageDescription
     case NSPhotoLibraryAddUsageDescription
     case NSPhotoLibraryUsageDescription
-    case NSCameraUsageDescription
+
+    // MARK: services
+
+    case NSAppleMusicUsageDescription
+    case NSHomeKitUsageDescription
+    //case NSVideoSubscriberAccountUsageDescription
+    case NSHealthShareUsageDescription
+    case NSHealthUpdateUsageDescription
+
+    // MARK: misc
+
+    case NSAppleEventsUsageDescription
+    case NSFocusStatusUsageDescription
+    case NSLocalNetworkUsageDescription
+    case NSFaceIDUsageDescription
+
+    // MARK: location
+
+    case NSLocationUsageDescription
+    case NSLocationAlwaysUsageDescription
+    case NSLocationTemporaryUsageDescriptionDictionary
     case NSLocationWhenInUseUsageDescription
+    case NSLocationAlwaysAndWhenInUseUsageDescription
+
+    // MARK: tracking
+    case NSUserTrackingUsageDescription
+
 }
 
 extension UsageDescriptionKeys {
@@ -874,7 +895,8 @@ struct AppInfoView : View {
 
     func usageRow(key: UsageDescriptionKeys) -> some View {
         TextField(text: .constant(appInfo[usage: key] ?? ""), prompt: Text("Unset")) {
-            Text(key.description) + Text(":")
+            (Text(key.description) + Text(":"))
+                //.label(image: key.icon)
         }
         // .textFieldStyle(.squareBorder) // not on iOS
         .textSelection(.enabled)
