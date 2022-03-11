@@ -5,7 +5,13 @@ import UniformTypeIdentifiers
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
+    /// The signing identity for signing .ipa files
+    @AppStorage("signingIdentity") public var signingIdentity = ""
+    /// The developer team ID for signing .ipa files
+    @AppStorage("teamID") public var teamID = ""
+    /// The keychain that holds the signing certificate
+    @AppStorage("keychainName") public var keychainName = ""
+
     @Published var selection: DeviceConnectionInfo?
     @Published var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
     /// Errors to be shown at the top level
@@ -949,11 +955,35 @@ public extension AppContainer {
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
+    public enum Tabs: Hashable {
+        case general
+    }
+
     public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
+        TabView {
+            Group {
+                Form {
+                    TextField(text: $store.teamID, prompt: Text("1A2B3C4D5F")) {
+                        Text("Team ID:")
+                    }
+                    TextField(text: $store.signingIdentity, prompt: Text("iPhone Distribution: <Developer> (<Team ID>)")) {
+                        Text("Signing Identity:")
+                    }
+                    TextField(text: $store.keychainName, prompt: Text("Optional")) {
+                        Text("Keychain Name:")
+                    }
+                }
+            }
+            .padding(20)
+            .tabItem {
+                Text("General")
+                    .label(image: FairSymbol.platter_filled_top_and_arrow_up_iphone)
+                    .symbolVariant(.fill)
+            }
+            .tag(Tabs.general)
         }
-        .padding()
+        .padding(20)
+        .frame(width: 600)
     }
 }
 
