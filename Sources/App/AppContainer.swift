@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
     var deviceEventSubscription: Disposable?
 
     /// Whether to display an initial error
-    var presentedError: Binding<Bool> {
+    var presentedErrorExists: Binding<Bool> {
         Binding {
             self.errors.isEmpty == false
         } set: { newValue in
@@ -22,6 +22,11 @@ import UniformTypeIdentifiers
             }
         }
     }
+
+    var presentedError: AppError? {
+        errors.first.flatMap(AppError.init)
+    }
+
     /// Returns the connection infos as will be displayed by the UI
     var connectionInfos: [DeviceConnectionInfo] {
         // TODO: sort by name, or something other than the udid
@@ -67,7 +72,7 @@ import UniformTypeIdentifiers
         }
     }
 
-    func importIPA(_ urls: [URL]) {
+    func importIPA(_ urls: [URL], upgrade: Bool = false) {
         dbg("importing:", urls, "into:", selection)
         guard let selection = selection,
               let client = deviceMap[selection]?.successValue else {
@@ -76,11 +81,30 @@ import UniformTypeIdentifiers
 
         dbg("importing into:", client)
 
-        do {
-            let iproxy = try client.createInstallationProxy()
-        } catch {
-            dbg("error installing IPA:", error)
-            self.errors.append(error)
+        for url in urls {
+            do {
+                let iproxy = try client.createInstallationProxy()
+                // "iTunesMetadata" -> PLIST_DATA
+                // "ApplicationSINF" -> PLIST_DATA
+                // "PackageType" -> "Developer"
+                let opts = Plist(dictionary: [
+                    // "CFBundleIdentifier": nil,
+                    // "iTunesMetadata": nil,
+                    // "ApplicationSINF": nil,
+                    // "PackageType": Plist(string: "Developer"),
+                    :])
+
+                if upgrade {
+                    let result = try iproxy.upgrade(pkgPath: url.path, options: opts, callback: nil)
+                    result.dispose()
+                } else {
+                    let result = try iproxy.install(pkgPath: url.path, options: opts, callback: nil)
+                    result.dispose()
+                }
+            } catch {
+                dbg("error installing IPA:", error)
+                self.errors.append(error)
+            }
         }
     }
 
@@ -108,8 +132,10 @@ public struct ContentView: View {
 
     public var body: some View {
         navigationView
-            .sheet(isPresented: store.presentedError) {
-                Text("ERROR: \(store.errors.first.debugDescription)")
+        // FIXME: not working
+            .alert(isPresented: store.presentedErrorExists, error: store.presentedError) {
+                Button("OK") {
+                }
             }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [ipaType], allowsMultipleSelection: false) { result in
                 switch result {
@@ -618,59 +644,59 @@ struct AppItemLabel : View {
     func appCapabilityIcons() -> some View {
         HStack(spacing: 2) {
             Group { // voice
-                icon(appInfo.NSSiriUsageDescription, "Siri", .ear)
-                icon(appInfo.NSSpeechRecognitionUsageDescription, "Speech Recognition", .waveform)
+                icon(.NSSiriUsageDescription)
+                icon(.NSSpeechRecognitionUsageDescription)
             }
             .foregroundStyle(Color.cyan)
 
             Group { // hardware
-                icon(appInfo.NSMicrophoneUsageDescription, "Microphone", .mic_circle)
-                icon(appInfo.NSCameraUsageDescription, "Camera", .camera)
-                icon(appInfo.NSMotionUsageDescription, "Motion", .gyroscope)
-                icon(appInfo.NFCReaderUsageDescription, "NFC Reader", .barcode_viewfinder)
-                icon(appInfo.NSBluetoothUsageDescription, "Bluetooth", .cable_connector)
-                icon(appInfo.NSBluetoothAlwaysUsageDescription, "Bluetooth (Always)", .cable_connector_horizontal)
-                icon(appInfo.NSBluetoothPeripheralUsageDescription, "Bluetooth (peripheral)", .printer)
+                icon(.NSMicrophoneUsageDescription)
+                icon(.NSCameraUsageDescription)
+                icon(.NSMotionUsageDescription)
+                icon(.NFCReaderUsageDescription)
+                icon(.NSBluetoothUsageDescription)
+                icon(.NSBluetoothAlwaysUsageDescription)
+                icon(.NSBluetoothPeripheralUsageDescription)
             }
             .foregroundStyle(Color.mint)
 
             Group { // databases
-                icon(appInfo.NSRemindersUsageDescription, "Reminders", .text_badge_checkmark)
-                icon(appInfo.NSContactsUsageDescription, "Contacts", .person_text_rectangle)
-                icon(appInfo.NSCalendarsUsageDescription, "Calendars", .calendar)
-                icon(appInfo.NSPhotoLibraryAddUsageDescription, "Photo Library Add", .text_below_photo_fill)
-                icon(appInfo.NSPhotoLibraryUsageDescription, "Photo Library", .photo)
+                icon(.NSRemindersUsageDescription)
+                icon(.NSContactsUsageDescription)
+                icon(.NSCalendarsUsageDescription)
+                icon(.NSPhotoLibraryAddUsageDescription)
+                icon(.NSPhotoLibraryUsageDescription)
             }
             .foregroundStyle(Color.green)
 
             Group { // services
-                icon(appInfo.NSAppleMusicUsageDescription, "Apple Music", .music_note)
-                icon(appInfo.NSHomeKitUsageDescription, "HomeKit", .house)
-                icon(appInfo.NSVideoSubscriberAccountUsageDescription, "Video Subscriber Account Usage", .sparkles_tv)
-                icon(appInfo.NSHealthShareUsageDescription, "Health Sharing", .stethoscope)
-                icon(appInfo.NSHealthUpdateUsageDescription, "Health Update", .stethoscope_circle)
+                icon(.NSAppleMusicUsageDescription)
+                icon(.NSHomeKitUsageDescription)
+                //icon(.NSVideoSubscriberAccountUsageDescription)
+                icon(.NSHealthShareUsageDescription)
+                icon(.NSHealthUpdateUsageDescription)
             }
             .foregroundStyle(Color.mint)
 
             Group { // misc
-                icon(appInfo.NSAppleEventsUsageDescription, "Apple Events", .scroll)
-                icon(appInfo.NSFocusStatusUsageDescription, "Focus Status", .eyeglasses)
-                icon(appInfo.NSLocalNetworkUsageDescription, "Local Network", .network)
-                icon(appInfo.NSFaceIDUsageDescription, "Face ID", .viewfinder)
+                icon(.NSAppleEventsUsageDescription)
+                icon(.NSFocusStatusUsageDescription)
+                icon(.NSLocalNetworkUsageDescription)
+                icon(.NSFaceIDUsageDescription)
             }
             .foregroundStyle(Color.gray)
 
             Group { // location
-                icon(appInfo.NSLocationUsageDescription, "Location", .location_magnifyingglass)
-                icon(appInfo.NSLocationAlwaysUsageDescription, "Location (Always)", .location_fill)
-                icon(appInfo.NSLocationTemporaryUsageDescriptionDictionary, "Location (Temporary)", .location)
-                icon(appInfo.NSLocationWhenInUseUsageDescription, "Location (When in use)", .location_north)
-                icon(appInfo.NSLocationAlwaysAndWhenInUseUsageDescription, "Location (Always and when in use)", .location_fill_viewfinder)
+                icon(.NSLocationUsageDescription)
+                icon(.NSLocationAlwaysUsageDescription)
+                icon(.NSLocationTemporaryUsageDescriptionDictionary)
+                icon(.NSLocationWhenInUseUsageDescription)
+                icon(.NSLocationAlwaysAndWhenInUseUsageDescription)
             }
             .foregroundStyle(Color.blue)
 
             Group { // tracking
-                icon(appInfo.NSUserTrackingUsageDescription, "User Tracking", .eyes)
+                icon(.NSUserTrackingUsageDescription)
             }
             .foregroundStyle(Color.pink)
         }
@@ -678,10 +704,120 @@ struct AppItemLabel : View {
     }
 
 
-    @ViewBuilder func icon(_ value: String?, _ desc: String, _ symbol: FairSymbol) -> some View {
-        if let value = value {
-            symbol
-                .help(Text(desc) + Text(": ") + Text(value))
+    @ViewBuilder func icon(_ key: UsageDescriptionKeys) -> some View {
+        if let value = appInfo[usage: key] {
+            key.icon
+                .help(Text(key.description) + Text(": ") + Text(value))
+        }
+    }
+}
+
+extension InstalledAppInfo {
+    /// Returns the value of the given `UsageDescriptionKeys` is it exists
+    subscript(usage key: UsageDescriptionKeys) -> String? {
+        dict[key.rawValue]?.string
+    }
+}
+
+enum UsageDescriptionKeys : String, CaseIterable {
+    case NSAppleEventsUsageDescription
+    case NSBluetoothUsageDescription
+    case NSLocationAlwaysUsageDescription
+    //case NSVideoSubscriberAccountUsageDescription // tvOS only
+    case NSFocusStatusUsageDescription
+    case NFCReaderUsageDescription
+    case NSHomeKitUsageDescription
+    case NSRemindersUsageDescription
+    case NSLocationTemporaryUsageDescriptionDictionary
+    case NSSiriUsageDescription
+    case NSHealthShareUsageDescription
+    case NSHealthUpdateUsageDescription
+    case NSSpeechRecognitionUsageDescription
+    case NSLocationUsageDescription // macOS
+    case NSMotionUsageDescription
+    case NSLocalNetworkUsageDescription
+    case NSAppleMusicUsageDescription
+    case NSLocationAlwaysAndWhenInUseUsageDescription
+    case NSUserTrackingUsageDescription
+    case NSBluetoothAlwaysUsageDescription
+    case NSFaceIDUsageDescription
+    case NSBluetoothPeripheralUsageDescription
+    case NSCalendarsUsageDescription
+    case NSContactsUsageDescription
+    case NSMicrophoneUsageDescription
+    case NSPhotoLibraryAddUsageDescription
+    case NSPhotoLibraryUsageDescription
+    case NSCameraUsageDescription
+    case NSLocationWhenInUseUsageDescription
+}
+
+extension UsageDescriptionKeys {
+    var description: LocalizedStringKey {
+        switch self {
+        case .NSSiriUsageDescription: return "Siri"
+        case .NSSpeechRecognitionUsageDescription: return "Speech Recognition"
+        case .NSMicrophoneUsageDescription: return "Microphone"
+        case .NSCameraUsageDescription: return "Camera"
+        case .NSMotionUsageDescription: return "Motion"
+        case .NFCReaderUsageDescription: return "NFC Reader"
+        case .NSBluetoothUsageDescription: return "Bluetooth"
+        case .NSBluetoothAlwaysUsageDescription: return "Bluetooth (Always)"
+        case .NSBluetoothPeripheralUsageDescription: return "Bluetooth (peripheral)"
+        case .NSRemindersUsageDescription: return "Reminders"
+        case .NSContactsUsageDescription: return "Contacts"
+        case .NSCalendarsUsageDescription: return "Calendars"
+        case .NSPhotoLibraryAddUsageDescription: return "Photo Library Add"
+        case .NSPhotoLibraryUsageDescription: return "Photo Library"
+        case .NSAppleMusicUsageDescription: return "Apple Music"
+        case .NSHomeKitUsageDescription: return "HomeKit"
+        //case .NSVideoSubscriberAccountUsageDescription: return "Video Subscriber Account Usage"
+        case .NSHealthShareUsageDescription: return "Health Sharing"
+        case .NSHealthUpdateUsageDescription: return "Health Update"
+        case .NSAppleEventsUsageDescription: return "Apple Events"
+        case .NSFocusStatusUsageDescription: return "Focus Status"
+        case .NSLocalNetworkUsageDescription: return "Local Network"
+        case .NSFaceIDUsageDescription: return "Face ID"
+        case .NSLocationUsageDescription: return "Location"
+        case .NSLocationAlwaysUsageDescription: return "Location (Always)"
+        case .NSLocationTemporaryUsageDescriptionDictionary: return "Location (Temporary)"
+        case .NSLocationWhenInUseUsageDescription: return "Location (When in use)"
+        case .NSLocationAlwaysAndWhenInUseUsageDescription: return "Location (Always)"
+        case .NSUserTrackingUsageDescription: return "User Tracking"
+        }
+    }
+
+    var icon: FairSymbol {
+        switch self {
+        case .NSSiriUsageDescription: return .ear
+        case .NSSpeechRecognitionUsageDescription: return .waveform
+        case .NSMicrophoneUsageDescription: return .mic_circle
+        case .NSCameraUsageDescription: return .camera
+        case .NSMotionUsageDescription: return .gyroscope
+        case .NFCReaderUsageDescription: return .barcode_viewfinder
+        case .NSBluetoothUsageDescription: return .cable_connector
+        case .NSBluetoothAlwaysUsageDescription: return .cable_connector_horizontal
+        case .NSBluetoothPeripheralUsageDescription: return .printer
+        case .NSRemindersUsageDescription: return .text_badge_checkmark
+        case .NSContactsUsageDescription: return .person_text_rectangle
+        case .NSCalendarsUsageDescription: return .calendar
+        case .NSPhotoLibraryAddUsageDescription: return .text_below_photo_fill
+        case .NSPhotoLibraryUsageDescription: return .photo
+        case .NSAppleMusicUsageDescription: return .music_note
+        case .NSHomeKitUsageDescription: return .house
+        //case .NSVideoSubscriberAccountUsageDescription: return .sparkles_tv
+        case .NSHealthShareUsageDescription: return .stethoscope
+        case .NSHealthUpdateUsageDescription: return .stethoscope_circle
+        case .NSAppleEventsUsageDescription: return .scroll
+        case .NSFocusStatusUsageDescription: return .eyeglasses
+        case .NSLocalNetworkUsageDescription: return .network
+        case .NSFaceIDUsageDescription: return .viewfinder
+        case .NSLocationUsageDescription: return .location_magnifyingglass
+        case .NSLocationAlwaysUsageDescription: return .location_fill
+        case .NSLocationTemporaryUsageDescriptionDictionary: return .location
+        case .NSLocationWhenInUseUsageDescription: return .location_north
+        case .NSLocationAlwaysAndWhenInUseUsageDescription: return .location_fill_viewfinder
+        case .NSUserTrackingUsageDescription: return .eyes
+
         }
     }
 }
@@ -716,48 +852,8 @@ struct AppInfoView : View {
                 Divider()
 
                 Section {
-                    Group {
-                        Group {
-                            if let usage = appInfo.NSSiriUsageDescription {
-                                row(title: "Siri", value: usage)
-                            }
-                            if let usage = appInfo.NSCameraUsageDescription {
-                                row(title: "Camera", value: usage)
-                            }
-                            if let usage = appInfo.NSMotionUsageDescription {
-                                row(title: "Motion", value: usage)
-                            }
-                            if let usage = appInfo.NSContactsUsageDescription {
-                                row(title: "Contacts", value: usage)
-                            }
-                            if let usage = appInfo.NSLocationUsageDescription {
-                                row(title: "Location", value: usage)
-                            }
-                            if let usage = appInfo.NSBluetoothUsageDescription {
-                                row(title: "Bluetooth", value: usage)
-                            }
-                        }
-
-                        Group {
-                            if let usage = appInfo.NSCalendarsUsageDescription {
-                                row(title: "Calendar", value: usage)
-                            }
-                            if let usage = appInfo.NSRemindersUsageDescription {
-                                row(title: "Reminders", value: usage)
-                            }
-                            if let usage = appInfo.NSMicrophoneUsageDescription {
-                                row(title: "Microphone", value: usage)
-                            }
-                            if let usage = appInfo.NSFaceIDUsageDescription {
-                                row(title: "FaceID", value: usage)
-                            }
-                            if let usage = appInfo.NSHomeKitUsageDescription {
-                                row(title: "Homekit", value: usage)
-                            }
-                            if let usage = appInfo.NSSpeechRecognitionUsageDescription {
-                                row(title: "Speech", value: usage)
-                            }
-                        }
+                    ForEach(UsageDescriptionKeys.allCases, id: \.self) { key in
+                        usageRow(key: key)
                     }
                 } header: {
                     Text("Permissions")
@@ -775,6 +871,15 @@ struct AppInfoView : View {
         // .textFieldStyle(.squareBorder) // not on iOS
         .textSelection(.enabled)
     }
+
+    func usageRow(key: UsageDescriptionKeys) -> some View {
+        TextField(text: .constant(appInfo[usage: key] ?? ""), prompt: Text("Unset")) {
+            Text(key.description) + Text(":")
+        }
+        // .textFieldStyle(.squareBorder) // not on iOS
+        .textSelection(.enabled)
+    }
+
 }
 
 public extension AppContainer {
