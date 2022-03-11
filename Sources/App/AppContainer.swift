@@ -88,7 +88,7 @@ import UniformTypeIdentifiers
 
         for url in urls {
             do {
-                let iproxy = try client.createInstallationProxy()
+                let iproxy = try client.createInstallationProxy(escrow: true)
                 // "iTunesMetadata" -> PLIST_DATA
                 // "ApplicationSINF" -> PLIST_DATA
                 // "PackageType" -> "Developer"
@@ -499,6 +499,7 @@ struct DeviceAppListSplitView : View {
         // this split view allows us to override the 3-panel navigation behavior such that selecting an item from the list will make its navigation destination appear here (below the list) rather than in the panel on the right
         VSplit {
             appListView
+                .frame(minHeight: 250)
             Text("No App Selected")
                 .font(.title)
                 .foregroundColor(.secondary)
@@ -506,8 +507,8 @@ struct DeviceAppListSplitView : View {
         }
         .task {
             do {
-                self.iproxy = try client.createInstallationProxy()
-                self.sbclient = try client.createSpringboardServiceClient()
+                self.iproxy = try client.createInstallationProxy(escrow: true)
+                self.sbclient = try client.createSpringboardServiceClient(escrow: true)
             } catch {
                 store.reportError(error)
             }
