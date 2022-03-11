@@ -72,6 +72,11 @@ import UniformTypeIdentifiers
         }
     }
 
+    func reportError(_ error: Error) {
+        dbg("error:", error)
+        errors.append(error)
+    }
+
     func importIPA(_ urls: [URL], upgrade: Bool = false) {
         dbg("importing:", urls, "into:", selection)
         guard let selection = selection,
@@ -103,7 +108,7 @@ import UniformTypeIdentifiers
                 }
             } catch {
                 dbg("error installing IPA:", error)
-                self.errors.append(error)
+                self.reportError(error)
             }
         }
     }
@@ -484,8 +489,11 @@ typealias VSplit = VSplitView
 /// A vertical split view containing a list of apps for the device, below which is the information about the selected app
 /// This uses the undocumented behavior of a NavigationLink such that it will use the next available split for displaying the destination of the link.
 struct DeviceAppListSplitView : View {
+    @EnvironmentObject var store: Store
     @EnvironmentObject var client: LockdownClient
     @State var apps: [InstalledAppInfo] = []
+    @State var iproxy: InstallationProxy?
+    @State var sbclient: SpringboardServiceClient?
 
     var body: some View {
         // this split view allows us to override the 3-panel navigation behavior such that selecting an item from the list will make its navigation destination appear here (below the list) rather than in the panel on the right
@@ -496,13 +504,20 @@ struct DeviceAppListSplitView : View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .task {
+            do {
+                self.iproxy = try client.createInstallationProxy()
+                self.sbclient = try client.createSpringboardServiceClient()
+            } catch {
+                store.reportError(error)
+            }
+        }
     }
 
     @ViewBuilder var appListView: some View {
-        if let iproxy = try? client.createInstallationProxy(),
-           let sbcient = try? client.createSpringboardServiceClient() {
+        if let iproxy = self.iproxy, let sbclient = self.sbclient {
             AppsListView(apps: $apps)
-                .environmentObject(sbcient)
+                .environmentObject(sbclient)
                 .environmentObject(iproxy)
                 .task {
                     DispatchQueue.global().async {
@@ -559,6 +574,7 @@ struct AppsListView : View {
 struct AppInfoLink : View {
     let appInfo: InstalledAppInfo
     @State var icon: Image?
+    @EnvironmentObject var store: Store
     @EnvironmentObject var springboard: SpringboardServiceClient
 
     var body: some View {
@@ -569,11 +585,14 @@ struct AppInfoLink : View {
         }
         .task {
             if let bundleID = appInfo.CFBundleIdentifier {
-                if let pngData = try? springboard.getIconPNGData(bundleIdentifier: bundleID) {
+                do {
+                    let pngData = try springboard.getIconPNGData(bundleIdentifier: bundleID)
                     if let img = UXImage(data: pngData) {
                         self.icon = Image(uxImage: img)
                             .resizable()
                     }
+                } catch {
+                    store.reportError(error)
                 }
             }
         }
@@ -721,6 +740,17 @@ extension InstalledAppInfo {
 
 enum UsageDescriptionKeys : String, CaseIterable {
 
+    // MARK: tracking
+    case NSUserTrackingUsageDescription
+
+    // MARK: location
+
+    case NSLocationUsageDescription
+    case NSLocationAlwaysUsageDescription
+    case NSLocationTemporaryUsageDescriptionDictionary
+    case NSLocationWhenInUseUsageDescription
+    case NSLocationAlwaysAndWhenInUseUsageDescription
+
     // MARK: voice
 
     case NSSiriUsageDescription
@@ -758,17 +788,6 @@ enum UsageDescriptionKeys : String, CaseIterable {
     case NSFocusStatusUsageDescription
     case NSLocalNetworkUsageDescription
     case NSFaceIDUsageDescription
-
-    // MARK: location
-
-    case NSLocationUsageDescription
-    case NSLocationAlwaysUsageDescription
-    case NSLocationTemporaryUsageDescriptionDictionary
-    case NSLocationWhenInUseUsageDescription
-    case NSLocationAlwaysAndWhenInUseUsageDescription
-
-    // MARK: tracking
-    case NSUserTrackingUsageDescription
 
 }
 
@@ -894,7 +913,7 @@ struct AppInfoView : View {
     }
 
     func usageRow(key: UsageDescriptionKeys) -> some View {
-        TextField(text: .constant(appInfo[usage: key] ?? ""), prompt: Text("Unset")) {
+        TextField(text: .constant(appInfo[usage: key] ?? ""), prompt: Text("Not used")) {
             (Text(key.description) + Text(":"))
                 //.label(image: key.icon)
         }
