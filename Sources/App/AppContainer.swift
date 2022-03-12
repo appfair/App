@@ -56,7 +56,7 @@ import UniformTypeIdentifiers
             var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
             for deviceInfo in deviceInfos {
                 deviceMap[deviceInfo] = Result {
-                    try Device(udid: deviceInfo.udid, options: deviceInfo.connectionType == .network ? .network : .usbmux).createLockdownClient()
+                    try deviceInfo.createDevice().createLockdownClient()
                 }
             }
             let dmap = deviceMap // else error: “Reference to captured var 'deviceMap' in concurrently-executing code”
@@ -364,6 +364,7 @@ struct DeviceInfoView: View {
                 Group {
                     keyRow("ModelNumber")
                     keyRow("PasswordProtected")
+                    keyRow("DevicePublicKey")
                     keyRow(domain: "com.apple.mobile.battery", "BatteryCurrentCapacity")
                     keyRow(domain: "com.apple.mobile.battery", "BatteryIsCharging")
                     keyRow("CPUArchitecture")
