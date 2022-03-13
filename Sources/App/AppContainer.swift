@@ -162,21 +162,6 @@ public struct ContentView: View {
                     store.importIPA([url])
                 }
             }
-            .onDrop(of: [ipaType], isTargeted: nil) { providers in
-                dbg("dropped:", providers)
-                for provider in providers {
-                    provider.loadInPlaceFileRepresentation(forTypeIdentifier: ipaType.identifier) { url, inPlace, error in
-                        if let error = error {
-                            dbg("error loading file representation:", error)
-                        } else if let url = url {
-                            if store.ensureSelection() {
-                                store.importIPA([url])
-                            }
-                        }
-                    }
-                }
-                return !providers.isEmpty
-            }
             .toolbar(id: "ImportToolbar") {
                 ToolbarItem(id: "ImportIPA", placement: .navigation, showsByDefault: true) {
                     Text("Import")
@@ -501,16 +486,15 @@ struct DeviceAppListSplitView : View {
     @State var apps: [InstalledAppInfo] = []
     @State var iproxy: InstallationProxy?
     @State var sbclient: SpringboardServiceClient?
+    @State var dropZoneTargeted = false
 
     var body: some View {
         // this split view allows us to override the 3-panel navigation behavior such that selecting an item from the list will make its navigation destination appear here (below the list) rather than in the panel on the right
         VSplit {
             appListView
-                .frame(minHeight: 250)
-            Text("No App Selected")
-                .font(.title)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(idealHeight: 100)
+
+            selectAppView()
         }
         .task {
             do {
@@ -522,25 +506,90 @@ struct DeviceAppListSplitView : View {
         }
     }
 
-    @ViewBuilder var appListView: some View {
-        if let iproxy = self.iproxy, let sbclient = self.sbclient {
-            AppsListView(apps: $apps)
-                .environmentObject(sbclient)
-                .environmentObject(iproxy)
-                .task {
-                    DispatchQueue.global().async {
-                        do {
-                            let appList = try iproxy.getAppList(type: .any)
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    self.apps = appList
-                                }
-                            }
-                        } catch {
-                            dbg("error getting app list:", error)
+    func selectAppView() -> some View {
+        Group {
+            if store.teamID.isEmpty {
+                Text("No App Selected")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                appDropView()
+            }
+        }
+    }
+
+    func appDropView() -> some View {
+        VStack {
+            // square.and.arrow.down.on.square.fill
+            Image(FairSymbol.square_and_arrow_down_on_square)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .font(.largeTitle)
+                .symbolVariant(dropZoneTargeted ? .fill : .none)
+                .frame(maxHeight: 150)
+
+            Text("Install app .ipa")
+                .font(.title)
+        }
+        .help(Text("This will sign the dropped IPA with your Signing Identity and Team ID and transfer and install the app on your device."))
+        .foregroundColor(.secondary)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onDrop(of: [UTType.url, UTType.fileURL], isTargeted: $dropZoneTargeted) { (items) -> Bool in
+            guard let item = items.first else {
+                return false
+            }
+            guard let identifier = item.registeredTypeIdentifiers.first else {
+                return false
+            }
+            item.loadItem(forTypeIdentifier: identifier, options: nil) { (urlData, error) in
+                DispatchQueue.main.async {
+                    if let urlData = urlData as? Data {
+                        let urll = NSURL(absoluteURLWithDataRepresentation: urlData, relativeTo: nil) as URL
+                        if urll.pathExtension == "ipa"{
+                            store.importIPA([urll])
                         }
                     }
                 }
+            }
+            return true
+        }
+    }
+
+    @ViewBuilder var appListView: some View {
+        ZStack {
+            if let iproxy = self.iproxy, let sbclient = self.sbclient {
+                AppsListView(apps: $apps)
+                    .environmentObject(sbclient)
+                    .environmentObject(iproxy)
+                    .task {
+                        DispatchQueue.global().async {
+                            do {
+                                let appList = try iproxy.getAppList(type: .any)
+                                DispatchQueue.main.async {
+                                    withAnimation {
+                                        self.apps = appList
+                                    }
+                                }
+                            } catch {
+                                dbg("error getting app list:", error)
+                            }
+                        }
+                    }
+            }
+
+            HStack(spacing: 10) {
+                #if os(macOS)
+                ProgressView().controlSize(.small)
+                #else
+                ProgressView()
+                #endif
+                Text("Loading App Inventory…")
+                    .font(.title)
+            }
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(apps.isEmpty ? 1.0 : 0.0)
         }
     }
 }
@@ -964,14 +1013,36 @@ public struct AppSettingsView : View {
         TabView {
             Group {
                 Form {
-                    TextField(text: $store.teamID, prompt: Text("1A2B3C4D5F")) {
-                        Text("Team ID:")
+                    HStack {
+                        TextField(text: $store.teamID, prompt: Text("1A2B3C4D5F")) {
+                            Text("Team ID:")
+                        }
+
+                        Group {
+                            if store.teamID.isEmpty {
+                                FairSymbol.questionmark_circle_fill
+                            } else if store.teamID.count != 10 {
+                                FairSymbol.exclamationmark_triangle_fill
+                            } else {
+                                FairSymbol.checkmark_square_fill.foregroundStyle(Color.green)
+                            }
+                        }
+                            .symbolRenderingMode(.multicolor)
+                            .help(Text("Team ID must be 10 characters long"))
                     }
-                    TextField(text: $store.signingIdentity, prompt: Text("iPhone Distribution: <Developer> (<Team ID>)")) {
-                        Text("Signing Identity:")
+                    HStack {
+                        TextField(text: $store.signingIdentity, prompt: Text("iPhone Distribution: <Developer> (<Team ID>)")) {
+                            Text("Signing Identity:")
+                        }
+                        FairSymbol.exclamationmark_triangle_fill
+                            .opacity(0.0) // TODO
                     }
-                    TextField(text: $store.keychainName, prompt: Text("Optional")) {
-                        Text("Keychain Name:")
+                    HStack {
+                        TextField(text: $store.keychainName, prompt: Text("Optional")) {
+                            Text("Keychain Name:")
+                        }
+                        FairSymbol.exclamationmark_triangle_fill
+                            .opacity(0.0) // TODO
                     }
                 }
             }
