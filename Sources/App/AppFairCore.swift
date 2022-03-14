@@ -162,29 +162,6 @@ enum Selection {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-struct SearchCommands: Commands {
-    var body: some Commands {
-        CommandGroup(after: CommandGroupPlacement.textEditing) {
-            Section {
-                #if os(macOS)
-                Text("Search").button {
-                    dbg("activating search field")
-                    if let window = NSApp.currentEvent?.window,
-                       let toolbar = window.toolbar,
-                       let searchField = toolbar.visibleItems?.compactMap({ $0 as? NSSearchToolbarItem }).first {
-                        // <SwiftUI.AppKitSearchToolbarItem: 0x13a8721a0> identifier = "com.apple.SwiftUI.search"]
-                        dbg("searchField:", searchField)
-                        window.makeFirstResponder(searchField.searchField)
-                    }
-                }
-                .keyboardShortcut("F")
-                #endif
-            }
-        }
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
 //    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?

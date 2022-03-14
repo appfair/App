@@ -11,7 +11,7 @@ public extension AppContainer {
         }
         .commands {
             SidebarCommands()
-            SearchCommands()
+            SearchBarCommands()
             ToolbarCommands()
         }
         .commands {
