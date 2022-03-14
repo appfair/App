@@ -1419,7 +1419,8 @@ extension AppCatalogItem {
         //FairIconView(self.name, subtitle: self.id.rawValue, iconColor: itemTintColor())
         //
         let baseColor = itemTintColor()
-        Circle()
+        //Circle()
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
             .fill(baseColor)
             .opacity(0.5)
     }
