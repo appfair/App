@@ -1,3 +1,20 @@
+/**
+ Copyright The Blunder Busq Contributors
+ SPDX-License-Identifier: AGPL-3.0
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairApp
 import Busq
 import SwiftUI
@@ -35,8 +52,13 @@ import UniformTypeIdentifiers
 
     /// Returns the connection infos as will be displayed by the UI
     var connectionInfos: [DeviceConnectionInfo] {
-        // TODO: sort by name, or something other than the udid
-        deviceMap.keys.sorting(by: \.udid)
+        deviceMap.keys
+            .sorting(by: \.udid)
+            .sorted(by: { i1, i2 in
+                // always show connected devices first
+                i1.connectionType.rawValue < i2.connectionType.rawValue
+            })
+
     }
 
     func subscribeToDeviceEvents() {
@@ -478,14 +500,41 @@ typealias VSplit = VStack // VSplitView unavailable on iOS
 typealias VSplit = VSplitView
 #endif
 
+/// Holder for various services
+final class ServicesManager : ObservableObject {
+    @Published var searchText = ""
+
+    @Published var iproxy: InstallationProxy?
+    @Published var sbclient: SpringboardServiceClient?
+
+    /// The list of apps installed for a certain device
+    @Published var apps: [InstalledAppInfo] = []
+
+    var filteredApps: [InstalledAppInfo] {
+        apps
+            .filter({ info in
+                searchText.isEmpty ||
+                    info.CFBundleName?.localizedCaseInsensitiveContains(searchText) == true
+            })
+    }
+    /// Refresh the list of installed apps from the device
+    func refreshAppList() throws {
+        let appList = try iproxy?.getAppList(type: .any) ?? []
+//        DispatchQueue.main.async {
+            withAnimation {
+                self.apps = appList
+            }
+//        }
+
+    }
+}
+
 /// A vertical split view containing a list of apps for the device, below which is the information about the selected app
 /// This uses the undocumented behavior of a NavigationLink such that it will use the next available split for displaying the destination of the link.
 struct DeviceAppListSplitView : View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var client: LockdownClient
-    @State var apps: [InstalledAppInfo] = []
-    @State var iproxy: InstallationProxy?
-    @State var sbclient: SpringboardServiceClient?
+    @StateObject var manager: ServicesManager = ServicesManager()
     @State var dropZoneTargeted = false
 
     var body: some View {
@@ -498,8 +547,10 @@ struct DeviceAppListSplitView : View {
         }
         .task {
             do {
-                self.iproxy = try client.createInstallationProxy(escrow: true)
-                self.sbclient = try client.createSpringboardServiceClient(escrow: true)
+                let iproxy = try client.createInstallationProxy(escrow: true)
+                manager.iproxy = iproxy
+                manager.sbclient = try client.createSpringboardServiceClient(escrow: true)
+                try manager.refreshAppList()
             } catch {
                 store.reportError(error)
             }
@@ -545,9 +596,9 @@ struct DeviceAppListSplitView : View {
             item.loadItem(forTypeIdentifier: identifier, options: nil) { (urlData, error) in
                 DispatchQueue.main.async {
                     if let urlData = urlData as? Data {
-                        let urll = NSURL(absoluteURLWithDataRepresentation: urlData, relativeTo: nil) as URL
-                        if urll.pathExtension == "ipa"{
-                            store.importIPA([urll])
+                        let dataURL = NSURL(absoluteURLWithDataRepresentation: urlData, relativeTo: nil) as URL
+                        if dataURL.pathExtension == "ipa"{
+                            store.importIPA([dataURL])
                         }
                     }
                 }
@@ -557,64 +608,43 @@ struct DeviceAppListSplitView : View {
     }
 
     @ViewBuilder var appListView: some View {
-        ZStack {
-            if let iproxy = self.iproxy, let sbclient = self.sbclient {
-                AppsListView(apps: $apps)
-                    .environmentObject(sbclient)
-                    .environmentObject(iproxy)
-                    .task {
-                        DispatchQueue.global().async {
-                            do {
-                                let appList = try iproxy.getAppList(type: .any)
-                                DispatchQueue.main.async {
-                                    withAnimation {
-                                        self.apps = appList
-                                    }
-                                }
-                            } catch {
-                                dbg("error getting app list:", error)
-                            }
-                        }
-                    }
-            }
-
-            HStack(spacing: 10) {
-                #if os(macOS)
-                ProgressView().controlSize(.small)
-                #else
-                ProgressView()
-                #endif
-                Text("Loading App Inventory…")
-                    .font(.title)
-            }
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(apps.isEmpty ? 1.0 : 0.0)
-        }
+        AppsListView()
+            .environmentObject(manager)
+//            }
+//
+//            HStack(spacing: 10) {
+//                #if os(macOS)
+//                ProgressView().controlSize(.small)
+//                #else
+//                ProgressView()
+//                #endif
+//                Text("Loading App Inventory…")
+//                    .font(.title)
+//            }
+//                .foregroundColor(.secondary)
+//                .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                .opacity(apps.isEmpty ? 1.0 : 0.0)
+//                .animation(.none)
+//        }
     }
 }
 
 struct AppsListView : View {
-    @EnvironmentObject var client: LockdownClient
-    @EnvironmentObject var proxy: InstallationProxy
-    @EnvironmentObject var springboard: SpringboardServiceClient
-    @Binding var apps: [InstalledAppInfo]
+    @EnvironmentObject var manager: ServicesManager
 
     var body: some View {
         List {
-            if !apps.isEmpty {
-                appsSection(type: .user)
+            appsSection(type: .user) // always show this section because it contains the progress view
+            if !manager.apps.isEmpty {
                 appsSection(type: .system)
-                //appsSection(type: .internal)
+                appsSection(type: .internal)
             }
-//            if !archives.isEmpty {
-//                archivesSection
-//            }
         }
+        .searchable(text: $manager.searchText, placement: .automatic, prompt: Text("Search"))
     }
 
     @ViewBuilder func appsSection(type: ApplicationType) -> some View {
-        let apps = apps.filter { app in
+        let apps = manager.filteredApps.filter { app in
             app.ApplicationType == type.rawValue
         }
 
@@ -623,7 +653,14 @@ struct AppsListView : View {
                 AppInfoLink(appInfo: appInfo)
             }
         } header: {
-            Text(type.rawValue) + Text(" ") + Text("Apps") + Text(" (") + Text(apps.count, format: .number) + Text(")")
+            HStack(spacing: 10) {
+                if manager.apps.isEmpty {
+                    #if os(macOS)
+                    ProgressView().controlSize(.mini)
+                    #endif
+                }
+                Text(type.rawValue) + Text(" ") + Text("Apps") + Text(" (") + Text(apps.count, format: .number) + Text(")")
+            }
         }
     }
 }
@@ -632,7 +669,7 @@ struct AppInfoLink : View {
     let appInfo: InstalledAppInfo
     @State var icon: Image?
     @EnvironmentObject var store: Store
-    @EnvironmentObject var springboard: SpringboardServiceClient
+    @EnvironmentObject var manager: ServicesManager
 
     var body: some View {
         NavigationLink {
@@ -643,10 +680,11 @@ struct AppInfoLink : View {
         .task {
             if let bundleID = appInfo.CFBundleIdentifier {
                 do {
-                    let pngData = try springboard.getIconPNGData(bundleIdentifier: bundleID)
-                    if let img = UXImage(data: pngData) {
-                        self.icon = Image(uxImage: img)
-                            .resizable()
+                    if let pngData = try manager.sbclient?.getIconPNGData(bundleIdentifier: bundleID) {
+                        if let img = UXImage(data: pngData) {
+                            self.icon = Image(uxImage: img)
+                                .resizable()
+                        }
                     }
                 } catch {
                     store.reportError(error)
@@ -922,42 +960,77 @@ extension UsageDescriptionKeys {
 struct AppInfoView : View {
     let appInfo: InstalledAppInfo
     @Binding var icon: Image?
+    @EnvironmentObject var store: Store
+    @EnvironmentObject var manager: ServicesManager
+    @State var deleteAppConfirm = false
 
     var body: some View {
         ScrollView {
-            Form {
-                Section {
-                    Group {
-                        row(title: "Name", value: appInfo.CFBundleDisplayName)
-                        row(title: "Version", value: appInfo.CFBundleShortVersionString)
-                        row(title: "Path", value: appInfo.Path)
-                        row(title: "Bundle ID", value: appInfo.CFBundleIdentifier)
-                        row(title: "Signer Identity", value: appInfo.SignerIdentity)
+            appInfoForm
+                .padding()
+        }
+        .toolbar(id: "AppInfoToolbar") {
+            ToolbarItem(id: "DeleteApp", placement: .automatic, showsByDefault: true) {
+                Text("Delete")
+                    .label(image: FairSymbol.trash)
+                    .button {
+                        deleteAppConfirm = true // show the delete confirmation
                     }
-                } header: {
-                    TextField(text: .constant(appInfo.CFBundleDisplayName ?? ""), prompt: Text("Unknown")) {
-                        icon.aspectRatio(contentMode: .fit)
-                            .frame(width: 60, height: 60)
-                    }
-                    .font(Font.largeTitle)
-                    .textFieldStyle(.plain)
-                    .textSelection(.enabled)
-                    //.disabled(true)
-                    //.frame(alignment: .center)
-                }
-
-                Divider()
-
-                Section {
-                    ForEach(UsageDescriptionKeys.allCases, id: \.self) { key in
-                        usageRow(key: key)
-                    }
-                } header: {
-                    Text("Permissions")
-                        .font(Font.headline)
-                }
+                    .confirmationDialog(Text("Delete App?"), isPresented: $deleteAppConfirm, titleVisibility: .visible, actions: {
+                        Text("Delete").button {
+                            if let iproxy = manager.iproxy {
+                                do {
+                                    if let appID = appInfo.CFBundleIdentifier {
+                                        try iproxy.uninstall(appID: appID, options: Plist(dictionary: [:]), callback: nil).dispose()
+                                        try manager.refreshAppList()
+                                    }
+                                } catch {
+                                    store.reportError(error)
+                                }
+                            }
+                        }
+                    }, message: {
+                        Text("Really delete the app “\(appInfo.CFBundleName ?? "")”? This operation cannot be undone.")
+                    })
+                    .hoverSymbol(activeVariant: .fill)
+                    .help(Text("Delete the app from your device"))
+                    .disabled(manager.iproxy == nil || appInfo.CFBundleIdentifier == nil)
             }
-            .padding()
+        }
+    }
+
+    var appInfoForm: some View {
+        Form {
+            Section {
+                Group {
+                    row(title: "Name", value: appInfo.CFBundleDisplayName)
+                    row(title: "Version", value: appInfo.CFBundleShortVersionString)
+                    row(title: "Path", value: appInfo.Path)
+                    row(title: "Bundle ID", value: appInfo.CFBundleIdentifier)
+                    row(title: "Signer Identity", value: appInfo.SignerIdentity)
+                }
+            } header: {
+                TextField(text: .constant(appInfo.CFBundleDisplayName ?? ""), prompt: Text("Unknown")) {
+                    icon.aspectRatio(contentMode: .fit)
+                        .frame(width: 60, height: 60)
+                }
+                .font(Font.largeTitle)
+                .textFieldStyle(.plain)
+                .textSelection(.enabled)
+                //.disabled(true)
+                //.frame(alignment: .center)
+            }
+
+            Divider()
+
+            Section {
+                ForEach(UsageDescriptionKeys.allCases, id: \.self) { key in
+                    usageRow(key: key)
+                }
+            } header: {
+                Text("Permissions")
+                    .font(Font.headline)
+            }
         }
     }
 
@@ -988,6 +1061,7 @@ public extension AppContainer {
         .commands {
             SidebarCommands()
             ToolbarCommands()
+            //SearchBarCommands()
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
