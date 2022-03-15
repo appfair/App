@@ -32,7 +32,7 @@ let package = Package(
 precondition(package.name == "App", "Package.swift name must be 'App', but was: '\(package.name)'")
 precondition(!package.dependencies.isEmpty, "Package.swift must have at least one dependency")
 precondition(package.dependencies[0].name == "Fair", "first dependency name must be 'Fair', but was: '\(package.dependencies[0].name ?? "")'")
-precondition(package.dependencies[0].url == "https://fair-ground.org/Fair.git", "first Package.swift dependency must be 'https://fair-ground.org/Fair.git', but was: '\(package.dependencies[0].url)'")
+precondition(package.dependencies[0].url == "https://fair-ground.org/Fair.git", "first Package.swift dependency must be 'https://fair-ground.org/Fair.git', but was: '\(String(describing: package.dependencies[0].url))'")
 
 precondition(package.products.count == 1, "Package.swift must have exactly one product")
 precondition(package.products[0].name == "App", "Package.swift product must be named 'App', but was: '\(package.products[0].name)'")
