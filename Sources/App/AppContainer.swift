@@ -35,6 +35,15 @@ import UniformTypeIdentifiers
     @Published var errors: [Error] = []
     var deviceEventSubscription: Disposable?
 
+    /// Returns the `LockdownClient` for the selected device
+    var selectedLockdownClient: LockdownClient? {
+        if let selection = self.selection {
+            return deviceMap[selection]?.successValue
+        } else {
+            return nil
+        }
+    }
+
     /// Whether to display an initial error
     var presentedErrorExists: Binding<Bool> {
         Binding {
@@ -105,35 +114,42 @@ import UniformTypeIdentifiers
         errors.append(error)
     }
 
-    func importIPA(_ urls: [URL], upgrade: Bool = false) {
+    func installIPA(_ urls: [URL], escrow: Bool = false) {
         dbg("importing:", urls, "into:", selection)
-        guard let selection = selection,
-              let client = deviceMap[selection]?.successValue else {
-                  return dbg("no device selected")
-              }
+        guard let client = selectedLockdownClient else {
+              return dbg("no device selected")
+          }
 
-        dbg("importing into:", client)
+        dbg("importing:", urls.map(\.path), "into:", client)
 
+        // TODO: cannot install using tasks because the tools are inaccessible from the sandboxed app
         for url in urls {
             do {
-                let iproxy = try client.createInstallationProxy(escrow: true)
-                // "iTunesMetadata" -> PLIST_DATA
-                // "ApplicationSINF" -> PLIST_DATA
-                // "PackageType" -> "Developer"
-                let opts = Plist(dictionary: [
-                    // "CFBundleIdentifier": nil,
-                    // "iTunesMetadata": nil,
-                    // "ApplicationSINF": nil,
-                    // "PackageType": Plist(string: "Developer"),
-                    :])
+                let signedIPA = try FileManager.default.signIPA(url, identity: self.signingIdentity, teamID: self.teamID, recompress: true)
 
-                if upgrade {
-                    let result = try iproxy.upgrade(pkgPath: url.path, options: opts, callback: nil)
-                    result.dispose()
-                } else {
-                    let result = try iproxy.install(pkgPath: url.path, options: opts, callback: nil)
-                    result.dispose()
+                print("signedIPA:", signedIPA.path)
+                let tmpFile = UUID().uuidString + ".ipa"
+
+                let fileConduit = try client.createFileConduit(escrow: escrow)
+                let handle = try fileConduit.fileOpen(filename: tmpFile, fileMode: .wrOnly)
+                defer { try? fileConduit.fileClose(handle: handle) }
+                try fileConduit.fileWrite(handle: handle, fileURL: signedIPA) { progress in
+                    // TODO: progress handles
                 }
+
+                defer { try? fileConduit.removeFile(path: tmpFile) }
+
+                let installProxy = try client.createInstallationProxy(escrow: escrow)
+
+                var opts: [String : Busq.Plist] = [:]
+                if true {
+                    opts["PackageType"] = Plist(string: "Developer")
+                }
+
+                let optsDict = Plist(dictionary: opts)
+
+                try installProxy.install(pkgPath: tmpFile, options: optsDict, callback: nil).dispose()
+
             } catch {
                 dbg("error installing IPA:", error)
                 self.reportError(error)
@@ -175,13 +191,13 @@ public struct ContentView: View {
                 case .failure(let error):
                     dbg("error importing file:", error)
                 case .success(let urls):
-                    store.importIPA(urls)
+                    store.installIPA(urls)
                 }
             }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open IPA files
             .onOpenURL { url in
                 if store.ensureSelection() {
-                    store.importIPA([url])
+                    store.installIPA([url])
                 }
             }
             .toolbar(id: "ImportToolbar") {
@@ -208,8 +224,7 @@ public struct ContentView: View {
                     ForEach(store.connectionInfos.enumerated().array(), id: \.element) { (index, info) in
                         if let client = store.deviceMap[info]?.successValue {
                             NavigationLink {
-                                DeviceAppListSplitView()
-                                    .environmentObject(client)
+                                DeviceAppListSplitView(info: info)
                             } label: {
                                 clientLabel(client, info: info)
                             }
@@ -510,6 +525,9 @@ final class ServicesManager : ObservableObject {
     /// The list of apps installed for a certain device
     @Published var apps: [InstalledAppInfo] = []
 
+    /// Map of app bundle IDs to Icon images
+    @Published var icons: [String: Image] = [:]
+
     var filteredApps: [InstalledAppInfo] {
         apps
             .filter({ info in
@@ -532,8 +550,8 @@ final class ServicesManager : ObservableObject {
 /// A vertical split view containing a list of apps for the device, below which is the information about the selected app
 /// This uses the undocumented behavior of a NavigationLink such that it will use the next available split for displaying the destination of the link.
 struct DeviceAppListSplitView : View {
+    let info: DeviceConnectionInfo
     @EnvironmentObject var store: Store
-    @EnvironmentObject var client: LockdownClient
     @StateObject var manager: ServicesManager = ServicesManager()
     @State var dropZoneTargeted = false
 
@@ -547,9 +565,10 @@ struct DeviceAppListSplitView : View {
         }
         .task {
             do {
-                let iproxy = try client.createInstallationProxy(escrow: true)
+                let client = store.deviceMap[info]?.successValue
+                let iproxy = try client?.createInstallationProxy(escrow: true)
                 manager.iproxy = iproxy
-                manager.sbclient = try client.createSpringboardServiceClient(escrow: true)
+                manager.sbclient = try client?.createSpringboardServiceClient(escrow: true)
                 try manager.refreshAppList()
             } catch {
                 store.reportError(error)
@@ -598,7 +617,7 @@ struct DeviceAppListSplitView : View {
                     if let urlData = urlData as? Data {
                         let dataURL = NSURL(absoluteURLWithDataRepresentation: urlData, relativeTo: nil) as URL
                         if dataURL.pathExtension == "ipa"{
-                            store.importIPA([dataURL])
+                            store.installIPA([dataURL])
                         }
                     }
                 }
@@ -667,23 +686,24 @@ struct AppsListView : View {
 
 struct AppInfoLink : View {
     let appInfo: InstalledAppInfo
-    @State var icon: Image?
     @EnvironmentObject var store: Store
     @EnvironmentObject var manager: ServicesManager
 
     var body: some View {
         NavigationLink {
-            AppInfoView(appInfo: appInfo, icon: $icon)
+            AppInfoView(appInfo: appInfo)
         } label: {
-            AppItemLabel(appInfo: appInfo, icon: $icon)
+            AppItemLabel(appInfo: appInfo)
         }
         .task {
             if let bundleID = appInfo.CFBundleIdentifier {
                 do {
                     if let pngData = try manager.sbclient?.getIconPNGData(bundleIdentifier: bundleID) {
                         if let img = UXImage(data: pngData) {
-                            self.icon = Image(uxImage: img)
-                                .resizable()
+                            withAnimation {
+                                manager.icons[bundleID] = Image(uxImage: img)
+                                    .resizable()
+                            }
                         }
                     }
                 } catch {
@@ -696,13 +716,14 @@ struct AppInfoLink : View {
 }
 
 struct AppItemLabel : View {
+    @EnvironmentObject var manager: ServicesManager
     let appInfo: InstalledAppInfo
-    @Binding var icon: Image?
 
     var body: some View {
         HStack {
             Group {
-                if let icon = icon {
+                if let bundleID = appInfo.CFBundleIdentifier,
+                    let icon = manager.icons[bundleID] {
                     icon
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -959,7 +980,6 @@ extension UsageDescriptionKeys {
 
 struct AppInfoView : View {
     let appInfo: InstalledAppInfo
-    @Binding var icon: Image?
     @EnvironmentObject var store: Store
     @EnvironmentObject var manager: ServicesManager
     @State var deleteAppConfirm = false
@@ -1011,8 +1031,9 @@ struct AppInfoView : View {
                 }
             } header: {
                 TextField(text: .constant(appInfo.CFBundleDisplayName ?? ""), prompt: Text("Unknown")) {
-                    icon.aspectRatio(contentMode: .fit)
-                        .frame(width: 60, height: 60)
+                    manager.icons[appInfo.CFBundleIdentifier ?? ""]?
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 55, height: 55)
                 }
                 .font(Font.largeTitle)
                 .textFieldStyle(.plain)
@@ -1131,17 +1152,4 @@ public struct AppSettingsView : View {
         .padding(20)
         .frame(width: 600)
     }
-}
-
-
-/// Extension to permit passing as an `@EnvironmentObject`
-extension SpringboardServiceClient : ObservableObject {
-}
-
-/// Extension to permit passing as an `@EnvironmentObject`
-extension InstallationProxy : ObservableObject {
-}
-
-/// Extension to permit passing as an `@EnvironmentObject`
-extension LockdownClient : ObservableObject {
 }
