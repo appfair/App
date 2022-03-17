@@ -24,10 +24,17 @@ import UniformTypeIdentifiers
 @MainActor public final class Store: SceneManager {
     /// The signing identity for signing .ipa files
     @AppStorage("signingIdentity") public var signingIdentity = ""
+    /// The signing name for signing .ipa files
+    @AppStorage("signingName") public var signingName = ""
+    /// The developer's ID
+    @AppStorage("signingNameID") public var signingNameID = ""
     /// The developer team ID for signing .ipa files
     @AppStorage("teamID") public var teamID = ""
+
     /// The keychain that holds the signing certificate
     @AppStorage("keychainName") public var keychainName = ""
+    /// The preferred theme style for the app
+    @AppStorage("themeStyle") public var themeStyle = ThemeStyle.system
 
     @Published var selection: DeviceConnectionInfo?
     @Published var deviceMap: [DeviceConnectionInfo: Result<LockdownClient, Error>] = [:]
@@ -41,17 +48,6 @@ import UniformTypeIdentifiers
             return deviceMap[selection]?.successValue
         } else {
             return nil
-        }
-    }
-
-    /// Whether to display an initial error
-    var presentedErrorExists: Binding<Bool> {
-        Binding {
-            self.errors.isEmpty == false
-        } set: { newValue in
-            if newValue == false && !self.errors.isEmpty {
-                let _ = self.errors.removeFirst()
-            }
         }
     }
 
@@ -125,7 +121,9 @@ import UniformTypeIdentifiers
         // TODO: cannot install using tasks because the tools are inaccessible from the sandboxed app
         for url in urls {
             do {
-                let signedIPA = try FileManager.default.signIPA(url, identity: self.signingIdentity, teamID: self.teamID, recompress: true)
+                // let signname = self.signingIdentity // TODO: need fingerprint
+                let signname = self.signingName + " (" + self.signingNameID + ")"
+                let signedIPA = try FileManager.default.prepareIPA(url, identity: signname, teamID: self.teamID, recompress: true)
 
                 print("signedIPA:", signedIPA.path)
                 let tmpFile = UUID().uuidString + ".ipa"
@@ -181,11 +179,6 @@ public struct ContentView: View {
 
     public var body: some View {
         navigationView
-        // FIXME: not working
-            .alert(isPresented: store.presentedErrorExists, error: store.presentedError) {
-                Button("OK") {
-                }
-            }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [ipaType], allowsMultipleSelection: false) { result in
                 switch result {
                 case .failure(let error):
@@ -578,6 +571,7 @@ struct DeviceAppListSplitView : View {
 
     func selectAppView() -> some View {
         Group {
+            // if the developer's teamid has not been selected, do not show the install screen
             if store.teamID.isEmpty {
                 Text("No App Selected")
                     .font(.title)
@@ -1077,7 +1071,9 @@ struct AppInfoView : View {
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
-            ContentView().environmentObject(store)
+            ContentView()
+                .environmentObject(store)
+                .preferredColorScheme(store.themeStyle.colorScheme)
         }
         .commands {
             SidebarCommands()
@@ -1093,7 +1089,9 @@ public extension AppContainer {
 
     /// The app-wide settings view
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
+        AppSettingsView()
+            .environmentObject(store)
+            .preferredColorScheme(store.themeStyle.colorScheme)
     }
 }
 
@@ -1102,54 +1100,225 @@ public struct AppSettingsView : View {
 
     public enum Tabs: Hashable {
         case general
+        case developer
     }
 
     public var body: some View {
         TabView {
-            Group {
-                Form {
-                    HStack {
-                        TextField(text: $store.teamID, prompt: Text("1A2B3C4D5F")) {
-                            Text("Team ID:")
-                        }
-
-                        Group {
-                            if store.teamID.isEmpty {
-                                FairSymbol.questionmark_circle_fill
-                            } else if store.teamID.count != 10 {
-                                FairSymbol.exclamationmark_triangle_fill
-                            } else {
-                                FairSymbol.checkmark_square_fill.foregroundStyle(Color.green)
-                            }
-                        }
-                            .symbolRenderingMode(.multicolor)
-                            .help(Text("Team ID must be 10 characters long"))
-                    }
-                    HStack {
-                        TextField(text: $store.signingIdentity, prompt: Text("iPhone Distribution: <Developer> (<Team ID>)")) {
-                            Text("Signing Identity:")
-                        }
-                        FairSymbol.exclamationmark_triangle_fill
-                            .opacity(0.0) // TODO
-                    }
-                    HStack {
-                        TextField(text: $store.keychainName, prompt: Text("Optional")) {
-                            Text("Keychain Name:")
-                        }
-                        FairSymbol.exclamationmark_triangle_fill
-                            .opacity(0.0) // TODO
-                    }
+            GeneralSettingsView()
+                .padding(20)
+                .tabItem {
+                    Text("General")
+                        .label(image: FairSymbol.switch_2)
+                        .symbolVariant(.fill)
                 }
-            }
-            .padding(20)
-            .tabItem {
-                Text("General")
-                    .label(image: FairSymbol.platter_filled_top_and_arrow_up_iphone)
-                    .symbolVariant(.fill)
-            }
-            .tag(Tabs.general)
+                .tag(Tabs.general)
+
+            DeveloperSettingsView()
+                .padding(20)
+                .tabItem {
+                    Text("Developer")
+                        .label(image: FairSymbol.platter_filled_top_and_arrow_up_iphone)
+                        .symbolVariant(.fill)
+                }
+                .tag(Tabs.developer)
         }
         .padding(20)
         .frame(width: 600)
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct DeveloperSettingsView: View {
+    @EnvironmentObject var store: Store
+    @State var identities: [SigningIdentity] = []
+
+    var selectedSigningIdentity: Binding<SigningIdentity?> {
+        Binding {
+            SigningIdentity(certid: store.signingIdentity, certname: store.signingName, teamid: store.signingNameID)
+        } set: { newValue in
+            if let newValue = newValue {
+                store.signingIdentity = newValue.certid
+                store.signingName = newValue.certname
+                store.signingNameID = newValue.teamid
+            }
+        }
+    }
+
+    var body: some View {
+        return Group {
+            Form {
+                HStack {
+                    Picker(selection: selectedSigningIdentity) {
+                        if identities.isEmpty {
+                            Text("No signing identities found")
+                                .foregroundColor(.secondary)
+                                .disabled(true)
+                        } else {
+                            ForEach(identities, id: \.certid) { identity in
+                                Text(identity.menuString)
+                                    .tag(Optional.some(identity))
+                            }
+                        }
+                    } label: {
+                        Text("Signing Identity:")
+                    }
+                    .pickerStyle(.menu)
+                    .task {
+                        dbg("showing identities")
+                        refreshSigningIdentities()
+                    }
+
+                    Text("Refresh")
+                        .label(image: FairSymbol.arrow_triangle_2_circlepath_circle)
+                        .labelStyle(.iconOnly)
+                        .button {
+                            refreshSigningIdentities()
+                        }
+                        .buttonStyle(.plain)
+                        .hoverSymbol(activeVariant: .fill)
+                        .help(Text("Refresh signing identities"))
+
+                }
+
+                Picker(selection: $store.teamID) {
+                    if identities.isEmpty {
+                        Text("No team identifiers found")
+                            .foregroundColor(.secondary)
+                            .disabled(true)
+                    } else {
+                        ForEach(identities.map(\.teamid), id: \.self) { teamid in
+                            Text(teamid)
+                                .tag(Optional.some(teamid))
+                        }
+                    }
+                } label: {
+                    Text("Team ID:")
+                }
+                .pickerStyle(.menu)
+            }
+        }
+    }
+
+    func refreshSigningIdentities() {
+        dbg("refreshing signing identities")
+        do {
+            let output = try shell("/usr/bin/security", args: ["find-identity", "-v", "-p", "codesigning"])
+            let ids = output.split(separator: "\r").compactMap(SigningIdentity.init(string:))
+            dbg("parsed ids:", ids)
+            self.identities = ids
+        } catch {
+            store.reportError(error)
+        }
+    }
+}
+
+/// The parsed output from `/usr/bin/security find-identity -v -p codesigning`
+struct SigningIdentity : Hashable {
+    let certid: String
+    let certname: String
+    let teamid: String
+}
+
+extension SigningIdentity {
+    private static let idregex = Result {
+        // `1) CERTID "Some Development: Person Name (TEAMID)"`
+        try NSRegularExpression(pattern: #" *[0-9]*\) *(?<certid>[A-Z0-9]*) "(?<certname>.*) \((?<teamid>[A-Z0-9]*)\)""#, options: [])
+    }
+
+    /// Attempt the parse the signing identify in the form of: “1) CERTSIG "Some Development: Person Name (TEAMID)"”
+    init?<S: StringProtocol>(string: S) {
+        guard let idregex = Self.idregex.successValue else {
+            dbg("bad regular expression:", Self.idregex.failureValue)
+            return nil
+        }
+
+        let str = string.description
+        dbg("parsing:", str)
+        guard let certid = idregex.firstMatch(in: str, options: [], range: string.span)?.range(withName: "certid"), certid.location != NSNotFound else {
+            dbg("no certid")
+            return nil
+        }
+        guard let certname = idregex.firstMatch(in: str, options: [], range: string.span)?.range(withName: "certname"), certname.location != NSNotFound else {
+            dbg("no certname")
+            return nil
+        }
+        guard let teamid = idregex.firstMatch(in: str, options: [], range: string.span)?.range(withName: "teamid"), teamid.location != NSNotFound else {
+            dbg("no teamid")
+            return nil
+        }
+
+        self.certid = (str as NSString).substring(with: certid)
+        self.certname = (str as NSString).substring(with: certname)
+        self.teamid = (str as NSString).substring(with: teamid)
+    }
+
+    /// The string that will be displayed in a menu (the certificate name and team ID, but not the cert ID)
+    var menuString: String {
+        certname + " (" + teamid + ")"
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct GeneralSettingsView: View {
+    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
+    @AppStorage("iconBadge") private var iconBadge = true
+
+    var body: some View {
+        Form {
+            ThemeStylePicker(style: $themeStyle)
+
+            Divider()
+
+            Toggle(isOn: $iconBadge) {
+                Text("Badge App Icon")
+            }
+                .help(Text("Show the number of apps pending install."))
+        }
+    }
+}
+
+
+@available(macOS 12.0, iOS 15.0, *)
+struct ThemeStylePicker: View {
+    @Binding var style: ThemeStyle
+
+    var body: some View {
+        Picker(selection: $style) {
+            ForEach(ThemeStyle.allCases) { themeStyle in
+                themeStyle.label
+            }
+        } label: {
+            Text("Theme:")
+        }
+        .pickerStyle(.radioGroup)
+    }
+}
+
+
+/// The preferred theme style for the app
+public enum ThemeStyle: String, CaseIterable {
+    case system
+    case light
+    case dark
+}
+
+extension ThemeStyle : Identifiable {
+    public var id: Self { self }
+
+    public var label: Text {
+        switch self {
+        case .system: return Text("System")
+        case .light: return Text("Light")
+        case .dark: return Text("Dark")
+        }
+    }
+
+    public var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 }
