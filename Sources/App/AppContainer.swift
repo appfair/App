@@ -1148,37 +1148,24 @@ struct DeveloperSettingsView: View {
     var body: some View {
         return Group {
             Form {
-                HStack {
-                    Picker(selection: selectedSigningIdentity) {
-                        if identities.isEmpty {
-                            Text("No signing identities found")
-                                .foregroundColor(.secondary)
-                                .disabled(true)
-                        } else {
-                            ForEach(identities, id: \.certid) { identity in
-                                Text(identity.menuString)
-                                    .tag(Optional.some(identity))
-                            }
+                Picker(selection: selectedSigningIdentity) {
+                    if identities.isEmpty {
+                        Text("No signing identities found")
+                            .foregroundColor(.secondary)
+                            .disabled(true)
+                    } else {
+                        ForEach(identities, id: \.certid) { identity in
+                            Text(identity.menuString)
+                                .tag(Optional.some(identity))
                         }
-                    } label: {
-                        Text("Signing Identity:")
                     }
-                    .pickerStyle(.menu)
-                    .task {
-                        dbg("showing identities")
-                        refreshSigningIdentities()
-                    }
-
-                    Text("Refresh")
-                        .label(image: FairSymbol.arrow_triangle_2_circlepath_circle)
-                        .labelStyle(.iconOnly)
-                        .button {
-                            refreshSigningIdentities()
-                        }
-                        .buttonStyle(.plain)
-                        .hoverSymbol(activeVariant: .fill)
-                        .help(Text("Refresh signing identities"))
-
+                } label: {
+                    Text("Signing Identity:")
+                }
+                .pickerStyle(.menu)
+                .task {
+                    dbg("showing identities")
+                    refreshSigningIdentities()
                 }
 
                 Picker(selection: $store.teamID) {
@@ -1196,7 +1183,18 @@ struct DeveloperSettingsView: View {
                     Text("Team ID:")
                 }
                 .pickerStyle(.menu)
+
+                Text("Refresh")
+                    .label(image: FairSymbol.arrow_triangle_2_circlepath_circle)
+                //.labelStyle(.iconOnly)
+                    .button {
+                        refreshSigningIdentities()
+                    }
+                    //.buttonStyle(.plain)
+                    .hoverSymbol(activeVariant: .fill)
+                    .help(Text("Refresh signing identities"))
             }
+
         }
     }
 
