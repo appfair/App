@@ -534,12 +534,14 @@ struct CatalogItemView: View {
                         if info.cask == nil {
                             riskSection()
                         }
+                    case .security:
+                        if info.cask == nil {
+                            artifactSecuritySection()
+                        }
                     case .formula:
                         if let cask = info.cask {
                             caskFormulaSection(cask: cask)
                         }
-                    case .security:
-                        artifactSecuritySection()
                     }
                 }
                 .tag(tab)
@@ -575,7 +577,7 @@ struct CatalogItemView: View {
         try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
     }
 
-    private func fetchMarkdownResource(url: URL) async throws -> AttributedString{
+    private func fetchMarkdownResource(url: URL) async throws -> AttributedString {
         let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
             .fetch(validateFragmentHash: true)
         let atx = String(data: data, encoding: .utf8) ?? ""
