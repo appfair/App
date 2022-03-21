@@ -66,9 +66,9 @@ struct AppsListView : View {
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
 
-                let hasScreenshots = ($0.release.screenshotURLs ?? []).isEmpty == false
-                let hasCategory = ($0.release.categories ?? []).isEmpty == false
-                // an app is in the "top" apps iff it has at least one screenshot
+                let hasScreenshots = $0.release.screenshotURLs?.isEmpty != true
+                let hasCategory = $0.release.categories?.isEmpty == true
+                // an app is in the "top" apps iff it has at least one screenshot and a category
                 return (section == .top) == (hasScreenshots && hasCategory)
             })
     }

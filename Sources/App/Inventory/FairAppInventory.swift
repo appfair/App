@@ -71,9 +71,15 @@ extension ObservableObject {
     }
 }
 
+private let showPreReleasesDefault = false
+private let relaunchUpdatedAppsDefault = true
+private let riskFilterDefault = AppRisk.risky
+private let autoUpdateCatalogAppDefault = true
+private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
+
 /// The manager for installing App Fair apps
 @available(macOS 12.0, iOS 15.0, *)
-public final class FairAppInventory: ObservableObject, AppInventory {
+@MainActor public final class FairAppInventory: ObservableObject, AppInventory {
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published var installedApps: [URL : Result<Plist, Error>] = [:]
 
@@ -87,30 +93,25 @@ public final class FairAppInventory: ObservableObject, AppInventory {
     @Published var updateInProgress = 0
 
     @AppStorage("showPreReleases") var showPreReleases = showPreReleasesDefault
-    static let showPreReleasesDefault = false
 
     @AppStorage("relaunchUpdatedApps") var relaunchUpdatedApps = relaunchUpdatedAppsDefault
-    static let relaunchUpdatedAppsDefault = true
 
     @AppStorage("riskFilter") var riskFilter = riskFilterDefault
-    static let riskFilterDefault = AppRisk.risky
 
     @AppStorage("autoUpdateCatalogApp") public var autoUpdateCatalogApp = autoUpdateCatalogAppDefault
-    static let autoUpdateCatalogAppDefault = true
 
     /// Whether to automatically re-launch the catalog app when it has updated itself
     @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = relaunchUpdatedCatalogAppDefault
-    static let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
     @Published public var errors: [AppError] = []
 
     /// Resets all of the `@AppStorage` properties to their default values
     func resetAppStorage() {
-        self.showPreReleases = Self.showPreReleasesDefault
-        self.relaunchUpdatedApps = Self.relaunchUpdatedAppsDefault
-        self.riskFilter = Self.riskFilterDefault
-        self.autoUpdateCatalogApp = Self.autoUpdateCatalogAppDefault
-        self.relaunchUpdatedCatalogApp = Self.relaunchUpdatedCatalogAppDefault
+        self.showPreReleases = showPreReleasesDefault
+        self.relaunchUpdatedApps = relaunchUpdatedAppsDefault
+        self.riskFilter = riskFilterDefault
+        self.autoUpdateCatalogApp = autoUpdateCatalogAppDefault
+        self.relaunchUpdatedCatalogApp = relaunchUpdatedCatalogAppDefault
     }
 
     /// Register that an error occurred with the app manager
@@ -469,7 +470,7 @@ extension FairAppInventory {
 
     /// Install or update the given catalog item.
     func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
-        let window = await NSApp.currentEvent?.window
+        let window = NSApp.currentEvent?.window
 
         if update == false, let installPath = Self.installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
@@ -558,13 +559,13 @@ extension FairAppInventory {
             let isCatalogApp = item.bundleIdentifier.rawValue == Bundle.main.bundleID
             if !isCatalogApp {
                 // automatically re-launch any app that isn't a catalog app
-                await relaunch()
+                relaunch()
             } else {
                 // if this is the catalog app, prompt the user to re-launch
                 let response = await prompt(window: window, messageText: loc("App Fair has been updated"), informativeText: loc("This app has been updated from \(Bundle.main.bundleVersionString ?? "?") to the latest version \(item.version ?? "?"). Would you like to re-launch it?"), accept: loc("Re-launch"), refuse: loc("Later"), suppressionKey: $relaunchUpdatedCatalogApp)
                 dbg("prompt response:", response)
                 if response == true {
-                    await relaunch()
+                    relaunch()
                 }
             }
         }

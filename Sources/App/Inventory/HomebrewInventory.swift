@@ -30,6 +30,25 @@ private extension AppInventory where Self : HomebrewInventory {
 
 }
 
+private let appfairBase = URL(string: "https://github.com/App-Fair/")
+private let caskAPIEndpointDefault = URL(string: "https://formulae.brew.sh/api/")!
+private let useSystemHomebrewDefault = false
+private let quarantineCasksDefault = true
+private let installDependenciesDefault = false
+private let zapDeletedCasksDefault = false
+private let ignoreAutoUpdatingAppUpdatesDefault = true
+private let requireCaskChecksumDefault = false
+private let forceInstallCasksDefault = false
+private let manageCaskDownloadsDefault = true
+private let enableBrewAnalyticsDefault = false
+private let enableBrewSelfUpdateDefault = false
+private let enableHomebrewDefault = true
+
+/// ~/Library/Caches/appfair-homebrew/Homebrew/
+private let brewInstallRootDefault: URL = {
+    URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: HomebrewInventory.localCacheFolder)
+}()
+
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
@@ -43,58 +62,42 @@ private extension AppInventory where Self : HomebrewInventory {
             }
         }
     }
-    static let enableHomebrewDefault = true
 
     /// The base endpoint for the cask API; this can be used to test different cask endpoints
     @AppStorage("caskAPIEndpoint") var caskAPIEndpoint = caskAPIEndpointDefault
-    static let caskAPIEndpointDefault = URL(string: "https://formulae.brew.sh/api/")!
 
     /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
     @AppStorage("brewInstallRoot") var brewInstallRoot = brewInstallRootDefault
-    /// ~/Library/Caches/appfair-homebrew/Homebrew/
-    static let brewInstallRootDefault: URL = {
-        URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: localCacheFolder)
-    }()
 
     /// Whether to use the system-installed Homebrew
     @AppStorage("useSystemHomebrew") var useSystemHomebrew = useSystemHomebrewDefault
-    static let useSystemHomebrewDefault = false
 
     /// Whether the quarantine flag should be applied to newly-installed casks
     @AppStorage("quarantineCasks") var quarantineCasks = quarantineCasksDefault
-    static let quarantineCasksDefault = true
 
     /// Whether to automatically install dependencies or not
     @AppStorage("installDependencies") var installDependencies = installDependenciesDefault
-    static let installDependenciesDefault = false
 
     /// Whether delete apps should be "zapped"
     @AppStorage("zapDeletedCasks") var zapDeletedCasks = zapDeletedCasksDefault
-    static let zapDeletedCasksDefault = false
 
     /// Whether to ignore casks that mark themselves as "autoupdates" from being shown in the "Updated" section
     @AppStorage("ignoreAutoUpdatingAppUpdates") var ignoreAutoUpdatingAppUpdates = ignoreAutoUpdatingAppUpdatesDefault
-    static let ignoreAutoUpdatingAppUpdatesDefault = true
 
     /// Whether to require a checksum before downloading; many brew casks don't publish a checksum, so disabled by default
     @AppStorage("requireCaskChecksum") var requireCaskChecksum = requireCaskChecksumDefault
-    static let requireCaskChecksumDefault = false
 
     /// Whether to force overwrite other installations
     @AppStorage("forceInstallCasks") var forceInstallCasks = forceInstallCasksDefault
-    static let forceInstallCasksDefault = false
 
     /// Whether to use the in-app downloader to pre-cache the download file (which allows progress monitoring and user cancellation)
     @AppStorage("manageCaskDownloads") var manageCaskDownloads = manageCaskDownloadsDefault
-    static let manageCaskDownloadsDefault = true
 
     /// Whether to permit the `brew` command to send activitiy analytics. This controls whether to set Homebrew's flag [HOMEBREW_NO_ANALYTICS](https://docs.brew.sh/Analytics#opting-out)
     @AppStorage("enableBrewAnalytics") var enableBrewAnalytics = enableBrewAnalyticsDefault
-    static let enableBrewAnalyticsDefault = false
 
     /// Allow brew to update itself when performing operations
     @AppStorage("enableBrewSelfUpdate") var enableBrewSelfUpdate = enableBrewSelfUpdateDefault
-    static let enableBrewSelfUpdateDefault = false
 
     /// The arranged list of app info items, synthesized from the `casks`, `stats`, and `appcasks` properties
     @Published private var appInfos: [AppInfo] = [] { didSet { updateAppCategories() } }
@@ -138,10 +141,8 @@ private extension AppInventory where Self : HomebrewInventory {
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
 
-    private static let appfairBase = URL(string: "https://github.com/App-Fair/")
-
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
-    private let brewArchiveURLRemote = URL(string: "brew/zipball/HEAD", relativeTo: HomebrewInventory.appfairBase)! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
+    private let brewArchiveURLRemote = URL(string: "brew/zipball/HEAD", relativeTo: appfairBase)! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
 
     /// The source to the cask ruby definition file
     func caskSource(name: String) -> URL? {
@@ -223,18 +224,18 @@ private extension AppInventory where Self : HomebrewInventory {
     }
 
     func resetAppStorage() {
-        self.caskAPIEndpoint = Self.caskAPIEndpointDefault
-        self.brewInstallRoot = Self.brewInstallRootDefault
-        self.useSystemHomebrew = Self.useSystemHomebrewDefault
-        self.quarantineCasks = Self.quarantineCasksDefault
-        self.installDependencies = Self.installDependenciesDefault
-        self.zapDeletedCasks = Self.zapDeletedCasksDefault
-        self.ignoreAutoUpdatingAppUpdates = Self.ignoreAutoUpdatingAppUpdatesDefault
-        self.requireCaskChecksum = Self.requireCaskChecksumDefault
-        self.forceInstallCasks = Self.forceInstallCasksDefault
-        self.manageCaskDownloads = Self.manageCaskDownloadsDefault
-        self.enableBrewAnalytics = Self.enableBrewAnalyticsDefault
-        self.enableBrewSelfUpdate = Self.enableBrewSelfUpdateDefault
+        self.caskAPIEndpoint = caskAPIEndpointDefault
+        self.brewInstallRoot = brewInstallRootDefault
+        self.useSystemHomebrew = useSystemHomebrewDefault
+        self.quarantineCasks = quarantineCasksDefault
+        self.installDependencies = installDependenciesDefault
+        self.zapDeletedCasks = zapDeletedCasksDefault
+        self.ignoreAutoUpdatingAppUpdates = ignoreAutoUpdatingAppUpdatesDefault
+        self.requireCaskChecksum = requireCaskChecksumDefault
+        self.forceInstallCasks = forceInstallCasksDefault
+        self.manageCaskDownloads = manageCaskDownloadsDefault
+        self.enableBrewAnalytics = enableBrewAnalyticsDefault
+        self.enableBrewSelfUpdate = enableBrewSelfUpdateDefault
     }
 
     /// The path to the `homebrew` command
@@ -552,7 +553,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
 
         // count the install
-        if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: Self.appfairBase) {
+        if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: appfairBase) {
             dbg("counting install:", installCounter.absoluteString)
             let _ = try? await URLSession.shared.fetch(request: URLRequest(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 600))
         }
@@ -771,10 +772,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     /// Downloads and installs Homebrew from the source zip
     /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
     @discardableResult func installHomebrew(force: Bool = false, fromLocalOnly: Bool = false, retainCasks: Bool) async throws -> Bool {
-        if force || (FileManager.default.isDirectory(url: Self.brewInstallRootDefault) != true) {
+        if force || (FileManager.default.isDirectory(url: brewInstallRootDefault) != true) {
             let cacheFolder = Self.localCacheFolder
             try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
-            try await installBrew(to: Self.brewInstallRootDefault, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
+            try await installBrew(to: brewInstallRootDefault, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
             return true
         } else {
             return false

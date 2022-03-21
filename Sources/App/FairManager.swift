@@ -3,9 +3,9 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairManager: SceneManager {
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    let fairAppInv = FairAppInventory()
+    let fairAppInv: FairAppInventory
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    let homeBrewInv = HomebrewInventory()
+    let homeBrewInv: HomebrewInventory
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
@@ -26,6 +26,9 @@ import FairApp
     @AppStorage("maxDisplayItems") public var maxDisplayItems = 1_000
 
     required internal init() {
+        self.fairAppInv = FairAppInventory()
+        self.homeBrewInv = HomebrewInventory()
+        
         super.init()
 
         /// The gloal quick actions for the App Fair
