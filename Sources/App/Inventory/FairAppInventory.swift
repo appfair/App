@@ -142,6 +142,8 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     }
 
     func refreshAll() async throws {
+        self.catalog = []
+        
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
 

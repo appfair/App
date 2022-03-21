@@ -250,6 +250,10 @@ private let brewInstallRootDefault: URL = {
             return
         }
 
+        self.casks = []
+        self.appcasks = nil
+        self.appstats = nil
+        
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
         async let installedCasks = scanInstalledCasks()

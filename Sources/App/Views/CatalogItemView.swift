@@ -916,8 +916,9 @@ struct CatalogItemView: View {
 
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
-            fairManager.iconView(for: info)
+            fairManager.iconView(for: info, transition: true)
                 .frame(width: 60, height: 60)
+                .transition(AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // shrink and fade out the placeholder while fading in the actual icon
                 .padding(.leading)
 
             VStack(alignment: .center) {

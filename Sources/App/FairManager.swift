@@ -60,12 +60,22 @@ import FairApp
             + (homeBrewInv.enableHomebrew ? homeBrewInv.updateCount() : 0)
     }
 
-    @ViewBuilder func iconView(for info: AppInfo) -> some View {
-        if info.isCask == true {
-            homeBrewInv.icon(for: info.release, useInstalledIcon: false)
-        } else {
-            info.release.iconImage()
+    /// The icon for the given item
+    /// - Parameters:
+    ///   - info: the info to check
+    ///   - transition: whether to use a fancy transition
+    /// - Returns: the icon
+    @ViewBuilder func iconView(for info: AppInfo, transition: Bool = false) -> some View {
+        Group {
+            if info.isCask == true {
+                homeBrewInv.icon(for: info.release, useInstalledIcon: false)
+            } else {
+                info.release.iconImage()
+            }
         }
+        //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
+        .transition(transition == false ? AnyTransition.opacity : AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // skrink and fade out the placeholder while fading in the actual icon
+
     }
 }
 

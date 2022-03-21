@@ -121,13 +121,13 @@ struct AppsListView : View {
 
         if items.isEmpty && !searchText.isEmpty {
             Text("No results")
-                .font(.headline)
+                .font(.caption)
                 .foregroundColor(.secondary)
         }
 
         if items.count > displayCount {
             Text("Loading…")
-                .font(.headline)
+                .font(.caption)
                 .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
                 .foregroundColor(.secondary)
                 .onAppear {
@@ -142,8 +142,8 @@ struct AppsListView : View {
     func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
             ZStack {
-                fairManager.iconView(for: item)
-                    .transition(.scale.combined(with: .opacity))
+                fairManager.iconView(for: item, transition: true)
+
                 if let progress = fairManager.fairAppInv.operations[item.id]?.progress {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
