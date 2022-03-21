@@ -32,6 +32,9 @@ struct AppsListView : View {
                     appListSection(section: nil)
                 }
             }
+//            .onChange(of: fairManager.refreshing) { refreshing in
+//                dbg(wip("### REFRESHING:"), refreshing)
+//            }
             .onChange(of: searchTextSource) { searchString in
                 selection = nil
                 displayCount = 25
@@ -50,15 +53,6 @@ struct AppsListView : View {
 //            }
             .searchable(text: $searchText)
             .animation(.easeInOut, value: searchText)
-        }
-    }
-
-    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        switch source {
-        case .homebrew:
-            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        case .fairapps:
-            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
@@ -87,15 +81,27 @@ struct AppsListView : View {
             })
     }
 
+    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        switch source {
+        case .homebrew:
+            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        case .fairapps:
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        }
+    }
+
+    /// Returns true is there are any refreshes in progress
+    var refreshing: Bool {
+        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
+    }
+
     @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
         let items = items(section: section)
         if let section = section {
-            if !items.isEmpty {
-                Section {
-                    appSectionItems(items: items)
-                } header: {
-                    section.localizedTitle
-                }
+            Section {
+                appSectionItems(items: items)
+            } header: {
+                section.localizedTitle
             }
         } else {
             // nil section means don't sub-divide
@@ -113,20 +119,23 @@ struct AppsListView : View {
             })
         }
 
+        if items.isEmpty && !searchText.isEmpty {
+            Text("No results")
+                .font(.headline)
+                .foregroundColor(.secondary)
+        }
+
         if items.count > displayCount {
-            Label {
-                Text("More…")
-            } icon: {
-                FairSymbol.hourglass
-            }
-            .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
-            .foregroundColor(.secondary)
-            .onAppear {
-                dbg("showing more items (\(displayCount) of \(items.count))")
-                DispatchQueue.main.async {
-                    displayCount += 100
+            Text("Loading…")
+                .font(.headline)
+                .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
+                .foregroundColor(.secondary)
+                .onAppear {
+                    dbg("showing more items (\(displayCount) of \(items.count))")
+                    DispatchQueue.main.async {
+                        displayCount += 100
+                    }
                 }
-            }
         }
     }
 
@@ -134,6 +143,7 @@ struct AppsListView : View {
         return HStack(alignment: .center) {
             ZStack {
                 fairManager.iconView(for: item)
+                    .transition(.scale.combined(with: .opacity))
                 if let progress = fairManager.fairAppInv.operations[item.id]?.progress {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))

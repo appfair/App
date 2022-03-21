@@ -535,7 +535,7 @@ struct CatalogItemView: View {
                             riskSection()
                         }
                     case .security:
-                        if info.cask == nil {
+                        if info.cask != nil {
                             artifactSecuritySection()
                         }
                     case .formula:
