@@ -10,8 +10,15 @@ struct AppsListView : View {
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
     var sidebarSelection: SidebarSelection?
-    @State var sortOrder: [KeyPathComparator<AppInfo>] = []
-    @Binding var searchText: String
+    /// The underlying source of the search text
+    @Binding var searchTextSource: String
+    /// The source of the
+    @State private var searchText: String = ""
+    /// The number of items to initially display to keep the list rendering responsive
+    @State private var displayCount = 0
+    @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
+
+    //static let topID = UUID()
 
     @ViewBuilder var body : some View {
         ScrollViewReader { proxy in
@@ -25,14 +32,22 @@ struct AppsListView : View {
                     appListSection(section: nil)
                 }
             }
-            .onChange(of: scrollToSelection) { scrollToSelection in
-                // sadly, this doesn't seem to work
-                if scrollToSelection == true {
-                    dbg("scrolling to:", selection)
-                    proxy.scrollTo(selection, anchor: nil)
-                    self.scrollToSelection = false // reset once we have performed the scroll
+            .onChange(of: searchTextSource) { searchString in
+                selection = nil
+                displayCount = 25
+                DispatchQueue.main.async {
+                    searchText = searchString
+                    // proxy.scrollTo(Self.topID, anchor: .top) // doesn't work
                 }
             }
+//            .onChange(of: scrollToSelection) { scrollToSelection in
+//                // sadly, this doesn't seem to work
+//                if scrollToSelection == true {
+//                    dbg("scrolling to:", selection)
+//                    proxy.scrollTo(selection, anchor: nil)
+//                    self.scrollToSelection = false // reset once we have performed the scroll
+//                }
+//            }
             .searchable(text: $searchText)
             .animation(.easeInOut, value: searchText)
         }
@@ -65,9 +80,8 @@ struct AppsListView : View {
         arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
-
-                let hasScreenshots = $0.release.screenshotURLs?.isEmpty != true
-                let hasCategory = $0.release.categories?.isEmpty == true
+                let hasScreenshots = $0.release.screenshotURLs?.isEmpty == false
+                let hasCategory = $0.release.categories?.isEmpty == false
                 // an app is in the "top" apps iff it has at least one screenshot and a category
                 return (section == .top) == (hasScreenshots && hasCategory)
             })
@@ -90,13 +104,29 @@ struct AppsListView : View {
     }
 
     @ViewBuilder func appSectionItems(items: [AppInfo]) -> some View {
-        ForEach(items.prefix(fairManager.maxDisplayItems)) { item in
+        ForEach(items.prefix(displayCount)) { item in
             NavigationLink(tag: item.id, selection: $selection, destination: {
                 CatalogItemView(info: item)
             }, label: {
                 label(for: item)
                 //.frame(minHeight: 44, maxHeight: 44) // attempt to speed up list rendering (doesn't seem to help)
             })
+        }
+
+        if items.count > displayCount {
+            Label {
+                Text("More…")
+            } icon: {
+                FairSymbol.hourglass
+            }
+            .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
+            .foregroundColor(.secondary)
+            .onAppear {
+                dbg("showing more items (\(displayCount) of \(items.count))")
+                DispatchQueue.main.async {
+                    displayCount += 100
+                }
+            }
         }
     }
 

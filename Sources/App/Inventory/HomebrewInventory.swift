@@ -1077,7 +1077,7 @@ extension HomebrewInventory {
             if self.ignoreAutoUpdatingAppUpdates == true && item.cask?.auto_updates == true {
                 return false // show showing apps that mark themselves as auto-updating
             }
-            // dbg(item.release.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
+            dbg(item.release.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
             return installedVersions.contains(releaseVersion) == false
         } else {
             return false

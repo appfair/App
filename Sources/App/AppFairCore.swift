@@ -563,7 +563,7 @@ struct NavigationRootView : View {
         TriptychView(orient: $displayMode) {
             SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: $sidebarSelection, displayMode: $displayMode, searchText: $searchText)
         } list: {
-            AppsListView(source: sidebarSource, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchText: $searchText)
+            AppsListView(source: sidebarSource, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchTextSource: $searchText)
         } table: {
             #if os(macOS)
             AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
@@ -1079,7 +1079,7 @@ struct SidebarView: View {
     @ViewBuilder func navigationDestinationView(item: SidebarSelection) -> some View {
         switch displayMode {
         case .list:
-            AppsListView(source: item.source, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchText: $searchText)
+            AppsListView(source: item.source, selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelection, searchTextSource: $searchText)
         #if os(macOS)
         case .table:
             AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sidebarSelection: sidebarSelection)
