@@ -91,9 +91,9 @@ import UniformTypeIdentifiers
                 withAnimation {
                     self.deviceMap = dmap
                     // behaves really wierd
-//                    DispatchQueue.main.async {
-//                        self.ensureSelection() // select the first available device
-//                    }
+                    //                    DispatchQueue.main.async {
+                    //                        self.ensureSelection() // select the first available device
+                    //                    }
                 }
             }
         } catch {
@@ -113,8 +113,8 @@ import UniformTypeIdentifiers
     func installIPA(_ urls: [URL], escrow: Bool = false) {
         dbg("importing:", urls, "into:", selection)
         guard let client = selectedLockdownClient else {
-              return dbg("no device selected")
-          }
+            return dbg("no device selected")
+        }
 
         dbg("importing:", urls.map(\.path), "into:", client)
 
@@ -205,7 +205,7 @@ public struct ContentView: View {
                         .hoverSymbol(activeVariant: .none)
                         .help(Text("Import an IPA file"))
                         .keyboardShortcut("O")
-                        //.disabled(selection == nil) // instead we select the first available device if none is already selected
+                    //.disabled(selection == nil) // instead we select the first available device if none is already selected
                 }
             }
     }
@@ -252,15 +252,15 @@ public struct ContentView: View {
                     let deviceName = (try? client.deviceClass) ?? "Unknown Device"
                     let batteryLevel = (try? client.batteryLevel) ?? 0
                     let batteryIcon = batteryLevel > 90 ? FairSymbol.battery_100
-                        : batteryLevel > 60 ? .battery_75
-                        : batteryLevel > 40 ? .battery_50
-                        : batteryLevel > 10 ? .battery_25
-                        : .battery_0
+                    : batteryLevel > 60 ? .battery_75
+                    : batteryLevel > 40 ? .battery_50
+                    : batteryLevel > 10 ? .battery_25
+                    : .battery_0
                     Text(deviceName)
                         .label(image: batteryIcon)
                         .foregroundColor(Color.secondary)
                         .font(Font.caption)
-                        //.help("Battery level: \(batteryLevel)%")
+                    //.help("Battery level: \(batteryLevel)%")
                     Text((try? client.productVersion) ?? "Unknown Version")
                         .foregroundColor(Color.secondary)
                         .font(Font.caption)
@@ -294,33 +294,52 @@ struct DeviceInfoView: View {
     @EnvironmentObject var store: Store
     var selection: DeviceConnectionInfo?
 
-    @ViewBuilder var body: some View {
-        ScrollView {
-            if let selection = selection {
-                switch store.deviceMap[selection] {
-                case .none:
-                    Text("No Device Selected")
-                        .font(.title)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    var body: some View {
+        GeometryReader { proxy in
+            List {
+                if let selection = selection {
+                    switch store.deviceMap[selection] {
+                    case .none:
+                        Text("No Device Selected")
+                            .font(.title)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                case .some(.failure(let error)):
-                    Text("Error: \(error.localizedDescription)")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    case .some(.failure(let error)):
+                        Text("Error: \(error.localizedDescription)")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                case .some(.success(let client)):
-                    appDeviceInfoView(client)
+                    case .some(.success(let client)):
+                        appDeviceInfoView(client, proxy)
+                    }
+                } else {
+                    Spacer()
                 }
-            } else {
-                Spacer()
             }
         }
     }
 
     /// A list of properties of a device
-    func appDeviceInfoView(_ client: LockdownClient) -> some View {
+    private func appDeviceInfoView(_ client: LockdownClient, _ proxy: GeometryProxy) -> some View {
+        func row(title: String, value: String?) -> some View {
+            HStack {
+                (Text(title) + Text(":"))
+                    .truncationMode(.middle)
+                    .frame(width: proxy.size.width / 2, alignment: .trailing)
+                    .help(Text(title))
+
+                Text(value ?? "")
+                    .truncationMode(.tail)
+                    .frame(maxWidth: proxy.size.width / 2, alignment: .leading)
+                    .help(Text(value ?? ""))
+            }
+            .lineLimit(1)
+            .allowsTightening(true)
+            .textSelection(.enabled)
+        }
+
         func keyRow(domain: String? = nil, _ key: String) -> some View {
             let value: Busq.Plist?
             let accessError: Error?
@@ -361,56 +380,50 @@ struct DeviceInfoView: View {
             }
         }
 
-
-        return Form {
-            Group {
-                HStack {
-                    Text("Device Info")
-                        .font(.headline)
-                }
+        return Group {
+            Section("Device Info") {
                 Group {
-                    keyRow("DeviceName")
-                    keyRow("DeviceClass")
-                    keyRow("ProductName")
-                    keyRow("ProductType")
-                    keyRow("ProductVersion")
-                }
+                    Group {
+                        keyRow("DeviceName")
+                        keyRow("DeviceClass")
+                        keyRow("ProductName")
+                        keyRow("ProductType")
+                        keyRow("ProductVersion")
+                    }
 
-                Group {
-                    keyRow("ModelNumber")
-                    keyRow("PasswordProtected")
-                    keyRow("DevicePublicKey")
-                    keyRow(domain: "com.apple.mobile.battery", "BatteryCurrentCapacity")
-                    keyRow(domain: "com.apple.mobile.battery", "BatteryIsCharging")
-                    keyRow("CPUArchitecture")
-                }
+                    Group {
+                        keyRow("ModelNumber")
+                        keyRow("PasswordProtected")
+                        keyRow("DevicePublicKey")
+                        keyRow(domain: "com.apple.mobile.battery", "BatteryCurrentCapacity")
+                        keyRow(domain: "com.apple.mobile.battery", "BatteryIsCharging")
+                        keyRow("CPUArchitecture")
+                    }
 
-                Group {
-                    keyRow("ActiveWirelessTechnology")
-                    keyRow("AirplaneMode")
-                    //keyRow("assistant")
-                    keyRow("BasebandCertId")
-                    keyRow("BasebandChipId")
-                    keyRow("BasebandPostponementStatus")
-                    keyRow("BasebandStatus")
-                }
+                    Group {
+                        keyRow("ActiveWirelessTechnology")
+                        keyRow("AirplaneMode")
+                        //keyRow("assistant")
+                        keyRow("BasebandCertId")
+                        keyRow("BasebandChipId")
+                        keyRow("BasebandPostponementStatus")
+                        keyRow("BasebandStatus")
+                    }
 
-                Group {
-                    keyRow("BluetoothAddress")
-                    keyRow("BoardId")
-                    keyRow("BootNonce")
-                    keyRow("BuildVersion")
-                    keyRow("CertificateProductionStatus")
-                    keyRow("CertificateSecurityMode")
-                    keyRow("ChipID")
-                    keyRow("CompassCalibrationDictionary")
+                    Group {
+                        keyRow("BluetoothAddress")
+                        keyRow("BoardId")
+                        keyRow("BootNonce")
+                        keyRow("BuildVersion")
+                        keyRow("CertificateProductionStatus")
+                        keyRow("CertificateSecurityMode")
+                        keyRow("ChipID")
+                        keyRow("CompassCalibrationDictionary")
+                    }
                 }
             }
 
-            Group {
-                Text("Extended Info")
-                    .font(.headline)
-
+            Section("Extended Info") {
                 Group {
                     keyRow("DeviceColor")
                     keyRow("DeviceEnclosureColor")
@@ -453,9 +466,7 @@ struct DeviceInfoView: View {
                     keyRow("MobileSubscriberNetworkCode")
                     keyRow("PartitionType")
                 }
-            }
 
-            Group {
                 Group {
                     // keyRow("ProximitySensorCalibrationDictionary")
                     //keyRow("RearFacingCameraHFRCapability")
@@ -481,24 +492,7 @@ struct DeviceInfoView: View {
                 }
             }
         }
-        .controlSize(.small)
-        .padding()
-
     }
-
-    @ViewBuilder func row(title: String, value: String?) -> some View {
-        TextField(text: .constant(value ?? ""), prompt: Text("Unknown")) {
-            (Text(title) + Text(":"))
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .help(Text(title))
-                .layoutPriority(0)
-        }
-        .layoutPriority(1)
-        .textFieldStyle(.plain)
-        .textSelection(.enabled)
-    }
-
 
 }
 
@@ -525,17 +519,17 @@ final class ServicesManager : ObservableObject {
         apps
             .filter({ info in
                 searchText.isEmpty ||
-                    info.CFBundleName?.localizedCaseInsensitiveContains(searchText) == true
+                info.CFBundleName?.localizedCaseInsensitiveContains(searchText) == true
             })
     }
     /// Refresh the list of installed apps from the device
     func refreshAppList() throws {
         let appList = try iproxy?.getAppList(type: .any) ?? []
-//        DispatchQueue.main.async {
-            withAnimation {
-                self.apps = appList
-            }
-//        }
+        //        DispatchQueue.main.async {
+        withAnimation {
+            self.apps = appList
+        }
+        //        }
 
     }
 }
@@ -623,22 +617,22 @@ struct DeviceAppListSplitView : View {
     @ViewBuilder var appListView: some View {
         AppsListView()
             .environmentObject(manager)
-//            }
-//
-//            HStack(spacing: 10) {
-//                #if os(macOS)
-//                ProgressView().controlSize(.small)
-//                #else
-//                ProgressView()
-//                #endif
-//                Text("Loading App Inventory…")
-//                    .font(.title)
-//            }
-//                .foregroundColor(.secondary)
-//                .frame(maxWidth: .infinity, maxHeight: .infinity)
-//                .opacity(apps.isEmpty ? 1.0 : 0.0)
-//                .animation(.none)
-//        }
+        //            }
+        //
+        //            HStack(spacing: 10) {
+        //                #if os(macOS)
+        //                ProgressView().controlSize(.small)
+        //                #else
+        //                ProgressView()
+        //                #endif
+        //                Text("Loading App Inventory…")
+        //                    .font(.title)
+        //            }
+        //                .foregroundColor(.secondary)
+        //                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        //                .opacity(apps.isEmpty ? 1.0 : 0.0)
+        //                .animation(.none)
+        //        }
     }
 }
 
@@ -668,9 +662,9 @@ struct AppsListView : View {
         } header: {
             HStack(spacing: 10) {
                 if manager.apps.isEmpty {
-                    #if os(macOS)
+#if os(macOS)
                     ProgressView().controlSize(.mini)
-                    #endif
+#endif
                 }
                 Text(type.rawValue) + Text(" ") + Text("Apps") + Text(" (") + Text(apps.count, format: .number) + Text(")")
             }
@@ -717,7 +711,7 @@ struct AppItemLabel : View {
         HStack {
             Group {
                 if let bundleID = appInfo.CFBundleIdentifier,
-                    let icon = manager.icons[bundleID] {
+                   let icon = manager.icons[bundleID] {
                     icon
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -757,7 +751,7 @@ struct AppItemLabel : View {
                     Text(appInfo.CFBundleIdentifier ?? "")
                         .lineLimit(1)
                         .allowsTightening(true)
-                        //.font(Font.body.monospaced())
+                    //.font(Font.body.monospaced())
                         .truncationMode(.middle)
                         .foregroundColor(Color.secondary)
 
@@ -920,7 +914,7 @@ extension UsageDescriptionKeys {
         case .NSPhotoLibraryUsageDescription: return "Photo Library"
         case .NSAppleMusicUsageDescription: return "Apple Music"
         case .NSHomeKitUsageDescription: return "HomeKit"
-        //case .NSVideoSubscriberAccountUsageDescription: return "Video Subscriber Account Usage"
+            //case .NSVideoSubscriberAccountUsageDescription: return "Video Subscriber Account Usage"
         case .NSHealthShareUsageDescription: return "Health Sharing"
         case .NSHealthUpdateUsageDescription: return "Health Update"
         case .NSAppleEventsUsageDescription: return "Apple Events"
@@ -954,7 +948,7 @@ extension UsageDescriptionKeys {
         case .NSPhotoLibraryUsageDescription: return .photo
         case .NSAppleMusicUsageDescription: return .music_note
         case .NSHomeKitUsageDescription: return .house
-        //case .NSVideoSubscriberAccountUsageDescription: return .sparkles_tv
+            //case .NSVideoSubscriberAccountUsageDescription: return .sparkles_tv
         case .NSHealthShareUsageDescription: return .stethoscope
         case .NSHealthUpdateUsageDescription: return .stethoscope_circle
         case .NSAppleEventsUsageDescription: return .scroll
@@ -1060,7 +1054,7 @@ struct AppInfoView : View {
     func usageRow(key: UsageDescriptionKeys) -> some View {
         TextField(text: .constant(appInfo[usage: key] ?? ""), prompt: Text("Not used")) {
             (Text(key.description) + Text(":"))
-                //.label(image: key.icon)
+            //.label(image: key.icon)
         }
         // .textFieldStyle(.squareBorder) // not on iOS
         .textSelection(.enabled)
@@ -1078,7 +1072,7 @@ public extension AppContainer {
         .commands {
             SidebarCommands()
             ToolbarCommands()
-            //SearchBarCommands()
+            //            SearchBarCommands()
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
@@ -1190,7 +1184,7 @@ struct DeveloperSettingsView: View {
                     .button {
                         refreshSigningIdentities()
                     }
-                    //.buttonStyle(.plain)
+                //.buttonStyle(.plain)
                     .hoverSymbol(activeVariant: .fill)
                     .help(Text("Refresh signing identities"))
             }
@@ -1271,7 +1265,7 @@ struct GeneralSettingsView: View {
             Toggle(isOn: $iconBadge) {
                 Text("Badge App Icon")
             }
-                .help(Text("Show the number of apps pending install."))
+            .help(Text("Show the number of apps pending install."))
         }
     }
 }
