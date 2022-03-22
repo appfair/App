@@ -89,8 +89,8 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
-    /// Whether the app is currently performing an update
-    @Published var updateInProgress = 0
+    /// The number of outstanding update requests
+    @Published var updateInProgress: UInt = 0
 
     @AppStorage("showPreReleases") var showPreReleases = showPreReleasesDefault
 
@@ -816,7 +816,7 @@ extension FairAppInventory.SidebarItem {
         case .recent:
             return true
         case .category(let category):
-            return item.release.appCategories.contains(category)
+            return item.displayCategories.contains(category)
         }
     }
 }

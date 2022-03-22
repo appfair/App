@@ -1250,7 +1250,7 @@ struct CatalogItemView: View {
         //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
-        let img = item.appCategories.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
+        let img = info.displayCategories.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
         let baseColor = item.itemTintColor()
         return ZStack {
             Circle()
@@ -1415,14 +1415,7 @@ extension AppCatalogItem {
     }
 
     @ViewBuilder func fallbackIcon() -> some View {
-        // fall-back to the generated image for the app, but with no title or sub-title
-        //        if id.isCaskApp {
-        //            // cask apps use a blank icon
-        //        } else {
-        //FairIconView(self.name, subtitle: self.id.rawValue, iconColor: itemTintColor())
-        //
         let baseColor = itemTintColor()
-        //Circle()
         RoundedRectangle(cornerRadius: 10, style: .continuous)
             .fill(baseColor)
             .opacity(0.5)

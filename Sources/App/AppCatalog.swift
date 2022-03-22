@@ -28,7 +28,7 @@ extension AppCatalogItem {
 
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5
     var riskLevel: AppRisk {
-        // let groups = Set(item.appCategories.flatMap(\.groupings))
+        // let groups = Set(item.displayCategories.flatMap(\.groupings))
         let categories = Set((self.permissions ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
         // the risk level is simply the number of categories the permissions fall into. E.g.:
         // nothing -> harmless

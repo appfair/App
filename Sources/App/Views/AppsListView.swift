@@ -90,11 +90,6 @@ struct AppsListView : View {
         }
     }
 
-    /// Returns true is there are any refreshes in progress
-    var refreshing: Bool {
-        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
-    }
-
     @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
         let items = items(section: section)
         if let section = section {
@@ -140,24 +135,31 @@ struct AppSectionItems : View {
 
         let itemCount = items.count
 
-        if itemCount == 0 && searchTextSource.isEmpty {
-            Text("No results")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        } else if itemCount == 0 {
-            // nothing; we don't know if it was empty or not
-        } else if itemCount > displayCount {
-            Text("Loading…")
-                .font(.caption)
-                .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
-                .foregroundColor(.secondary)
-                .onAppear {
-                    dbg("showing more items (\(displayCount) of \(items.count))")
-                    DispatchQueue.main.async {
-                        displayCount += 50
+        Group {
+            if itemCount == 0 && refreshing == true {
+                Text("Loading…")
+            } else if itemCount == 0 && searchTextSource.isEmpty {
+                Text("No results")
+            } else if itemCount == 0 {
+                // nothing; we don't know if it was empty or not
+            } else if itemCount > displayCount {
+                Text("More…")
+                    .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
+                    .onAppear {
+                        dbg("showing more items (\(displayCount) of \(items.count))")
+                        DispatchQueue.main.async {
+                            displayCount += 50
+                        }
                     }
-                }
+            }
         }
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+
+    /// Returns true is there are any refreshes in progress
+    var refreshing: Bool {
+        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
     }
 
     func label(for item: AppInfo) -> some View {
@@ -179,7 +181,7 @@ struct AppSectionItems : View {
                     .font(.headline)
                     .lineLimit(1)
                 HStack {
-                    if let category = item.release.appCategories.first {
+                    if let category = item.displayCategories.first {
                         // category.tintedLabel
                         TintedLabel(title: category.text, systemName: category.symbol.symbolName, tint: item.release.itemTintColor(), mode: .hierarchical)
                             .symbolVariant(.fill)

@@ -122,8 +122,8 @@ private let brewInstallRootDefault: URL = {
         // KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)
     ] { didSet { updateAppInfo() } }
 
-    /// Whether the are currently performing an update
-    @Published var updateInProgress = 0
+    /// The number of outstanding update requests
+    @Published var updateInProgress: UInt = 0
 
     /// The list of casks
     private var caskList: URL { URL(string: "cask.json", relativeTo: caskAPIEndpoint)! }
@@ -1011,7 +1011,7 @@ extension HomebrewInventory {
     func updateAppCategories() {
         appCategories.removeAll()
         for app in appInfos {
-            for cat in app.release.appCategories {
+            for cat in app.displayCategories {
                 appCategories[cat, default: []].append(app)
             }
         }
