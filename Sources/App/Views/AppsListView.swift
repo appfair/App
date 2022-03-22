@@ -4,18 +4,19 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView : View {
     let source: AppSource
+    let sidebarSelection: SidebarSelection?
+
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var fairAppInv: FairAppInventory
     @EnvironmentObject var homeBrewInv: HomebrewInventory
+
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
-    var sidebarSelection: SidebarSelection?
     /// The underlying source of the search text
     @Binding var searchTextSource: String
-    /// The source of the
+
+    /// The filter text for displayed items
     @State private var searchText: String = ""
-    /// The number of items to initially display to keep the list rendering responsive
-    @State private var displayCount = 0
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
 
     //static let topID = UUID()
@@ -32,17 +33,18 @@ struct AppsListView : View {
                     appListSection(section: nil)
                 }
             }
-//            .onChange(of: fairManager.refreshing) { refreshing in
-//                dbg(wip("### REFRESHING:"), refreshing)
-//            }
+            .searchable(text: $searchText)
+            .animation(.easeInOut, value: searchText)
             .onChange(of: searchTextSource) { searchString in
                 selection = nil
-                displayCount = 25
                 DispatchQueue.main.async {
                     searchText = searchString
                     // proxy.scrollTo(Self.topID, anchor: .top) // doesn't work
                 }
             }
+//            .onChange(of: fairManager.refreshing) { refreshing in
+//                dbg(wip("### REFRESHING:"), refreshing)
+//            }
 //            .onChange(of: scrollToSelection) { scrollToSelection in
 //                // sadly, this doesn't seem to work
 //                if scrollToSelection == true {
@@ -51,8 +53,6 @@ struct AppsListView : View {
 //                    self.scrollToSelection = false // reset once we have performed the scroll
 //                }
 //            }
-            .searchable(text: $searchText)
-            .animation(.easeInOut, value: searchText)
         }
     }
 
@@ -99,17 +99,36 @@ struct AppsListView : View {
         let items = items(section: section)
         if let section = section {
             Section {
-                appSectionItems(items: items)
+                AppSectionItems(items: items, selection: $selection, searchTextSource: $searchTextSource)
             } header: {
                 section.localizedTitle
             }
         } else {
             // nil section means don't sub-divide
-            appSectionItems(items: items)
+            AppSectionItems(items: items, selection: $selection, searchTextSource: $searchTextSource)
         }
     }
+}
 
-    @ViewBuilder func appSectionItems(items: [AppInfo]) -> some View {
+struct AppSectionItems : View {
+    let items: [AppInfo]
+    @Binding var selection: AppInfo.ID?
+    /// The underlying source of the search text
+    @Binding var searchTextSource: String
+
+    @EnvironmentObject var fairManager: FairManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
+
+    /// The number of items to initially display to keep the list rendering responsive;
+    /// when the list is scrolled to the bottom, this count will increment to give the appearance of infinite scrolling
+    @State private var displayCount = 25
+
+    var body: some View {
+        sectionContents
+    }
+
+    @ViewBuilder var sectionContents: some View {
         ForEach(items.prefix(displayCount)) { item in
             NavigationLink(tag: item.id, selection: $selection, destination: {
                 CatalogItemView(info: item)
@@ -119,13 +138,15 @@ struct AppsListView : View {
             })
         }
 
-        if items.isEmpty && !searchText.isEmpty {
+        let itemCount = items.count
+
+        if itemCount == 0 && searchTextSource.isEmpty {
             Text("No results")
                 .font(.caption)
                 .foregroundColor(.secondary)
-        }
-
-        if items.count > displayCount {
+        } else if itemCount == 0 {
+            // nothing; we don't know if it was empty or not
+        } else if itemCount > displayCount {
             Text("Loading…")
                 .font(.caption)
                 .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
@@ -133,7 +154,7 @@ struct AppsListView : View {
                 .onAppear {
                     dbg("showing more items (\(displayCount) of \(items.count))")
                     DispatchQueue.main.async {
-                        displayCount += 100
+                        displayCount += 50
                     }
                 }
         }
@@ -193,4 +214,3 @@ struct AppsListView : View {
         .frame(height: 50)
     }
 }
-
