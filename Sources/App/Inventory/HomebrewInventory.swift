@@ -27,7 +27,6 @@ private extension AppInventory where Self : HomebrewInventory {
     static var globalBrewPath: URL {
         URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
     }
-
 }
 
 private let appfairBase = URL(string: "https://github.com/App-Fair/")

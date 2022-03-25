@@ -446,9 +446,9 @@ struct CatalogItemView: View {
                 Group {
                     switch tab {
                     case .description:
-                        descriptionSection()
+                        ReadmeBox(info: info)
                     case .version:
-                        versionSection()
+                        ReleaseNotesBox(info: info)
                     case .caveats:
                         if let cask = info.cask, let caveats = cask.caveats {
                             textBox(.success(AttributedString(caveats)))
@@ -464,7 +464,7 @@ struct CatalogItemView: View {
                             tab.title
                         }
                     } icon: {
-                        fetchingReadme > 0 ? FairSymbol.hourglass : FairSymbol.atom
+                        //fetchingReadme > 0 ? FairSymbol.hourglass : FairSymbol.atom
                     }
                 }
             }
@@ -484,7 +484,7 @@ struct CatalogItemView: View {
                         }
                     case .security:
                         if info.cask != nil {
-                            artifactSecuritySection()
+                            SecurityBox(info: info)
                         }
                     case .formula:
                         if let cask = info.cask {
@@ -506,106 +506,8 @@ struct CatalogItemView: View {
 
     // MARK: README
 
-    @State var readmeText: Result<AttributedString, Error>? = nil
-    @State var fetchingReadme = 0
-
-    func descriptionSection() -> some View {
-        textBox(self.readmeText)
-            .font(Font.body)
-            .task {
-                if fetchingReadme == 0 {
-                    fetchingReadme += 1
-                    await fetchReadme()
-                    fetchingReadme -= 1
-                }
-            }
-    }
-
-    private static let readmeRegex = Result {
-        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
-    }
-
-    private func fetchMarkdownResource(url: URL) async throws -> AttributedString {
-        let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
-            .fetch(validateFragmentHash: true)
-        let atx = String(data: data, encoding: .utf8) ?? ""
-//        // extract the portion of text between the "# Description" and following "#" sections
-//        if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
-//            atx = (atx as NSString).substring(with: match)
-//        } else {
-//            if !info.isCask { // casks don't have this requirement; permit full READMEs
-//                atx = ""
-//            }
-//        }
-
-        // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
-
-        // note this this differs with casks
-        let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
-        return try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
-    }
-
-    private func fetchReadme() async {
-        let readmeURL = info.release.readmeURL
-        do {
-            dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
-            if let readmeURL = readmeURL {
-                try self.readmeText = await .success(fetchMarkdownResource(url: readmeURL))
-            } else {
-                // throw AppError(loc("No description found."))
-                self.readmeText = .success(AttributedString(info.release.localizedDescription ?? loc("No description found")))
-            }
-        } catch {
-            dbg("error handling README:", error)
-            //if let readmeURL = readmeURL {
-                self.readmeText = .failure(error)
-            //}
-        }
-    }
 
     // MARK: Description / Summary
-
-    @State var releaseNotesText: Result<AttributedString, Error>? = nil
-    @State var fetchingReleaseNotes = 0
-
-    @ViewBuilder func versionSection() -> some View {
-//        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
-        textBox(self.releaseNotesText)
-            .font(.body)
-            .task {
-                if fetchingReleaseNotes == 0 {
-                    fetchingReleaseNotes += 1
-                    await fetchReleaseNotes()
-                    fetchingReleaseNotes -= 1
-                }
-            }
-    }
-
-    func fetchReleaseNotes() async {
-        let releaseNotesURL = info.release.releaseNotesURL
-        do {
-            dbg("fetching release notes for:", info.release.id, releaseNotesURL?.absoluteString)
-            if let releaseNotesURL = releaseNotesURL {
-                try self.releaseNotesText = await .success(fetchMarkdownResource(url: releaseNotesURL))
-            } else {
-                self.releaseNotesText = .success(AttributedString("No release notes"))
-
-            }
-        } catch {
-            dbg("error handling release notes:", error)
-            //if let readmeURL = readmeURL {
-                self.releaseNotesText = .failure(error)
-            //}
-        }
-    }
-
-    func releaseVersionAccessoryView() -> Text? {
-        if let versionDate = info.release.versionDate ?? self.caskURLModifiedDate {
-            return Text(versionDate, format: .dateTime)
-        } else {
-            return nil
-        }
-    }
 
     func riskSection() -> some View {
         let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
@@ -628,72 +530,6 @@ struct CatalogItemView: View {
                             .help(Text("Risk assessment is only available for App Fair Fairground apps"))
                     }
                 })
-        }
-    }
-
-    @State var securitySummary: Result<AttributedString, Error>? = nil
-    @State var fetchingSecurity = 0
-
-    func artifactSecuritySection() -> some View {
-        textBox(self.securitySummary)
-            .font(Font.body.monospaced())
-            .task {
-                if fetchingSecurity == 0 && securitySummary == nil {
-                    fetchingSecurity += 1
-                    self.securitySummary = await fetchArtifactSecurity(checkFileHash: true)
-                    fetchingSecurity -= 1
-                }
-            }
-
-    }
-
-    func fetchArtifactSecurity(checkFileHash: Bool = true, reparseJSON: Bool = false) async -> Result<AttributedString, Error>? {
-
-        let url: URL?
-        if checkFileHash == false {
-            let sourceURL = self.info.cask?.url ?? self.info.release.downloadURL.absoluteString
-            let urlChecksum = sourceURL.utf8Data.sha256().hex()
-
-            url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
-
-        } else { // use the artifact URL hash
-            guard let checksum = self.info.cask?.checksum ?? self.info.release.sha256 else {
-                dbg("no checksum for artifact")
-                return nil
-            }
-
-            if checksum == "no_check" {
-                dbg("checksum for artifact is no_check")
-                return nil
-            }
-
-            url = URL(string: checksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/files/"))?.appendingPathExtension("json") // e.g.: https://www.appfair.net/fairscan/urls/ffea53299849ef43ee26927cbf3ff0342fa6e9a1421059c368fe91a992c9a3a1.json
-        }
-
-        guard let url = url else {
-            dbg("no URL for info", info.release.name)
-            return nil
-        }
-
-        do {
-            dbg("checking security URL:", url.absoluteString)
-            let scanResult = try await URLSession.shared.fetch(request: URLRequest(url: url))
-            if !reparseJSON {
-                return .success(AttributedString(scanResult.data.utf8String ?? ""))
-            } else {
-                do {
-                    let ob = try JSONSerialization.jsonObject(with: scanResult.data, options: .topLevelDictionaryAssumed)
-                    let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
-                    return .success(AttributedString(pretty.utf8String ?? ""))
-                } catch {
-                    return .success(AttributedString(scanResult.data.utf8String ?? ""))
-                }
-            }
-        } catch {
-            // errors are not unexpected when the user leaves this view:
-            // NSURLErrorDomain Code=-999 "cancelled"
-            dbg("error checking cask security:", url.absoluteString, "error:", error)
-            return .failure(error)
         }
     }
 
@@ -1308,6 +1144,201 @@ fileprivate extension View {
             }
         }
     }
+
+    func fetchMarkdownResource(url: URL, info: AppInfo) async throws -> AttributedString {
+        let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
+            .fetch(validateFragmentHash: true)
+        let atx = String(data: data, encoding: .utf8) ?? ""
+//        // extract the portion of text between the "# Description" and following "#" sections
+//        if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+//            atx = (atx as NSString).substring(with: match)
+//        } else {
+//            if !info.isCask { // casks don't have this requirement; permit full READMEs
+//                atx = ""
+//            }
+//        }
+
+        // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
+
+        // note this this differs with casks
+        let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
+        return try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
+    }
+
+
+}
+
+struct ReadmeBox : View {
+    let info: AppInfo
+
+    @State var readmeText: Result<AttributedString, Error>? = nil
+    @State var fetchingReadme = 0
+
+    var body: some View {
+        descriptionSection()
+    }
+
+    private static let readmeRegex = Result {
+        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+    }
+
+    func descriptionSection() -> some View {
+        textBox(self.readmeText)
+            .font(Font.body)
+            .task {
+                if fetchingReadme == 0 {
+                    fetchingReadme += 1
+                    await fetchReadme()
+                    fetchingReadme -= 1
+                }
+            }
+    }
+
+
+    private func fetchReadme() async {
+        let readmeURL = info.release.readmeURL
+        do {
+            dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
+            if let readmeURL = readmeURL {
+                try self.readmeText = await .success(fetchMarkdownResource(url: readmeURL, info: info))
+            } else {
+                // throw AppError(loc("No description found."))
+                self.readmeText = .success(AttributedString(info.release.localizedDescription ?? loc("No description found")))
+            }
+        } catch {
+            dbg("error handling README:", error)
+            //if let readmeURL = readmeURL {
+                self.readmeText = .failure(error)
+            //}
+        }
+    }
+
+
+}
+
+struct SecurityBox : View {
+    let info: AppInfo
+
+    @State private var securitySummary: Result<AttributedString, Error>? = nil
+    @State private var fetchingSecurity = 0
+
+    var body: some View {
+        artifactSecuritySection()
+    }
+
+    func artifactSecuritySection() -> some View {
+        textBox(self.securitySummary)
+            .font(Font.body.monospaced())
+            .task {
+                if fetchingSecurity == 0 && securitySummary == nil {
+                    fetchingSecurity += 1
+                    self.securitySummary = await fetchArtifactSecurity(checkFileHash: true)
+                    fetchingSecurity -= 1
+                }
+            }
+
+    }
+
+    func fetchArtifactSecurity(checkFileHash: Bool = true, reparseJSON: Bool = false) async -> Result<AttributedString, Error>? {
+
+        let url: URL?
+        if checkFileHash == false {
+            let sourceURL = self.info.cask?.url ?? self.info.release.downloadURL.absoluteString
+            let urlChecksum = sourceURL.utf8Data.sha256().hex()
+
+            url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
+
+        } else { // use the artifact URL hash
+            guard let checksum = self.info.cask?.checksum ?? self.info.release.sha256 else {
+                dbg("no checksum for artifact")
+                return nil
+            }
+
+            if checksum == "no_check" {
+                dbg("checksum for artifact is no_check")
+                return nil
+            }
+
+            url = URL(string: checksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/files/"))?.appendingPathExtension("json") // e.g.: https://www.appfair.net/fairscan/urls/ffea53299849ef43ee26927cbf3ff0342fa6e9a1421059c368fe91a992c9a3a1.json
+        }
+
+        guard let url = url else {
+            dbg("no URL for info", info.release.name)
+            return nil
+        }
+
+        do {
+            dbg("checking security URL:", url.absoluteString)
+            let scanResult = try await URLSession.shared.fetch(request: URLRequest(url: url))
+            if !reparseJSON {
+                return .success(AttributedString(scanResult.data.utf8String ?? ""))
+            } else {
+                do {
+                    let ob = try JSONSerialization.jsonObject(with: scanResult.data, options: .topLevelDictionaryAssumed)
+                    let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                    return .success(AttributedString(pretty.utf8String ?? ""))
+                } catch {
+                    return .success(AttributedString(scanResult.data.utf8String ?? ""))
+                }
+            }
+        } catch {
+            // errors are not unexpected when the user leaves this view:
+            // NSURLErrorDomain Code=-999 "cancelled"
+            dbg("error checking cask security:", url.absoluteString, "error:", error)
+            return .failure(error)
+        }
+    }
+}
+
+struct ReleaseNotesBox : View {
+    let info: AppInfo
+
+    @State var releaseNotesText: Result<AttributedString, Error>? = nil
+    @State var fetchingReleaseNotes = 0
+
+    var body: some View {
+        versionSection()
+    }
+
+
+    @ViewBuilder func versionSection() -> some View {
+//        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
+        textBox(self.releaseNotesText)
+            .font(.body)
+            .task {
+                if fetchingReleaseNotes == 0 {
+                    fetchingReleaseNotes += 1
+                    await fetchReleaseNotes()
+                    fetchingReleaseNotes -= 1
+                }
+            }
+    }
+
+    func fetchReleaseNotes() async {
+        let releaseNotesURL = info.release.releaseNotesURL
+        do {
+            dbg("fetching release notes for:", info.release.id, releaseNotesURL?.absoluteString)
+            if let releaseNotesURL = releaseNotesURL {
+                try self.releaseNotesText = await .success(fetchMarkdownResource(url: releaseNotesURL, info: info))
+            } else {
+                self.releaseNotesText = .success(AttributedString("No release notes"))
+
+            }
+        } catch {
+            dbg("error handling release notes:", error)
+            //if let readmeURL = readmeURL {
+                self.releaseNotesText = .failure(error)
+            //}
+        }
+    }
+
+//    func releaseVersionAccessoryView() -> Text? {
+//        if let versionDate = info.release.versionDate ?? self.caskURLModifiedDate {
+//            return Text(versionDate, format: .dateTime)
+//        } else {
+//            return nil
+//        }
+//    }
 }
 
 struct CaskFormulaBox : View {
@@ -1316,8 +1347,8 @@ struct CaskFormulaBox : View {
 
     @EnvironmentObject var homeBrewInv: HomebrewInventory
 
-    @State var caskSummary: Result<AttributedString, Error>? = nil
-    @State var fetchingFormula = 0
+    @State private var caskSummary: Result<AttributedString, Error>? = nil
+    @State private var fetchingFormula = 0
 
     var body: some View {
         caskFormulaSection(cask: cask)
