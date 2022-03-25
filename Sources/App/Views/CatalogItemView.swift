@@ -198,32 +198,6 @@ struct CatalogItemView: View {
         }
     }
 
-    private func fetchCaskSummary(jsonSource: Bool = false) async {
-        if let cask = self.info.cask, self.caskSummary == nil, let url = jsonSource ? homeBrewInv.caskMetadata(name: cask.token) : homeBrewInv.caskSource(name: cask.token) {
-            // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
-            do {
-                dbg("checking cask summary:", url.absoluteString)
-                let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
-                if jsonSource {
-                    do {
-                        let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
-                        let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
-                        self.caskSummary = .success(AttributedString(pretty.utf8String ?? ""))
-                    } catch {
-                        self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
-                    }
-                } else {
-                    self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
-                }
-            } catch {
-                // errors are not unexpected when the user leaves this view:
-                // NSURLErrorDomain Code=-999 "cancelled"
-                dbg("error checking cask metadata:", url.absoluteString, "error:", error)
-                self.caskSummary = .failure(error)
-            }
-        }
-    }
-
     private func fetchDownloadURLStats() async {
         if homeBrewInv.manageCaskDownloads == true {
             do {
@@ -259,32 +233,6 @@ struct CatalogItemView: View {
         }
         //.frame(height: 54)
     }
-
-    private func textBox(_ text: Result<AttributedString, Error>?) -> some View {
-        let astr: AttributedString
-        switch text {
-        case .none: astr = AttributedString()
-        case .success(let str): astr = str
-        case .failure(let error): astr = AttributedString(error.localizedDescription, attributes: .init([NSAttributedString.Key.obliqueness: 8]))
-        }
-
-        return ZStack {
-            ScrollView {
-                Text(astr)
-                    .textSelection(.enabled)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxHeight: .infinity)
-
-            if text == nil {
-                ProgressView()
-                    .controlSize(.small)
-            }
-        }
-    }
-
-
     /// The accessory on the trailing section of a `groupBox`
     @ViewBuilder func progressAccessory(_ fetching: Int) -> some View {
         ProgressView()
@@ -540,17 +488,17 @@ struct CatalogItemView: View {
                         }
                     case .formula:
                         if let cask = info.cask {
-                            caskFormulaSection(cask: cask)
+                            CaskFormulaBox(cask: cask, json: true)
                         }
                     }
                 }
                 .tag(tab)
                 .tabItem {
-                    Label {
-                        tab.title
-                    } icon: {
-                        fetchingFormula > 0 ? FairSymbol.hourglass : FairSymbol.atom
-                    }
+                    tab.title
+//                    Label {
+//                    } icon: {
+//                        // fetchingFormula > 0 ? FairSymbol.hourglass : FairSymbol.atom
+//                    }
                 }
             }
         }
@@ -616,21 +564,6 @@ struct CatalogItemView: View {
     }
 
     // MARK: Description / Summary
-
-    @State var caskSummary: Result<AttributedString, Error>? = nil
-    @State var fetchingFormula = 0
-
-    func caskFormulaSection(cask: CaskItem) -> some View {
-        textBox(self.caskSummary)
-            .font(Font.body.monospaced())
-            .task {
-                if fetchingFormula == 0 {
-                    fetchingFormula += 1
-                    await fetchCaskSummary()
-                    fetchingFormula -= 1
-                }
-            }
-    }
 
     @State var releaseNotesText: Result<AttributedString, Error>? = nil
     @State var fetchingReleaseNotes = 0
@@ -1347,6 +1280,84 @@ struct CatalogItemView: View {
             }
         } else {
             await fairAppInv.trash(item: item)
+        }
+    }
+}
+
+fileprivate extension View {
+    func textBox(_ text: Result<AttributedString, Error>?) -> some View {
+        let astr: AttributedString
+        switch text {
+        case .none: astr = AttributedString()
+        case .success(let str): astr = str
+        case .failure(let error): astr = AttributedString(error.localizedDescription, attributes: .init([NSAttributedString.Key.obliqueness: 8]))
+        }
+
+        return ZStack {
+            ScrollView {
+                Text(astr)
+                    .textSelection(.enabled)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: .infinity)
+
+            if text == nil {
+                ProgressView()
+                    .controlSize(.small)
+            }
+        }
+    }
+}
+
+struct CaskFormulaBox : View {
+    let cask: CaskItem
+    let json: Bool
+
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
+
+    @State var caskSummary: Result<AttributedString, Error>? = nil
+    @State var fetchingFormula = 0
+
+    var body: some View {
+        caskFormulaSection(cask: cask)
+    }
+
+    func caskFormulaSection(cask: CaskItem) -> some View {
+        textBox(self.caskSummary)
+            .font(Font.body.monospaced())
+            .task {
+                if fetchingFormula == 0 {
+                    fetchingFormula += 1
+                    await fetchCaskSummary(json: json)
+                    fetchingFormula -= 1
+                }
+            }
+    }
+
+    private func fetchCaskSummary(json jsonSource: Bool) async {
+        if self.caskSummary == nil, let url = jsonSource ? homeBrewInv.caskMetadata(name: cask.token) : homeBrewInv.caskSource(name: cask.token) {
+            // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
+            do {
+                dbg("checking cask summary:", url.absoluteString)
+                let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
+                if jsonSource {
+                    do {
+                        let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
+                        let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                        self.caskSummary = .success(AttributedString(pretty.utf8String ?? ""))
+                    } catch {
+                        self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
+                    }
+                } else {
+                    self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
+                }
+            } catch {
+                // errors are not unexpected when the user leaves this view:
+                // NSURLErrorDomain Code=-999 "cancelled"
+                dbg("error checking cask metadata:", url.absoluteString, "error:", error)
+                self.caskSummary = .failure(error)
+            }
         }
     }
 }
