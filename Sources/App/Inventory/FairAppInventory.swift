@@ -721,12 +721,7 @@ extension FairAppInventory {
         case .installed:
             return Text(installedBundleIDs.count, format: .number)
         case .category:
-            if pretendMode {
-                let pretendCount = item.id.utf8Data.sha256().first ?? 0 // 0-256
-                return Text(pretendCount.localizedNumber(style: .decimal))
-            } else {
-                return nil
-            }
+            return nil
         }
     }
 

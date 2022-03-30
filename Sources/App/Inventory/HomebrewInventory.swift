@@ -35,13 +35,16 @@ private let useSystemHomebrewDefault = false
 private let quarantineCasksDefault = true
 private let installDependenciesDefault = false
 private let zapDeletedCasksDefault = false
-private let ignoreAutoUpdatingAppUpdatesDefault = true
+private let ignoreAutoUpdatingAppUpdatesDefault = false
 private let requireCaskChecksumDefault = false
 private let forceInstallCasksDefault = false
 private let manageCaskDownloadsDefault = true
 private let enableBrewAnalyticsDefault = false
 private let enableBrewSelfUpdateDefault = false
 private let enableHomebrewDefault = true
+
+/// The cache policy to use when loading data
+private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
 
 /// ~/Library/Caches/appfair-homebrew/Homebrew/
 private let brewInstallRootDefault: URL = {
@@ -271,7 +274,7 @@ private let brewInstallRootDefault: URL = {
     func fetchCasks() async throws -> Array<CaskItem> {
         dbg("loading cask list")
         let url = self.caskList
-        let data = try await URLRequest(url: url).fetch()
+        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
         let casks = try Array<CaskItem>(json: data)
         dbg("loaded", casks.count, "casks")
@@ -282,7 +285,7 @@ private let brewInstallRootDefault: URL = {
     fileprivate func fetchAppStats(statsURL: URL? = nil) async throws -> CaskStats {
         let url = statsURL ?? self.caskStats365
         dbg("loading cask stats:", url.absoluteString)
-        let data = try await URLRequest(url: url).fetch()
+        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
 
         dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
         return try CaskStats(json: data)
@@ -291,14 +294,14 @@ private let brewInstallRootDefault: URL = {
     fileprivate func fetchAppCasks() async throws -> FairAppCatalog {
         dbg("loading appcasks")
         let url = appfairCaskAppsURL
-        let data = try await URLRequest(url: url).fetch()
+        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
         let appcasks = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
         dbg("loaded appcasks:", appcasks.apps.count)
         return appcasks
     }
 
-    func scanInstalledCasks() throws -> [CaskItem.ID : Set<String>] {
+    private func scanInstalledCasks() throws -> [CaskItem.ID : Set<String>] {
         // manually scan the installed files in /opt/homebrew/Caskroom/*/* to get the names and versions of the installed apps. E.g.,
         // /opt/homebrew/Caskroom/bon-mot/0.2.25/Bon Mot.app
         // /opt/homebrew/Caskroom/cloud-cuckoo-prerelease/0.8.150/Cloud Cuckoo.app
@@ -508,7 +511,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             if let depURL = self.caskSource(name: depToken) {
                 dbg("downloading dependency token:", depToken, "from:", depURL.absoluteString)
                 let caskDepPath = URL(fileURLWithPath: depURL.lastPathComponent, relativeTo: downloadFolder)
-                try await URLSession.shared.fetch(request: URLRequest(url: depURL)).data.write(to: caskDepPath)
+                try await URLSession.shared.fetch(request: URLRequest(url: depURL, cachePolicy: cachePolicy)).data.write(to: caskDepPath)
             }
         }
 
@@ -562,6 +565,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
 
         dbg("result of command:", cmd, ":", result)
+        // manually re-scan to update the installed status of the item
+        withAnimation {
+            rescanInstalledCasks()
+        }
     }
 
     /// The folder that will store cask information so that `brew info` will be able to find it
@@ -579,7 +586,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let caskPath = URL(fileURLWithPath: sourceURL.lastPathComponent, relativeTo: downloadFolder)
 
         dbg("downloading cask info from:", sourceURL.absoluteString, "to:", caskPath.path)
-        try await URLSession.shared.fetch(request: URLRequest(url: sourceURL)).data.write(to: caskPath)
+        try await URLSession.shared.fetch(request: URLRequest(url: sourceURL, cachePolicy: cachePolicy)).data.write(to: caskPath)
 
         // don't delete the local cask, since we want to re-use it for install
         // defer { try? FileManager.default.removeItem(at: caskPath) }
@@ -855,13 +862,18 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
             for delay in delays {
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
-                    do {
-                        self.installedCasks = try self.scanInstalledCasks()
-                    } catch {
-                        dbg("error scanning for installed casks:", error)
-                    }
+                    self.rescanInstalledCasks()
                 }
             }
+        }
+    }
+
+    /// Performs a scan of the installed casks and updates the local cache
+    @MainActor func rescanInstalledCasks() {
+        do {
+            self.installedCasks = try self.scanInstalledCasks()
+        } catch {
+            dbg("error scanning for installed casks:", error)
         }
     }
 }
@@ -1080,7 +1092,7 @@ extension HomebrewInventory {
             if self.ignoreAutoUpdatingAppUpdates == true && item.cask?.auto_updates == true {
                 return false // show showing apps that mark themselves as auto-updating
             }
-            dbg(item.release.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
+            //dbg(item.release.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
             return installedVersions.contains(releaseVersion) == false
         } else {
             return false

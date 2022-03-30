@@ -15,7 +15,7 @@ public struct AppSettingsView: View {
             GeneralSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("General")
+                    Text("General", comment: "General preferences tab title")
                         .label(image: FairSymbol.switch_2)
                         .symbolVariant(.fill)
                 }
@@ -23,7 +23,7 @@ public struct AppSettingsView: View {
             FairAppsSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Fairapps")
+                    Text("Fairapps", comment: "Fairapps preferences tab title")
                         .label(image: AppSource.fairapps.symbol)
                         .symbolVariant(.fill)
                 }
@@ -31,7 +31,7 @@ public struct AppSettingsView: View {
             HomebrewSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Homebrew")
+                    Text("Homebrew", comment: "Homebrew preferences tab title")
                         .label(image: AppSource.homebrew.symbol)
                         .symbolVariant(.fill)
                 }
@@ -39,7 +39,7 @@ public struct AppSettingsView: View {
             AdvancedSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Advanced")
+                    Text("Advanced", comment: "Advanced preferences tab title")
                         .label(image: FairSymbol.gearshape)
                         .symbolVariant(.fill)
                 }
@@ -69,7 +69,7 @@ struct HomebrewSettingsView: View {
         Form {
             HStack {
                 Toggle(isOn: $homeBrewInv.enableHomebrew) {
-                    Text(atx: "Homebrew Casks")
+                    Text("Homebrew Casks")
                 }
                 .onChange(of: homeBrewInv.enableHomebrew) { enabled in
                     if enabled == false {
@@ -96,43 +96,43 @@ struct HomebrewSettingsView: View {
 
             Group {
                 Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
-                    Text(atx: "Use integrated download manager")
+                    Text("Use integrated download manager")
                 }
                     .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
-                Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
-                    Text(atx: "Exclude auto-updating apps from sidebar updates list")
-                }
-                    .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
-
                 Toggle(isOn: $homeBrewInv.forceInstallCasks) {
-                    Text(atx: "Install overwrites previous app installation")
+                    Text("Install overwrites previous app installation")
                 }
                     .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
                 Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                    Text(atx: "Quarantine installed apps")
+                    Text("Quarantine installed apps")
                 }
                     .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
                 Toggle(isOn: $homeBrewInv.installDependencies) {
-                    Text(atx: "Automatically install dependencies")
+                    Text("Automatically install dependencies")
                 }
                     .help(Text("Automatically attempt to install any required dependencies for a cask."))
 
+                Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
+                    Text("Exclude auto-updating apps from sidebar updates list")
+                }
+                    .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+
                 Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
-                    Text(atx: "Clear all app info on delete")
+                    Text("Clear all app info on delete")
                         //.label(.bolt)
                 }
                     .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This opetion is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
 
                 Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                    Text(atx: "Require cask checksum")
+                    Text("Require cask checksum")
                 }
                     .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
 
                 Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
-                    Text(atx: "Enable Homebrew self-update")
+                    Text("Enable Homebrew self-update")
                 }
                     .help(Text("Allow Homebrew to update itself while installing other packages."))
 
@@ -140,13 +140,13 @@ struct HomebrewSettingsView: View {
                 #if DEBUG
                 #if false
                 Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
-                    Text(atx: "Use system Homebrew installation")
+                    Text("Use system Homebrew installation")
                 }
                     .help(Text("Use the system-installed Homebrew installation"))
                     .disabled(!HomebrewInventory.globalBrewInstalled)
                 #endif
                 Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
-                    Text(atx: "Enable installation telemetry")
+                    Text("Enable installation telemetry")
                 }
                     .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
                 #endif
@@ -367,19 +367,19 @@ struct AdvancedSettingsView: View {
                     .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
 
                 Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
-                    Text(atx: "Keep catalog app up to date")
+                    Text("Keep catalog app up to date")
                 }
                 .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))
                 .toggleStyle(.checkbox)
 
                 Toggle(isOn: $fairManager.enableInstallWarning) {
-                    Text(atx: "Require app install confirmation")
+                    Text("Require app install confirmation")
                 }
                 .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation."))
                 .toggleStyle(.checkbox)
 
                 Toggle(isOn: $fairManager.enableDeleteWarning) {
-                    Text(atx: "Require app delete confirmation")
+                    Text("Require app delete confirmation")
                 }
                 .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation."))
                 .toggleStyle(.checkbox)

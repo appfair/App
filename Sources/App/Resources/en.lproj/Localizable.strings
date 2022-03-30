@@ -31,15 +31,21 @@
 "Downloads" = "Downloads";
 "Issues" = "Issues";
 "Installed" = "Installed";
+"Categories" = "Categories";
 
+"Casks" = "Casks";
 
-"Arts & Crafts" = "Arts & Crafts";
-"Knowledge" = "Knowledge";
-"Communication" = "Communication";
-"Entertainment" = "Entertainment";
-"Health & Lifestyle" = "Health & Lifestyle";
-"Diversion" = "Diversion";
-"Work" = "Work";
+/* General preferences tab title */
+"General" = "General";
+
+/* Fairapps preferences tab title */
+"Fairapps" = "Fairapps";
+
+/* Homebrew preferences tab title */
+"Homebrew" = "Homebrew";
+
+/* Advanced preferences tab title */
+"Advanced" = "Advanced";
 
 
 "appfair.business" = "Business";

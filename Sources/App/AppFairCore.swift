@@ -729,91 +729,92 @@ extension SwiftUI.Color {
 
     }
 }
+
 public extension AppCategory {
     @available(macOS 12.0, iOS 15.0, *)
     var text: Text {
         switch self {
         case .business:
-            return Text("Business")
+            return Text("appfair.business")
         case .developertools:
-            return Text("Developer Tools")
+            return Text("appfair.developer-tools")
         case .education:
-            return Text("Education")
+            return Text("appfair.education")
         case .entertainment:
-            return Text("Entertainment")
+            return Text("appfair.entertainment")
         case .finance:
-            return Text("Finance")
+            return Text("appfair.finance")
         case .graphicsdesign:
-            return Text("Graphics Design")
+            return Text("appfair.graphics-design")
         case .healthcarefitness:
-            return Text("Health & Fitness")
+            return Text("appfair.healthcare-fitness")
         case .lifestyle:
-            return Text("Lifestyle")
+            return Text("appfair.lifestyle")
         case .medical:
-            return Text("Medical")
+            return Text("appfair.medical")
         case .music:
-            return Text("Music")
+            return Text("appfair.music")
         case .news:
-            return Text("News")
+            return Text("appfair.news")
         case .photography:
-            return Text("Photography")
+            return Text("appfair.photography")
         case .productivity:
-            return Text("Productivity")
+            return Text("appfair.productivity")
         case .reference:
-            return Text("Reference")
+            return Text("appfair.reference")
         case .socialnetworking:
-            return Text("Social Networking")
+            return Text("appfair.social-networking")
         case .sports:
-            return Text("Sports")
+            return Text("appfair.sports")
         case .travel:
-            return Text("Travel")
+            return Text("appfair.travel")
         case .utilities:
-            return Text("Utilities")
+            return Text("appfair.utilities")
         case .video:
-            return Text("Video")
+            return Text("appfair.video")
         case .weather:
-            return Text("Weather")
+            return Text("appfair.weather")
 
         case .games:
-            return Text("Games")
+            return Text("appfair.games")
         case .actiongames:
-            return Text("Action Games")
+            return Text("appfair.action-games")
         case .adventuregames:
-            return Text("Adventure Games")
+            return Text("appfair.adventure-games")
         case .arcadegames:
-            return Text("Arcade Games")
+            return Text("appfair.arcade-games")
         case .boardgames:
-            return Text("Board Games")
+            return Text("appfair.board-games")
         case .cardgames:
-            return Text("Card Games")
+            return Text("appfair.card-games")
         case .casinogames:
-            return Text("Casino Games")
+            return Text("appfair.casino-games")
         case .dicegames:
-            return Text("Dice Games")
+            return Text("appfair.dice-games")
         case .educationalgames:
-            return Text("Educational Games")
+            return Text("appfair.educational-games")
         case .familygames:
-            return Text("Family Games")
+            return Text("appfair.family-games")
         case .kidsgames:
-            return Text("Kids Games")
+            return Text("appfair.kids-games")
         case .musicgames:
-            return Text("Music Games")
+            return Text("appfair.music-games")
         case .puzzlegames:
-            return Text("Puzzle Games")
+            return Text("appfair.puzzle-games")
         case .racinggames:
-            return Text("Racing Games")
+            return Text("appfair.racing-games")
         case .roleplayinggames:
-            return Text("Role Playing Games")
+            return Text("appfair.role-playing-games")
         case .simulationgames:
-            return Text("Simulation Games")
+            return Text("appfair.simulation-games")
         case .sportsgames:
-            return Text("Sports Games")
+            return Text("appfair.sports-games")
         case .strategygames:
-            return Text("Strategy Games")
+            return Text("appfair.strategy-games")
         case .triviagames:
-            return Text("Trivia Games")
+            return Text("appfair.trivia-games")
         case .wordgames:
-            return Text("Word Games")
+            return Text("appfair.word-games")
         }
     }
 
@@ -1228,11 +1229,8 @@ internal func loc(_ key: String, tableName: String? = nil, comment: String? = ni
 @available(*, deprecated, message: "work in progress")
 internal func wip<T>(_ value: T) -> T { value }
 
-/// If true, show simulated information
-let pretendMode = false // wip(true) // pretend mode is for pretend
-
 /// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
-@usableFromInline internal func Text(_ string: LocalizedStringKey) -> SwiftUI.Text {
-    SwiftUI.Text(string, bundle: .module)
+/// Otherwise it will default to the main bundle's strings, which is always empty.
+@usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
+    SwiftUI.Text(string, bundle: .module, comment: comment)
 }
-
