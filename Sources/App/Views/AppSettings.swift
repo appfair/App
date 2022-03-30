@@ -116,7 +116,7 @@ struct HomebrewSettingsView: View {
                     .help(Text("Automatically attempt to install any required dependencies for a cask."))
 
                 Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
-                    Text("Exclude auto-updating apps from sidebar updates list")
+                    Text("Exclude auto-updating apps from updates list")
                 }
                     .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
 
@@ -125,6 +125,12 @@ struct HomebrewSettingsView: View {
                         //.label(.bolt)
                 }
                     .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This opetion is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
+
+                Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
+                    Text("Show casks without app artifacts")
+                        //.label(.bolt)
+                }
+                    .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
 
                 Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
                     Text("Require cask checksum")

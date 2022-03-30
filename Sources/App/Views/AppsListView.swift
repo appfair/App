@@ -28,8 +28,12 @@ struct AppsListView : View {
                     ForEach(AppListSection.allCases) { section in
                         appListSection(section: section)
                     }
+                } else if sidebarSelection?.item == .updated {
+                    ForEach(AppUpdatesSection.allCases) { section in
+                        appUpdatesSection(section: section)
+                    }
                 } else {
-                    // installed & updated don't use sections
+                    // installed list don't use sections
                     appListSection(section: nil)
                 }
             }
@@ -70,7 +74,21 @@ struct AppsListView : View {
         }
     }
 
-    func items(section: AppListSection?) -> [AppInfo] {
+    enum AppUpdatesSection : CaseIterable, Identifiable, Hashable {
+        case available
+        case recent
+
+        var id: Self { self }
+
+        var localizedTitle: Text {
+            switch self {
+            case .available: return Text("Available Updates")
+            case .recent: return Text("Recently Updated")
+            }
+        }
+    }
+
+    func appInfoItems(section: AppListSection?) -> [AppInfo] {
         arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
@@ -91,7 +109,7 @@ struct AppsListView : View {
     }
 
     @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
-        let items = items(section: section)
+        let items = appInfoItems(section: section)
         if let section = section {
             Section {
                 AppSectionItems(items: items, selection: $selection, searchTextSource: $searchTextSource)
@@ -101,6 +119,32 @@ struct AppsListView : View {
         } else {
             // nil section means don't sub-divide
             AppSectionItems(items: items, selection: $selection, searchTextSource: $searchTextSource)
+        }
+    }
+
+    func appUpdateItems(section: AppsListView.AppUpdatesSection) -> [AppInfo] {
+        let updatedItems: [AppInfo] = arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+
+        switch section {
+        case .available:
+            return updatedItems
+        case .recent:
+            // get a list of all recently installed items that are not in the availabe updates set
+            let installedItems = arrangedItems(source: source, sidebarSelection: .some(SidebarSelection(source: source, item: .installed)), sortOrder: sortOrder, searchText: searchText)
+                .filter({ fairManager.sessionInstalls.contains($0.id) })
+                .filter({ !updatedItems.contains($0 )})
+            return installedItems
+        }
+    }
+
+    /// The section holding the updated app items
+    @ViewBuilder func appUpdatesSection(section: AppsListView.AppUpdatesSection) -> some View {
+        let updatedApps = appUpdateItems(section: section)
+
+        Section {
+            AppSectionItems(items: updatedApps, selection: $selection, searchTextSource: $searchTextSource)
+        } header: {
+            section.localizedTitle
         }
     }
 }

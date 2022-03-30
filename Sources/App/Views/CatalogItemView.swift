@@ -418,26 +418,69 @@ struct CatalogItemView: View {
                 overviewTabView()
                 metadataTabView()
             }
+            .frame(maxHeight: 200)
 
-            groupBox(title: Text("Screenshots"), trailing: EmptyView()) {
-                ScrollView(.horizontal) {
-                    previewView()
-                }
-                .overlay(Group {
-                    if item.screenshotURLs?.isEmpty != false {
-                        Text("No screenshots available") // ([contribute…](https://www.appfair.app/#customize_app))")
-                            .label(image: unavailableIcon)
-                            .padding()
-                            .lineLimit(1)
-                            .font(Font.callout)
-                            .foregroundColor(.secondary)
-                            .help(Text("This app has not published any screenshots"))
-                    }
-                })
+            previewTabView()
+        }
+    }
+
+    @State var previewTab = PreviewTab.screenshots
+
+    enum PreviewTab : CaseIterable, Hashable {
+        case screenshots
+        case homepage
+
+        var title: Text {
+            switch self {
+            case .screenshots: return Text("Screen Shots")
+            case .homepage: return Text("Home Page")
             }
         }
-        .padding()
+    }
 
+
+    /// The preview tabs, including screenshots and the homepage
+    func previewTabView() -> some View {
+        TabView(selection: $previewTab) {
+            ForEach(PreviewTab.allCases, id: \.self) { tab in
+                Group {
+                    switch tab {
+                    case .screenshots:
+                        screenshotsSection()
+                    case .homepage:
+                        homepageSection()
+                    }
+                }
+                .tag(tab)
+                .tabItem {
+                    tab.title
+                }
+            }
+        }
+    }
+
+    /// Use a little mini-browser to show the homepage
+    @ViewBuilder func homepageSection() -> some View {
+        if let homepage = info.homepage {
+            FairBrowser(url: .constant(homepage))
+        }
+    }
+
+    func screenshotsSection() -> some View {
+        ScrollView(.horizontal) {
+            screenshotsStackView()
+        }
+        .overlay(Group {
+            if item.screenshotURLs?.isEmpty != false {
+                Text("No screenshots available") // ([contribute…](https://www.appfair.app/#customize_app))")
+                    .label(image: unavailableIcon)
+                    .padding()
+                    .lineLimit(1)
+                    .font(Font.callout)
+                    .foregroundColor(.secondary)
+                    .help(Text("This app has not published any screenshots"))
+            }
+        })
     }
 
     func overviewTabView() -> some View {
@@ -571,7 +614,7 @@ struct CatalogItemView: View {
         URLImage(url: url, resizable: .fit)
     }
 
-    func previewView() -> some View {
+    func screenshotsStackView() -> some View {
         LazyHStack {
             ForEach(item.screenshotURLs ?? [], id: \.self) { url in
                 previewImage(url)
@@ -1064,37 +1107,19 @@ struct CatalogItemView: View {
         return progress.progress
     }
 
-    func installButtonTapped() async {
-        dbg("installButtonTapped")
-        await fairAppInv.trying {
-            if let cask = info.cask {
-                try await homeBrewInv.install(cask: cask, progress: startProgress(), update: false)
-            } else {
-                try await fairAppInv.install(item: item, progress: startProgress(), update: false)
-            }
-        }
-    }
-
     func launchButtonTapped() async {
         dbg("launchButtonTapped")
-        if info.isCask == true {
-            await fairManager.trying {
-                try await homeBrewInv.launch(item: item, gatekeeperCheck: true)
-            }
-        } else {
-            await fairAppInv.launch(item: item)
-        }
+        await fairManager.launch(info)
+    }
+
+    func installButtonTapped() async {
+        dbg("installButtonTapped")
+        await fairManager.install(info, progress: startProgress(), update: false)
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
-        await fairAppInv.trying {
-            if let cask = info.cask {
-                try await homeBrewInv.install(cask: cask, progress: startProgress(), update: true)
-            } else {
-                try await fairAppInv.install(item: item, progress: startProgress(), update: true)
-            }
-        }
+        await fairManager.install(info, progress: startProgress(), update: true)
     }
 
     func revealButtonTapped() async {

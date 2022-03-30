@@ -22,6 +22,9 @@ import FairApp
     /// An optional authorization token for direct API usagefor the organization
     @AppStorage("hubToken") public var hubToken = ""
 
+    /// The apps that have been installed or updated in this session
+    @Published var sessionInstalls: Set<AppCatalogItem.ID> = []
+
     required internal init() {
         self.fairAppInv = FairAppInventory()
         self.homeBrewInv = HomebrewInventory()
@@ -77,6 +80,28 @@ import FairApp
         .transition(transition == false ? AnyTransition.opacity : AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // skrink and fade out the placeholder while fading in the actual icon
 
     }
+
+    func launch(_ info: AppInfo) async {
+        if info.isCask == true {
+            await self.trying {
+                try await homeBrewInv.launch(item: info.release, gatekeeperCheck: true)
+            }
+        } else {
+            await fairAppInv.launch(item: info.release)
+        }
+    }
+
+    func install(_ info: AppInfo, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
+        await self.trying {
+            if let cask = info.cask {
+                try await homeBrewInv.install(cask: cask, progress: parentProgress, update: update)
+            } else {
+                try await fairAppInv.install(item: info.release, progress: parentProgress, update: update)
+            }
+            sessionInstalls.insert(info.id)
+        }
+    }
+
 }
 
 extension Error {

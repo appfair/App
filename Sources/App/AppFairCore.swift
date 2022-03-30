@@ -97,6 +97,21 @@ struct AppInfo : Identifiable, Equatable {
         installedVersionString != nil && installedVersionString != release.version
     }
 
+    /// Returns the homepage for the info URL
+    var homepage: URL? {
+        if let cask = self.cask {
+            if let homepage = cask.homepage {
+                if let url = URL(string: homepage) {
+                    return url
+                }
+            }
+
+            return nil
+        } else {
+            return release.homepage
+        }
+    }
+
     /// The categories as should be displayed in the UI; this will collapes sub-groups (i.e., game categories) into their parent groups.
     var displayCategories: [AppCategory] {
         release.appCategories
@@ -506,7 +521,7 @@ struct NavigationRootView : View {
 
     public var body: some View {
         triptychView
-            .frame(minHeight: 600) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
+            .frame(minHeight: 500) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
             .displayingFirstAlert($fairAppInv.errors)
             .toolbar(id: "NavToolbar") {
 //                ToolbarItem(placement: .navigation) {

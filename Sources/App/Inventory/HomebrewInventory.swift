@@ -35,6 +35,7 @@ private let useSystemHomebrewDefault = false
 private let quarantineCasksDefault = true
 private let installDependenciesDefault = false
 private let zapDeletedCasksDefault = false
+private let allowCasksWithoutAppDefault = false
 private let ignoreAutoUpdatingAppUpdatesDefault = false
 private let requireCaskChecksumDefault = false
 private let forceInstallCasksDefault = false
@@ -82,6 +83,9 @@ private let brewInstallRootDefault: URL = {
 
     /// Whether delete apps should be "zapped"
     @AppStorage("zapDeletedCasks") var zapDeletedCasks = zapDeletedCasksDefault
+
+    /// Whether apps that don't have an ".app" artifact should be shown
+    @AppStorage("allowCasksWithoutApp") var allowCasksWithoutApp = allowCasksWithoutAppDefault
 
     /// Whether to ignore casks that mark themselves as "autoupdates" from being shown in the "Updated" section
     @AppStorage("ignoreAutoUpdatingAppUpdates") var ignoreAutoUpdatingAppUpdates = ignoreAutoUpdatingAppUpdatesDefault
@@ -232,6 +236,7 @@ private let brewInstallRootDefault: URL = {
         self.quarantineCasks = quarantineCasksDefault
         self.installDependencies = installDependenciesDefault
         self.zapDeletedCasks = zapDeletedCasksDefault
+        self.allowCasksWithoutApp = allowCasksWithoutAppDefault
         self.ignoreAutoUpdatingAppUpdates = ignoreAutoUpdatingAppUpdatesDefault
         self.requireCaskChecksum = requireCaskChecksumDefault
         self.forceInstallCasks = forceInstallCasksDefault
@@ -693,20 +698,11 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         // fall back to scanning for the app artifact and looking in the /Applications folder
         if let cask = casks.first(where: { $0.token == token }) {
-            for appList in (cask.artifacts ?? []).compactMap({ $0.infer() as [String]? }) {
-                for var appName in appList {
-                    dbg("checking app:", appName)
-                    // some artifacts are full paths to the binary, like: /Applications/Nextcloud.app/Contents/MacOS/nextcloudcmd
-                    while appName.count > 1 && !appName.hasSuffix(".app") {
-                        appName = (appName as NSString).deletingLastPathComponent
-                    }
-                    if appName.hasSuffix(".app") {
-                        let appURL = URL(fileURLWithPath: appName, relativeTo: FairAppInventory.applicationsFolderURL)
-                        dbg("checking app path:", appURL.path)
-                        if FileManager.default.isExecutableFile(atPath: appURL.path) {
-                            return appURL
-                        }
-                    }
+            for appName in cask.appArtifacts {
+                let appURL = URL(fileURLWithPath: appName, relativeTo: FairAppInventory.applicationsFolderURL)
+                dbg("checking app path:", appURL.path)
+                if FileManager.default.isExecutableFile(atPath: appURL.path) {
+                    return appURL
                 }
             }
         }
@@ -1018,10 +1014,17 @@ extension HomebrewInventory {
         }
     }
 
+    var visibleAppInfos: [AppInfo] {
+        appInfos
+            .filter { info in
+                allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
+            }
+    }
+
     /// Updates the appCategories index whenever the appInfos property changes
     func updateAppCategories() {
         appCategories.removeAll()
-        for app in appInfos {
+        for app in visibleAppInfos {
             for cat in app.displayCategories {
                 appCategories[cat, default: []].append(app)
             }
@@ -1029,7 +1032,7 @@ extension HomebrewInventory {
     }
 
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        let infos = appInfos
+        let infos = visibleAppInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
 
@@ -1108,7 +1111,7 @@ extension HomebrewInventory {
     }
 
     func updateCount() -> Int {
-        return appInfos
+        return visibleAppInfos
             .filter({ info in
                 if let cask = info.cask {
                     return self.versionNotInstalled(cask: cask)
@@ -1130,7 +1133,7 @@ extension HomebrewInventory {
 
         switch item {
         case .top:
-            return fmt(appInfos.count)
+            return fmt(visibleAppInfos.count)
         case .updated:
             return fmt(updateCount())
         case .installed:
@@ -1389,6 +1392,25 @@ extension CaskItem : Identifiable {
         } else {
             return nil
         }
+    }
+
+    /// Returns the list of artifacts that contain an ".app" path
+    var appArtifacts: [String] {
+        var appNames: [String] = []
+        
+        for artifactLists in (self.artifacts ?? []).compactMap({ $0.infer() as [String]? }) {
+            for var potentialAppName in artifactLists {
+                //dbg("checking app:", potentialAppName)
+                // some artifacts are full paths to the binary, like: /Applications/Nextcloud.app/Contents/MacOS/nextcloudcmd
+                while potentialAppName.count > 1 && !potentialAppName.hasSuffix(".app") {
+                    potentialAppName = (potentialAppName as NSString).deletingLastPathComponent
+                }
+                if potentialAppName.hasSuffix(".app") {
+                    appNames.append(potentialAppName)
+                }
+            }
+        }
+        return appNames
     }
 }
 

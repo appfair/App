@@ -174,6 +174,12 @@ To install apps from the Fairground Apps, the current user needs permission to w
 
 Apps installed through the Homebrew Casks catalog typically just require the ability to write to the `/Applications/` folder, but for system-level apps or extensions, the installation process may request an administrator password to complete the installation.
 
+#### How does the App Fair work with auto-updating apps?
+
+Many apps utilize an embedded framework called “Sparkle” to check for updates and automatically download and install the most recent version. When an update occurs in this way, the event is not visible to the homebrew environment used by App Fair.app, so any apps that have been auto-updated will still show up in the App Fair as being available for download and update. The preference "Exclude auto-updating apps from updates list" exists to prevent these apps from showing up in the updates list.
+
+Another difference is that the Sparkle system of auto-downloading updates doesn't “quarantine” the downloaded artifacts, thereby skipping the operating system's gatekeeper check for malware. The App Fair, on the other hand, does respect the quarantine flag by default (subject to the "Quarantine installed apps" preference), which means that both the initial download of an app as well as any updates that are downloaded via the App Fair will be subject to gatekeeper scrutiny.
+
 #### What identifying information does App Fair.app track or transmit?
 
 Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code](https://github.com/App-Fair/App.git).
