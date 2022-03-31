@@ -18,6 +18,10 @@ import SwiftUI
 @available(macOS 12.0, iOS 15.0, *)
 extension AppCatalogItem {
 
+    var releasedVersion: AppVersion? {
+        version.flatMap({ AppVersion(string: $0, prerelease: self.beta == true) })
+    }
+
     /// All the entitlements, ordered by their index in the `AppEntitlement` cases.
     public func orderedPermissions(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppPermission> {
         (self.permissions ?? [])

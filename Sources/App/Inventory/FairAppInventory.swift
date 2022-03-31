@@ -81,7 +81,7 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairAppInventory: ObservableObject, AppInventory {
     /// The list of currently installed apps of the appID to the Info.plist (or error)
-    @Published var installedApps: [URL : Result<Plist, Error>] = [:]
+    @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
 
     /// The current activities that are taking place
     @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
@@ -200,9 +200,9 @@ extension FairAppInventory {
     }
 
     /// The app info for the current app (which is the catalog browser app)
-    var catalogAppInfo: AppInfo? {
+    var catalogAppInfo: AppCatalogItem? {
         appInfoItems(includePrereleases: false).first(where: { info in
-            info.release.bundleIdentifier.rawValue == Bundle.main.bundleIdentifier
+            info.bundleIdentifier.rawValue == Bundle.main.bundleIdentifier
         })
     }
 
@@ -218,11 +218,11 @@ extension FairAppInventory {
             return dbg("skipping update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
 
-        dbg("updating:", Bundle.main.bundleURL.path, "from installed:", catalogApp.installedVersionString, "to:", catalogApp.releasedVersion?.versionString)
+        dbg("updating:", Bundle.main.bundleURL.path, "from installed:", catalogApp.id, "to:", catalogApp.releasedVersion?.versionString)
 
         // if the release version is greater than the installed version, download and install it automatically
-        if (catalogApp.releasedVersion ?? .min) > (catalogApp.installedVersion ?? .max) {
-            try await install(item: catalogApp.release, progress: nil, update: true)
+        if (catalogApp.releasedVersion ?? .min) > (installedVersion(for: catalogApp.id) ?? .max) {
+            try await install(item: catalogApp, progress: nil, update: true)
         }
     }
 
@@ -230,40 +230,36 @@ extension FairAppInventory {
     ///
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
     /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
-    func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
-        let installedApps: [BundleIdentifier?: [Plist]] = Dictionary(grouping: self.installedApps.values.compactMap(\.successValue), by: { $0.CFBundleIdentifier.flatMap(BundleIdentifier.init(rawValue:)) })
+    func appInfoItems(includePrereleases: Bool) -> [AppCatalogItem] {
 
         // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
         // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [BundleIdentifier: [AppInfo]] = catalog
-            .map { item in
-                AppInfo(release: item, installedPlist: installedApps[item.bundleIdentifier]?.first)
-            }
-            .grouping(by: \.release.bundleIdentifier)
+        let bundleAppInfoMap: [BundleIdentifier: [AppCatalogItem]] = catalog
+            .grouping(by: \.bundleIdentifier)
 
         // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
         let infos = bundleAppInfoMap.values.compactMap({ appInfos in
             appInfos
                 .filter { item in
                     // "beta" apps are are included when the pre-release flag is set
-                    includePrereleases == true || item.release.beta == false // || item.installedPlist != nil
+                    includePrereleases == true || item.beta == false // || item.installedPlist != nil
                 }
                 .sorting(by: \.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
                 .first // there can be only a single bundle identifier in the list for Identifiable
         })
 
-        return infos.sorting(by: \.release.bundleIdentifier) // needs to return in constant order
+        return infos.sorting(by: \.bundleIdentifier) // needs to return in constant order
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppCatalogItem] {
         self
             .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.item == .installed)
             .filter({ matchesExtension(item: $0) })
             .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .filter({ categoryFilter(sidebarSelection: sidebarSelection, item: $0) })
-            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
+            .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
+//            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
 
     func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
@@ -271,31 +267,27 @@ extension FairAppInventory {
         case .none:
             return []
         case .top:
-            return [KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
         case .recent:
-            return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
         case .updated:
-            return [KeyPathComparator(\AppInfo.release.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
         case .installed:
-            return [KeyPathComparator(\AppInfo.release.name, order: .forward)]
+            return [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)]
         case .category:
-            return [KeyPathComparator(\AppInfo.release.starCount, order: .reverse), KeyPathComparator(\AppInfo.release.downloadCount, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.catalogMetadata.starCount, order: .reverse), KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
         }
     }
 
-    func categoryFilter(sidebarSelection: SidebarSelection?, item: AppInfo) -> Bool {
-        sidebarSelection?.item.matches(item: item) != false
+    func matchesExtension(item: AppCatalogItem) -> Bool {
+        displayExtensions?.contains(item.downloadURL.pathExtension) != false
     }
 
-    func matchesExtension(item: AppInfo) -> Bool {
-        displayExtensions?.contains(item.release.downloadURL.pathExtension) != false
+    func matchesRiskFilter(item: AppCatalogItem) -> Bool {
+        item.riskLevel <= riskFilter
     }
 
-    func matchesRiskFilter(item: AppInfo) -> Bool {
-        item.release.riskLevel <= riskFilter
-    }
-
-    func matchesSearch(item: AppInfo, searchText: String) -> Bool {
+    func matchesSearch(item: AppCatalogItem, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if txt.count < minimumSearchLength {
@@ -306,12 +298,12 @@ extension FairAppInventory {
             string?.localizedCaseInsensitiveContains(txt) == true
         }
 
-        if matches(item.release.bundleIdentifier.rawValue) { return true }
+        if matches(item.bundleIdentifier.rawValue) { return true }
         
-        if matches(item.release.name) { return true }
-        if matches(item.release.subtitle) { return true }
-        if matches(item.release.developerName) { return true }
-        if matches(item.release.localizedDescription) { return true }
+        if matches(item.name) { return true }
+        if matches(item.subtitle) { return true }
+        if matches(item.developerName) { return true }
+        if matches(item.localizedDescription) { return true }
         
         return false
     }
@@ -333,7 +325,7 @@ extension FairAppInventory {
     func launch(item: AppCatalogItem) async {
         do {
             dbg("launching:", item.name)
-            guard let installPath = Self.installedPath(for: item) else {
+            guard let installPath = installedPath(for: item) else {
                 throw Errors.appNotInstalled(item)
             }
 
@@ -368,8 +360,19 @@ extension FairAppInventory {
     }
 
     /// The bundle IDs for all the installed apps
-    var installedBundleIDs: Set<String> {
-        Set(installedApps.values.compactMap(\.successValue).compactMap(\.CFBundleIdentifier))
+    var installedBundleIDs: Dictionary<BundleIdentifier, Result<Plist, Error>>.Keys {
+        installedApps.keys
+    }
+
+    func installedVersion(for id: BundleIdentifier) -> AppVersion? {
+        installedInfo(for: id)?.appVersion
+    }
+
+    /// Returns the installed Plist for the given bundle identifier
+    func installedInfo(for id: BundleIdentifier) -> Plist? {
+        installedApps.values.first { result in
+            result.successValue?.CFBundleIdentifier == id.rawValue
+        }?.successValue
     }
 
     static func createInstallFolder() async throws {
@@ -410,17 +413,19 @@ extension FairAppInventory {
                 let infoPlist = installPath.appendingPathComponent("Contents/Info.plist")
                 do {
                     let plist = try Plist(data: Data(contentsOf: infoPlist))
-                    // here was can validate some of the app's metadata, version number, etc
-                    installedApps[installPath] = .success(plist)
+                    if let bundleID = plist.bundleID {
+                        // here was can validate some of the app's metadata, version number, etc
+                        installedApps[.init(bundleID)] = .success(plist)
+                    }
                 } catch {
                     dbg("error parsing Info.plist for:", installPath.path, error)
-                    installedApps[installPath] = .failure(error)
+                    // installedApps[installPath] = .failure(error)
                 }
             }
 
             self.installedApps = installedApps
             let end = CFAbsoluteTimeGetCurrent()
-            dbg("scanned", installedApps.count, "apps in:", end - start, installedBundleIDs)
+            dbg("scanned", installedApps.count, "apps in:", end - start, installedBundleIDs.map(\.rawValue))
         } catch {
             dbg("error performing re-scan:", error)
             self.reportError(error)
@@ -428,53 +433,41 @@ extension FairAppInventory {
     }
 
     /// The `appInstallPath`, or nil if it does not exist
-    static func installedPath(for item: AppCatalogItem) -> URL? {
-        appInstallPath(for: item).asDirectory
+    func installedPath(for item: AppCatalogItem) -> URL? {
+        Self.appInstallPath(for: item).asDirectory
     }
 
     /// Trashes the local installed copy of this app
-    func trash(item: AppCatalogItem) async {
-        do {
-            dbg("trashing:", item.name)
-            guard let installPath = Self.installedPath(for: item) else {
-                throw Errors.appNotInstalled(item)
-            }
-
-            try await trash(installPath)
-        } catch {
-            dbg("error performing trash for:", item.name, "error:", error)
-            self.reportError(error)
+    func delete(item: AppCatalogItem, verbose: Bool = true) async throws {
+        dbg("trashing:", item.name)
+        guard let installPath = installedPath(for: item) else {
+            throw Errors.appNotInstalled(item)
         }
 
+        try await trash(installPath)
         // always re-scan after altering apps
         await scanInstalledApps()
     }
 
     /// Reveals the local installed copy of this app using the finder
-    func reveal(item: AppCatalogItem) async {
-        do {
-            dbg("revealing:", item.name)
-            guard let installPath = Self.installedPath(for: item) else {
-                throw Errors.appNotInstalled(item)
-            }
-            dbg("revealing:", installPath.path)
+    func reveal(item: AppCatalogItem) async throws {
+        dbg("revealing:", item.name)
+        guard let installPath = installedPath(for: item) else {
+            throw Errors.appNotInstalled(item)
+        }
+        dbg("revealing:", installPath.path)
 
 #if os(macOS)
-            // NSWorkspace.shared.activateFileViewerSelecting([installPath]) // unreliable
-            NSWorkspace.shared.selectFile(installPath.path, inFileViewerRootedAtPath: Self.installFolderURL.path)
+        // NSWorkspace.shared.activateFileViewerSelecting([installPath]) // unreliable
+        NSWorkspace.shared.selectFile(installPath.path, inFileViewerRootedAtPath: Self.installFolderURL.path)
 #endif
-
-        } catch {
-            dbg("error performing reveal for:", item.name, "error:", error)
-            self.reportError(error)
-        }
     }
 
     /// Install or update the given catalog item.
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true, verbose: Bool = true) async throws {
         let window = NSApp.currentEvent?.window
 
-        if update == false, let installPath = Self.installedPath(for: item) {
+        if update == false, let installPath = installedPath(for: item) {
             throw Errors.appAlreadyInstalled(installPath)
         }
 
@@ -696,15 +689,48 @@ extension AppInventory {
 extension FairAppInventory {
     typealias Item = URL
 
-    func activateFind() {
-        dbg("### ", #function) // TODO: is there a way to focus the search field in the toolbar?
-    }
-
     func updateCount() -> Int {
         appInfoItems(includePrereleases: showPreReleases).filter { item in
-            item.appUpdated
+            appUpdated(item: item)
         }
         .count
+    }
+
+    func appInstalled(item: AppCatalogItem) -> Bool {
+        installedInfo(for: item.bundleIdentifier) != nil
+    }
+
+    func appUpdated(item: AppCatalogItem) -> Bool {
+        // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
+        (installedVersion(for: item.bundleIdentifier) ?? .max) < (item.releasedVersion ?? .min)
+    }
+
+}
+
+// MARK: Sidebar
+
+@available(macOS 12.0, iOS 15.0, *)
+extension FairAppInventory {
+    /// Returns true if the item was recently updated
+    func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = (60 * 60 * 24 * 30)) -> Bool {
+        (item.versionDate ?? .distantPast) > (Date() - interval)
+    }
+
+    func selectionFilter(_ selection: SidebarSelection?, item: AppCatalogItem) -> Bool {
+        switch selection?.item {
+        case .none:
+            return true
+        case .top:
+            return true
+        case .updated:
+            return appUpdated(item: item)
+        case .installed:
+            return appInstalled(item: item)
+        case .recent:
+            return isRecentlyUpdated(item: item)
+        case .category(let category):
+            return item.categories?.contains(category.rawValue) == true
+        }
     }
 
     func badgeCount(for item: SidebarItem) -> Text? {
@@ -712,10 +738,7 @@ extension FairAppInventory {
         case .top:
             return Text(appInfoItems(includePrereleases: showPreReleases).count, format: .number)
         case .recent:
-            return Text(appInfoItems(includePrereleases: showPreReleases)
-            .filter {
-                ($0.release.versionDate ?? .distantPast) > (Date() - (60 * 60 * 24 * 30))
-            }.count, format: .number)
+            return Text(appInfoItems(includePrereleases: showPreReleases).filter({ isRecentlyUpdated(item: $0) }).count, format: .number)
         case .updated:
             return Text(updateCount(), format: .number)
         case .installed:
@@ -725,93 +748,4 @@ extension FairAppInventory {
         }
     }
 
-    enum SidebarItem : Hashable {
-        case top
-        case updated
-        case installed
-        case recent
-        case category(_ category: AppCategory)
-
-        /// The persistent identifier for this grouping
-        var id: String {
-            switch self {
-            case .top:
-                return "top"
-            case .updated:
-                return "updated"
-            case .installed:
-                return "installed"
-            case .recent:
-                return "recent"
-            case .category(let category):
-                return "category:" + category.rawValue
-            }
-        }
-
-        func label(for source: AppSource) -> TintedLabel {
-            switch source {
-            case .fairapps:
-                switch self {
-                case .top:
-                    return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
-                case .recent:
-                    return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
-                case .installed:
-                    return TintedLabel(title: Text("Installed"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
-                case .updated:
-                    return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
-                case .category(let category):
-                    return category.tintedLabel
-                }
-            case .homebrew:
-                switch self {
-                case .top:
-                    return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
-                case .installed:
-                    return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
-                case .recent: // not supported with casks
-                    return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
-                case .updated:
-                    return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
-                case .category(let category):
-                    return category.tintedLabel
-                }
-            }
-
-        }
-
-        /// True indicates that this sidebar specifies to filter for locally-installed packages
-        var isLocalFilter: Bool {
-            switch self {
-            case .updated:
-                return true
-            case .installed:
-                return true
-            case .top:
-                return false
-            case .recent:
-                return false
-            case .category:
-                return false
-            }
-        }
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-extension FairAppInventory.SidebarItem {
-    func matches(item: AppInfo) -> Bool {
-        switch self {
-        case .top:
-            return true
-        case .updated:
-            return item.appUpdated
-        case .installed:
-            return item.installedVersion != nil
-        case .recent:
-            return true
-        case .category(let category):
-            return item.displayCategories.contains(category)
-        }
-    }
 }

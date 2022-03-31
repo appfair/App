@@ -191,7 +191,7 @@ struct CatalogItemView: View {
 
     func releaseDateView() -> some View {
         Group {
-            if let date = item.versionDate ?? self.caskURLModifiedDate {
+            if let date = metadata.versionDate ?? self.caskURLModifiedDate {
                 Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
                     .transition(.opacity)
             } else {
@@ -205,19 +205,19 @@ struct CatalogItemView: View {
     private func fetchDownloadURLStats() async {
         if homeBrewInv.manageCaskDownloads == true {
             do {
-                dbg("checking URL HEAD:", item.downloadURL.absoluteString)
-                let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
+                dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
+                let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
                 // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
                 withAnimation {
                     self.caskURLFileSize = head.expectedContentLength
                     self.caskURLModifiedDate = head.lastModifiedDate
                 }
-                dbg("URL HEAD:", item.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
+                dbg("URL HEAD:", metadata.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
 
             } catch {
                 // errors are not unexpected when the user leaves this view:
                 // NSURLErrorDomain Code=-999 "cancelled"
-                dbg("error checking URL size:", item.downloadURL.absoluteString, "error:", error)
+                dbg("error checking URL size:", metadata.downloadURL.absoluteString, "error:", error)
             }
         }
     }
@@ -247,7 +247,7 @@ struct CatalogItemView: View {
     }
 
 
-    func linkTextField(_ title: Text, icon: String, url: URL?, linkText: String? = nil) -> some View {
+    func linkTextField(_ title: Text, icon: FairSymbol, url: URL?, linkText: String? = nil) -> some View {
         // the text winds up being un-aligned vertically when rendered like this
         //        TextField(text: .constant(linkText ?? url?.absoluteString ?? "")) {
         //            title
@@ -260,7 +260,7 @@ struct CatalogItemView: View {
 
         HStack {
             title
-                .label(symbol: icon)
+                .label(image: icon)
                 .lineLimit(1)
                 .labelStyle(.titleAndIconFlipped)
                 .link(to: url)
@@ -306,57 +306,57 @@ struct CatalogItemView: View {
             Form {
                 if let cask = info.cask {
                     if let page = cask.homepage, let homepage = URL(string: page) {
-                        linkTextField(Text("Homepage"), icon: FairSymbol.house.symbolName, url: homepage)
+                        linkTextField(Text("Homepage"), icon: .house, url: homepage)
                             .help(Text("Opens link to the home page for this app at: \(homepage.absoluteString)"))
                     }
 
                     if let downloadURL = cask.url, let downloadURL = URL(string: downloadURL) {
-                        linkTextField(Text("Download"), icon: FairSymbol.arrow_down_circle.symbolName, url: downloadURL)
+                        linkTextField(Text("Download"), icon: .arrow_down_circle, url: downloadURL)
                             .help(Text("Opens link to the direct download for this app at: \(downloadURL.absoluteString)"))
                     }
 
                     if let appcast = cask.appcast, let appcast = URL(string: appcast) {
-                        linkTextField(Text("Appcast"), icon: FairSymbol.dot_radiowaves_up_forward.symbolName, url: appcast)
+                        linkTextField(Text("Appcast"), icon: .dot_radiowaves_up_forward, url: appcast)
                             .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)"))
                     }
 
-                    if let sha256 = cask.checksum ?? "None" {
-                        linkTextField(Text("Checksum"), icon: FairSymbol.rosette.symbolName, url: cask.checksum == nil ? nil : URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
-                            .help(Text("The SHA-256 checksum for the app download"))
-                    }
-
                     if let tapToken = cask.tapToken, let tapURL = cask.tapURL {
-                        linkTextField(Text("Cask Token"), icon: FairSymbol.esim.symbolName, url: tapURL, linkText: tapToken)
+                        linkTextField(Text("Cask Token"), icon: .esim, url: tapURL, linkText: tapToken)
                             .help(Text("The page for the Homebrew Cask token"))
                     }
 
-//                    linkTextField(Text("Auto-Updates"), icon: FairSymbol.sparkle.symbolName, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
+                    if let sha256 = cask.checksum ?? "None" {
+                        linkTextField(Text("Checksum"), icon: cask.checksum == nil ? .exclamationmark_triangle_fill : .rosette, url: cask.checksum == nil ? nil : URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
+                            .help(cask.checksum == nil ? Text("The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.") : Text("The SHA-256 checksum for the app download"))
+                    }
+
+//                    linkTextField(Text("Auto-Updates"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
 //                        .help(Text("Whether this app handles updating itself"))
 
                 } else {
-                    if let landingPage = info.release.landingPage {
-                        linkTextField(Text("Home"), icon: FairSymbol.house.symbolName, url: landingPage)
+                    if let landingPage = info.catalogMetadata.landingPage {
+                        linkTextField(Text("Home"), icon: .house, url: landingPage)
                             .help(Text("Opens link to the landing page for this app at: \(landingPage.absoluteString)"))
                     }
-                    if let discussionsURL = info.release.discussionsURL {
-                        linkTextField(Text("Discussions"), icon: FairSymbol.text_bubble.symbolName, url: discussionsURL)
+                    if let discussionsURL = info.catalogMetadata.discussionsURL {
+                        linkTextField(Text("Discussions"), icon: .text_bubble, url: discussionsURL)
                             .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
                     }
-                    if let issuesURL = info.release.issuesURL {
-                        linkTextField(Text("Issues"), icon: FairSymbol.checklist.symbolName, url: issuesURL)
+                    if let issuesURL = info.catalogMetadata.issuesURL {
+                        linkTextField(Text("Issues"), icon: .checklist, url: issuesURL)
                             .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)"))
                     }
-                    if let sourceURL = info.release.sourceURL {
-                        linkTextField(Text("Source"), icon: FairSymbol.chevron_left_forwardslash_chevron_right.symbolName, url: sourceURL)
+                    if let sourceURL = info.catalogMetadata.sourceURL {
+                        linkTextField(Text("Source"), icon: .chevron_left_forwardslash_chevron_right, url: sourceURL)
                             .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)"))
                     }
-                    if let fairsealURL = info.release.fairsealURL {
-                        linkTextField(Text("Fairseal"), icon: FairSymbol.rosette.symbolName, url: fairsealURL, linkText: String(info.release.sha256 ?? ""))
-                            .help(Text("Lookup fairseal at: \(info.release.fairsealURL?.absoluteString ?? "")"))
+                    if let fairsealURL = info.catalogMetadata.fairsealURL {
+                        linkTextField(Text("Fairseal"), icon: .rosette, url: fairsealURL, linkText: String(info.catalogMetadata.sha256 ?? ""))
+                            .help(Text("Lookup fairseal at: \(info.catalogMetadata.fairsealURL?.absoluteString ?? "")"))
                     }
-                    if let developerURL = info.release.developerURL {
-                        linkTextField(Text("Developer"), icon: FairSymbol.person.symbolName, url: developerURL, linkText: item.developerName)
-                            .help(Text("Searches for this developer at: \(info.release.developerURL?.absoluteString ?? "")"))
+                    if let developerURL = info.catalogMetadata.developerURL {
+                        linkTextField(Text("Developer"), icon: .person, url: developerURL, linkText: metadata.developerName)
+                            .help(Text("Searches for this developer at: \(info.catalogMetadata.developerURL?.absoluteString ?? "")"))
                     }
                 }
             }
@@ -476,7 +476,7 @@ struct CatalogItemView: View {
             screenshotsStackView()
         }
         .overlay(Group {
-            if item.screenshotURLs?.isEmpty != false {
+            if metadata.screenshotURLs?.isEmpty != false {
                 Text("No screenshots available") // ([contribute…](https://www.appfair.app/#customize_app))")
                     .label(image: unavailableIcon)
                     .padding()
@@ -506,7 +506,7 @@ struct CatalogItemView: View {
                 .tag(tab)
                 .tabItem {
                     Label {
-                        if tab == .version, let version = item.version, version.count < 16 {
+                        if tab == .version, let version = metadata.version, version.count < 16 {
                             Text(verbatim: version)
                         } else {
                             tab.title
@@ -558,10 +558,10 @@ struct CatalogItemView: View {
     // MARK: Description / Summary
 
     func riskSection() -> some View {
-        let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + item.riskLevel.textLabel().fontWeight(.regular)
+        let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + metadata.riskLevel.textLabel().fontWeight(.regular)
 
-        let riskIcon = (info.isCask ? nil : item)?.riskLevel.riskLabel()
-            .help(item.riskLevel.riskSummaryText())
+        let riskIcon = (info.isCask ? nil : metadata)?.riskLevel.riskLabel()
+            .help(metadata.riskLevel.riskSummaryText())
             .labelStyle(IconOnlyLabelStyle())
             .padding(.trailing)
 
@@ -601,7 +601,7 @@ struct CatalogItemView: View {
     /// The entitlements that will appear in the list.
     /// These filter out entitlements that are pre-requisites (e.g., sandboxing) as well as harmless entitlements (e.g., JIT).
     var listedPermissions: [AppPermission] {
-        item.orderedPermissions(filterCategories: [.harmless, .prerequisite])
+        metadata.orderedPermissions(filterCategories: [.harmless, .prerequisite])
     }
 
     func permissionsList() -> some View {
@@ -621,7 +621,7 @@ struct CatalogItemView: View {
 
     func screenshotsStackView() -> some View {
         LazyHStack {
-            ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+            ForEach(metadata.screenshotURLs ?? [], id: \.self) { url in
                 previewImage(url)
                     .matchedGeometryEffect(id: url, in: namespace, isSource: self.previewScreenshot != url)
                     .contentShape(Rectangle())
@@ -642,7 +642,7 @@ struct CatalogItemView: View {
                 Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
             }
 
-            ForEach(item.screenshotURLs ?? [], id: \.self) { url in
+            ForEach(metadata.screenshotURLs ?? [], id: \.self) { url in
                 let presenting = self.previewScreenshot == url
 
                 ZStack {
@@ -692,7 +692,7 @@ struct CatalogItemView: View {
 
     func catalogAuthorRow() -> some View {
         Group {
-            let devName = info.release.developerName ?? ""
+            let devName = info.catalogMetadata.developerName ?? ""
             if devName.isEmpty {
                 Text("Unknown")
             } else {
@@ -702,7 +702,7 @@ struct CatalogItemView: View {
     }
 
     func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, _ path: KeyPath<AppCatalogItem, Int?>) -> some View {
-        numberView(number: numberStyle, size: sizeStyle, value: info.release[keyPath: path])
+        numberView(number: numberStyle, size: sizeStyle, value: info.catalogMetadata[keyPath: path])
     }
 
     func numberView(number numberStyle: NumberFormatter.Style? = nil, size sizeStyle: ByteCountFormatStyle.Style? = nil, value: Int?) -> some View {
@@ -739,10 +739,10 @@ struct CatalogItemView: View {
                 .padding(.leading)
 
             VStack(alignment: .center) {
-                Text(item.name)
+                Text(metadata.name)
                     .font(Font.largeTitle)
                     .truncationMode(.middle)
-                Text(item.subtitle ?? item.localizedDescription ?? "")
+                Text(metadata.subtitle ?? metadata.localizedDescription ?? "")
                     .font(Font.title2)
                     .truncationMode(.tail)
 //                catalogAuthorRow()
@@ -761,7 +761,7 @@ struct CatalogItemView: View {
     }
 
     func catalogActionButtons() -> some View {
-        let isCatalogApp = info.release.bundleIdentifier.rawValue == Bundle.main.bundleID
+        let isCatalogApp = info.catalogMetadata.bundleIdentifier.rawValue == Bundle.main.bundleID
 
         return GeometryReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -803,8 +803,8 @@ struct CatalogItemView: View {
         button(activity: .install, role: nil, needsConfirm: fairManager.enableInstallWarning)
             .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
             .disabled(appInstalled)
-            .confirmationDialog(Text("Install \(info.release.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
-                Text("Download & Install \(info.release.name)").button {
+            .confirmationDialog(Text("Install \(info.catalogMetadata.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
+                Text("Download & Install \(info.catalogMetadata.name)").button {
                     runTask(activity: .install, confirm: true)
                 }
                 if let cask = info.cask {
@@ -814,7 +814,7 @@ struct CatalogItemView: View {
                         }
                     }
                 } else {
-                    if let discussionsURL = info.release.discussionsURL {
+                    if let discussionsURL = info.catalogMetadata.discussionsURL {
                         Text("Visit Community Forum").button {
                             openURLAction(discussionsURL)
                         }
@@ -822,7 +822,7 @@ struct CatalogItemView: View {
                 }
                 // TODO: only show if there are any open issues
                 // Text("Visit App Issues Page").button {
-                //    openURLAction(info.release.issuesURL)
+                //    openURLAction(info.catalogMetadata.issuesURL)
                 // }
                 //.help(Text("Opens your web browsers and visits the developer site")) // sadly, tooltips on confirmationDialog buttons don't seem to work
             }, message: installMessage)
@@ -860,16 +860,16 @@ struct CatalogItemView: View {
                     runTask(activity: .trash, confirm: true)
                 }
             }, message: {
-                Text("This will remove the application “\(info.release.name)” from your applications folder and place it in the Trash.")
+                Text("This will remove the application “\(info.catalogMetadata.name)” from your applications folder and place it in the Trash.")
             })
     }
 
     func installMessage() -> some View {
         if info.isCask {
             return Text(atx: """
-                This will use the Homebrew package manager to download and install the application “\(info.release.name)” from the developer “\(info.release.developerName ?? "")” at:
+                This will use the Homebrew package manager to download and install the application “\(info.catalogMetadata.name)” from the developer “\(info.catalogMetadata.developerName ?? "")” at:
 
-                [\(info.release.downloadURL.absoluteString)](\(info.release.downloadURL.absoluteString))
+                [\(info.catalogMetadata.downloadURL.absoluteString)](\(info.catalogMetadata.downloadURL.absoluteString))
 
                 This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
@@ -877,9 +877,9 @@ struct CatalogItemView: View {
                 """)
         } else {
             return Text(atx: """
-                This will download and install the application “\(info.release.name)” from the developer “\(info.release.developerName ?? "")” at:
+                This will download and install the application “\(info.catalogMetadata.name)” from the developer “\(info.catalogMetadata.developerName ?? "")” at:
 
-                \(info.release.sourceURL?.absoluteString ?? "")
+                \(info.catalogMetadata.sourceURL?.absoluteString ?? "")
 
                 This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
@@ -888,59 +888,32 @@ struct CatalogItemView: View {
         }
     }
 
-    private var item: AppCatalogItem {
-        info.release
+    private var metadata: AppCatalogItem {
+        info.catalogMetadata
     }
 
-    /// The plist for the given installed app
-    var appPropertyList: Result<Plist, Error>? {
-        let installPath = FairAppInventory.appInstallPath(for: item)
-        let result = fairAppInv.installedApps[installPath]
-        //dbg("install for item:", item, "install path:", fairAppInv.appInstallPath(for: item).path, "plist:", result != nil, "installedApps:", fairAppInv.installedApps.keys.map(\.path))
-
-        if result == nil {
-            //dbg("install path not found:", installPath, "in keys:", fairAppInv.installedApps.keys)
-        }
-        return result
-    }
-
-    /// Returns the URLs that are registered with the system `NSWorkspace` for handling the app's bundle
-    @available(*, deprecated, message: "unsuitable for use with bindings because NSWorkspace.shared.urlsForApplications sometimes has a delay")
-    var appInstallURLs: [URL] {
-        guard let plist = appPropertyList?.successValue else {
-            return []
-        }
-        guard let bundleID = plist.bundleID else {
-            return []
-        }
-
-#if os(macOS)
-        let apps = NSWorkspace.shared.urlsForApplications(withBundleIdentifier: bundleID)
-        return apps
-#else
-        return [] // TODO: iOS install check
-#endif
-    }
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
         if info.isCask {
-            return homeBrewInv.installedCasks[info.id.rawValue]?.isEmpty == false
+            return homeBrewInv.appInstalled(item: info)
+        } else {
+            return fairAppInv.appInstalled(item: info.catalogMetadata)
         }
 
-        return appPropertyList?.successValue?.bundleID == info.id.rawValue
+        // return appPropertyList?.successValue?.bundleID == info.id.rawValue
+
         //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
     }
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
         if info.isCask {
-            let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
-            return info.release.version.flatMap(versions.contains) != true
+            return homeBrewInv.appUpdated(item: info)
+        } else {
+            return fairAppInv.appUpdated(item: info.catalogMetadata)
         }
-
-        return (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
     }
 
     func confirmationBinding(_ activity: CatalogActivity) -> Binding<Bool> {
@@ -1049,7 +1022,7 @@ struct CatalogItemView: View {
     func warning(for activity: CatalogActivity) -> Text? {
         switch activity {
         case .install, .update:
-            if info.release.sha256 == nil {
+            if info.catalogMetadata.sha256 == nil {
                 return Text("Installation artifact cannot be verified because it has no associated SHA-256 checksum.")
             }
             return nil
@@ -1068,7 +1041,7 @@ struct CatalogItemView: View {
 
         //let img = Image(systemName: category.symbolName.description)
         let img = info.displayCategories.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
-        let baseColor = item.itemTintColor()
+        let baseColor = metadata.itemTintColor()
         return ZStack {
             Circle()
                 //.fill(baseColor)
@@ -1131,21 +1104,25 @@ struct CatalogItemView: View {
         dbg("revealButtonTapped")
         if info.isCask == true {
             await fairManager.trying {
-                try await homeBrewInv.reveal(item: item)
+                try await homeBrewInv.reveal(item: info)
             }
         } else {
-            await fairAppInv.reveal(item: item)
+            await fairManager.trying {
+                try await fairAppInv.reveal(item: info.catalogMetadata)
+            }
         }
     }
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
-        if let cask = info.cask {
+        if info.isCask {
             return await fairManager.trying {
-                try await homeBrewInv.delete(cask: cask)
+                try await homeBrewInv.delete(item: info)
             }
         } else {
-            await fairAppInv.trash(item: item)
+            return await fairManager.trying {
+                try await fairAppInv.delete(item: info.catalogMetadata)
+            }
         }
     }
 }
@@ -1192,7 +1169,7 @@ fileprivate extension View {
         // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
 
         // note this this differs with casks
-        let baseURL = info.release.baseURL?.appendingPathComponent("blob/main/")
+        let baseURL = info.catalogMetadata.baseURL?.appendingPathComponent("blob/main/")
         return try AttributedString(markdown: atx.trimmed(), options: .init(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil), baseURL: baseURL)
     }
 
@@ -1227,9 +1204,9 @@ struct ReadmeBox : View {
 
 
     private func fetchReadme() async {
-        let readmeURL = info.release.readmeURL
+        let readmeURL = info.catalogMetadata.readmeURL
         do {
-            dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
+            dbg("fetching README for:", info.catalogMetadata.id, readmeURL?.absoluteString)
             if let readmeURL = readmeURL {
                 let txt = try await fetchMarkdownResource(url: readmeURL, info: info)
                 //withAnimation { // the effect here is weird: it expands from zero width
@@ -1237,7 +1214,7 @@ struct ReadmeBox : View {
                 //}
             } else {
                 // throw AppError(loc("No description found."))
-                self.readmeText = .success(AttributedString(info.release.localizedDescription ?? loc("No description found")))
+                self.readmeText = .success(AttributedString(info.catalogMetadata.localizedDescription ?? loc("No description found")))
             }
         } catch {
             dbg("error handling README:", error)
@@ -1277,13 +1254,13 @@ struct SecurityBox : View {
 
         let url: URL?
         if checkFileHash == false {
-            let sourceURL = self.info.cask?.url ?? self.info.release.downloadURL.absoluteString
+            let sourceURL = self.info.cask?.url ?? self.info.catalogMetadata.downloadURL.absoluteString
             let urlChecksum = sourceURL.utf8Data.sha256().hex()
 
             url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
 
         } else { // use the artifact URL hash
-            guard let checksum = self.info.cask?.checksum ?? self.info.release.sha256 else {
+            guard let checksum = self.info.cask?.checksum ?? self.info.catalogMetadata.sha256 else {
                 dbg("no checksum for artifact")
                 return nil
             }
@@ -1297,7 +1274,7 @@ struct SecurityBox : View {
         }
 
         guard let url = url else {
-            dbg("no URL for info", info.release.name)
+            dbg("no URL for info", info.catalogMetadata.name)
             return nil
         }
 
@@ -1336,7 +1313,7 @@ struct ReleaseNotesBox : View {
 
 
     @ViewBuilder func versionSection() -> some View {
-//        let desc = info.isCask ? info.cask?.caveats : self.info.release.versionDescription
+//        let desc = info.isCask ? info.cask?.caveats : self.info.catalogMetadata.versionDescription
         textBox(self.releaseNotesText)
             .font(.body)
             .task {
@@ -1349,9 +1326,9 @@ struct ReleaseNotesBox : View {
     }
 
     func fetchReleaseNotes() async {
-        let releaseNotesURL = info.release.releaseNotesURL
+        let releaseNotesURL = info.catalogMetadata.releaseNotesURL
         do {
-            dbg("fetching release notes for:", info.release.id, releaseNotesURL?.absoluteString)
+            dbg("fetching release notes for:", info.catalogMetadata.id, releaseNotesURL?.absoluteString)
             if let releaseNotesURL = releaseNotesURL {
                 let notes = try await fetchMarkdownResource(url: releaseNotesURL, info: info)
                 //withAnimation { // the effect here is weird: it expands from zero width
@@ -1370,7 +1347,7 @@ struct ReleaseNotesBox : View {
     }
 
 //    func releaseVersionAccessoryView() -> Text? {
-//        if let versionDate = info.release.versionDate ?? self.caskURLModifiedDate {
+//        if let versionDate = info.catalogMetadata.versionDate ?? self.caskURLModifiedDate {
 //            return Text(versionDate, format: .dateTime)
 //        } else {
 //            return nil
@@ -1592,7 +1569,7 @@ extension ButtonStyle where Self == ZoomableButtonStyle {
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
-        CatalogItemView(info: AppInfo(release: AppCatalogItem.sample))
+        CatalogItemView(info: AppInfo(catalogMetadata: AppCatalogItem.sample))
             .environmentObject(FairAppInventory())
             .frame(width: 700)
             .frame(height: 800)

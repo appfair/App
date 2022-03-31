@@ -32,37 +32,12 @@ public extension AppSource {
     }
 }
 
-//@available(macOS 12.0, iOS 15.0, *)
-//public struct AppSourcePicker: View {
-//    @Binding var source: AppSource
-//
-//    public init(source: Binding<AppSource>) {
-//        self._source = source
-//    }
-//
-//    public var body: some View {
-//        // only display the picker if there is more than one element (i.e., on macOS)
-//        if AppSource.allCases.count > 1 {
-//            Picker(selection: $source) {
-//                ForEach(AppSource.allCases) { viewMode in
-//                    viewMode.label.labelStyle(.titleOnly)
-//                        //.badge(appUpdatedCount())
-//                }
-//            } label: {
-//                Text("App Source")
-//            }
-//            .pickerStyle(SegmentedPickerStyle())
-//        }
-//    }
-//}
-
-
 struct AppInfo : Identifiable, Equatable {
-    /// The fairapp catalog item
-    var release: AppCatalogItem
-    /// The associated cash, if any
+    /// The catalog item metadata
+    var catalogMetadata: AppCatalogItem
+
+    /// The associated homebrew cask
     var cask: CaskItem?
-    var installedPlist: Plist?
 
     /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
     var isCask: Bool {
@@ -71,30 +46,7 @@ struct AppInfo : Identifiable, Equatable {
 
     /// The bundle ID of the selected app (e.g., "app.App-Name")
     var id: AppCatalogItem.ID {
-        release.id
-    }
-
-    /// The released version of this app
-    /// TODO: @available(*, deprecated, message: "homebrew cask versions do not conform")
-    var releasedVersion: AppVersion? {
-        release.version.flatMap({ AppVersion(string: $0, prerelease: release.beta == true) })
-    }
-
-    /// The installed version of this app, which will always be indicated as a non-prerelease
-    /// TODO: @available(*, deprecated, message: "homebrew cask versions do not conform")
-    var installedVersion: AppVersion? {
-        installedVersionString.flatMap({ AppVersion(string: $0, prerelease: false) })
-    }
-
-    /// The installed version of this app
-    var installedVersionString: String? {
-        installedPlist?.versionString
-    }
-
-    /// The app is updated if its installed version is less than the released version
-    var appUpdated: Bool {
-        //installedVersion != nil && (installedVersion ?? .max) < (releasedVersion ?? .min)
-        installedVersionString != nil && installedVersionString != release.version
+        catalogMetadata.id
     }
 
     /// Returns the homepage for the info URL
@@ -108,13 +60,13 @@ struct AppInfo : Identifiable, Equatable {
 
             return nil
         } else {
-            return release.homepage
+            return catalogMetadata.homepage
         }
     }
 
     /// The categories as should be displayed in the UI; this will collapes sub-groups (i.e., game categories) into their parent groups.
     var displayCategories: [AppCategory] {
-        release.appCategories
+        catalogMetadata.appCategories
             .map { cat in
                 switch cat {
                 case .business: return .business
@@ -496,8 +448,81 @@ public struct RootView : View {
 
 struct SidebarSelection : Hashable {
     let source: AppSource
-    let item: FairAppInventory.SidebarItem
+    let item: SidebarItem
 }
+
+enum SidebarItem : Hashable {
+    case top
+    case updated
+    case installed
+    case recent
+    case category(_ category: AppCategory)
+
+    /// The persistent identifier for this grouping
+    var id: String {
+        switch self {
+        case .top:
+            return "top"
+        case .updated:
+            return "updated"
+        case .installed:
+            return "installed"
+        case .recent:
+            return "recent"
+        case .category(let category):
+            return "category:" + category.rawValue
+        }
+    }
+
+    func label(for source: AppSource) -> TintedLabel {
+        switch source {
+        case .fairapps:
+            switch self {
+            case .top:
+                return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
+            case .recent:
+                return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
+            case .installed:
+                return TintedLabel(title: Text("Installed"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
+            case .updated:
+                return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
+            case .category(let category):
+                return category.tintedLabel
+            }
+        case .homebrew:
+            switch self {
+            case .top:
+                return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
+            case .installed:
+                return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
+            case .recent: // not supported with casks
+                return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
+            case .updated:
+                return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
+            case .category(let category):
+                return category.tintedLabel
+            }
+        }
+
+    }
+
+    /// True indicates that this sidebar specifies to filter for locally-installed packages
+    var isLocalFilter: Bool {
+        switch self {
+        case .updated:
+            return true
+        case .installed:
+            return true
+        case .top:
+            return false
+        case .recent:
+            return true
+        case .category:
+            return false
+        }
+    }
+}
+
 
 @available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
@@ -512,6 +537,7 @@ struct NavigationRootView : View {
     @State var scrollToSelection: Bool = false
 
     @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
+    //@State var sidebarSelection: SidebarSelection? = wip(SidebarSelection(source: AppSource.fairapps, item: .installed))
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -1118,7 +1144,7 @@ struct SidebarView: View {
         }
     }
 
-    func item(_ source: AppSource, item: FairAppInventory.SidebarItem) -> some View {
+    func item(_ source: AppSource, item: SidebarItem) -> some View {
         let selection = SidebarSelection(source: source, item: item)
         let label = selection.item.label(for: source)
         var navtitle = label.title
@@ -1153,7 +1179,7 @@ struct SidebarView: View {
         }
     }
 
-    func tool(source: AppSource = .fairapps, _ item: FairAppInventory.SidebarItem) -> some CustomizableToolbarContent {
+    func tool(source: AppSource = .fairapps, _ item: SidebarItem) -> some CustomizableToolbarContent {
         ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
@@ -1165,7 +1191,7 @@ struct SidebarView: View {
         }
     }
 
-    func selectItem(_ item: FairAppInventory.SidebarItem) {
+    func selectItem(_ item: SidebarItem) {
         dbg("selected:", item.label, item.id)
     }
 }

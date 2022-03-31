@@ -22,7 +22,7 @@ struct AppsTableView : View, ItemTableView {
         case .homebrew:
             return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         case .fairapps:
-            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText).map({ AppInfo(catalogMetadata: $0) })
         }
     }
 
@@ -60,7 +60,7 @@ struct AppsTableView : View, ItemTableView {
     var tableView: some View {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
-                let imageColumn = TableColumn("", value: \AppInfo.release.iconURL, comparator: URLComparator()) { item in
+                let imageColumn = TableColumn("", value: \AppInfo.catalogMetadata.iconURL, comparator: URLComparator()) { item in
                     fairManager.iconView(for: item)
                         .frame(width: 20, height: 20)
                 }
@@ -69,7 +69,7 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group {
-                let nameColumn = strColumn(named: "Name", path: \AppInfo.release.name)
+                let nameColumn = strColumn(named: "Name", path: \AppInfo.catalogMetadata.name)
                 nameColumn.width(ideal: 125)
 
 //                let subtitleColumn = ostrColumn(named: "Subtitle", path: \AppInfo.release.subtitle)
@@ -80,30 +80,30 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group {
-                let versionColumn = ostrColumn(named: "Version", path: \AppInfo.release.version)
+                let versionColumn = ostrColumn(named: "Version", path: \AppInfo.catalogMetadata.version)
                 versionColumn.width(ideal: 60)
 
-                let installedColumn = ostrColumn(named: "Installed", path: \AppInfo.installedVersionString)
-                installedColumn.width(ideal: 60)
+//                let installedColumn = ostrColumn(named: "Installed", path: \AppInfo.installedVersionString)
+//                installedColumn.width(ideal: 60)
 
-                let sizeColumn = TableColumn("Size", value: \AppInfo.release.size, comparator: optionalComparator(0)) { item in
-                    Text((item.release.size ?? 0).localizedByteCount())
+                let sizeColumn = TableColumn("Size", value: \AppInfo.catalogMetadata.size, comparator: optionalComparator(0)) { item in
+                    Text((item.catalogMetadata.size ?? 0).localizedByteCount())
                         .multilineTextAlignment(.trailing)
                 }
 
                 sizeColumn.width(ideal: 60)
 
-//                let coreSizeColumn = onumColumn(named: "Core Size", path: \AppInfo.release.coreSize)
+//                let coreSizeColumn = onumColumn(named: "Core Size", path: \AppInfo.catalogMetadata.coreSize)
 //                coreSizeColumn
 
-                let riskColumn = TableColumn("Risk", value: \AppInfo.release.riskLevel) { item in
-                    item.release.riskLevel.riskLabel()
-                        .help(item.release.riskLevel.riskSummaryText())
+                let riskColumn = TableColumn("Risk", value: \AppInfo.catalogMetadata.riskLevel) { item in
+                    item.catalogMetadata.riskLevel.riskLabel()
+                        .help(item.catalogMetadata.riskLevel.riskSummaryText())
                 }
                 riskColumn.width(ideal: 125)
 
-                let dateColumn = TableColumn("Date", value: \AppInfo.release.versionDate, comparator: optionalDateComparator) { item in
-                    Text(item.release.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
+                let dateColumn = TableColumn("Date", value: \AppInfo.catalogMetadata.versionDate, comparator: optionalDateComparator) { item in
+                    Text(item.catalogMetadata.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
                         .multilineTextAlignment(.trailing)
                 }
                 dateColumn
@@ -111,22 +111,22 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group { // ideally, we'd guard for whether we are using Homebrew casks, but table builders don't support conditional statements: “Closure containing control flow statement cannot be used with result builder 'TableColumnBuilder'”
-                let starCount = onumColumn(named: "Stars", path: \AppInfo.release.starCount)
+                let starCount = onumColumn(named: "Stars", path: \AppInfo.catalogMetadata.starCount)
                 starCount.width(ideal: 40)
 
-                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.release.downloadCount)
+                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.catalogMetadata.downloadCount)
                 downloadCount.width(ideal: 40)
 
-                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.release.forkCount)
+                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.catalogMetadata.forkCount)
                 //forkCount.width(ideal: 40)
 
-                let issueCount = onumColumn(named: "Issues", path: \AppInfo.release.issueCount)
+                let issueCount = onumColumn(named: "Issues", path: \AppInfo.catalogMetadata.issueCount)
                 issueCount.width(ideal: 40)
 
-                let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.release.primaryCategoryIdentifier?.rawValue)
+                let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.catalogMetadata.primaryCategoryIdentifier?.rawValue)
                 catgoryColumn
 
-                let authorColumn = ostrColumn(named: "Author", path: \AppInfo.release.developerName)
+                let authorColumn = ostrColumn(named: "Author", path: \AppInfo.catalogMetadata.developerName)
                 authorColumn.width(ideal: 200)
             }
         }, rows: { self })

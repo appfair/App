@@ -92,8 +92,8 @@ struct AppsListView : View {
         arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
-                let hasScreenshots = $0.release.screenshotURLs?.isEmpty == false
-                let hasCategory = $0.release.categories?.isEmpty == false
+                let hasScreenshots = $0.catalogMetadata.screenshotURLs?.isEmpty == false
+                let hasCategory = $0.catalogMetadata.categories?.isEmpty == false
                 // an app is in the "top" apps iff it has at least one screenshot and a category
                 return (section == .top) == (hasScreenshots && hasCategory)
             })
@@ -104,7 +104,7 @@ struct AppsListView : View {
         case .homebrew:
             return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         case .fairapps:
-            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText).map({ AppInfo(catalogMetadata: $0) })
         }
     }
 
@@ -224,34 +224,34 @@ struct AppSectionItems : View {
             .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: item.release.name)
+                Text(verbatim: item.catalogMetadata.name)
                     .font(.headline)
                     .lineLimit(1)
                 HStack {
                     if let category = item.displayCategories.first {
                         // category.tintedLabel
-                        TintedLabel(title: category.text, systemName: category.symbol.symbolName, tint: item.release.itemTintColor(), mode: .hierarchical)
+                        TintedLabel(title: category.text, systemName: category.symbol.symbolName, tint: item.catalogMetadata.itemTintColor(), mode: .hierarchical)
                             .symbolVariant(.fill)
                             .labelStyle(.iconOnly)
                             .help(category.text)
                             .frame(width: 20)
                     }
-                    Text(verbatim: item.release.subtitle ?? "")
+                    Text(verbatim: item.catalogMetadata.subtitle ?? "")
                         .font(.subheadline)
                         .lineLimit(1)
                 }
                 HStack {
-                    if item.release.permissions != nil {
-                        item.release.riskLevel.riskLabel()
-                            .help(item.release.riskLevel.riskSummaryText())
+                    if item.catalogMetadata.permissions != nil {
+                        item.catalogMetadata.riskLevel.riskLabel()
+                            .help(item.catalogMetadata.riskLevel.riskSummaryText())
                             .labelStyle(.iconOnly)
                             .frame(width: 20)
                     }
 
-                    Text(verbatim: item.release.version ?? "")
+                    Text(verbatim: item.catalogMetadata.version ?? "")
                         .font(.subheadline)
 
-                    if let versionDate = item.release.versionDate {
+                    if let versionDate = item.catalogMetadata.versionDate {
                         Text(versionDate, format: .relative(presentation: .numeric, unitsStyle: .narrow))
                     }
 

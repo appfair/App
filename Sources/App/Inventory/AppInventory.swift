@@ -2,11 +2,29 @@ import FairApp
 
 /// The `AppInventory` protocol handles installing and managing apps.
 protocol AppInventory {
-    // This is where we can define the protocol requriements once Isolated protocol conformances are supported (https://github.com/apple/swift-evolution/blob/main/proposals/0313-actor-isolation-control.md#isolated-protocol-conformances)
+    /// The inventory item associated with this inventory list
+    associatedtype InventoryItem : Equatable
 
-    // Static method 'installedPath(for:)' isolated to global actor 'MainActor' can not satisfy corresponding requirement from protocol 'InstallationManager'
-    // func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
+    /// Returns true if the given inventory item is currently installed
+    @MainActor func appInstalled(item: InventoryItem) -> Bool
 
-    // static func installedPath(for item: AppCatalogItem) -> URL?
+    /// Returns true if the given inventory item can be updated
+    @MainActor func appUpdated(item: InventoryItem) -> Bool
+
+    /// Returns the installation path for the given item, possible querying the file system if needed
+    @MainActor func installedPath(for item: InventoryItem) throws -> URL?
+
+    /// Returns the installation path for the given item, possible querying the file system if needed
+    @MainActor func launch(item: InventoryItem) async throws
+
+    /// Installs the given item
+    @MainActor func install(item: InventoryItem, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
+
+    /// Instructs the system to reveal the path of the item using the Finder
+    @MainActor func reveal(item: InventoryItem) async throws
+
+    /// Deletes the given item from the system
+    @MainActor func delete(item: InventoryItem, verbose: Bool) async throws
+
 }
 

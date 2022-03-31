@@ -23,7 +23,7 @@ import FairApp
     @AppStorage("hubToken") public var hubToken = ""
 
     /// The apps that have been installed or updated in this session
-    @Published var sessionInstalls: Set<AppCatalogItem.ID> = []
+    @Published var sessionInstalls: Set<AppInfo.ID> = []
 
     required internal init() {
         self.fairAppInv = FairAppInventory()
@@ -71,9 +71,9 @@ import FairApp
     @ViewBuilder func iconView(for info: AppInfo, transition: Bool = false) -> some View {
         Group {
             if info.isCask == true {
-                homeBrewInv.icon(for: info.release, useInstalledIcon: false)
+                homeBrewInv.icon(for: info, useInstalledIcon: false)
             } else {
-                info.release.iconImage()
+                info.catalogMetadata.iconImage()
             }
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
@@ -84,19 +84,19 @@ import FairApp
     func launch(_ info: AppInfo) async {
         if info.isCask == true {
             await self.trying {
-                try await homeBrewInv.launch(item: info.release, gatekeeperCheck: true)
+                try await homeBrewInv.launch(item: info)
             }
         } else {
-            await fairAppInv.launch(item: info.release)
+            await fairAppInv.launch(item: info.catalogMetadata)
         }
     }
 
     func install(_ info: AppInfo, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
         await self.trying {
-            if let cask = info.cask {
-                try await homeBrewInv.install(cask: cask, progress: parentProgress, update: update)
+            if info.isCask {
+                try await homeBrewInv.install(item: info, progress: parentProgress, update: update)
             } else {
-                try await fairAppInv.install(item: info.release, progress: parentProgress, update: update)
+                try await fairAppInv.install(item: info.catalogMetadata, progress: parentProgress, update: update)
             }
             sessionInstalls.insert(info.id)
         }

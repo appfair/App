@@ -95,68 +95,78 @@ struct HomebrewSettingsView: View {
             .help(Text("Adds homebrew Casks to the sources of available apps."))
 
             Group {
-                Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
-                    Text("Use integrated download manager")
-                }
-                    .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
+                Group {
+                    Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
+                        Text("Use integrated download manager")
+                    }
+                        .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
-                Toggle(isOn: $homeBrewInv.forceInstallCasks) {
-                    Text("Install overwrites previous app installation")
-                }
-                    .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
+                    Toggle(isOn: $homeBrewInv.forceInstallCasks) {
+                        Text("Install overwrites previous app installation")
+                    }
+                        .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
-                Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                    Text("Quarantine installed apps")
-                }
-                    .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+                    Toggle(isOn: $homeBrewInv.quarantineCasks) {
+                        Text("Quarantine installed apps")
+                    }
+                        .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-                Toggle(isOn: $homeBrewInv.installDependencies) {
-                    Text("Automatically install dependencies")
-                }
-                    .help(Text("Automatically attempt to install any required dependencies for a cask."))
+                    Toggle(isOn: $homeBrewInv.permitGatekeeperBypass) {
+                        Text("Permit gatekeeper bypass")
+                    }
+                        .help(Text("Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched."))
 
-                Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
-                    Text("Exclude auto-updating apps from updates list")
-                }
-                    .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+                    Toggle(isOn: $homeBrewInv.installDependencies) {
+                        Text("Automatically install dependencies")
+                    }
+                        .help(Text("Automatically attempt to install any required dependencies for a cask."))
 
-                Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
-                    Text("Clear all app info on delete")
-                }
-                    .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
+                    Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
+                        Text("Exclude auto-updating apps from updates list")
+                    }
+                        .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
 
-                Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
-                    Text("Show casks without app artifacts")
-                        //.label(.bolt)
+                    Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
+                        Text("Clear all app info on delete")
+                    }
+                        .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
                 }
-                    .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
 
-                Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                    Text("Require cask checksum")
-                }
-                    .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+                Group {
 
-                Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
-                    Text("Enable Homebrew self-update")
-                }
-                    .help(Text("Allow Homebrew to update itself while installing other packages."))
+                    Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
+                        Text("Show casks without app artifacts")
+                            //.label(.bolt)
+                    }
+                        .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
 
-                // switching between the system-installed brew and locally cached brew doesn't yet work
-                #if DEBUG
-                #if false
-                Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
-                    Text("Use system Homebrew installation")
+                    Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
+                        Text("Require cask checksum")
+                    }
+                        .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+
+                    Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
+                        Text("Enable Homebrew self-update")
+                    }
+                        .help(Text("Allow Homebrew to update itself while installing other packages."))
+
+                    // switching between the system-installed brew and locally cached brew doesn't yet work
+                    #if DEBUG
+                    #if false
+                    Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
+                        Text("Use system Homebrew installation")
+                    }
+                        .help(Text("Use the system-installed Homebrew installation"))
+                        .disabled(!HomebrewInventory.globalBrewInstalled)
+                    #endif
+                    Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
+                        Text("Enable installation telemetry")
+                    }
+                        .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
+                    #endif
                 }
-                    .help(Text("Use the system-installed Homebrew installation"))
-                    .disabled(!HomebrewInventory.globalBrewInstalled)
-                #endif
-                Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
-                    Text("Enable installation telemetry")
-                }
-                    .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
-                #endif
+                .disabled(homeBrewInv.enableHomebrew == false)
             }
-            .disabled(homeBrewInv.enableHomebrew == false)
 
 
             Divider().padding()
