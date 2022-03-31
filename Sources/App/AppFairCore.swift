@@ -206,11 +206,12 @@ struct AppFairCommands: Commands {
 //        }
 
         CommandMenu(Text("Fair")) {
-            Text("Reload Apps")
+            Text("Reload Catalog")
                 .button(action: reloadAll)
                 .keyboardShortcut("R")
 //                .disabled(reloadCommand == nil)
         }
+
     }
 
     func reloadAll() {
@@ -1083,11 +1084,7 @@ struct SidebarView: View {
                 case .homebrew:
                     if homeBrewInv.enableHomebrew {
                         Section {
-                            item(.homebrew, item: .top).keyboardShortcut("1")
-                            // item(.homebrew, .recent) // casks don't have a last-updated date
-                            item(.homebrew, item: .installed).keyboardShortcut("2")
-                            item(.homebrew, item: .updated).keyboardShortcut("3")
-                                .symbolVariant(.fill)
+                            homebrewItems()
                         } header: {
                             sectionHeader(label: source.label, updating: homeBrewInv.updateInProgress != 0)
                          }
@@ -1095,10 +1092,7 @@ struct SidebarView: View {
 
                 case .fairapps:
                     Section {
-                        item(.fairapps, item: .top).keyboardShortcut("4")
-                        item(.fairapps, item: .recent).keyboardShortcut("5")
-                        item(.fairapps, item: .installed).keyboardShortcut("6")
-                        item(.fairapps, item: .updated).keyboardShortcut("7")
+                        fairappsItems()
                     } header: {
                         sectionHeader(label: source.label, updating: fairAppInv.updateInProgress != 0)
 
@@ -1141,6 +1135,25 @@ struct SidebarView: View {
 //            tool(.category(.game))
 //            tool(.category(.live))
 //            tool(.category(.work))
+        }
+    }
+
+    func homebrewItems() -> some View {
+        Group {
+            item(.homebrew, item: .top).keyboardShortcut("1")
+            // item(.homebrew, .recent) // casks don't have a last-updated date
+            item(.homebrew, item: .installed).keyboardShortcut("2")
+            item(.homebrew, item: .updated).keyboardShortcut("3")
+                .symbolVariant(.fill)
+        }
+    }
+
+    func fairappsItems() -> some View {
+        Group {
+            item(.fairapps, item: .top).keyboardShortcut("4")
+            item(.fairapps, item: .recent).keyboardShortcut("5")
+            item(.fairapps, item: .installed).keyboardShortcut("6")
+            item(.fairapps, item: .updated).keyboardShortcut("7")
         }
     }
 

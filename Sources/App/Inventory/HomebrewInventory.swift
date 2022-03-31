@@ -118,6 +118,9 @@ private let brewInstallRootDefault: URL = {
     /// The current catalog of casks
     @Published var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
 
+    /// The date the catalog was most recently updated
+    @Published private(set) var catalogUpdated: Date? = nil
+
     /// The download stats for cask tokens
     @Published private var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
 
@@ -276,19 +279,24 @@ private let brewInstallRootDefault: URL = {
         //(self.stats, self.appcasks, self.installedCasks, self.casks) = try await (stats, appcasks, installedCasks, casks)
         self.installedCasks = try await installedCasks
         self.appcasks = try await appcasks
-        self.casks = try await casks
         self.appstats = try await appstats
+        let caskResponse = try await casks
+        self.casks = caskResponse.casks
+        self.catalogUpdated = caskResponse.response.lastModifiedDate
     }
 
     /// Fetches the cask list and populates it in the `casks` property
-    func fetchCasks() async throws -> Array<CaskItem> {
+    func fetchCasks() async throws -> (casks: Array<CaskItem>, response: URLResponse) {
         dbg("loading cask list")
         let url = self.caskList
-        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
+        let request = URLRequest(url: url, cachePolicy: cachePolicy)
+        let (data, response) = try await URLSession.shared.fetch(request: request)
+        try response.validateHTTPCode()
+
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
         let casks = try Array<CaskItem>(json: data)
         dbg("loaded", casks.count, "casks")
-        return casks
+        return (casks, response)
     }
 
     /// Fetches the cask stats and populates it in the `stats` property

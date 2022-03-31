@@ -89,6 +89,9 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
+    /// The date the catalog was most recently updated
+    @Published private(set) var catalogUpdated: Date? = nil
+
     /// The number of outstanding update requests
     @Published var updateInProgress: UInt = 0
 
@@ -179,8 +182,10 @@ extension FairAppInventory {
         do {
             dbg("loading catalog")
             let start = CFAbsoluteTimeGetCurrent()
-            let catalog = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
+            let (catalog, response) = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
             self.catalog = catalog.apps
+            self.catalogUpdated = response.lastModifiedDate
+
             let end = CFAbsoluteTimeGetCurrent()
             dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
             if autoUpdateCatalogApp == true {
@@ -683,6 +688,24 @@ extension AppInventory {
         dbg("downloaded:", downloadedArtifact.fileSize()?.localizedByteCount(), t2 - t1, (response as? HTTPURLResponse)?.statusCode)
         return (downloadedArtifact, downloadSha256)
     }
+}
+
+extension FairHub {
+#if swift(>=5.5)
+    /// Fetches the `FairAppCatalog`
+    @available(macOS 12.0, iOS 15.0, *)
+    public static func fetchCatalog(catalogURL: URL, cache: URLRequest.CachePolicy? = nil) async throws -> (catalog: FairAppCatalog, response: URLResponse) {
+        dbg("fetching async", catalogURL)
+
+        var req = URLRequest(url: catalogURL)
+        if let cache = cache { req.cachePolicy = cache }
+        let (data, response) = try await URLSession.shared.data(for: req, delegate: nil)
+
+        let catalog = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
+
+        return (catalog, response)
+    }
+#endif // swift(>=5.5)
 }
 
 @available(macOS 12.0, iOS 15.0, *)

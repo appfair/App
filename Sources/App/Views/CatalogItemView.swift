@@ -467,7 +467,7 @@ struct CatalogItemView: View {
     /// Use a little mini-browser to show the homepage
     @ViewBuilder func homepageSection() -> some View {
         if let homepage = info.homepage {
-            FairBrowser(url: .constant(homepage))
+            FairBrowser(url: .constant(homepage), toolbar: false)
         }
     }
 

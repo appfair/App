@@ -1,7 +1,12 @@
 import FairApp
 
+/// The `AppCatalog` defined non-generic metadata for a catalog
+protocol AppCatalog {
+    @MainActor var catalogUpdated: Date? { get }
+}
+
 /// The `AppInventory` protocol handles installing and managing apps.
-protocol AppInventory {
+protocol AppInventory : AppCatalog {
     /// The inventory item associated with this inventory list
     associatedtype InventoryItem : Equatable
 

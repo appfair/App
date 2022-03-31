@@ -21,7 +21,36 @@ struct AppsListView : View {
 
     //static let topID = UUID()
 
+    var catalog: AppCatalog {
+        switch source {
+        case .homebrew: return homeBrewInv
+        case .fairapps: return fairAppInv
+        }
+    }
+
     @ViewBuilder var body : some View {
+        VStack(spacing: 0) {
+            appsList
+            Divider()
+            bottomBar
+        }
+    }
+
+    @ViewBuilder var bottomBar: some View {
+        Group {
+            if let updated = catalog.catalogUpdated {
+                Text("Updated") + Text(" ") + Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide))
+            } else {
+                Text("")
+            }
+        }
+        .font(.caption)
+        .help(Text("The catalog was last updated on") + Text(" ") + Text(catalog.catalogUpdated ?? .distantPast, format: .dateTime))
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(4)
+    }
+
+    @ViewBuilder var appsList : some View {
         ScrollViewReader { proxy in
             List {
                 if sidebarSelection?.item == .top {
