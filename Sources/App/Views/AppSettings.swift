@@ -7,6 +7,7 @@ public struct AppSettingsView: View {
         case general
         case fairapps
         case homebrew
+        case privacy
         case advanced
     }
 
@@ -36,6 +37,14 @@ public struct AppSettingsView: View {
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.general)
+            PrivacySettingsView()
+                .padding(20)
+                .tabItem {
+                    Text("Privacy", comment: "Privacy preferences tab title")
+                        .label(image: FairSymbol.hand_raised)
+                        .symbolVariant(.fill)
+                }
+                .tag(Tabs.privacy)
             AdvancedSettingsView()
                 .padding(20)
                 .tabItem {
@@ -427,5 +436,38 @@ struct AdvancedSettingsView: View {
             .padding(20)
         }
     }
+}
+
+struct PrivacySettingsView : View {
+    @EnvironmentObject var fairManager: FairManager
+
+    var body: some View {
+        Toggle(isOn: $fairManager.blockLaunchTelemetry) {
+            Text("Block macOS launch telemetry")
+        }
+        .toggleStyle(.switch)
+        .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
+        .onChange(of: fairManager.blockLaunchTelemetry) { enabled in
+            Task {
+                await fairManager.trying {
+                    do {
+                        if enabled == true {
+                            try await fairManager.installTelemetryBlocker()
+                        } else {
+                            if let script = try? FairManager.blockLaunchTelemetryScript.get(), FileManager.default.fileExists(atPath: script.path) {
+                                dbg("removing script it:", script.path)
+                                try FileManager.default.removeItem(at: script)
+                            }
+                        }
+                    } catch {
+                        // any failure to install should disable the toggle
+                        fairManager.blockLaunchTelemetry = false
+                        throw error
+                    }
+                }
+            }
+        }
+    }
+
 }
 

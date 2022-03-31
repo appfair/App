@@ -45,7 +45,16 @@ struct AppsListView : View {
             }
         }
         .font(.caption)
-        .help(Text("The catalog was last updated on") + Text(" ") + Text(catalog.catalogUpdated ?? .distantPast, format: .dateTime))
+        .help(Text("The catalog was last updated on") + Text(" ") + Text(catalog.catalogUpdated ?? .distantPast, format: Date.FormatStyle()
+            .year(.defaultDigits)
+            .month(.wide)
+            .day(.defaultDigits)
+            .weekday(.wide)
+            .hour(.conversationalDefaultDigits(amPM: .wide))
+            .minute(.defaultDigits)
+            .second(.defaultDigits)
+            //.timeZone(.exemplarLocation)
+        ))
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
     }

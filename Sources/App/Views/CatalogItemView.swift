@@ -477,13 +477,13 @@ struct CatalogItemView: View {
         }
         .overlay(Group {
             if metadata.screenshotURLs?.isEmpty != false {
-                Text("No screenshots available") // ([contribute…](https://www.appfair.app/#customize_app))")
+                Text("No screenshots available", comment: "placeholder string for empty screenshot preview section") // ([contribute…](https://www.appfair.app/#customize_app))")
                     .label(image: unavailableIcon)
                     .padding()
                     .lineLimit(1)
                     .font(Font.callout)
                     .foregroundColor(.secondary)
-                    .help(Text("This app has not published any screenshots"))
+                    .help(Text("This app has not published any screenshots", comment: "tooltip for empty screenshot preview section"))
             }
         })
     }
@@ -558,7 +558,7 @@ struct CatalogItemView: View {
     // MARK: Description / Summary
 
     func riskSection() -> some View {
-        let riskLabel = info.isCask ? Text("Risk: Unknown") : Text("Risk: ") + metadata.riskLevel.textLabel().fontWeight(.regular)
+        let riskLabel = info.isCask ? Text("Risk: Unknown", comment: "label for unknown rick") : Text("Risk: ", comment: "prefix string for risk label") + metadata.riskLevel.textLabel().fontWeight(.regular)
 
         let riskIcon = (info.isCask ? nil : metadata)?.riskLevel.riskLabel()
             .help(metadata.riskLevel.riskSummaryText())
@@ -569,13 +569,13 @@ struct CatalogItemView: View {
             permissionsList()
                 .overlay(Group {
                     if info.isCask {
-                        Text("Risk assessment unavailable for Homebrew Casks")
+                        Text("Risk assessment unavailable for Homebrew Casks", comment: "placeholder string")
                             .label(image: unavailableIcon)
                             .padding()
                             .lineLimit(1)
                             .font(Font.callout)
                             .foregroundColor(.secondary)
-                            .help(Text("Risk assessment is only available for App Fair Fairground apps"))
+                            .help(Text("Risk assessment is only available for App Fair Fairground apps", comment: "tooltip text"))
                     }
                 })
         }
