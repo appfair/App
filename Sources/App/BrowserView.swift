@@ -122,7 +122,9 @@ struct URLTextField<Accessory> : View where Accessory : View {
     @State private var isEditing = false
     @State private var text: String = ""
 
+    #if os(macOS)
     @Environment(\.resetFocus) var resetFocus
+    #endif
     @Namespace private var namespace
 
     @EnvironmentObject var store: Store
@@ -155,10 +157,10 @@ struct URLTextField<Accessory> : View where Accessory : View {
         .background(URLFieldBackground(loadingProgress: loadingProgress))
         .frame(minWidth: 200, idealWidth: 400, maxWidth: 600)
         .onChange(of: url, perform: { _ in urlDidChange() })
-        .focusScope(namespace)
 
 #if os(macOS)
         return content
+            .focusScope(namespace)
             .overlay(RoundedRectangle(cornerRadius: 6)
             .stroke(Color.accentColor, lineWidth: 2))
 #else
