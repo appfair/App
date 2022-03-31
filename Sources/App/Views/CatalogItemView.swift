@@ -94,6 +94,7 @@ struct CatalogItemView: View {
                 .frame(height: 40)
             Divider()
             catalogOverview()
+                .padding()
         }
     }
 
@@ -145,6 +146,7 @@ struct CatalogItemView: View {
                 numberView(size: .file, \.fileSize)
             }
         }
+        .transition(.opacity)
     }
 
     func coreSizeCard() -> some View {
@@ -191,11 +193,13 @@ struct CatalogItemView: View {
         Group {
             if let date = item.versionDate ?? self.caskURLModifiedDate {
                 Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
+                    .transition(.opacity)
             } else {
                 Text("Unknown")
                     .redacted(reason: .placeholder)
             }
         }
+        .transition(.opacity)
     }
 
     private func fetchDownloadURLStats() async {
@@ -204,8 +208,10 @@ struct CatalogItemView: View {
                 dbg("checking URL HEAD:", item.downloadURL.absoluteString)
                 let head = try await URLSession.shared.fetchHEAD(url: item.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
                 // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
-                self.caskURLFileSize = head.expectedContentLength
-                self.caskURLModifiedDate = head.lastModifiedDate
+                withAnimation {
+                    self.caskURLFileSize = head.expectedContentLength
+                    self.caskURLModifiedDate = head.lastModifiedDate
+                }
                 dbg("URL HEAD:", item.downloadURL.absoluteString, self.caskURLFileSize?.localizedByteCount(), self.caskURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
 
             } catch {
@@ -229,10 +235,9 @@ struct CatalogItemView: View {
             Divider()
             issuesCard()
                 .opacity(info.isCask ? 0.0 : 1.0)
-            //watchersCard()
         }
-        //.frame(height: 54)
     }
+
     /// The accessory on the trailing section of a `groupBox`
     @ViewBuilder func progressAccessory(_ fetching: Int) -> some View {
         ProgressView()
@@ -1157,9 +1162,10 @@ fileprivate extension View {
         return ZStack {
             ScrollView {
                 Text(astr)
-                    .textSelection(.enabled)
+                    //.textSelection(.enabled) // there's a weird bug here that causes multi-line text to stop wrapping lined when the text box is selected
+                    //.fixedSize() // doesn't help
                     .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .frame(maxHeight: .infinity)
 
@@ -1225,7 +1231,10 @@ struct ReadmeBox : View {
         do {
             dbg("fetching README for:", info.release.id, readmeURL?.absoluteString)
             if let readmeURL = readmeURL {
-                try self.readmeText = await .success(fetchMarkdownResource(url: readmeURL, info: info))
+                let txt = try await fetchMarkdownResource(url: readmeURL, info: info)
+                //withAnimation { // the effect here is weird: it expands from zero width
+                    self.readmeText = .success(txt)
+                //}
             } else {
                 // throw AppError(loc("No description found."))
                 self.readmeText = .success(AttributedString(info.release.localizedDescription ?? loc("No description found")))
@@ -1344,7 +1353,10 @@ struct ReleaseNotesBox : View {
         do {
             dbg("fetching release notes for:", info.release.id, releaseNotesURL?.absoluteString)
             if let releaseNotesURL = releaseNotesURL {
-                try self.releaseNotesText = await .success(fetchMarkdownResource(url: releaseNotesURL, info: info))
+                let notes = try await fetchMarkdownResource(url: releaseNotesURL, info: info)
+                //withAnimation { // the effect here is weird: it expands from zero width
+                    self.releaseNotesText = .success(notes)
+                //}
             } else {
                 self.releaseNotesText = .success(AttributedString("No release notes"))
 
@@ -1457,7 +1469,9 @@ extension AppCatalogItem {
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
                 case .failure(let error):
-                    let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
+                    if !error.isURLCancelledError { // happens when items are scrolled off the screen
+                        let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
+                    }
                     fallbackIcon()
                         .grayscale(0.9)
                         .help(error.localizedDescription)

@@ -192,7 +192,10 @@ struct AppSectionItems : View {
                     .onAppear {
                         dbg("showing more items (\(displayCount) of \(items.count))")
                         DispatchQueue.main.async {
-                            displayCount += 50
+                            // displayCount += 50
+                            withAnimation {
+                                self.displayCount += self.displayCount + 1 // increase the total display count
+                            }
                         }
                     }
             }

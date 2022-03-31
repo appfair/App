@@ -122,9 +122,8 @@ struct HomebrewSettingsView: View {
 
                 Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
                     Text("Clear all app info on delete")
-                        //.label(.bolt)
                 }
-                    .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This opetion is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
+                    .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
 
                 Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
                     Text("Show casks without app artifacts")
