@@ -144,6 +144,7 @@ extension FairManager {
                         dbg("unblocking launch telemetry")
                         let unblock = try Process.exec(cmd: blockScript.path, "unblock")
                         dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
+                        try self.flushDNSCache()
                     }
                 } catch {
                     dbg("error unblocking launch telemetry:", error)
@@ -151,10 +152,13 @@ extension FairManager {
             }
 
             // also flush the DNS cache to ensure that the OCSP address is not cached
-            let _ = try Process.exec(cmd: "/usr/bin/dscacheutil", "-flushcache")
+            try self.flushDNSCache()
         }
     }
 
+    private func flushDNSCache() throws {
+        let _ = try Process.exec(cmd: "/usr/bin/dscacheutil", "-flushcache")
+    }
 
     /// Compiles a swift utility that will block telemetry. This needs to be a compiled program rather than a shell script, because we want to set the setuid bit on it to be able to invoke it without asking for the admin password every time.
     func installTelemetryBlocker() async throws {
@@ -183,7 +187,7 @@ extension FairManager {
         }
 
         // set the root uid bit on the script so we can execute it without asking for the password each time
-        let setuid = "chown root '\(scriptFile.path)' && chmod 4755 '\(scriptFile.path)'"
+        let setuid = "chown root '\(scriptFile.path)' && chmod 4750 '\(scriptFile.path)'"
         let _ = try await NSUserScriptTask.fork(command: setuid, admin: true)
 
 

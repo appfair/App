@@ -75,110 +75,111 @@ struct HomebrewSettingsView: View {
     }
 
     var settingsForm: some View {
-        Form {
-            HStack {
-                Toggle(isOn: $homeBrewInv.enableHomebrew) {
-                    Text("Homebrew Casks")
-                }
-                .onChange(of: homeBrewInv.enableHomebrew) { enabled in
-                    if enabled == false {
-                        // un-install the local homebrew cache if we ever disable it; this makes it so we don't need a local cache location
-                        Task {
-                            try await homeBrewInv.uninstallHomebrew()
-                            self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
+        VStack {
+            Form {
+                HStack {
+                    Toggle(isOn: $homeBrewInv.enableHomebrew) {
+                        Text("Homebrew Casks")
+                    }
+                    .onChange(of: homeBrewInv.enableHomebrew) { enabled in
+                        if enabled == false {
+                            // un-install the local homebrew cache if we ever disable it; this makes it so we don't need a local cache location
+                            Task {
+                                try await homeBrewInv.uninstallHomebrew()
+                                self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
+                            }
                         }
                     }
+
+    //                let installedVersion = try? caskManager.installedBrewVersion()
+    //                if let installedVersion = installedVersion {
+    //                    (Text("Installed version: \(installedVersion.version)")
+    //                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
+    //                        .foregroundColor(.secondary)
+    //                        .textSelection(.enabled)
+    //                } else {
+    //                    Text("Not Installed")
+    //                }
                 }
-
-//                let installedVersion = try? caskManager.installedBrewVersion()
-//                if let installedVersion = installedVersion {
-//                    (Text("Installed version: \(installedVersion.version)")
-//                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
-//                        .foregroundColor(.secondary)
-//                        .textSelection(.enabled)
-//                } else {
-//                    Text("Not Installed")
-//                }
-            }
-            .toggleStyle(.switch)
-            .help(Text("Adds homebrew Casks to the sources of available apps."))
-
-            Group {
-                Group {
-                    Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
-                        Text("Use integrated download manager")
-                    }
-                        .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
-
-                    Toggle(isOn: $homeBrewInv.forceInstallCasks) {
-                        Text("Install overwrites previous app installation")
-                    }
-                        .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
-
-                    Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                        Text("Quarantine installed apps")
-                    }
-                        .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
-
-                    Toggle(isOn: $homeBrewInv.permitGatekeeperBypass) {
-                        Text("Permit gatekeeper bypass")
-                    }
-                        .help(Text("Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched."))
-
-                    Toggle(isOn: $homeBrewInv.installDependencies) {
-                        Text("Automatically install dependencies")
-                    }
-                        .help(Text("Automatically attempt to install any required dependencies for a cask."))
-
-                    Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
-                        Text("Exclude auto-updating apps from updates list")
-                    }
-                        .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
-
-                    Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
-                        Text("Clear all app info on delete")
-                    }
-                        .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
-                }
+                .toggleStyle(.switch)
+                .help(Text("Adds homebrew Casks to the sources of available apps."))
 
                 Group {
+                    Group {
+                        Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
+                            Text("Use integrated download manager")
+                        }
+                            .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
 
-                    Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
-                        Text("Show casks without app artifacts")
-                            //.label(.bolt)
-                    }
-                        .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
+                        Toggle(isOn: $homeBrewInv.forceInstallCasks) {
+                            Text("Install overwrites previous app installation")
+                        }
+                            .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
 
-                    Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                        Text("Require cask checksum")
-                    }
-                        .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+                        Toggle(isOn: $homeBrewInv.quarantineCasks) {
+                            Text("Quarantine installed apps")
+                        }
+                            .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
 
-                    Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
-                        Text("Enable Homebrew self-update")
-                    }
-                        .help(Text("Allow Homebrew to update itself while installing other packages."))
+                        Toggle(isOn: $homeBrewInv.permitGatekeeperBypass) {
+                            Text("Permit gatekeeper bypass")
+                        }
+                            .help(Text("Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched."))
 
-                    // switching between the system-installed brew and locally cached brew doesn't yet work
-                    #if DEBUG
-                    #if false
-                    Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
-                        Text("Use system Homebrew installation")
+                        Toggle(isOn: $homeBrewInv.installDependencies) {
+                            Text("Automatically install dependencies")
+                        }
+                            .help(Text("Automatically attempt to install any required dependencies for a cask."))
+
+                        Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
+                            Text("Exclude auto-updating apps from updates list")
+                        }
+                            .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+
+                        Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
+                            Text("Clear all app info on delete")
+                        }
+                            .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
                     }
-                        .help(Text("Use the system-installed Homebrew installation"))
-                        .disabled(!HomebrewInventory.globalBrewInstalled)
-                    #endif
-                    Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
-                        Text("Enable installation telemetry")
+
+                    Group {
+
+                        Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
+                            Text("Show casks without app artifacts")
+                                //.label(.bolt)
+                        }
+                            .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
+
+                        Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
+                            Text("Require cask checksum")
+                        }
+                            .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+
+                        Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
+                            Text("Enable Homebrew self-update")
+                        }
+                            .help(Text("Allow Homebrew to update itself while installing other packages."))
+
+                        // switching between the system-installed brew and locally cached brew doesn't yet work
+                        #if DEBUG
+                        #if false
+                        Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
+                            Text("Use system Homebrew installation")
+                        }
+                            .help(Text("Use the system-installed Homebrew installation"))
+                            .disabled(!HomebrewInventory.globalBrewInstalled)
+                        #endif
+                        Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
+                            Text("Enable installation telemetry")
+                        }
+                            .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
+                        #endif
                     }
-                        .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
-                    #endif
+                    .disabled(homeBrewInv.enableHomebrew == false)
                 }
-                .disabled(homeBrewInv.enableHomebrew == false)
             }
 
-
-            Divider().padding()
+            Divider()
 
             Section {
                 GroupBox {
@@ -193,7 +194,7 @@ struct HomebrewSettingsView: View {
                             Location: \((homeBrewInv.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
                             Installed: \(isBrewInstalled ? "yes" : "no")
                             """)
-                            .textSelection(.enabled)
+                            // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -235,7 +236,9 @@ struct HomebrewSettingsView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-
+                } label: {
+                    Text("About Homebrew Casks")
+                        .font(.headline)
                 }
             }
         }
@@ -442,29 +445,57 @@ struct PrivacySettingsView : View {
     @EnvironmentObject var fairManager: FairManager
 
     var body: some View {
-        Toggle(isOn: $fairManager.blockLaunchTelemetry) {
-            Text("Block macOS launch telemetry")
-        }
-        .toggleStyle(.switch)
-        .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
-        .onChange(of: fairManager.blockLaunchTelemetry) { enabled in
-            Task {
-                await fairManager.trying {
-                    do {
-                        if enabled == true {
-                            try await fairManager.installTelemetryBlocker()
-                        } else {
-                            if let script = try? FairManager.blockLaunchTelemetryScript.get(), FileManager.default.fileExists(atPath: script.path) {
-                                dbg("removing script it:", script.path)
-                                try FileManager.default.removeItem(at: script)
+        VStack {
+            Toggle(isOn: $fairManager.blockLaunchTelemetry) {
+                Text("Block macOS launch telemetry")
+            }
+            .toggleStyle(.switch)
+            .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
+            .onChange(of: fairManager.blockLaunchTelemetry) { enabled in
+                Task {
+                    await fairManager.trying {
+                        do {
+                            if enabled == true {
+                                try await fairManager.installTelemetryBlocker()
+                            } else {
+                                if let script = try? FairManager.blockLaunchTelemetryScript.get() {
+
+                                    if FileManager.default.fileExists(atPath: script.path) {
+                                        dbg("removing script at:", script.path)
+                                        try FileManager.default.removeItem(at: script)
+                                    }
+                                    if FileManager.default.fileExists(atPath: script.appendingPathExtension("swift").path) {
+                                        dbg("removing script at:", script.path)
+                                        try FileManager.default.removeItem(at: script.appendingPathExtension("swift"))
+                                    }
+                                }
                             }
+                        } catch {
+                            // any failure to install should disable the toggle
+                            fairManager.blockLaunchTelemetry = false
+                            throw error
                         }
-                    } catch {
-                        // any failure to install should disable the toggle
-                        fairManager.blockLaunchTelemetry = false
-                        throw error
                     }
                 }
+            }
+
+            Divider()
+
+            GroupBox {
+                Text("""
+                    The macOS operating system reports all application launches to third-party servers in order to check for certificate revocation. Preventing this tracking is accomplished by temporarily blocking traffic to these servers during the launch of an application.
+
+                    Enabling this feature requires that developer tools be installed on the host machine, and will also require authenticating as an administratior in order to activate the tool. The tool works by modifying the `/etc/hosts` file to re-route the traffic to these servers during the application launch, and then re-enabling the server traffic after a delay of 30 seconds.
+
+                    Note that this will *only* block telemetry from being sent when an app is opened with the App Fair's “Launch” button. It will **not** block telemetry when an app is launched by other means, such as directly opening the app from the `/Applications` folder.
+                    """)
+                    .font(.body)
+                    // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            } label: {
+                Text("About launch telemetry blocking")
+                    .font(.headline)
             }
         }
     }
