@@ -123,7 +123,7 @@ struct URLTextField<Accessory> : View where Accessory : View {
     @State private var text: String = ""
 
     #if os(macOS)
-    @Environment(\.resetFocus) var resetFocus
+    //@Environment(\.resetFocus) var resetFocus
     #endif
     @Namespace private var namespace
 
