@@ -123,6 +123,11 @@ import FairApp
 extension FairManager {
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
+    static let blockLaunchTelemetryScriptSource = Result {
+        try Bundle.module.loadBundleResource(named: "blocklaunchtelemetry.swift")
+    }
+
+    /// The script that we will store in the Applications Script folder to block app launch snooping
     static let blockLaunchTelemetryScript = Result {
         URL(string: "blocklaunchtelemetry", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
     }
@@ -150,20 +155,12 @@ extension FairManager {
                         dbg("unblocking launch telemetry")
                         let unblock = try Process.exec(cmd: blockScript.path, "unblock")
                         dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
-                        try self.flushDNSCache()
                     }
                 } catch {
                     dbg("error unblocking launch telemetry:", error)
                 }
             }
-
-            // also flush the DNS cache to ensure that the OCSP address is not cached
-            try self.flushDNSCache()
         }
-    }
-
-    private func flushDNSCache() throws {
-        let _ = try Process.exec(cmd: "/usr/bin/dscacheutil", "-flushcache")
     }
 
     /// Whether a `/usr/bin/swiftc` file exists and is executable. Implies the presence of the developer tools.
@@ -183,7 +180,7 @@ extension FairManager {
         let swiftFile = scriptFile.appendingPathExtension("swift")
 
         dbg("writing to file:", swiftFile.path)
-        try Self.telemetryBlockScript.write(to: swiftFile, atomically: true, encoding: .utf8)
+        try Self.blockLaunchTelemetryScriptSource.get().write(to: swiftFile)
 
         return swiftFile
     }
@@ -236,83 +233,6 @@ extension FairManager {
         }
 
     }
-
-    /// The script that we compile to a helper utility in order to run to block app telemetry reporting when launching apps
-    private static let telemetryBlockScript = #"""
-//
-// This tool is part of the App Fair's launch telemetry blocking.
-// It modifies the /etc/hosts file on the host machine
-// to redirect traffic intended for ocsp.apple.com and ocsp2.apple.com
-// to localhost, thereby blocking the tracking of app launches
-// at the cost of bypassing certificate revocation checking.
-// These servers (presumably) implement the Online Certificate Status Protocol
-// in order to allow the revocation of signing certificates.
-// While this is a positive security feature, the down-side is that
-// all app launches are reported to third-parties, who may be
-// compromised.
-//
-// This script can be run directly as root, or it can be compiled
-// to a binary, which can then have the setuid bit set on it
-// so as to enable running by a non-root user. The latter mechanism
-// is how the App Fair utilizes the tool, which enables users to
-// block telemetry prior to launching their apps without
-// having their activity tracked by third parties.
-//
-// Usage:
-//
-// blocklaunchtelemetry block: modifies the /etc/hosts to block ocsp.apple.com
-// blocklaunchtelemetry unblock: removes the blocking from /etc/hosts
-//
-// For more details, see: https://appfair.app
-//
-import Foundation
-
-// this tool accepts a single argument: "block" or "unblock"
-let flag = CommandLine.arguments.dropFirst().first
-
-// a single entry for each host we need to block
-let hostBlocks = [
-    """
-
-    # begin appfair.app launch telemetry blocking
-    127.0.0.1 ocsp.apple.com
-    # end appfair.app launch telemetry blocking
-
-    """,
-
-    """
-
-    # begin appfair.app launch telemetry blocking
-    127.0.0.1 ocsp2.apple.com
-    # end appfair.app launch telemetry blocking
-
-    """,
-
-]
-
-var etchosts = try String(contentsOfFile: "/etc/hosts", encoding: .utf8)
-
-// always clear out our existing blocks; if the argument is "block", they will be re-added
-for hostBlock in hostBlocks {
-    etchosts = etchosts.replacingOccurrences(of: hostBlock, with: "")
-}
-
-if flag == "block" {
-    // append each block to the hosts file
-    for hostBlock in hostBlocks {
-        etchosts.append(contentsOf: hostBlock)
-    }
-} else if flag != "unblock" {
-    struct BadArgument : LocalizedError {
-        let failureReason: String? = "argument must be block or unblock"
-    }
-    throw BadArgument()
-}
-
-try etchosts.write(toFile: "/etc/hosts", atomically: true, encoding: .utf8)
-
-"""#
-
 }
 
 
