@@ -232,7 +232,7 @@ extension FairManager {
                         try await self.invokeBlockLaunchTelemetry()
                     }
                 }
-                .help(Text("App launch telemetry blocking is currently active. Click this button to manually extent the duration for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+                .help(Text("App launch telemetry blocking is currently active. Click this button to manually extend the duration for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
         }
 
     }
