@@ -1072,7 +1072,7 @@ public extension AppContainer {
         .commands {
             SidebarCommands()
             ToolbarCommands()
-            //            SearchBarCommands()
+            SearchBarCommands()
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
