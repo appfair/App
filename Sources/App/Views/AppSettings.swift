@@ -446,46 +446,26 @@ struct PrivacySettingsView : View {
 
     var body: some View {
         VStack {
-            Toggle(isOn: $fairManager.blockLaunchTelemetry) {
-                Text("Block macOS launch telemetry")
-            }
-            .toggleStyle(.switch)
-            .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
-            .onChange(of: fairManager.blockLaunchTelemetry) { enabled in
-                Task {
-                    await fairManager.trying {
-                        do {
-                            if enabled == true {
-                                try await fairManager.installTelemetryBlocker()
-                            } else {
-                                if let script = try? FairManager.blockLaunchTelemetryScript.get() {
-
-                                    if FileManager.default.fileExists(atPath: script.path) {
-                                        dbg("removing script at:", script.path)
-                                        try FileManager.default.removeItem(at: script)
-                                    }
-                                    if FileManager.default.fileExists(atPath: script.appendingPathExtension("swift").path) {
-                                        dbg("removing script at:", script.path)
-                                        try FileManager.default.removeItem(at: script.appendingPathExtension("swift"))
-                                    }
-                                }
-                            }
-                        } catch {
-                            // any failure to install should disable the toggle
-                            fairManager.blockLaunchTelemetry = false
-                            throw error
-                        }
-                    }
+            HStack {
+                Toggle(isOn: $fairManager.blockLaunchTelemetry) {
+                    Text("App Launch Privacy")
+                }
+                .toggleStyle(.switch)
+                .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
+                .onChange(of: fairManager.blockLaunchTelemetry) { enabled in
+                    self.handleChangeTelemetryPreference(enabled: enabled)
                 }
             }
+
+            scriptPreviewRow()
 
             Divider()
 
             GroupBox {
                 Text("""
-                    The macOS operating system reports all application launches to third-party servers in order to check for certificate revocation. Preventing this tracking is accomplished by temporarily blocking traffic to these servers during the launch of an application.
+                    The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking traffic to these servers during the launch of an application.
 
-                    Enabling this feature requires that developer tools be installed on the host machine, and will also require authenticating as an administratior in order to activate the tool. The tool works by modifying the `/etc/hosts` file to re-route the traffic to these servers during the application launch, and then re-enabling the server traffic after a delay of 30 seconds.
+                    Enabling this feature requires that developer tools be installed on the host machine, and will also require authenticating as an administratior in order to activate the tool. The tool works by modifying the `/etc/hosts` file to re-route the traffic to these servers during the application launch, and then re-enabling the server traffic after a delay of 60 seconds.
 
                     Note that this will *only* block telemetry from being sent when an app is opened with the App Fair's “Launch” button. It will **not** block telemetry when an app is launched by other means, such as directly opening the app from the `/Applications` folder.
                     """)
@@ -493,9 +473,79 @@ struct PrivacySettingsView : View {
                     // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding()
             } label: {
-                Text("About launch telemetry blocking")
+                Text("About App Launch Privacy")
                     .font(.headline)
+            }
+        }
+    }
+
+    func handleChangeTelemetryPreference(enabled: Bool) {
+        Task {
+            await fairManager.trying {
+                do {
+                    if enabled == true {
+                        try await fairManager.installTelemetryBlocker()
+                    } else {
+                        if let script = try? FairManager.blockLaunchTelemetryScript.get() {
+
+                            if FileManager.default.fileExists(atPath: script.path) {
+                                dbg("removing script at:", script.path)
+                                try FileManager.default.removeItem(at: script)
+                            }
+                            if FileManager.default.fileExists(atPath: script.appendingPathExtension("swift").path) {
+                                dbg("removing script at:", script.path)
+                                try FileManager.default.removeItem(at: script.appendingPathExtension("swift"))
+                            }
+                        }
+                    }
+                } catch {
+                    // any failure to install should disable the toggle
+                    fairManager.blockLaunchTelemetry = false
+                    throw error
+                }
+            }
+        }
+    }
+
+    func scriptPreviewRow() -> some View {
+        Group {
+            if let scriptURL = try? FairManager.blockLaunchTelemetryScript.get() {
+                let scriptFolder = (scriptURL.deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath
+
+                if fairManager.blockLaunchTelemetry == true {
+                    HStack {
+                        (Text("Installed at: ") + Text(verbatim: scriptFolder))
+                            .textSelection(.enabled)
+                        Text("Show")
+                            .button {
+                                NSWorkspace.shared.selectFile(scriptURL.path, inFileViewerRootedAtPath: scriptFolder)
+                            }
+
+                        fairManager.launchPrivacyButton()
+                            .buttonStyle(.bordered)
+                    }
+                } else if FairManager.swiftCompilerInstalled == false {
+                    Text("Developer tools must be installed with: `xcode-select --install`")
+                        .warningLabel()
+                        .textSelection(.enabled)
+                } else {
+                    HStack {
+                        (Text("Will be installed at: ") + Text(verbatim: scriptFolder))
+                            .textSelection(.enabled)
+                        Text("Preview")
+                            .button {
+                                if !FileManager.default.isReadableFile(atPath: scriptURL.path) {
+                                    // save the script so we can preview it
+                                    if let swiftFile = try? self.fairManager.saveTelemetryScript() {
+                                        NSWorkspace.shared.selectFile(swiftFile.path, inFileViewerRootedAtPath: scriptFolder)
+                                    }
+                                }
+                            }
+                    }
+
+                }
             }
         }
     }

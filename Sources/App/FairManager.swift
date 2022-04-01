@@ -25,8 +25,14 @@ import FairApp
     /// Whether to try blocking launch telemetry reporting
     @AppStorage("blockLaunchTelemetry") public var blockLaunchTelemetry = false
 
+    /// The duration to continue blocking launch telemtry after an app has been launched (since the OS retries for a certain amount of time if the initial connection fails)
+    @AppStorage("blockLaunchTelemetryDuration") public var blockLaunchTelemetryDuration: TimeInterval = 60.0
+
     /// The apps that have been installed or updated in this session
     @Published var sessionInstalls: Set<AppInfo.ID> = []
+
+    /// The number of times we have blocked launch telemetry; this counter will go back to zero when we have cleared all existng blocks
+    @Published var launchTelemetryBlockCount = 0
 
 
     required internal init() {
@@ -85,12 +91,11 @@ import FairApp
 
     }
 
-    /// The number of times we have blocked launch telemetry
-    private var launchTelemetryBlockCount = 0
-
     func launch(_ info: AppInfo) async {
         await self.trying {
-            try await blockLaunchTelemetry(duration: 30.0)
+            if self.blockLaunchTelemetry {
+                try await self.invokeBlockLaunchTelemetry()
+            }
 
             if info.isCask == true {
                 try await homeBrewInv.launch(item: info)
@@ -119,14 +124,15 @@ extension FairManager {
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
     static let blockLaunchTelemetryScript = Result {
-        URL(string: "snoopblock", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+        URL(string: "blocklaunchtelemetry", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
     }
 
     /// Invokes the block launch telemetry script if it is installed and enabled
-    private func blockLaunchTelemetry(duration: TimeInterval) async throws {
+    func invokeBlockLaunchTelemetry(duration timeInterval: TimeInterval? = nil) async throws {
+        let duration = timeInterval ?? self.blockLaunchTelemetryDuration
+
         /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
-        if blockLaunchTelemetry,
-            let blockScript = try? Self.blockLaunchTelemetryScript.get(),
+        if let blockScript = try? Self.blockLaunchTelemetryScript.get(),
             FileManager.default.fileExists(atPath: blockScript.path) {
             dbg("invoking telemetry launch block script:", blockScript.path)
             let blocked = try Process.exec(cmd: blockScript.path, "block")
@@ -160,18 +166,16 @@ extension FairManager {
         let _ = try Process.exec(cmd: "/usr/bin/dscacheutil", "-flushcache")
     }
 
-    /// Compiles a swift utility that will block telemetry. This needs to be a compiled program rather than a shell script, because we want to set the setuid bit on it to be able to invoke it without asking for the admin password every time.
-    func installTelemetryBlocker() async throws {
+    /// Whether a `/usr/bin/swiftc` file exists and is executable. Implies the presence of the developer tools.
+    static let swiftCompilerInstalled = FileManager.default.isExecutableFile(atPath: "/usr/bin/swiftc")
+
+    /// Saves the telemetry script to the user's application folder
+    func saveTelemetryScript() throws -> URL {
         dbg("installing script")
 
         guard let scriptFile = try FairManager.blockLaunchTelemetryScript.get() else {
             throw CocoaError(.fileNoSuchFile)
         }
-
-        if !FileManager.default.isExecutableFile(atPath: "/usr/bin/swiftc") {
-            throw AppError("Developer tools not found", failureReason: "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.")
-        }
-
 
         // clear any previous script if it exists
         try? FileManager.default.removeItem(at: scriptFile)
@@ -180,47 +184,132 @@ extension FairManager {
 
         dbg("writing to file:", swiftFile.path)
         try Self.telemetryBlockScript.write(to: swiftFile, atomically: true, encoding: .utf8)
-        dbg("compiling script:", swiftFile.path)
-        let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", scriptFile.path, target: swiftFile)
+
+        return swiftFile
+    }
+
+    /// Compiles a swift utility that will block telemetry. This needs to be a compiled program rather than a shell script, because we want to set the setuid bit on it to be able to invoke it without asking for the admin password every time.
+    func installTelemetryBlocker() async throws {
+        let swiftFile = try saveTelemetryScript()
+
+        if !Self.swiftCompilerInstalled {
+            throw AppError("Developer tools not found", failureReason: "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.")
+        }
+
+
+        let compiledOutput = swiftFile.deletingPathExtension()
+        dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
+
+        let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
         if result.exitCode != 0 {
-            throw AppError("Error compiling snoopblock.swift", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+            throw AppError("Error compiling blocklaunchtelemetry.swift", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
         }
 
         // set the root uid bit on the script so we can execute it without asking for the password each time
-        let setuid = "chown root '\(scriptFile.path)' && chmod 4750 '\(scriptFile.path)'"
+        let setuid = "/usr/sbin/chown root '\(compiledOutput.path)' && /bin/chmod 4750 '\(compiledOutput.path)'"
         let _ = try await NSUserScriptTask.fork(command: setuid, admin: true)
+    }
 
+    @ViewBuilder func launchPrivacyButton() -> some View {
+        if self.blockLaunchTelemetry == false {
+//                        Text("App launch privacy not enabled")
+//                            .label(image: FairSymbol.shield_slash)
+        } else if self.launchTelemetryBlockCount <= 0 {
+            Text("Ready")
+                .label(image: FairSymbol.shield_slash_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.brown, Color.gray))
+                .button {
+                    await self.trying {
+                        try await self.invokeBlockLaunchTelemetry()
+                    }
+                }
+                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app, or click this button to manually enable it for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+        } else {
+            Text("Active")
+                .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
+                .button {
+                    // TODO: should this instead cancel the launch telemtry blocking?
+                    await self.trying {
+                        try await self.invokeBlockLaunchTelemetry()
+                    }
+                }
+                .help(Text("App launch telemetry blocking is currently active. Click this button to manually extent the duration for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+        }
 
     }
 
     /// The script that we compile to a helper utility in order to run to block app telemetry reporting when launching apps
     private static let telemetryBlockScript = #"""
+//
+// This tool is part of the App Fair's launch telemetry blocking.
+// It modifies the /etc/hosts file on the host machine
+// to redirect traffic intended for ocsp.apple.com and ocsp2.apple.com
+// to localhost, thereby blocking the tracking of app launches
+// at the cost of bypassing certificate revocation checking.
+// These servers (presumably) implement the Online Certificate Status Protocol
+// in order to allow the revocation of signing certificates.
+// While this is a positive security feature, the down-side is that
+// all app launches are reported to third-parties, who may be
+// compromised.
+//
+// This script can be run directly as root, or it can be compiled
+// to a binary, which can then have the setuid bit set on it
+// so as to enable running by a non-root user. The latter mechanism
+// is how the App Fair utilizes the tool, which enables users to
+// block telemetry prior to launching their apps without
+// having their activity tracked by third parties.
+//
+// Usage:
+//
+// blocklaunchtelemetry block: modifies the /etc/hosts to block ocsp.apple.com
+// blocklaunchtelemetry unblock: removes the blocking from /etc/hosts
+//
+// For more details, see: https://appfair.app
+//
 import Foundation
 
+// this tool accepts a single argument: "block" or "unblock"
 let flag = CommandLine.arguments.dropFirst().first
 
-let blockString = """
+// a single entry for each host we need to block
+let hostBlocks = [
+    """
 
-# begin launch telemetry blocking
-127.0.0.1 ocsp.apple.com
-127.0.0.1 ocsp2.apple.com
-# end launch telemetry blocking
+    # begin appfair.app launch telemetry blocking
+    127.0.0.1 ocsp.apple.com
+    # end appfair.app launch telemetry blocking
 
-"""
+    """,
 
-var hostsContent = try String(contentsOfFile: "/etc/hosts", encoding: .utf8)
+    """
+
+    # begin appfair.app launch telemetry blocking
+    127.0.0.1 ocsp2.apple.com
+    # end appfair.app launch telemetry blocking
+
+    """,
+
+]
+
+var etchosts = try String(contentsOfFile: "/etc/hosts", encoding: .utf8)
+
+// always clear out our existing blocks; if the argument is "block", they will be re-added
+for hostBlock in hostBlocks {
+    etchosts = etchosts.replacingOccurrences(of: hostBlock, with: "")
+}
+
 if flag == "block" {
-    hostsContent.append(contentsOf: blockString)
-} else if flag == "unblock" {
-    hostsContent = hostsContent.replacingOccurrences(of: blockString, with: "")
-} else {
+    // append each block to the hosts file
+    for hostBlock in hostBlocks {
+        etchosts.append(contentsOf: hostBlock)
+    }
+} else if flag != "unblock" {
     struct BadArgument : LocalizedError {
         let failureReason: String? = "argument must be block or unblock"
     }
     throw BadArgument()
 }
 
-try hostsContent.write(toFile: "/etc/hosts", atomically: true, encoding: .utf8)
+try etchosts.write(toFile: "/etc/hosts", atomically: true, encoding: .utf8)
 
 """#
 

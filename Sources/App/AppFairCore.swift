@@ -557,18 +557,23 @@ struct NavigationRootView : View {
 //                    })
 //                }
 
+                ToolbarItem(id: "AppPrivacy", placement: .automatic, showsByDefault: true) {
+                    fairManager.launchPrivacyButton()
+                }
+
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
                     Text("Reload")
-                        .label(symbol: "arrow.triangle.2.circlepath.circle")
-                        //.button(command: reloadCommand)
+                        .label(image: FairSymbol.arrow_triangle_2_circlepath.symbolRenderingMode(.hierarchical).foregroundStyle(Color.teal, Color.yellow, Color.blue))
                         .button {
                             await fairManager.trying {
                                 try await fairManager.refresh()
                             }
                         }
                         .hoverSymbol(activeVariant: .fill)
-                        .help(Text("Reload the App Fair catalog"))
+                        .help(Text("Refresh the app catalogs"))
                 }
+
+
                 ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: false) {
                     DisplayModePicker(mode: $displayMode)
                 }
@@ -1098,8 +1103,6 @@ struct SidebarView: View {
 
                     }
                 }
-
-
             }
 
             // categories section
@@ -1267,6 +1270,12 @@ extension NSUserScriptTask {
 }
 #endif
 
+extension Text {
+    /// Converts this `Text` into a label with a yellow exclamation warning.
+    func warningLabel() -> some View {
+        self.label(image: FairSymbol.exclamationmark_triangle_fill.symbolRenderingMode(.multicolor))
+    }
+}
 
 // MARK: Parochial (package-local) Utilities
 
