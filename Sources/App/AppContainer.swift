@@ -8,7 +8,9 @@ import FairApp
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
-            ContentView().environmentObject(store)
+            ContentView()
+                .colorScheme(.dark) // always use dark color scheme
+                .environmentObject(store)
         }
     }
 
