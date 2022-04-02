@@ -446,7 +446,7 @@ struct PrivacySettingsView : View {
 
     var body: some View {
         VStack {
-            HStack {
+            Form {
                 Toggle(isOn: $fairManager.appLaunchPrivacy) {
                     Text("App Launch Privacy")
                 }
@@ -455,8 +455,24 @@ struct PrivacySettingsView : View {
                 .onChange(of: fairManager.appLaunchPrivacy) { enabled in
                     self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
                 }
-            }
 
+                Picker(selection: $fairManager.appLaunchPrivacyDuration) {
+                    Text("10 Seconds").tag(TimeInterval(10.0))
+                    Text("60 Seconds").tag(TimeInterval(60.0))
+                    Text("30 Minutes").tag(TimeInterval(60.0 * 30))
+                    Text("1 Hour").tag(TimeInterval(60.0 * 60.0 * 1.0))
+                    Text("2 Hours").tag(TimeInterval(60.0 * 60.0 * 2.0))
+                    Text("12 Hour").tag(TimeInterval(60.0 * 60.0 * 12.0))
+                    Text("24 Hours").tag(TimeInterval(60.0 * 60.0 * 24.0))
+                    Text("Until App Fair Exit").tag(TimeInterval(60.0 * 60.0 * 24.0 * 1_000_000.0)) // close enough to forever
+                } label: {
+                    Text("Duration:")
+                }
+                .help(Text("The amount of time that App Launch Privacy will remain enabled before it is automatically disabled. Exiting the App Fair app will always disable App Launch privacy mode."))
+                .pickerStyle(.menu)
+                .disabled(fairManager.appLaunchPrivacy == false)
+                .fixedSize() // otherwise the picker expands greedily
+            }
             scriptPreviewRow()
 
             Divider()
@@ -467,11 +483,11 @@ struct PrivacySettingsView : View {
 
                     This feature will only automatically block telemetry from being sent when an app is opened with the App Fair's “Launch” button. It will not block telemetry when an app is launched by other means, such as directly opening the app from the `/Applications` folder, unless you first manually enable App Launch Privacy using the shield button.
                     """)
-                    .font(.body)
-                    // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding()
+                .font(.body)
+                // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding()
             } label: {
                 Text("About App Launch Privacy")
                     .font(.headline)
@@ -490,7 +506,7 @@ struct PrivacySettingsView : View {
                             .textSelection(.enabled)
                         Text("Show")
                             .button {
-                                NSWorkspace.shared.selectFile(scriptURL.path, inFileViewerRootedAtPath: scriptFolder)
+                                NSWorkspace.shared.selectFile(scriptURL.appendingPathExtension("swift").path, inFileViewerRootedAtPath: scriptFolder)
                             }
 
                         fairManager.launchPrivacyButton()
@@ -510,7 +526,6 @@ struct PrivacySettingsView : View {
                                 }
                             }
                     }
-
                 }
             }
         }

@@ -25,16 +25,17 @@
 // all app launches are reported to third-parties, who may be
 // intercepted or compromised.
 //
-// This script can be run directly as root, or it can be compiled
-// to a binary, which can then have the setuid bit set on it
-// so as to enable running by a non-root user. The latter mechanism
-// is how the App Fair utilizes the tool, which enables users to
-// block telemetry prior to launching their apps without
-// having their activity tracked by third parties. It is bundled
-// base64 encoded to avoid needing the hardened runtime
-// using the command:
+// This script can be run directly as root with:
 //
-// swiftc -O applaunchprivacy.swift && cat applaunchprivacy | base64 -i - > applaunchprivacy.b64 && rm applaunchprivacy
+//   sudo swift main.swift enable
+//
+// It can also be compiled to a binary, which can then have
+// the setuid bit set on it so as to enable running by a non-root user,
+// which enables running the tool without elevated priviliges.
+// It can be bundled base64 encoded to avoid needing the hardened runtime
+// with the command:
+//
+//   swift build -c release --arch arm64 --arch x86_64 && cat ./.build/apple/Products/Release/applaunchprivacy | base64 -o ../applaunchprivacy.b64
 //
 // Usage:
 //

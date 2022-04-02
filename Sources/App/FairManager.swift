@@ -31,8 +31,8 @@ import FairApp
     /// The apps that have been installed or updated in this session
     @Published var sessionInstalls: Set<AppInfo.ID> = []
 
-    /// The current timer marker for app launch privacy; it will be cleared whenever the timer is cancelled
-    @Published private var appLaunchPrivacyTimer: UUID? = nil
+    /// The current app exit observer for app launch privacy; it will be cleared when the observer expires
+    @Published private var appLaunchPrivacyDeactivator: NSObjectProtocol? = nil
 
     required internal init() {
         self.fairAppInv = FairAppInventory()
@@ -117,23 +117,32 @@ import FairApp
 
 }
 
-// MARK: telemetry blocking
+// MARK: App Launch Privacy support
 
 extension FairManager {
+    static let appLaunchPrivacyToolName = "applaunchprivacy"
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
     static let appLaunchPrivacyToolSource = Result {
-        try Bundle.module.loadBundleResource(named: "applaunchprivacy.swift")
+        try Bundle.module.loadBundleResource(named: appLaunchPrivacyToolName + "/main.swift")
     }
 
     /// The executable that we will store in the Applications Script folder to block app launch snooping
     static let appLaunchPrivacyToolBinary = Result {
-        try Bundle.module.loadBundleResource(named: "applaunchprivacy")
+        try Bundle.module.loadBundleResource(named: appLaunchPrivacyToolName + ".b64")
     }
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
     static let appLaunchPrivacyTool = Result {
-        URL(string: "applaunchprivacy", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+        URL(string: appLaunchPrivacyToolName, relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+    }
+
+    private func clearAppLaunchPrivacyObserver() {
+        if let observer = self.appLaunchPrivacyDeactivator {
+            // cancel the app exit observer
+            NotificationCenter.default.removeObserver(observer)
+            self.appLaunchPrivacyDeactivator = nil
+        }
     }
 
     /// Disables App Launch Privacy mode
@@ -143,7 +152,7 @@ extension FairManager {
             let unblock = try Process.exec(cmd: blockScript.path, "disable")
             dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
             if unblock.exitCode == 0 {
-                self.appLaunchPrivacyTimer = nil // clear any outstanding block timers
+                clearAppLaunchPrivacyObserver()
             }
         }
     }
@@ -152,34 +161,38 @@ extension FairManager {
     func enableAppLaunchPrivacy(duration timeInterval: TimeInterval? = nil) async throws {
         let duration = timeInterval ?? self.appLaunchPrivacyDuration
 
-        if let blockScript = try Self.appLaunchPrivacyTool.get() {
-            /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
-            if FileManager.default.fileExists(atPath: blockScript.path) {
-                dbg("invoking telemetry launch block script:", blockScript.path)
-                let blocked = try Process.exec(cmd: blockScript.path, "enable")
-                if blocked.exitCode != 0 {
-                    throw AppError("Failed to block launch telemetry", failureReason: (blocked.stdout + blocked.stderr).joined(separator: "\n"))
-                }
+        guard let blockScript = try Self.appLaunchPrivacyTool.get() else {
+            throw AppError("Could not find \(Self.appLaunchPrivacyToolName)")
+        }
 
-                let marker = UUID()
-                self.appLaunchPrivacyTimer = marker
+        /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
+        if FileManager.default.fileExists(atPath: blockScript.path) {
+            dbg("invoking telemetry launch block script:", blockScript.path)
+            let blocked = try Process.exec(cmd: blockScript.path, "enable")
+            if blocked.exitCode != 0 {
+                throw AppError("Failed to block launch telemetry", failureReason: (blocked.stdout + blocked.stderr).joined(separator: "\n"))
+            }
 
-                NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { note in
-                    dbg("application exiting; disabling app launch privacy mode")
-                    try? self.disableAppLaunchPrivacy()
-                }
+            // clear any previous observer
+            clearAppLaunchPrivacyObserver()
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                    do {
-                        if self.appLaunchPrivacyTimer == marker {
-                            dbg("disabling app launch privacy")
-                            try self.disableAppLaunchPrivacy()
-                        } else {
-                            dbg("app launch privacy timer marker became invalid; skipping disable")
-                        }
-                    } catch {
-                        dbg("error unblocking launch telemetry:", error)
+            let observer = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { note in
+                dbg("application exiting; disabling app launch privacy mode")
+                try? self.disableAppLaunchPrivacy()
+            }
+
+            self.appLaunchPrivacyDeactivator = observer
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                do {
+                    if observer.isEqual(self.appLaunchPrivacyDeactivator) {
+                        dbg("disabling app launch privacy")
+                        try self.disableAppLaunchPrivacy()
+                    } else {
+                        dbg("app launch privacy timer marker became invalid; skipping disable")
                     }
+                } catch {
+                    dbg("error unblocking launch telemetry:", error)
                 }
             }
         }
@@ -204,7 +217,11 @@ extension FairManager {
         } else {
             let executableFile = scriptFile
             dbg("writing binary to file:", executableFile.path)
-            try Self.appLaunchPrivacyToolBinary.get().write(to: executableFile)
+            let encodedTool = try Self.appLaunchPrivacyToolBinary.get()
+            guard let decodedTool = Data(base64Encoded: encodedTool, options: [.ignoreUnknownCharacters]) else {
+                throw AppError("Unable to decode \(Self.appLaunchPrivacyToolName)")
+            }
+            try decodedTool.write(to: executableFile)
             return executableFile
         }
     }
@@ -228,7 +245,7 @@ extension FairManager {
 
             let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
             if result.exitCode != 0 {
-                throw AppError("Error compiling applaunchprivacy.swift", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+                throw AppError("Error compiling \(Self.appLaunchPrivacyToolName)", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
             }
         } else {
             compiledOutput = try saveAppLaunchPrivacyTool(source: false)
@@ -270,7 +287,7 @@ extension FairManager {
 
     @ViewBuilder func launchPrivacyButton() -> some View {
         if self.appLaunchPrivacy == false {
-        } else if self.appLaunchPrivacyTimer == nil {
+        } else if self.appLaunchPrivacyDeactivator == nil {
             Text("Ready")
                 .label(image: FairSymbol.shield_slash_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.brown, Color.gray))
                 .button {
@@ -289,10 +306,8 @@ extension FairManager {
                 }
                 .help(Text("App Launch Privacy is currently active. Click this button to deactivate privacy mode."))
         }
-
     }
 }
-
 
 extension Error {
     /// Returns true if this error indicates that the user cancelled an operaiton
