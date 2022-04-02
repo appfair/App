@@ -147,10 +147,10 @@ extension FairManager {
 
     /// Disables App Launch Privacy mode
     func disableAppLaunchPrivacy() throws {
-        if let blockScript = try Self.appLaunchPrivacyTool.get() {
-            dbg("unblocking launch telemetry")
-            let unblock = try Process.exec(cmd: blockScript.path, "disable")
-            dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
+        if let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() {
+            dbg("disabling app launch privacy")
+            let unblock = try Process.exec(cmd: appLaunchPrivacyTool.path, "disable")
+            dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "disabled app launch privacy:", unblock.stdout, unblock.stderr)
             if unblock.exitCode == 0 {
                 clearAppLaunchPrivacyObserver()
             }
@@ -161,16 +161,16 @@ extension FairManager {
     func enableAppLaunchPrivacy(duration timeInterval: TimeInterval? = nil) async throws {
         let duration = timeInterval ?? self.appLaunchPrivacyDuration
 
-        guard let blockScript = try Self.appLaunchPrivacyTool.get() else {
+        guard let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() else {
             throw AppError("Could not find \(Self.appLaunchPrivacyToolName)")
         }
 
         /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
-        if FileManager.default.fileExists(atPath: blockScript.path) {
-            dbg("invoking telemetry launch block script:", blockScript.path)
-            let blocked = try Process.exec(cmd: blockScript.path, "enable")
-            if blocked.exitCode != 0 {
-                throw AppError("Failed to block launch telemetry", failureReason: (blocked.stdout + blocked.stderr).joined(separator: "\n"))
+        if FileManager.default.fileExists(atPath: appLaunchPrivacyTool.path) {
+            dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
+            let privacyEnabled = try Process.exec(cmd: appLaunchPrivacyTool.path, "enable")
+            if privacyEnabled.exitCode != 0 {
+                throw AppError("Failed to block launch telemetry", failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
             }
 
             // clear any previous observer

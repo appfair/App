@@ -451,6 +451,8 @@ extension Text {
 struct PrivacySettingsView : View {
     @EnvironmentObject var fairManager: FairManager
 
+    @Namespace var namespace
+
     var body: some View {
         VStack {
             Form {
@@ -464,8 +466,11 @@ struct PrivacySettingsView : View {
                         self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
                     }
 
+                    Spacer()
                     fairManager.launchPrivacyButton()
                         .buttonStyle(.bordered)
+                        .focusable(true)
+                        .prefersDefaultFocus(in: namespace)
                 }
 
                 Picker(selection: $fairManager.appLaunchPrivacyDuration) {
@@ -485,8 +490,11 @@ struct PrivacySettingsView : View {
                 .pickerStyle(.menu)
                 .disabled(fairManager.appLaunchPrivacy == false)
                 .fixedSize() // otherwise the picker expands greedily
+
+                scriptPreviewRow()
             }
-            scriptPreviewRow()
+            .padding()
+
 
             Divider()
 
@@ -517,8 +525,13 @@ struct PrivacySettingsView : View {
 
                 if fairManager.appLaunchPrivacy == true {
                     HStack {
-                        (Text("Installed at: ") + Text(verbatim: scriptFolder))
-                            .textSelection(.enabled)
+                        TextField(text: .constant(scriptFolder)) {
+                            Text("Installed at:")
+                        }
+                        .textFieldStyle(.plain)
+                        .textSelection(.disabled)
+                        .focusable(false)
+
                         Text("Show")
                             .button {
                                 NSWorkspace.shared.selectFile(scriptURL.appendingPathExtension("swift").path, inFileViewerRootedAtPath: scriptFolder)
@@ -526,8 +539,13 @@ struct PrivacySettingsView : View {
                     }
                 } else {
                     HStack {
-                        (Text("Will be installed at: ") + Text(verbatim: scriptFolder))
-                            .textSelection(.enabled)
+                        TextField(text: .constant(scriptFolder)) {
+                            Text("Install location:")
+                        }
+                        .textFieldStyle(.plain)
+                        .textSelection(.disabled)
+                        .focusable(false)
+
                         Text("Preview")
                             .button {
                                 if !FileManager.default.isReadableFile(atPath: scriptURL.path) {
