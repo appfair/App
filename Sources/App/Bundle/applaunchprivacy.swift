@@ -30,7 +30,10 @@
 // so as to enable running by a non-root user. The latter mechanism
 // is how the App Fair utilizes the tool, which enables users to
 // block telemetry prior to launching their apps without
-// having their activity tracked by third parties.
+// having their activity tracked by third parties. It is bundled
+// compressed with the command:
+//
+// swiftc applaunchprivacy.swift && zip applaunchprivacy.zip applaunchprivacy && rm applaunchprivacy
 //
 // Usage:
 //
