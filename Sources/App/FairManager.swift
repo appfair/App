@@ -239,6 +239,35 @@ extension FairManager {
         let _ = try await NSUserScriptTask.fork(command: setuid, admin: true)
     }
 
+    /// Invoked when the `appLaunchPrivacy` setting changes
+    func handleChangeAppLaunchPrivacy(enabled: Bool) {
+        Task {
+            await self.trying {
+                do {
+                    if enabled == true {
+                        try await self.installAppLaunchPrivacyTool()
+                    } else {
+                        if let script = try? Self.appLaunchPrivacyTool.get() {
+                            if FileManager.default.fileExists(atPath: script.path) {
+                                dbg("removing script at:", script.path)
+                                try FileManager.default.removeItem(at: script)
+                            }
+                            if FileManager.default.fileExists(atPath: script.appendingPathExtension("swift").path) {
+                                dbg("removing script at:", script.path)
+                                try FileManager.default.removeItem(at: script.appendingPathExtension("swift"))
+                            }
+                        }
+                    }
+                } catch {
+                    // any failure to install should disable the toggle
+                    self.appLaunchPrivacy = false
+                    throw error
+                }
+            }
+        }
+    }
+
+
     @ViewBuilder func launchPrivacyButton() -> some View {
         if self.appLaunchPrivacy == false {
         } else if self.appLaunchPrivacyTimer == nil {

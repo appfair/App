@@ -453,7 +453,7 @@ struct PrivacySettingsView : View {
                 .toggleStyle(.switch)
                 .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
                 .onChange(of: fairManager.appLaunchPrivacy) { enabled in
-                    self.handleChangeTelemetryPreference(enabled: enabled)
+                    self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
                 }
             }
 
@@ -475,33 +475,6 @@ struct PrivacySettingsView : View {
             } label: {
                 Text("About App Launch Privacy")
                     .font(.headline)
-            }
-        }
-    }
-
-    func handleChangeTelemetryPreference(enabled: Bool) {
-        Task {
-            await fairManager.trying {
-                do {
-                    if enabled == true {
-                        try await fairManager.installAppLaunchPrivacyTool()
-                    } else {
-                        if let script = try? FairManager.appLaunchPrivacyTool.get() {
-                            if FileManager.default.fileExists(atPath: script.path) {
-                                dbg("removing script at:", script.path)
-                                try FileManager.default.removeItem(at: script)
-                            }
-                            if FileManager.default.fileExists(atPath: script.appendingPathExtension("swift").path) {
-                                dbg("removing script at:", script.path)
-                                try FileManager.default.removeItem(at: script.appendingPathExtension("swift"))
-                            }
-                        }
-                    }
-                } catch {
-                    // any failure to install should disable the toggle
-                    fairManager.appLaunchPrivacy = false
-                    throw error
-                }
             }
         }
     }

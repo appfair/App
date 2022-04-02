@@ -33,7 +33,7 @@
 // having their activity tracked by third parties. It is bundled
 // compressed with the command:
 //
-// swiftc applaunchprivacy.swift && zip applaunchprivacy.zip applaunchprivacy && rm applaunchprivacy
+// swiftc applaunchprivacy.swift && zip applaunchprivacy.q applaunchprivacy && rm applaunchprivacy
 //
 // Usage:
 //
