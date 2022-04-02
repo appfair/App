@@ -31,9 +31,10 @@
 // is how the App Fair utilizes the tool, which enables users to
 // block telemetry prior to launching their apps without
 // having their activity tracked by third parties. It is bundled
-// compressed with the command:
+// base64 encoded to avoid needing the hardened runtime
+// using the command:
 //
-// swiftc applaunchprivacy.swift && zip applaunchprivacy.q applaunchprivacy && rm applaunchprivacy
+// swiftc -O applaunchprivacy.swift && cat applaunchprivacy | base64 -i - > applaunchprivacy.b64 && rm applaunchprivacy
 //
 // Usage:
 //
