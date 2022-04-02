@@ -441,30 +441,43 @@ struct AdvancedSettingsView: View {
     }
 }
 
+extension Text {
+    /// Creates a Text like "10 seconds", "2 hours"
+    init(duration: TimeInterval, style: Date.ComponentsFormatStyle.Style = .wide) {
+        self.init(Date(timeIntervalSinceReferenceDate: 0)..<Date(timeIntervalSinceReferenceDate: duration), format: .components(style: style))
+    }
+}
+
 struct PrivacySettingsView : View {
     @EnvironmentObject var fairManager: FairManager
 
     var body: some View {
         VStack {
             Form {
-                Toggle(isOn: $fairManager.appLaunchPrivacy) {
-                    Text("App Launch Privacy")
-                }
-                .toggleStyle(.switch)
-                .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
-                .onChange(of: fairManager.appLaunchPrivacy) { enabled in
-                    self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
+                HStack {
+                    Toggle(isOn: $fairManager.appLaunchPrivacy) {
+                        Text("App Launch Privacy:")
+                    }
+                    .toggleStyle(.switch)
+                    .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
+                    .onChange(of: fairManager.appLaunchPrivacy) { enabled in
+                        self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
+                    }
+
+                    fairManager.launchPrivacyButton()
+                        .buttonStyle(.bordered)
                 }
 
                 Picker(selection: $fairManager.appLaunchPrivacyDuration) {
-                    Text("10 Seconds").tag(TimeInterval(10.0))
-                    Text("60 Seconds").tag(TimeInterval(60.0))
-                    Text("30 Minutes").tag(TimeInterval(60.0 * 30))
-                    Text("1 Hour").tag(TimeInterval(60.0 * 60.0 * 1.0))
-                    Text("2 Hours").tag(TimeInterval(60.0 * 60.0 * 2.0))
-                    Text("12 Hour").tag(TimeInterval(60.0 * 60.0 * 12.0))
-                    Text("24 Hours").tag(TimeInterval(60.0 * 60.0 * 24.0))
-                    Text("Until App Fair Exit").tag(TimeInterval(60.0 * 60.0 * 24.0 * 1_000_000.0)) // close enough to forever
+                    Text(duration: 10.0).tag(10.0) // 10 seconds
+                    Text(duration: 60.0).tag(60.0) // 60 seconds
+                    Text(duration: 60.0 * 30).tag(60.0 * 30) // 1/2 hour
+                    Text(duration: 60.0 * 60.0 * 1.0).tag(60.0 * 60.0 * 1.0) // 1 hour
+                    Text(duration: 60.0 * 60.0 * 2.0).tag(60.0 * 60.0 * 2.0) // 2 hours
+                    Text(duration: 60.0 * 60.0 * 12.0).tag(60.0 * 60.0 * 12.0) // 12 hours
+                    Text(duration: 60.0 * 60.0 * 24.0).tag(60.0 * 60.0 * 24.0) // 24 hours
+
+                    Text("Until App Fair Exit").tag(TimeInterval(60.0 * 60.0 * 24.0 * 365.0 * 100.0)) // 100 years is close enough to forever
                 } label: {
                     Text("Duration:")
                 }
@@ -479,9 +492,11 @@ struct PrivacySettingsView : View {
 
             GroupBox {
                 Text("""
-                    The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application.
+                    The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application. Enabling this feature will require authenticating as an administrator.
 
-                    This feature will only automatically block telemetry from being sent when an app is opened with the App Fair's “Launch” button. It will not block telemetry when an app is launched by other means, such as directly opening the app from the `/Applications` folder, unless you first manually enable App Launch Privacy using the shield button.
+                    App Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.
+
+                    Privacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place.
                     """)
                 .font(.body)
                 // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
@@ -508,9 +523,6 @@ struct PrivacySettingsView : View {
                             .button {
                                 NSWorkspace.shared.selectFile(scriptURL.appendingPathExtension("swift").path, inFileViewerRootedAtPath: scriptFolder)
                             }
-
-                        fairManager.launchPrivacyButton()
-                            .buttonStyle(.bordered)
                     }
                 } else {
                     HStack {

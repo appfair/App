@@ -295,7 +295,7 @@ extension FairManager {
                         try await self.enableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate it ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in ") + Text(duration: self.appLaunchPrivacyDuration))
         } else {
             Text("Active")
                 .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
@@ -304,7 +304,7 @@ extension FairManager {
                         try self.disableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App Launch Privacy is currently active. Click this button to deactivate privacy mode."))
+                .help(Text("App Launch Privacy is currently active for ") + Text(duration: self.appLaunchPrivacyDuration) + Text(". Click this button to deactivate privacy mode."))
         }
     }
 }
