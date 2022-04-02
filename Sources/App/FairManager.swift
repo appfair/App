@@ -23,17 +23,16 @@ import FairApp
     @AppStorage("hubToken") public var hubToken = ""
 
     /// Whether to try blocking launch telemetry reporting
-    @AppStorage("blockLaunchTelemetry") public var blockLaunchTelemetry = false
+    @AppStorage("appLaunchPrivacy") public var appLaunchPrivacy = false
 
     /// The duration to continue blocking launch telemtry after an app has been launched (since the OS retries for a certain amount of time if the initial connection fails)
-    @AppStorage("blockLaunchTelemetryDuration") public var blockLaunchTelemetryDuration: TimeInterval = 60.0
+    @AppStorage("appLaunchPrivacyDuration") public var appLaunchPrivacyDuration: TimeInterval = 60.0
 
     /// The apps that have been installed or updated in this session
     @Published var sessionInstalls: Set<AppInfo.ID> = []
 
-    /// The number of times we have blocked launch telemetry; this counter will go back to zero when we have cleared all existng blocks
-    @Published var launchTelemetryBlockCount = 0
-
+    /// The current timer marker for app launch privacy; it will be cleared whenever the timer is cancelled
+    @Published private var appLaunchPrivacyTimer: UUID? = nil
 
     required internal init() {
         self.fairAppInv = FairAppInventory()
@@ -93,8 +92,8 @@ import FairApp
 
     func launch(_ info: AppInfo) async {
         await self.trying {
-            if self.blockLaunchTelemetry {
-                try await self.invokeBlockLaunchTelemetry()
+            if self.appLaunchPrivacy {
+                try await self.enableAppLaunchPrivacy()
             }
 
             if info.isCask == true {
@@ -123,83 +122,116 @@ import FairApp
 extension FairManager {
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
-    static let blockLaunchTelemetryScriptSource = Result {
-        try Bundle.module.loadBundleResource(named: "blocklaunchtelemetry.swift")
+    static let appLaunchPrivacyToolSource = Result {
+        try Bundle.module.loadBundleResource(named: "applaunchprivacy.swift")
+    }
+
+    /// The executable that we will store in the Applications Script folder to block app launch snooping
+    static let appLaunchPrivacyToolBinary = Result {
+        try Bundle.module.loadBundleResource(named: "applaunchprivacy")
     }
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
-    static let blockLaunchTelemetryScript = Result {
-        URL(string: "blocklaunchtelemetry", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+    static let appLaunchPrivacyTool = Result {
+        URL(string: "applaunchprivacy", relativeTo: try FileManager.default.url(for: .applicationScriptsDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+    }
+
+    /// Disables App Launch Privacy mode
+    func disableAppLaunchPrivacy() throws {
+        if let blockScript = try Self.appLaunchPrivacyTool.get() {
+            dbg("unblocking launch telemetry")
+            let unblock = try Process.exec(cmd: blockScript.path, "disable")
+            dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
+            if unblock.exitCode == 0 {
+                self.appLaunchPrivacyTimer = nil // clear any outstanding block timers
+            }
+        }
     }
 
     /// Invokes the block launch telemetry script if it is installed and enabled
-    func invokeBlockLaunchTelemetry(duration timeInterval: TimeInterval? = nil) async throws {
-        let duration = timeInterval ?? self.blockLaunchTelemetryDuration
+    func enableAppLaunchPrivacy(duration timeInterval: TimeInterval? = nil) async throws {
+        let duration = timeInterval ?? self.appLaunchPrivacyDuration
 
-        /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
-        if let blockScript = try? Self.blockLaunchTelemetryScript.get(),
-            FileManager.default.fileExists(atPath: blockScript.path) {
-            dbg("invoking telemetry launch block script:", blockScript.path)
-            let blocked = try Process.exec(cmd: blockScript.path, "block")
-            if blocked.exitCode != 0 {
-                throw AppError("Failed to block launch telemetry", failureReason: (blocked.stdout + blocked.stderr).joined(separator: "\n"))
-            }
+        if let blockScript = try Self.appLaunchPrivacyTool.get() {
+            /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
+            if FileManager.default.fileExists(atPath: blockScript.path) {
+                dbg("invoking telemetry launch block script:", blockScript.path)
+                let blocked = try Process.exec(cmd: blockScript.path, "enable")
+                if blocked.exitCode != 0 {
+                    throw AppError("Failed to block launch telemetry", failureReason: (blocked.stdout + blocked.stderr).joined(separator: "\n"))
+                }
 
-            launchTelemetryBlockCount += 1
+                let marker = UUID()
+                self.appLaunchPrivacyTimer = marker
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                do {
-                    // handle the case where multiple apps have been launched within the given window
-                    self.launchTelemetryBlockCount -= 1
-                    if self.launchTelemetryBlockCount <= 0 {
-                        dbg("unblocking launch telemetry")
-                        let unblock = try Process.exec(cmd: blockScript.path, "unblock")
-                        dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "unblocked launch telemetry:", unblock.stdout, unblock.stderr)
+                NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { note in
+                    dbg("application exiting; disabling app launch privacy mode")
+                    try? self.disableAppLaunchPrivacy()
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                    do {
+                        if self.appLaunchPrivacyTimer == marker {
+                            dbg("disabling app launch privacy")
+                            try self.disableAppLaunchPrivacy()
+                        } else {
+                            dbg("app launch privacy timer marker became invalid; skipping disable")
+                        }
+                    } catch {
+                        dbg("error unblocking launch telemetry:", error)
                     }
-                } catch {
-                    dbg("error unblocking launch telemetry:", error)
                 }
             }
         }
     }
 
-    /// Whether a `/usr/bin/swiftc` file exists and is executable. Implies the presence of the developer tools.
-    static let swiftCompilerInstalled = FileManager.default.isExecutableFile(atPath: "/usr/bin/swiftc")
-
     /// Saves the telemetry script to the user's application folder
-    func saveTelemetryScript() throws -> URL {
+    func saveAppLaunchPrivacyTool(source: Bool) throws -> URL {
         dbg("installing script")
 
-        guard let scriptFile = try FairManager.blockLaunchTelemetryScript.get() else {
+        guard let scriptFile = try FairManager.appLaunchPrivacyTool.get() else {
             throw CocoaError(.fileNoSuchFile)
         }
 
         // clear any previous script if it exists
         try? FileManager.default.removeItem(at: scriptFile)
 
-        let swiftFile = scriptFile.appendingPathExtension("swift")
-
-        dbg("writing to file:", swiftFile.path)
-        try Self.blockLaunchTelemetryScriptSource.get().write(to: swiftFile)
-
-        return swiftFile
+        if source {
+            let swiftFile = scriptFile.appendingPathExtension("swift")
+            dbg("writing source to file:", swiftFile.path)
+            try Self.appLaunchPrivacyToolSource.get().write(to: swiftFile)
+            return swiftFile
+        } else {
+            let executableFile = scriptFile
+            dbg("writing binary to file:", executableFile.path)
+            try Self.appLaunchPrivacyToolBinary.get().write(to: executableFile)
+            return executableFile
+        }
     }
 
-    /// Compiles a swift utility that will block telemetry. This needs to be a compiled program rather than a shell script, because we want to set the setuid bit on it to be able to invoke it without asking for the admin password every time.
-    func installTelemetryBlocker() async throws {
-        let swiftFile = try saveTelemetryScript()
+    /// Installs a swift utility that will block telemetry. This needs to be a compiled program rather than a shell script, because we want to set the setuid bit on it to be able to invoke it without asking for the admin password every time.
+    /// - Parameter compiler: the compiler to use to build the script (e.g., `"/usr/bin/swiftc"`), or `nil` to install the bundled binary directly
+    func installAppLaunchPrivacyTool(compiler: String? = nil) async throws {
+        let swiftFile = try saveAppLaunchPrivacyTool(source: true)
+        let compiledOutput: URL
 
-        if !Self.swiftCompilerInstalled {
-            throw AppError("Developer tools not found", failureReason: "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.")
-        }
+        if let compiler = compiler {
+            compiledOutput = swiftFile.deletingPathExtension()
 
+            let swiftCompilerInstalled = FileManager.default.isExecutableFile(atPath: compiler)
 
-        let compiledOutput = swiftFile.deletingPathExtension()
-        dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
+            if swiftCompilerInstalled {
+                throw AppError("Developer tools not found", failureReason: "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.")
+            }
 
-        let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
-        if result.exitCode != 0 {
-            throw AppError("Error compiling blocklaunchtelemetry.swift", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+            dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
+
+            let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
+            if result.exitCode != 0 {
+                throw AppError("Error compiling applaunchprivacy.swift", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+            }
+        } else {
+            compiledOutput = try saveAppLaunchPrivacyTool(source: false)
         }
 
         // set the root uid bit on the script so we can execute it without asking for the password each time
@@ -208,28 +240,25 @@ extension FairManager {
     }
 
     @ViewBuilder func launchPrivacyButton() -> some View {
-        if self.blockLaunchTelemetry == false {
-//                        Text("App launch privacy not enabled")
-//                            .label(image: FairSymbol.shield_slash)
-        } else if self.launchTelemetryBlockCount <= 0 {
+        if self.appLaunchPrivacy == false {
+        } else if self.appLaunchPrivacyTimer == nil {
             Text("Ready")
                 .label(image: FairSymbol.shield_slash_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.brown, Color.gray))
                 .button {
                     await self.trying {
-                        try await self.invokeBlockLaunchTelemetry()
+                        try await self.enableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app, or click this button to manually enable it for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate it ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
         } else {
             Text("Active")
                 .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
                 .button {
-                    // TODO: should this instead cancel the launch telemtry blocking?
                     await self.trying {
-                        try await self.invokeBlockLaunchTelemetry()
+                        try self.disableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App launch telemetry blocking is currently active. Click this button to manually extend the duration for ") + Text(Date(timeIntervalSinceNow: 60.0), format: .relative(presentation: .numeric)))
+                .help(Text("App Launch Privacy is currently active. Click this button to deactivate privacy mode."))
         }
 
     }

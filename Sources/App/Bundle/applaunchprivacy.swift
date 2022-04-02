@@ -14,16 +14,16 @@
  */
 
 //
-// This tool is part of the App Fair's launch telemetry blocking.
+// This tool is part of the App Fair's “App Launch Privacy”.
+//
 // It modifies the /etc/hosts file on the host machine
 // to redirect traffic intended for ocsp.apple.com and ocsp2.apple.com
-// to localhost, thereby blocking the tracking of app launches
-// at the cost of bypassing certificate revocation checking.
-// These servers (presumably) implement the Online Certificate Status Protocol
-// in order to allow the revocation of signing certificates.
+// to localhost, thereby blocking the tracking of app launches.
+// These servers (presumably) implement Online Certificate Status Protocol
+// in order to check for the revocation of signing certificates.
 // While this is a positive security feature, the down-side is that
 // all app launches are reported to third-parties, who may be
-// compromised.
+// intercepted or compromised.
 //
 // This script can be run directly as root, or it can be compiled
 // to a binary, which can then have the setuid bit set on it
@@ -34,8 +34,8 @@
 //
 // Usage:
 //
-// blocklaunchtelemetry block: modifies the /etc/hosts to block ocsp.apple.com
-// blocklaunchtelemetry unblock: removes the blocking from /etc/hosts
+// enable: modifies the /etc/hosts to block ocsp.apple.com
+// disable: removes the blocking from /etc/hosts
 //
 // For more details, see: https://appfair.app
 //
@@ -44,7 +44,7 @@ import Foundation
 
 let cmdname = CommandLine.arguments.first ?? "command"
 
-// this tool accepts a single argument: "block" or "unblock"
+// this tool accepts a single argument: "enable" or "disable"
 let flag = CommandLine.arguments.dropFirst().first
 
 // a single entry for each host we need to block
@@ -70,29 +70,29 @@ let hostBlocks = [
 let etchosts = try String(contentsOfFile: "/etc/hosts", encoding: .utf8)
 var modhosts = etchosts
 
-// always clear out our existing blocks; if the argument is "block", they will be re-added
+// always clear out our existing blocks; if the argument is "enable", they will be re-added
 for hostBlock in hostBlocks {
     modhosts = modhosts.replacingOccurrences(of: hostBlock, with: "")
 }
 
 let hostsChanged = modhosts != etchosts
 
-if flag == "unblock" {
+if flag == "disable" {
     if hostsChanged {
         try updateHosts() // save the unblocked hosts file
     }
-} else if flag == "block" {
+} else if flag == "enable" {
     // append each block to the hosts file
     for hostBlock in hostBlocks {
         modhosts.append(contentsOf: hostBlock)
     }
     try updateHosts()
 } else {
-    print("Blocking is currently", hostsChanged ? "active" : "inactive")
+    print("App launch privacy is currently", hostsChanged ? "enabled" : "disabled")
     if hostsChanged {
-        print("Run", cmdname, "unblock", "to deactivate")
+        print("Run", cmdname, "disable", "to deactivate")
     } else {
-        print("Run", cmdname, "block", "to activate")
+        print("Run", cmdname, "enable", "to activate")
     }
 }
 
