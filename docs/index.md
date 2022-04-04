@@ -257,6 +257,12 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 
 ### Advanced User FAQs
 
+#### Is the App Fair available in my language?
+
+Translators are invited to help translate the App Fair strings into
+their local language. The weblate service is used for translations,
+and can he accessed at [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
+
 #### How does the App Fair co-exist with an existing Homebrew installation?
 
 The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Caches/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository.
