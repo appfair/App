@@ -25,7 +25,7 @@ enum PromptSuppression : Int, CaseIterable {
 
 extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
-    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = loc("OK"), refuse: String = loc("Cancel"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
+    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", bundle: .module, comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", bundle: .module, comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
 
         let window = sheetWindow ?? NSApp.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
 
@@ -562,7 +562,7 @@ extension FairAppInventory {
                 relaunch()
             } else {
                 // if this is the catalog app, prompt the user to re-launch
-                let response = await prompt(window: window, messageText: loc("App Fair has been updated"), informativeText: loc("This app has been updated from \(Bundle.main.bundleVersionString ?? "?") to the latest version \(item.version ?? "?"). Would you like to re-launch it?"), accept: loc("Re-launch"), refuse: loc("Later"), suppressionKey: $relaunchUpdatedCatalogApp)
+                let response = await prompt(window: window, messageText: NSLocalizedString("App Fair has been updated", bundle: .module, comment: "app updated dialog title"), informativeText: NSLocalizedString("This app has been updated from \(Bundle.main.bundleVersionString ?? "?") to the latest version \(item.version ?? "?"). Would you like to re-launch it?", bundle: .module, comment: "app updated dialog body"), accept: NSLocalizedString("Re-launch", bundle: .module, comment: "app updated re-launch button text"), refuse: NSLocalizedString("Later", bundle: .module, comment: "app updated skip relaunch button text"), suppressionKey: $relaunchUpdatedCatalogApp)
                 dbg("prompt response:", response)
                 if response == true {
                     relaunch()

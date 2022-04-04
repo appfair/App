@@ -101,7 +101,7 @@ struct CatalogItemView: View {
     func starsCard() -> some View {
         summarySegment {
             card(
-                Text("Stars"),
+                Text("Stars", bundle: .module, comment: "app catalog entry header box title"),
                 numberView(number: .decimal, \.starCount),
                 histogramView(\.starCount)
             )
@@ -111,9 +111,9 @@ struct CatalogItemView: View {
     func downloadsCard() -> some View {
         summarySegment {
             card(
-                Text("Downloads"),
+                Text("Downloads", bundle: .module, comment: "app catalog entry header box title"),
                 numberView(number: .decimal, \.downloadCount)
-                    .help(info.isCask ? Text("The number of downloads of this cask in the past 90 days") : Text("The total number of downloads for this release")),
+                    .help(info.isCask ? Text("The number of downloads of this cask in the past 90 days", bundle: .module, comment: "app catalog entry header box title tooltip text") : Text("The total number of downloads for this release", bundle: .module, comment: "app catalog entry header box title tooltip text")),
                 histogramView(\.downloadCount)
             )
         }
@@ -122,7 +122,7 @@ struct CatalogItemView: View {
     func sizeCard() -> some View {
         summarySegment {
             card(
-                Text("Size"),
+                Text("Size", bundle: .module, comment: "app catalog entry header box title"),
                 downloadSizeView(),
                 histogramView(\.fileSize)
             )
@@ -136,7 +136,7 @@ struct CatalogItemView: View {
                     numberView(size: .file, value: Int(caskURLFileSize))
                 } else {
                     // show the card view with an empty file size
-                    Text("Unknown")
+                    Text("Unknown", bundle: .module, comment: "app catalog entry content box placeholder text for a download size that isn't known")
                         .redacted(reason: .placeholder)
                         .task {
                             await fetchDownloadURLStats()
@@ -152,7 +152,7 @@ struct CatalogItemView: View {
     func coreSizeCard() -> some View {
         summarySegment {
             card(
-                Text("Core Size"),
+                Text("Core Size", bundle: .module, comment: "app catalog entry header box title for the core size of the app"),
                 numberView(size: .file, \.coreSize),
                 histogramView(\.coreSize)
             )
@@ -162,7 +162,7 @@ struct CatalogItemView: View {
     func watchersCard() -> some View {
         summarySegment {
             card(
-                Text("Watchers"),
+                Text("Watchers", bundle: .module, comment: "app catalog entry header box title for the number of watchers for the app"),
                 numberView(number: .decimal, \.watcherCount),
                 histogramView(\.watcherCount)
             )
@@ -172,7 +172,7 @@ struct CatalogItemView: View {
     func issuesCard() -> some View {
         summarySegment {
             card(
-                Text("Issues"),
+                Text("Issues", bundle: .module, comment: "app catalog entry header box title for the number of issues for the app"),
                 numberView(number: .decimal, \.issueCount),
                 histogramView(\.issueCount)
             )
@@ -182,7 +182,7 @@ struct CatalogItemView: View {
     func releaseDateCard() -> some View {
         summarySegment {
             card(
-                Text("Updated"),
+                Text("Updated", bundle: .module, comment: "app catalog entry header box title for the date the app was last updated"),
                 releaseDateView(),
                 histogramView(\.issueCount)
             )
@@ -195,7 +195,7 @@ struct CatalogItemView: View {
                 Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
                     .transition(.opacity)
             } else {
-                Text("Unknown")
+                Text("Unknown", bundle: .module, comment: "app catalog entry header box content for an unknown update date")
                     .redacted(reason: .placeholder)
             }
         }
@@ -306,28 +306,28 @@ struct CatalogItemView: View {
             Form {
                 if let cask = info.cask {
                     if let page = cask.homepage, let homepage = URL(string: page) {
-                        linkTextField(Text("Homepage"), icon: .house, url: homepage)
-                            .help(Text("Opens link to the home page for this app at: \(homepage.absoluteString)"))
+                        linkTextField(Text("Homepage", bundle: .module, comment: "app catalog entry info link title"), icon: .house, url: homepage)
+                            .help(Text("Opens link to the home page for this app at: \(homepage.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
                     if let downloadURL = cask.url, let downloadURL = URL(string: downloadURL) {
-                        linkTextField(Text("Download"), icon: .arrow_down_circle, url: downloadURL)
-                            .help(Text("Opens link to the direct download for this app at: \(downloadURL.absoluteString)"))
+                        linkTextField(Text("Download", bundle: .module, comment: "app catalog entry info link title"), icon: .arrow_down_circle, url: downloadURL)
+                            .help(Text("Opens link to the direct download for this app at: \(downloadURL.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
                     if let appcast = cask.appcast, let appcast = URL(string: appcast) {
-                        linkTextField(Text("Appcast"), icon: .dot_radiowaves_up_forward, url: appcast)
-                            .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)"))
+                        linkTextField(Text("Appcast", bundle: .module, comment: "app catalog entry info link title"), icon: .dot_radiowaves_up_forward, url: appcast)
+                            .help(Text("Opens link to the appcast for this app at: \(appcast.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
                     if let tapToken = cask.tapToken, let tapURL = cask.tapURL {
-                        linkTextField(Text("Cask Token"), icon: .esim, url: tapURL, linkText: tapToken)
-                            .help(Text("The page for the Homebrew Cask token"))
+                        linkTextField(Text("Cask Token", bundle: .module, comment: "app catalog entry info link title"), icon: .esim, url: tapURL, linkText: tapToken)
+                            .help(Text("The page for the Homebrew Cask token", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
                     if let sha256 = cask.checksum ?? "None" {
-                        linkTextField(Text("Checksum"), icon: cask.checksum == nil ? .exclamationmark_triangle_fill : .rosette, url: cask.checksum == nil ? nil : URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
-                            .help(cask.checksum == nil ? Text("The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.") : Text("The SHA-256 checksum for the app download"))
+                        linkTextField(Text("Checksum", bundle: .module, comment: "app catalog entry info link title"), icon: cask.checksum == nil ? .exclamationmark_triangle_fill : .rosette, url: cask.checksum == nil ? nil : URL(string: "https://github.com/Homebrew/formulae.brew.sh/search?q=" + sha256), linkText: sha256)
+                            .help(cask.checksum == nil ? Text("The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.", bundle: .module, comment: "app catalog entry info link tooltip") : Text("The SHA-256 checksum for the app download", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
 //                    linkTextField(Text("Auto-Updates"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
@@ -335,28 +335,28 @@ struct CatalogItemView: View {
 
                 } else {
                     if let landingPage = info.catalogMetadata.landingPage {
-                        linkTextField(Text("Home"), icon: .house, url: landingPage)
-                            .help(Text("Opens link to the landing page for this app at: \(landingPage.absoluteString)"))
+                        linkTextField(Text("Home", bundle: .module, comment: "app catalog entry info link title"), icon: .house, url: landingPage)
+                            .help(Text("Opens link to the landing page for this app at: \(landingPage.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                     if let discussionsURL = info.catalogMetadata.discussionsURL {
-                        linkTextField(Text("Discussions"), icon: .text_bubble, url: discussionsURL)
-                            .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)"))
+                        linkTextField(Text("Discussions", bundle: .module, comment: "app catalog entry info link title"), icon: .text_bubble, url: discussionsURL)
+                            .help(Text("Opens link to the discussions page for this app at: \(discussionsURL.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                     if let issuesURL = info.catalogMetadata.issuesURL {
-                        linkTextField(Text("Issues"), icon: .checklist, url: issuesURL)
-                            .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)"))
+                        linkTextField(Text("Issues", bundle: .module, comment: "app catalog entry info link title"), icon: .checklist, url: issuesURL)
+                            .help(Text("Opens link to the issues page for this app at: \(issuesURL.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                     if let sourceURL = info.catalogMetadata.sourceURL {
-                        linkTextField(Text("Source"), icon: .chevron_left_forwardslash_chevron_right, url: sourceURL)
-                            .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)"))
+                        linkTextField(Text("Source", bundle: .module, comment: "app catalog entry info link title"), icon: .chevron_left_forwardslash_chevron_right, url: sourceURL)
+                            .help(Text("Opens link to source code repository for this app at: \(sourceURL.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                     if let fairsealURL = info.catalogMetadata.fairsealURL {
-                        linkTextField(Text("Fairseal"), icon: .rosette, url: fairsealURL, linkText: String(info.catalogMetadata.sha256 ?? ""))
-                            .help(Text("Lookup fairseal at: \(info.catalogMetadata.fairsealURL?.absoluteString ?? "")"))
+                        linkTextField(Text("Fairseal", bundle: .module, comment: "app catalog entry info link title"), icon: .rosette, url: fairsealURL, linkText: String(info.catalogMetadata.sha256 ?? ""))
+                            .help(Text("Lookup fairseal at: \(info.catalogMetadata.fairsealURL?.absoluteString ?? "")", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                     if let developerURL = info.catalogMetadata.developerURL {
-                        linkTextField(Text("Developer"), icon: .person, url: developerURL, linkText: metadata.developerName)
-                            .help(Text("Searches for this developer at: \(info.catalogMetadata.developerURL?.absoluteString ?? "")"))
+                        linkTextField(Text("Developer", bundle: .module, comment: "app catalog entry info link title"), icon: .person, url: developerURL, linkText: metadata.developerName)
+                            .help(Text("Searches for this developer at: \(info.catalogMetadata.developerURL?.absoluteString ?? "")", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
                 }
             }
@@ -391,9 +391,9 @@ struct CatalogItemView: View {
 
         var title: Text {
             switch self {
-            case .description: return Text("Description")
-            case .version: return Text("Version")
-            case .caveats: return Text("Caveats")
+            case .description: return Text("Description", bundle: .module, comment: "app catalog cask entry overview tab title")
+            case .version: return Text("Version", bundle: .module, comment: "app catalog cask entry overview tab title")
+            case .caveats: return Text("Caveats", bundle: .module, comment: "app catalog cask entry preview overview title")
             }
         }
     }
@@ -408,10 +408,10 @@ struct CatalogItemView: View {
 
         var title: Text {
             switch self {
-            case .details: return Text("Details")
-            case .risk: return Text("Risk")
-            case .formula: return Text("Formula")
-            case .security: return Text("Security")
+            case .details: return Text("Details", bundle: .module, comment: "app catalog cask entry metadata tab title")
+            case .risk: return Text("Risk", bundle: .module, comment: "app catalog cask entry metadata tab title")
+            case .formula: return Text("Formula", bundle: .module, comment: "app catalog cask entry metadata tab title")
+            case .security: return Text("Security", bundle: .module, comment: "app catalog cask entry metadata tab title")
             }
         }
     }
@@ -437,8 +437,8 @@ struct CatalogItemView: View {
 
         var title: Text {
             switch self {
-            case .screenshots: return Text("Screen Shots")
-            case .homepage: return Text("Home Page")
+            case .screenshots: return Text("Screen Shots", bundle: .module, comment: "app catalog cask entry preview tab title")
+            case .homepage: return Text("Home Page", bundle: .module, comment: "app catalog cask entry preview tab title")
             }
         }
     }
@@ -477,13 +477,13 @@ struct CatalogItemView: View {
         }
         .overlay(Group {
             if metadata.screenshotURLs?.isEmpty != false {
-                Text("No screenshots available", comment: "placeholder string for empty screenshot preview section") // ([contribute…](https://www.appfair.app/#customize_app))")
+                Text("No screenshots available", bundle: .module, comment: "placeholder string for empty screenshot preview section") // ([contribute…](https://www.appfair.app/#customize_app))")
                     .label(image: unavailableIcon)
                     .padding()
                     .lineLimit(1)
                     .font(Font.callout)
                     .foregroundColor(.secondary)
-                    .help(Text("This app has not published any screenshots", comment: "tooltip for empty screenshot preview section"))
+                    .help(Text("This app has not published any screenshots", bundle: .module, comment: "tooltip for empty screenshot preview section"))
             }
         })
     }
@@ -558,7 +558,7 @@ struct CatalogItemView: View {
     // MARK: Description / Summary
 
     func riskSection() -> some View {
-        let riskLabel = info.isCask ? Text("Risk: Unknown", comment: "label for unknown rick") : Text("Risk: ", comment: "prefix string for risk label") + metadata.riskLevel.textLabel().fontWeight(.regular)
+        let riskLabel = info.isCask ? Text("Risk: Unknown", bundle: .module, comment: "label for unknown rick") : Text("Risk: ", bundle: .module, comment: "prefix string for risk label") + metadata.riskLevel.textLabel().fontWeight(.regular)
 
         let riskIcon = (info.isCask ? nil : metadata)?.riskLevel.riskLabel()
             .help(metadata.riskLevel.riskSummaryText())
@@ -569,13 +569,13 @@ struct CatalogItemView: View {
             permissionsList()
                 .overlay(Group {
                     if info.isCask {
-                        Text("Risk assessment unavailable for Homebrew Casks", comment: "placeholder string")
+                        Text("Risk assessment unavailable for Homebrew Casks", bundle: .module, comment: "placeholder string")
                             .label(image: unavailableIcon)
                             .padding()
                             .lineLimit(1)
                             .font(Font.callout)
                             .foregroundColor(.secondary)
-                            .help(Text("Risk assessment is only available for App Fair Fairground apps", comment: "tooltip text"))
+                            .help(Text("Risk assessment is only available for App Fair Fairground apps", bundle: .module, comment: "tooltip text"))
                     }
                 })
         }
@@ -586,7 +586,7 @@ struct CatalogItemView: View {
 
         var title = entitlement.localizedInfo.title
         if !permission.usageDescription.isEmpty {
-            title = title + Text(" – ") + Text(permission.usageDescription).foregroundColor(.secondary).italic()
+            title = Text("\(title) – \(Text(permission.usageDescription))", bundle: .module, comment: "formatting string separating the permission title from the permission description").foregroundColor(.secondary).italic()
         }
 
         return title.label(symbol: entitlement.localizedInfo.symbol.symbolName)
@@ -595,7 +595,7 @@ struct CatalogItemView: View {
             .lineLimit(1)
             .truncationMode(.tail)
         //.textSelection(.enabled)
-            .help(entitlement.localizedInfo.info + Text(": ") + Text(permission.usageDescription))
+            .help(Text("\(entitlement.localizedInfo.info): \( Text(permission.usageDescription))", bundle: .module, comment: "formatting string separating entitlement info from usage description in tooltip text"))
     }
 
     /// The entitlements that will appear in the list.
@@ -694,7 +694,7 @@ struct CatalogItemView: View {
         Group {
             let devName = info.catalogMetadata.developerName ?? ""
             if devName.isEmpty {
-                Text("Unknown")
+                Text("Unknown", bundle: .module, comment: "fallback text for unknown developer name")
             } else {
                 Text(devName)
             }
@@ -803,19 +803,19 @@ struct CatalogItemView: View {
         button(activity: .install, role: nil, needsConfirm: fairManager.enableInstallWarning)
             .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
             .disabled(appInstalled)
-            .confirmationDialog(Text("Install \(info.catalogMetadata.name)"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
-                Text("Download & Install \(info.catalogMetadata.name)").button {
+            .confirmationDialog(Text("Install \(info.catalogMetadata.name)", bundle: .module, comment: "install button confirmation dialog title"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
+                Text("Download & Install \(info.catalogMetadata.name)", bundle: .module, comment: "install button confirmation dialog confirm button text").button {
                     runTask(activity: .install, confirm: true)
                 }
                 if let cask = info.cask {
                     if let page = cask.homepage, let homepage = URL(string: page) {
-                        (Text("Visit Homepage: ") + Text(homepage.host ?? "")).button {
+                        Text("Visit Homepage: \(homepage.host ?? "")", bundle: .module, comment: "install button confirmation dialog visit homepage button text").button {
                             openURLAction(homepage)
                         }
                     }
                 } else {
                     if let discussionsURL = info.catalogMetadata.discussionsURL {
-                        Text("Visit Community Forum").button {
+                        Text("Visit Community Forum", bundle: .module, comment: "install button confirmation dialog visit discussions button text").button {
                             openURLAction(discussionsURL)
                         }
                     }
@@ -855,12 +855,12 @@ struct CatalogItemView: View {
             .keyboardShortcut(.delete, modifiers: [])
             .disabled(!appInstalled)
         //.accentColor(.red) // coflicts with the red background of the button
-            .confirmationDialog(Text("Really delete this app?"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
-                Text("Delete").button {
+            .confirmationDialog(Text("Really delete this app?", bundle: .module, comment: "delete button confirmation dialog title"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
+                Text("Delete", bundle: .module, comment: "delete button confirmation dialog delete button text").button {
                     runTask(activity: .trash, confirm: true)
                 }
             }, message: {
-                Text("This will remove the application “\(info.catalogMetadata.name)” from your applications folder and place it in the Trash.")
+                Text("This will remove the application “\(info.catalogMetadata.name)” from your applications folder and place it in the Trash.", bundle: .module, comment: "delete button confirmation dialog body text")
             })
     }
 
@@ -1214,7 +1214,7 @@ struct ReadmeBox : View {
                 //}
             } else {
                 // throw AppError(loc("No description found."))
-                self.readmeText = .success(AttributedString(info.catalogMetadata.localizedDescription ?? loc("No description found")))
+                self.readmeText = .success(AttributedString(info.catalogMetadata.localizedDescription ?? NSLocalizedString("No description found", bundle: .module, comment: "error message when no app description could be found")))
             }
         } catch {
             dbg("error handling README:", error)
@@ -1382,7 +1382,7 @@ struct CaskFormulaBox : View {
 
     private func fetchCaskSummary(json jsonSource: Bool) async {
         if self.caskSummary == nil, let url = jsonSource ? homeBrewInv.caskMetadata(name: cask.token) : homeBrewInv.caskSource(name: cask.token) {
-            // self.caskSummary = NSLocalizedString("Loading…", comment: "") // makes unnecessary flashes
+            // self.caskSummary = NSLocalizedString("Loading…", bundle: .module, comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)
                 let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
@@ -1411,15 +1411,15 @@ private extension CatalogActivity {
     var info: (title: Text, systemSymbol: FairSymbol, tintColor: Color?, toolTip: Text) {
         switch self {
         case .install:
-            return (Text("Install"), .square_and_arrow_down_fill, Color.blue, Text("Download and install the app."))
+            return (Text("Install", bundle: .module, comment: "catalog entry button title for install action"), .square_and_arrow_down_fill, Color.blue, Text("Download and install the app.", bundle: .module, comment: "catalog entry button tooltip for install action"))
         case .update:
-            return (Text("Update"), .square_and_arrow_down_on_square, Color.orange, Text("Update to the latest version of the app.")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
+            return (Text("Update", bundle: .module, comment: "catalog entry button title for update action"), .square_and_arrow_down_on_square, Color.orange, Text("Update to the latest version of the app.", bundle: .module, comment: "catalog entry button tooltip for update action")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
         case .trash:
-            return (Text("Delete"), .trash, Color.red, Text("Delete the app from your computer."))
+            return (Text("Delete", bundle: .module, comment: "catalog entry button title for delete action"), .trash, Color.red, Text("Delete the app from your computer.", bundle: .module, comment: "catalog entry button tooltip for delete action"))
         case .reveal:
-            return (Text("Reveal"), .doc_viewfinder_fill, Color.indigo, Text("Displays the app install location in the Finder."))
+            return (Text("Reveal", bundle: .module, comment: "catalog entry button title for reveal action"), .doc_viewfinder_fill, Color.indigo, Text("Displays the app install location in the Finder.", bundle: .module, comment: "catalog entry button tooltip for reveal action"))
         case .launch:
-            return (Text("Launch"), .checkmark_seal_fill, Color.green, Text("Launches the app."))
+            return (Text("Launch", bundle: .module, comment: "catalog entry button title for launch action"), .checkmark_seal_fill, Color.green, Text("Launches the app.", bundle: .module, comment: "catalog entry button tooltip for launch action"))
         }
     }
 }

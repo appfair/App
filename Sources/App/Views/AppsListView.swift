@@ -39,22 +39,13 @@ struct AppsListView : View {
     @ViewBuilder var bottomBar: some View {
         Group {
             if let updated = catalog.catalogUpdated {
-                Text("Updated") + Text(" ") + Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide))
+                Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
             } else {
-                Text("")
+                Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
             }
         }
         .font(.caption)
-        .help(Text("The catalog was last updated on") + Text(" ") + Text(catalog.catalogUpdated ?? .distantPast, format: Date.FormatStyle()
-            .year(.defaultDigits)
-            .month(.wide)
-            .day(.defaultDigits)
-            .weekday(.wide)
-            .hour(.conversationalDefaultDigits(amPM: .wide))
-            .minute(.defaultDigits)
-            .second(.defaultDigits)
-            //.timeZone(.exemplarLocation)
-        ))
+        .help(Text("The catalog was last updated on \(Text(catalog.catalogUpdated ?? .distantPast, format: Date.FormatStyle().year(.defaultDigits).month(.wide).day(.defaultDigits).weekday(.wide).hour(.conversationalDefaultDigits(amPM: .wide)).minute(.defaultDigits).second(.defaultDigits)))", bundle: .module, comment: "apps list bottom bar help text"))
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
     }
@@ -106,8 +97,8 @@ struct AppsListView : View {
 
         var localizedTitle: Text {
             switch self {
-            case .top: return Text("Top Apps")
-            case .all: return Text("All Apps")
+            case .top: return Text("Top Apps", bundle: .module, comment: "apps list section header text")
+            case .all: return Text("All Apps", bundle: .module, comment: "apps list section header text")
             }
         }
     }
@@ -120,8 +111,8 @@ struct AppsListView : View {
 
         var localizedTitle: Text {
             switch self {
-            case .available: return Text("Available Updates")
-            case .recent: return Text("Recently Updated")
+            case .available: return Text("Available Updates", bundle: .module, comment: "apps list section header text")
+            case .recent: return Text("Recently Updated", bundle: .module, comment: "apps list section header text")
             }
         }
     }
@@ -219,13 +210,13 @@ struct AppSectionItems : View {
 
         Group {
             if itemCount == 0 && refreshing == true {
-                Text("Loading…")
+                Text("Loading…", bundle: .module, comment: "apps list placeholder text while the catalog is loading")
             } else if itemCount == 0 && searchTextSource.isEmpty {
-                Text("No results")
+                Text("No results", bundle: .module, comment: "apps list placeholder text where there are no results to display")
             } else if itemCount == 0 {
                 // nothing; we don't know if it was empty or not
             } else if itemCount > displayCount {
-                Text("More…")
+                Text("More…", bundle: .module, comment: "apps list text at the bottom of the list when there are more results to show")
                     .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
                     .onAppear {
                         dbg("showing more items (\(displayCount) of \(items.count))")

@@ -42,7 +42,7 @@ import FairApp
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
-            QuickAction(id: "refresh-action", localizedTitle: loc("Refresh Catalog")) { completion in
+            QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", bundle: .module, comment: "action button title for refreshing the catalog")) { completion in
                 dbg("refresh-action")
                 Task {
                     //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
@@ -288,23 +288,23 @@ extension FairManager {
     @ViewBuilder func launchPrivacyButton() -> some View {
         if self.appLaunchPrivacy == false {
         } else if self.appLaunchPrivacyDeactivator == nil {
-            Text("Ready")
+            Text("Ready", bundle: .module, comment: "launch privacy activate toolbar button title when in the inactive state")
                 .label(image: FairSymbol.shield_slash_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.brown, Color.gray))
                 .button {
                     await self.trying {
                         try await self.enableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in ") + Text(duration: self.appLaunchPrivacyDuration))
+                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in \(Text(duration: self.appLaunchPrivacyDuration))", bundle: .module, comment: "launch privacy activate toolbar button tooltip when in the inactive state"))
         } else {
-            Text("Active")
+            Text("Active", bundle: .module, comment: "launch privacy button toolbar button title when in the activate state")
                 .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
                 .button {
                     await self.trying {
                         try self.disableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App Launch Privacy is currently active for ") + Text(duration: self.appLaunchPrivacyDuration) + Text(". Click this button to deactivate privacy mode."))
+                .help(Text("App Launch Privacy is currently active for \(Text(duration: self.appLaunchPrivacyDuration)). Click this button to deactivate privacy mode.", bundle: .module, comment: "launch privacy button toolbar button title when in the inactivate state"))
         }
     }
 }

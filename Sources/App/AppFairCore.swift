@@ -16,9 +16,9 @@ public extension AppSource {
     var label: Label<Text, Image> {
         switch self {
         case .fairapps:
-            return Label { Text("Fairground") } icon: { symbol.image }
+            return Label { Text("Fairground", bundle: .module, comment: "app source title for fairground apps") } icon: { symbol.image }
         case .homebrew:
-            return Label { Text("Homebrew") } icon: { symbol.image }
+            return Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew apps") } icon: { symbol.image }
         }
     }
 
@@ -205,8 +205,8 @@ struct AppFairCommands: Commands {
 //            ShareAppButton()
 //        }
 
-        CommandMenu(Text("Fair")) {
-            Text("Reload Catalog")
+        CommandMenu(Text("Fair", bundle: .module, comment: "menu title for fairgroup actions")) {
+            Text("Refresh Catalogs", bundle: .module, comment: "menu title for refreshing the app catalog")
                 .button(action: reloadAll)
                 .keyboardShortcut("R")
 //                .disabled(reloadCommand == nil)
@@ -391,14 +391,14 @@ public extension View {
                             .focusable(false)
                             .frame(maxHeight: 200)
                     } label: {
-                        Text("More Info")
+                        Text("More Info", bundle: .module, comment: "error dialog disclosure button title for showing more information")
                     }
                 }
 
                 Button {
                     errorBinding.wrappedValue.removeFirst()
                 } label: {
-                    Text("OK").padding()
+                    Text("OK", bundle: .module, comment: "error dialog button to dismiss the error").padding()
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -480,26 +480,26 @@ enum SidebarItem : Hashable {
         case .fairapps:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Apps"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
+                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
             case .recent:
-                return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
             case .installed:
-                return TintedLabel(title: Text("Installed"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
             case .updated:
-                return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
             case .category(let category):
                 return category.tintedLabel
             }
         case .homebrew:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Casks"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
+                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
             case .installed:
-                return TintedLabel(title: Text("Installed"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
             case .recent: // not supported with casks
-                return TintedLabel(title: Text("Recent"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
             case .updated:
-                return TintedLabel(title: Text("Updated"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
             case .category(let category):
                 return category.tintedLabel
             }
@@ -562,7 +562,7 @@ struct NavigationRootView : View {
                 }
 
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
-                    Text("Reload")
+                    Text("Reload", bundle: .module, comment: "refresh catalog toolbar button title")
                         .label(image: FairSymbol.arrow_triangle_2_circlepath.symbolRenderingMode(.hierarchical).foregroundStyle(Color.teal, Color.yellow, Color.blue))
                         .button {
                             await fairManager.trying {
@@ -570,7 +570,7 @@ struct NavigationRootView : View {
                             }
                         }
                         .hoverSymbol(activeVariant: .fill)
-                        .help(Text("Refresh the app catalogs"))
+                        .help(Text("Refresh the app catalogs", bundle: .module, comment: "refresh catalog toolbar button tooltip"))
                 }
 
 
@@ -705,9 +705,9 @@ public struct AppDetailView : View {
             case .app(let app):
                 CatalogItemView(info: app)
             case .none:
-                Text("No Selection").font(.title)
+                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder").font(.title)
             case .some(.none):
-                Text("No Selection").font(.title)
+                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder").font(.title)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -782,86 +782,86 @@ public extension AppCategory {
     var text: Text {
         switch self {
         case .business:
-            return Text("appfair.business")
+            return Text("Business", bundle: .module, comment: "app category label for appfair.business")
         case .developertools:
-            return Text("appfair.developer-tools")
+            return Text("Developer Tools", bundle: .module, comment: "app category label for appfair.developer-tools")
         case .education:
-            return Text("appfair.education")
+            return Text("Education", bundle: .module, comment: "app category label for appfair.education")
         case .entertainment:
-            return Text("appfair.entertainment")
+            return Text("Entertainment", bundle: .module, comment: "app category label for appfair.entertainment")
         case .finance:
-            return Text("appfair.finance")
+            return Text("Finance", bundle: .module, comment: "app category label for appfair.finance")
         case .graphicsdesign:
-            return Text("appfair.graphics-design")
+            return Text("Graphics Design", bundle: .module, comment: "app category label for appfair.graphics-design")
         case .healthcarefitness:
-            return Text("appfair.healthcare-fitness")
+            return Text("Healthcare & Fitness", bundle: .module, comment: "app category label for appfair.healthcare-fitness")
         case .lifestyle:
-            return Text("appfair.lifestyle")
+            return Text("Lifestyle", bundle: .module, comment: "app category label for appfair.lifestyle")
         case .medical:
-            return Text("appfair.medical")
+            return Text("Medical", bundle: .module, comment: "app category label for appfair.medical")
         case .music:
-            return Text("appfair.music")
+            return Text("Music", bundle: .module, comment: "app category label for appfair.music")
         case .news:
-            return Text("appfair.news")
+            return Text("News", bundle: .module, comment: "app category label for appfair.news")
         case .photography:
-            return Text("appfair.photography")
+            return Text("Photography", bundle: .module, comment: "app category label for appfair.photography")
         case .productivity:
-            return Text("appfair.productivity")
+            return Text("Productivity", bundle: .module, comment: "app category label for appfair.productivity")
         case .reference:
-            return Text("appfair.reference")
+            return Text("Reference", bundle: .module, comment: "app category label for appfair.reference")
         case .socialnetworking:
-            return Text("appfair.social-networking")
+            return Text("Social Networking", bundle: .module, comment: "app category label for appfair.social-networking")
         case .sports:
-            return Text("appfair.sports")
+            return Text("Sports", bundle: .module, comment: "app category label for appfair.sports")
         case .travel:
-            return Text("appfair.travel")
+            return Text("Travel", bundle: .module, comment: "app category label for appfair.travel")
         case .utilities:
-            return Text("appfair.utilities")
+            return Text("Utilities", bundle: .module, comment: "app category label for appfair.utilities")
         case .video:
-            return Text("appfair.video")
+            return Text("Video", bundle: .module, comment: "app category label for appfair.video")
         case .weather:
-            return Text("appfair.weather")
+            return Text("Weather", bundle: .module, comment: "app category label for appfair.weather")
 
         case .games:
-            return Text("appfair.games")
+            return Text("Games", bundle: .module, comment: "app category label for appfair.games")
         case .actiongames:
-            return Text("appfair.action-games")
+            return Text("Action Games", bundle: .module, comment: "app category label for appfair.action-games")
         case .adventuregames:
-            return Text("appfair.adventure-games")
+            return Text("Adventure Games", bundle: .module, comment: "app category label for appfair.adventure-games")
         case .arcadegames:
-            return Text("appfair.arcade-games")
+            return Text("Arcade Games", bundle: .module, comment: "app category label for appfair.arcade-games")
         case .boardgames:
-            return Text("appfair.board-games")
+            return Text("Board Games", bundle: .module, comment: "app category label for appfair.board-games")
         case .cardgames:
-            return Text("appfair.card-games")
+            return Text("Card Games", bundle: .module, comment: "app category label for appfair.card-games")
         case .casinogames:
-            return Text("appfair.casino-games")
+            return Text("Casino Games", bundle: .module, comment: "app category label for appfair.casino-games")
         case .dicegames:
-            return Text("appfair.dice-games")
+            return Text("Dice Games", bundle: .module, comment: "app category label for appfair.dice-games")
         case .educationalgames:
-            return Text("appfair.educational-games")
+            return Text("Educational Games", bundle: .module, comment: "app category label for appfair.educational-games")
         case .familygames:
-            return Text("appfair.family-games")
+            return Text("Family Games", bundle: .module, comment: "app category label for appfair.family-games")
         case .kidsgames:
-            return Text("appfair.kids-games")
+            return Text("Kids Games", bundle: .module, comment: "app category label for appfair.kids-games")
         case .musicgames:
-            return Text("appfair.music-games")
+            return Text("Music Games", bundle: .module, comment: "app category label for appfair.music-games")
         case .puzzlegames:
-            return Text("appfair.puzzle-games")
+            return Text("Puzzle Games", bundle: .module, comment: "app category label for appfair.puzzle-games")
         case .racinggames:
-            return Text("appfair.racing-games")
+            return Text("Racing Games", bundle: .module, comment: "app category label for appfair.racing-games")
         case .roleplayinggames:
-            return Text("appfair.role-playing-games")
+            return Text("Role Playing Games", bundle: .module, comment: "app category label for appfair.role-playing-games")
         case .simulationgames:
-            return Text("appfair.simulation-games")
+            return Text("Simulation Games", bundle: .module, comment: "app category label for appfair.simulation-games")
         case .sportsgames:
-            return Text("appfair.sports-games")
+            return Text("Sports Games", bundle: .module, comment: "app category label for appfair.sports-games")
         case .strategygames:
-            return Text("appfair.strategy-games")
+            return Text("Strategy Games", bundle: .module, comment: "app category label for appfair.strategy-games")
         case .triviagames:
-            return Text("appfair.trivia-games")
+            return Text("Trivia Games", bundle: .module, comment: "app category label for appfair.trivia-games")
         case .wordgames:
-            return Text("appfair.word-games")
+            return Text("Word Games", bundle: .module, comment: "app category label for appfair.word-games")
         }
     }
 
@@ -1116,7 +1116,7 @@ struct SidebarView: View {
                     }
                     .symbolVariant(.fill)
                 } header: {
-                    sectionHeader(label: Label(title: { Text("Categories") }, icon: { FairSymbol.list_dash.image }), updating: homeBrewInv.updateInProgress != 0)
+                    sectionHeader(label: Label(title: { Text("Categories", bundle: .module, comment: "sidebar section header title for homebrew app categories") }, icon: { FairSymbol.list_dash.image }), updating: homeBrewInv.updateInProgress != 0)
                 }
             }
         }
@@ -1165,7 +1165,7 @@ struct SidebarView: View {
         let label = selection.item.label(for: source)
         var navtitle = label.title
         if !searchText.isEmpty {
-            navtitle = navtitle + Text(": ") + Text(searchText)
+            navtitle = Text("\(navtitle): \(Text(searchText))", bundle: .module, comment: "formatting string separating navigation title from search text")
         }
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
@@ -1278,15 +1278,6 @@ extension Text {
 }
 
 // MARK: Parochial (package-local) Utilities
-
-/// Returns the localized string for the current module.
-///
-/// - Note: This is boilerplate package-local code that could be copied
-///  to any Swift package with localized strings.
-internal func loc(_ key: String, tableName: String? = nil, comment: String? = nil) -> String {
-    // TODO: use StringLocalizationKey
-    NSLocalizedString(key, tableName: tableName, bundle: .module, comment: comment ?? "")
-}
 
 /// Work-in-Progress marker
 @available(*, deprecated, message: "work in progress")

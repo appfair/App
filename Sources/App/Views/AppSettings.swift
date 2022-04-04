@@ -16,7 +16,7 @@ public struct AppSettingsView: View {
             GeneralSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("General", comment: "General preferences tab title")
+                    Text("General", bundle: .module, comment: "general preferences tab title")
                         .label(image: FairSymbol.switch_2)
                         .symbolVariant(.fill)
                 }
@@ -24,7 +24,7 @@ public struct AppSettingsView: View {
             FairAppsSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Fairapps", comment: "Fairapps preferences tab title")
+                    Text("Fairapps", bundle: .module, comment: "fairapps preferences tab title")
                         .label(image: AppSource.fairapps.symbol)
                         .symbolVariant(.fill)
                 }
@@ -32,7 +32,7 @@ public struct AppSettingsView: View {
             HomebrewSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Homebrew", comment: "Homebrew preferences tab title")
+                    Text("Homebrew", bundle: .module, comment: "homebrew preferences tab title")
                         .label(image: AppSource.homebrew.symbol)
                         .symbolVariant(.fill)
                 }
@@ -40,7 +40,7 @@ public struct AppSettingsView: View {
             PrivacySettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Privacy", comment: "Privacy preferences tab title")
+                    Text("Privacy", bundle: .module, comment: "privacy preferences tab title")
                         .label(image: FairSymbol.hand_raised)
                         .symbolVariant(.fill)
                 }
@@ -48,7 +48,7 @@ public struct AppSettingsView: View {
             AdvancedSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Advanced", comment: "Advanced preferences tab title")
+                    Text("Advanced", bundle: .module, comment: "advanced preferences tab title")
                         .label(image: FairSymbol.gearshape)
                         .symbolVariant(.fill)
                 }
@@ -79,7 +79,7 @@ struct HomebrewSettingsView: View {
             Form {
                 HStack {
                     Toggle(isOn: $homeBrewInv.enableHomebrew) {
-                        Text("Homebrew Casks")
+                        Text("Homebrew Casks", bundle: .module, comment: "settings switch title for enabling homebrew cask support")
                     }
                     .onChange(of: homeBrewInv.enableHomebrew) { enabled in
                         if enabled == false {
@@ -90,89 +90,79 @@ struct HomebrewSettingsView: View {
                             }
                         }
                     }
-
-    //                let installedVersion = try? caskManager.installedBrewVersion()
-    //                if let installedVersion = installedVersion {
-    //                    (Text("Installed version: \(installedVersion.version)")
-    //                     + Text(" (") + Text(installedVersion.updated, format: .relative(presentation: .numeric, unitsStyle: .wide)) + Text(")"))
-    //                        .foregroundColor(.secondary)
-    //                        .textSelection(.enabled)
-    //                } else {
-    //                    Text("Not Installed")
-    //                }
                 }
                 .toggleStyle(.switch)
-                .help(Text("Adds homebrew Casks to the sources of available apps."))
+                .help(Text("Adds homebrew Casks to the sources of available apps.", bundle: .module, comment: "tooltip text for switch to enable homebrew support"))
 
                 Group {
                     Group {
                         Toggle(isOn: $homeBrewInv.manageCaskDownloads) {
-                            Text("Use integrated download manager")
+                            Text("Use integrated download manager", bundle: .module, comment: "homebrew preference checkbox for enabling the integrated download manager")
                         }
-                            .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface."))
+                            .help(Text("Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface.", bundle: .module, comment: "tooltip help text for preference to enable integrated download homebrew download manager"))
 
                         Toggle(isOn: $homeBrewInv.forceInstallCasks) {
-                            Text("Install overwrites previous app installation")
+                            Text("Install overwrites previous app installation", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version."))
+                            .help(Text("Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version.", bundle: .module, comment: "tooltip help text for preference"))
 
                         Toggle(isOn: $homeBrewInv.quarantineCasks) {
-                            Text("Quarantine installed apps")
+                            Text("Quarantine installed apps", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run."))
+                            .help(Text("Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run.", bundle: .module, comment: "tooltip help text for homebrew preference checkbox"))
 
                         Toggle(isOn: $homeBrewInv.permitGatekeeperBypass) {
-                            Text("Permit gatekeeper bypass")
+                            Text("Permit gatekeeper bypass", bundle: .module, comment: "tooltip help text for homebrew preference")
                         }
-                            .help(Text("Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched."))
+                            .help(Text("Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched.", bundle: .module, comment: "tooltip help text for homebrew preference"))
 
                         Toggle(isOn: $homeBrewInv.installDependencies) {
-                            Text("Automatically install dependencies")
+                            Text("Automatically install dependencies", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Automatically attempt to install any required dependencies for a cask."))
+                            .help(Text("Automatically attempt to install any required dependencies for a cask.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
 
                         Toggle(isOn: $homeBrewInv.ignoreAutoUpdatingAppUpdates) {
-                            Text("Exclude auto-updating apps from updates list")
+                            Text("Exclude auto-updating apps from updates list", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched."))
+                            .help(Text("If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
 
                         Toggle(isOn: $homeBrewInv.zapDeletedCasks) {
-                            Text("Clear all app info on delete")
+                            Text("Clear all app info on delete", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app."))
+                            .help(Text("When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
                     }
 
                     Group {
 
                         Toggle(isOn: $homeBrewInv.allowCasksWithoutApp) {
-                            Text("Show casks without app artifacts")
+                            Text("Show casks without app artifacts", bundle: .module, comment: "homebrew preference checkbox")
                                 //.label(.bolt)
                         }
-                            .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services."))
+                            .help(Text("This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
 
                         Toggle(isOn: $homeBrewInv.requireCaskChecksum) {
-                            Text("Require cask checksum")
+                            Text("Require cask checksum", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default."))
+                            .help(Text("Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
 
                         Toggle(isOn: $homeBrewInv.enableBrewSelfUpdate) {
-                            Text("Enable Homebrew self-update")
+                            Text("Enable Homebrew self-update", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Allow Homebrew to update itself while installing other packages."))
+                            .help(Text("Allow Homebrew to update itself while installing other packages.", bundle: .module, comment: "homebrew preference checkbox tooltip"))
 
                         // switching between the system-installed brew and locally cached brew doesn't yet work
                         #if DEBUG
                         #if false
                         Toggle(isOn: $homeBrewInv.useSystemHomebrew) {
-                            Text("Use system Homebrew installation")
+                            Text("Use system Homebrew installation", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Use the system-installed Homebrew installation"))
+                            .help(Text("Use the system-installed Homebrew installation", bundle: .module, comment: "homebrew preference checkbox tooltip"))
                             .disabled(!HomebrewInventory.globalBrewInstalled)
                         #endif
                         Toggle(isOn: $homeBrewInv.enableBrewAnalytics) {
-                            Text("Enable installation telemetry")
+                            Text("Enable installation telemetry", bundle: .module, comment: "homebrew preference checkbox")
                         }
-                            .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics"))
+                            .help(Text("Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics", bundle: .module, comment: "homebrew preference checkbox tooltip"))
                         #endif
                     }
                     .disabled(homeBrewInv.enableHomebrew == false)
@@ -193,7 +183,7 @@ struct HomebrewSettingsView: View {
                             Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
                             Location: \((homeBrewInv.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
                             Installed: \(isBrewInstalled ? "yes" : "no")
-                            """)
+                            """, bundle: .module, comment: "homebrew preference description")
                             // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
@@ -204,12 +194,12 @@ struct HomebrewSettingsView: View {
                                 .controlSize(.small)
                                 .frame(height: 12)
                                 .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
-                            Text("Reveal")
+                            Text("Reveal", bundle: .module, comment: "homebrew preference button for showing locating of homebrew installation")
                                 .button {
                                     NSWorkspace.shared.activateFileViewerSelecting([homeBrewInv.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
                                 }
                                 .disabled(isBrewInstalled == false)
-                                .help(Text("Browse the Homebrew installation folder using the Finder"))
+                                .help(Text("Browse the Homebrew installation folder using the Finder", bundle: .module, comment: "homebrew preference button tooltip"))
 
                             #if DEBUG
                             Text(isBrewInstalled ? "Reset Homebrew" : "Setup Homebrew")
@@ -237,7 +227,7 @@ struct HomebrewSettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                 } label: {
-                    Text("About Homebrew Casks")
+                    Text("About Homebrew Casks", bundle: .module, comment: "homebrew preference group box title")
                         .font(.headline)
                 }
             }
@@ -272,11 +262,11 @@ struct FairAppsSettingsView: View {
             }
 
             Toggle(isOn: $fairAppInv.showPreReleases) {
-                Text("Show Pre-Releases")
+                Text("Show Pre-Releases", bundle: .module, comment: "fairapps preference checkbox")
             }
-                .help(Text("Display releases that are not yet production-ready according to the developer's standards."))
+                .help(Text("Display releases that are not yet production-ready according to the developer's standards.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
 
-            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.")
+            Text("Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.", bundle: .module, comment: "fairapps preference description")
                 .font(.body)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
@@ -299,9 +289,9 @@ struct GeneralSettingsView: View {
             Divider()
 
             Toggle(isOn: $iconBadge) {
-                Text("Badge App Icon with update count")
+                Text("Badge App Icon with update count", bundle: .module, comment: "fairapps preference checkbox")
             }
-                .help(Text("Show the number of updates that are available to install."))
+                .help(Text("Show the number of updates that are available to install.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
         }
     }
 }
@@ -319,9 +309,9 @@ extension ThemeStyle : Identifiable {
 
     public var label: Text {
         switch self {
-        case .system: return Text("System")
-        case .light: return Text("Light")
-        case .dark: return Text("Dark")
+        case .system: return Text("System", bundle: .module, comment: "general preference for theme style in popup menu")
+        case .light: return Text("Light", bundle: .module, comment: "general preference for theme style in popup menu")
+        case .dark: return Text("Dark", bundle: .module, comment: "general preference for theme style in popup menu")
         }
     }
 
@@ -345,7 +335,7 @@ struct ThemeStylePicker: View {
                 themeStyle.label
             }
         } label: {
-            Text("Theme:")
+            Text("Theme:", bundle: .module, comment: "picker title for general preference for theme style")
         }
         .radioPickerStyle()
     }
@@ -366,7 +356,7 @@ struct AppRiskPicker: View {
                     }
             }
         } label: {
-            Text("Risk Exposure:")
+            Text("Risk Exposure:", bundle: .module, comment: "fairapps preference title for risk management")
         }
         .radioPickerStyle()
     }
@@ -389,26 +379,26 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 Toggle(isOn: $fairAppInv.relaunchUpdatedApps) {
-                    Text("Re-launch updated apps")
+                    Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
                 }
-                    .help(Text("Automatically re-launch an app when it has bee updated. Otherwise, the updated version will be used after quitting and re-starting the app."))
+                    .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
 
                 Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
-                    Text("Keep catalog app up to date")
+                    Text("Keep catalog app up to date", bundle: .module, comment: "preference checkbox")
                 }
-                .help(Text("Automatically download and apply updates to the App Fair catalog browser app."))
+                .help(Text("Automatically download and apply updates to the App Fair catalog browser app.", bundle: .module, comment: "preference checkbox tooltip"))
                 .toggleStyle(.checkbox)
 
                 Toggle(isOn: $fairManager.enableInstallWarning) {
-                    Text("Require app install confirmation")
+                    Text("Require app install confirmation", bundle: .module, comment: "preference checkbox")
                 }
-                .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation."))
+                .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
                 .toggleStyle(.checkbox)
 
                 Toggle(isOn: $fairManager.enableDeleteWarning) {
-                    Text("Require app delete confirmation")
+                    Text("Require app delete confirmation", bundle: .module, comment: "preference checkbox")
                 }
-                .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation."))
+                .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
                 .toggleStyle(.checkbox)
 
                 Divider()
@@ -458,10 +448,10 @@ struct PrivacySettingsView : View {
             Form {
                 HStack {
                     Toggle(isOn: $fairManager.appLaunchPrivacy) {
-                        Text("App Launch Privacy:")
+                        Text("App Launch Privacy:", bundle: .module, comment: "app privacy preference enable switch")
                     }
                     .toggleStyle(.switch)
-                    .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry."))
+                    .help(Text("By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry.", bundle: .module, comment: "app privacy preference enable switch tooltip"))
                     .onChange(of: fairManager.appLaunchPrivacy) { enabled in
                         self.fairManager.handleChangeAppLaunchPrivacy(enabled: enabled)
                     }
@@ -482,11 +472,11 @@ struct PrivacySettingsView : View {
                     Text(duration: 60.0 * 60.0 * 12.0).tag(60.0 * 60.0 * 12.0) // 12 hours
                     Text(duration: 60.0 * 60.0 * 24.0).tag(60.0 * 60.0 * 24.0) // 24 hours
 
-                    Text("Until App Fair Exit").tag(TimeInterval(60.0 * 60.0 * 24.0 * 365.0 * 100.0)) // 100 years is close enough to forever
+                    Text("Until App Fair Exit", bundle: .module, comment: "app launch privacy preference menu label").tag(TimeInterval(60.0 * 60.0 * 24.0 * 365.0 * 100.0)) // 100 years is close enough to forever
                 } label: {
-                    Text("Duration:")
+                    Text("Duration:", bundle: .module, comment: "app launch privacy activation duration menu title")
                 }
-                .help(Text("The amount of time that App Launch Privacy will remain enabled before it is automatically disabled. Exiting the App Fair app will always disable App Launch privacy mode."))
+                .help(Text("The amount of time that App Launch Privacy will remain enabled before it is automatically disabled. Exiting the App Fair app will always disable App Launch privacy mode.", bundle: .module, comment: "app launch privacy duration menu tooltip"))
                 .pickerStyle(.menu)
                 .disabled(fairManager.appLaunchPrivacy == false)
                 .fixedSize() // otherwise the picker expands greedily
@@ -505,14 +495,14 @@ struct PrivacySettingsView : View {
                     App Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.
 
                     Privacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place.
-                    """)
+                    """, bundle: .module, comment: "app launch privacy description text")
                 .font(.body)
                 // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding()
             } label: {
-                Text("About App Launch Privacy")
+                Text("About App Launch Privacy", bundle: .module, comment: "app launch privacy description group box title")
                     .font(.headline)
             }
         }
@@ -526,13 +516,13 @@ struct PrivacySettingsView : View {
                 if fairManager.appLaunchPrivacy == true {
                     HStack {
                         TextField(text: .constant(scriptFolder)) {
-                            Text("Installed at:")
+                            Text("Installed at:", bundle: .module, comment: "app launch privacy text field label for installation location")
                         }
                         .textFieldStyle(.plain)
                         .textSelection(.disabled)
                         .focusable(false)
 
-                        Text("Show")
+                        Text("Show", bundle: .module, comment: "app launch privacy button title for displaying location of installed script")
                             .button {
                                 NSWorkspace.shared.selectFile(scriptURL.appendingPathExtension("swift").path, inFileViewerRootedAtPath: scriptFolder)
                             }
@@ -540,13 +530,13 @@ struct PrivacySettingsView : View {
                 } else {
                     HStack {
                         TextField(text: .constant(scriptFolder)) {
-                            Text("Install location:")
+                            Text("Install location:", bundle: .module, comment: "app launch privacy text field title for script installation location")
                         }
                         .textFieldStyle(.plain)
                         .textSelection(.disabled)
                         .focusable(false)
 
-                        Text("Preview")
+                        Text("Preview", bundle: .module, comment: "app launch privacy button title for previewing location where script will be installed")
                             .button {
                                 if !FileManager.default.isReadableFile(atPath: scriptURL.path) {
                                     // save the script so we can preview it
