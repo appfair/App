@@ -181,8 +181,8 @@ private let brewInstallRootDefault: URL = {
     /// ~/Library/Application Support/app.App-Fair/appfair-homebrew/
     static let localAppSupportFolder: URL = appSupportFolder(named: "appfair-homebrew/")
 
-    /// ~/Library/Application Support/app.App-Fair/Homebrew/downlods/
-    static let downloadAppSupportFolder: URL = appSupportFolder(named: "Homebrew/downloads/")
+    /// Standard homebrew download cache folder: `~Library/Caches/Homebrew/downloads/`
+    static let caskDownloadCacheFolder: URL = URL(fileURLWithPath: "Homebrew/downloads/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
 
     /// ~/Library/Application Support/app.App-Fair/Homebrew/Cask/
     static let caskAppSupportFolder: URL = appSupportFolder(named: "Homebrew/Cask/")
@@ -440,10 +440,10 @@ private let brewInstallRootDefault: URL = {
 return text returned of (display dialog "\(prompt)" with title "\(title)" default answer "" buttons {"Cancel", "OK"} default button "OK" with hidden answer)
 """
 
-            dbg("creating sudo script:", askPassScript)
             let scriptFile = URL.tmpdir
                 .appendingPathComponent("askpass-" + cmd.utf8Data.sha256().hex())
                 .appendingPathExtension("scpt")
+            dbg("creating sudo script:", scriptFile)
             scpt = scriptFile
             try askPassScript.write(to: scriptFile, atomically: true, encoding: .utf8)
             try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o777)], ofItemAtPath: scriptFile.path) // set the executable bit
@@ -475,7 +475,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
         dbg("downloading:", downloadURL.absoluteString)
 
-        let cacheDir = Self.downloadAppSupportFolder
+        let cacheDir = Self.caskDownloadCacheFolder
         dbg("checking cache:", cacheDir.path)
         try? FileManager.default.createDirectory(at: Self.caskAppSupportFolder, withIntermediateDirectories: true, attributes: nil)
         try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Application Support/app.App-Fair/Homebrew/Cask/iterm2--3.4.15.zip`
@@ -548,8 +548,6 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             }
         }
 
-        let manageDownloads = self.manageCaskDownloads
-
         let (downloadURL, expectedHash) = (candidateURL, sha256)
 
         if expectedHash == nil && self.requireCaskChecksum == true {
@@ -558,7 +556,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
 
-        if manageDownloads == true {
+        if self.manageCaskDownloads == true {
             try Task.checkCancellation()
             try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
         }
@@ -587,7 +585,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             cmd += " --require-sha"
         }
 
-        cmd += " --cask " + caskArg
+        cmd += " --cask " + "'" + caskArg + "'" // handle spaces in cask arg
 
         let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
 
@@ -626,7 +624,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         var cmd = localBrewCommand
         cmd += " info --json=v2 --cask "
-        cmd += caskPath.path
+        cmd += "'" + caskPath.path + "'" // handle spaces in path
         let result = try await run(command: cmd, toolName: .init("info"), askPassAppInfo: cask)
         dbg("brew info result:", result)
 
