@@ -6,4 +6,4 @@
 "Welcome to %@!" = "Bienvenue sur %@ !";
 
 /* app entitlement info for device.bluetooth */
-"Access bluetooth." = "Bluetooth access.";
+"Access bluetooth." = "Access bluetooth devices.";
