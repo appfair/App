@@ -39,7 +39,7 @@
 "Access Audio Input devices." = "Access Audio Input devices.";
 
 /* app entitlement info for device.bluetooth */
-"Access bluetooth." = "Access bluetooth.";
+"Access bluetooth." = "Access Bluetooth.";
 
 /* app entitlement info for device.firewire */
 "Access Firewire devices." = "Access Firewire devices.";
@@ -72,7 +72,7 @@
 "Address Book" = "Address Book";
 
 /* tooltip text for switch to enable homebrew support */
-"Adds homebrew Casks to the sources of available apps." = "Adds homebrew Casks to the sources of available apps.";
+"Adds homebrew Casks to the sources of available apps." = "Adds homebrew casks to the sources of available apps.";
 
 /* advanced preferences tab title */
 "Advanced" = "Advanced";
@@ -127,8 +127,6 @@
 
 /* app entitlement title for device.audio-video-bridging */
 "Audio/Video Bridging" = "Audio/Video Bridging";
-
-/* No comment provided by engineer. */
 "Auto-Updates" = "Auto-Updates";
 
 /* homebrew preference checkbox tooltip */
@@ -148,8 +146,6 @@
 
 /* fairapps preference checkbox */
 "Badge App Icon with update count" = "Badge App Icon with update count";
-
-/* No comment provided by engineer. */
 "Based on the number of permission categories this app requests this app can be considered: " = "Based on the number of permission categories this app requests this app can be considered: ";
 
 /* app entitlement title for device.bluetooth */
@@ -175,8 +171,6 @@
 
 /* cancel button title for prompt */
 "Cancel" = "Cancel";
-
-/* No comment provided by engineer. */
 "Cancel " = "Cancel ";
 
 /* app category label for appfair.card-games */
@@ -411,8 +405,6 @@
 
 /* homebrew preference checkbox */
 "Install overwrites previous app installation" = "Install overwrites previous app installation";
-
-/* No comment provided by engineer. */
 "Installation artifact cannot be verified because it has no associated SHA-256 checksum." = "Installation artifact cannot be verified because it has no associated SHA-256 checksum.";
 
 /* fairapps sidebar category title
@@ -547,8 +539,6 @@
 
 /* app catalog entry info link tooltip */
 "Opens link to the landing page for this app at: %@" = "Opens link to the landing page for this app at: %@";
-
-/* No comment provided by engineer. */
 "Opens your web browsers and visits the developer site" = "Opens your web browsers and visits the developer site";
 
 /* risk assessment label 6 */
@@ -743,7 +733,7 @@
 "Risk assessment is only available for App Fair Fairground apps" = "Risk assessment is only available for App Fair Fairground apps";
 
 /* placeholder string */
-"Risk assessment unavailable for Homebrew Casks" = "Risk assessment unavailable for Homebrew Casks";
+"Risk assessment unavailable for Homebrew Casks" = "Risk assessment unavailable for homebrew casks";
 
 /* fairapps preference title for risk management */
 "Risk Exposure:" = "Risk Exposure:";
@@ -764,7 +754,7 @@
 "Sandbox" = "Sandbox";
 
 /* app catalog cask entry preview tab title */
-"Screen Shots" = "Screen Shots";
+"Screen Shots" = "Screenshots";
 
 /* app entitlement title for scripting-targets */
 "Scripting Target" = "Scripting Target";
@@ -833,10 +823,10 @@
 "The number of downloads of this cask in the past 90 days" = "The number of downloads of this cask in the past 90 days";
 
 /* app catalog entry info link tooltip */
-"The page for the Homebrew Cask token" = "The page for the Homebrew Cask token";
+"The page for the Homebrew Cask token" = "The page for the homebrew cask token";
 
 /* app entitlement info for app-sandbox */
-"The Sandbox entitlement entitlement ensures that the app will run in a secure container." = "The Sandbox entitlement entitlement ensures that the app will run in a secure container.";
+"The Sandbox entitlement entitlement ensures that the app will run in a secure container." = "The sandbox entitlement entitlement ensures that the app will run in a secure container.";
 
 /* app catalog entry info link tooltip */
 "The SHA-256 checksum for the app download" = "The SHA-256 checksum for the app download";
@@ -928,8 +918,6 @@
 
 /* app category label for appfair.video */
 "Video" = "Video";
-
-/* No comment provided by engineer. */
 "Visit App Issues Page" = "Visit App Issues Page";
 
 /* install button confirmation dialog visit discussions button text */
@@ -946,16 +934,15 @@
 
 /* homebrew preference checkbox tooltip */
 "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";
-
-/* No comment provided by engineer. */
 "Whether this app handles updating itself" = "Whether this app handles updating itself";
 
 /* tooltip help text for preference */
-"Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version." = "Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version.";
+"Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version." = "Whether to overwrite a prior installation of a given cask. This could cause a newer version of an app to be overwritten by an earlier version.";
 
 /* tooltip help text for preference to enable integrated download homebrew download manager */
-"Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface." = "Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface.";
+"Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface." = "Whether to use the built-in download manager to handle downloading and previewing cask artifacts. This permits cask installation to be monitored and cancelled from within the app. Turning off this preference causes brew to use cURL for downloading, which will not report progress in the user-interface.";
 
 /* app category label for appfair.word-games */
 "Word Games" = "Word Games";
+
 
