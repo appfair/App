@@ -48,9 +48,9 @@ private let enableHomebrewDefault = true
 /// The cache policy to use when loading data
 private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
 
-/// ~/Library/Caches/appfair-homebrew/Homebrew/
+/// ~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/
 private let brewInstallRootDefault: URL = {
-    URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: HomebrewInventory.localCacheFolder)
+    URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: HomebrewInventory.localAppSupportFolder)
 }()
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
@@ -166,18 +166,26 @@ private let brewInstallRootDefault: URL = {
         URL(string: name, relativeTo: caskMetadataBase)?.appendingPathExtension("json")
     }
 
-    private static func cacheFolder(named name: String) -> URL {
-        URL(fileURLWithPath: name, isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+    /// The previous location of homebrew installations: ~/Library/Caches/appfair-homebrew/
+    private static let homebrewSupportFolderOLD = URL(fileURLWithPath: "appfair-homebrew/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+
+
+    /// ~/Library/Application Support/app.App-Fair/
+    private static let appFairSupportFolder = URL(fileURLWithPath: "app.App-Fair", isDirectory: true, relativeTo: try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+
+    /// The given App Fair support folder name
+    private static func appSupportFolder(named name: String) -> URL {
+        URL(fileURLWithPath: name, isDirectory: true, relativeTo: appFairSupportFolder)
     }
 
-    /// ~/Library/Caches/appfair-homebrew/
-    static let localCacheFolder: URL = cacheFolder(named: "appfair-homebrew/")
+    /// ~/Library/Application Support/app.App-Fair/appfair-homebrew/
+    static let localAppSupportFolder: URL = appSupportFolder(named: "appfair-homebrew/")
 
-    /// ~/Library/Caches/Homebrew/downlods/
-    static let downloadCacheFolder: URL = cacheFolder(named: "Homebrew/downloads/")
+    /// ~/Library/Application Support/app.App-Fair/Homebrew/downlods/
+    static let downloadAppSupportFolder: URL = appSupportFolder(named: "Homebrew/downloads/")
 
-    /// ~/Library/Caches/Homebrew/Cask/
-    static let caskCacheFolder: URL = cacheFolder(named: "Homebrew/Cask/")
+    /// ~/Library/Application Support/app.App-Fair/Homebrew/Cask/
+    static let caskAppSupportFolder: URL = appSupportFolder(named: "Homebrew/Cask/")
 
     /// The path where cask metadata and links are stored
     var localCaskroom: URL {
@@ -254,8 +262,13 @@ private let brewInstallRootDefault: URL = {
     }
 
     /// The path to the `homebrew` command
-    var localBrewCommand: URL {
-        URL(fileURLWithPath: "bin/brew", relativeTo: useSystemHomebrew ? Self.globalBrewPath : brewInstallRoot)
+    var localBrewCommand: String {
+        let url = URL(fileURLWithPath: "bin/brew", relativeTo: useSystemHomebrew ? Self.globalBrewPath : brewInstallRoot)
+        var cmd = url.path
+        if cmd.contains(" ") {
+            cmd = "'" + cmd + "'" // commands with a space (e.g., ~/Library/Application Support/appfair-homebrew/Homebrew/bin/brew) need to be quotes to be able to be run
+        }
+        return cmd
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
@@ -394,7 +407,7 @@ private let brewInstallRootDefault: URL = {
         return cmd
     }
 
-    func run(command: String, toolName: String, askPassAppInfo: CaskItem? = nil) async throws -> String {
+    private func run(command: String, toolName: String, askPassAppInfo: CaskItem? = nil) async throws -> String {
 
         // Installers and updaters may sometimes require a password, but we don't want to run every brew command as an administrator (via AppleScript's `with administrator privileges`), since most installations should not require root (see: https://docs.brew.sh/FAQ#why-does-homebrew-say-sudo-is-bad)
 
@@ -462,10 +475,10 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
         dbg("downloading:", downloadURL.absoluteString)
 
-        let cacheDir = Self.downloadCacheFolder
+        let cacheDir = Self.downloadAppSupportFolder
         dbg("checking cache:", cacheDir.path)
-        try? FileManager.default.createDirectory(at: Self.caskCacheFolder, withIntermediateDirectories: true, attributes: nil)
-        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Caches/Homebrew/Cask/iterm2--3.4.15.zip`
+        try? FileManager.default.createDirectory(at: Self.caskAppSupportFolder, withIntermediateDirectories: true, attributes: nil)
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Application Support/app.App-Fair/Homebrew/Cask/iterm2--3.4.15.zip`
 
         /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
         let targetURL = URL(fileURLWithPath: cask.cacheBasePath(for: candidateURL), relativeTo: cacheDir)
@@ -543,14 +556,14 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             throw AppError("Missing cryptographic checksum", failureReason: "The download has no SHA-256 checksum set and so its authenticity cannot be verified.")
         }
 
-        // default config is to use: HOMEBREW_CACHE=$HOME/Library/Caches/Homebrew
+        // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
 
         if manageDownloads == true {
             try Task.checkCancellation()
             try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
         }
 
-        var cmd = (self.localBrewCommand.path as NSString).abbreviatingWithTildeInPath
+        var cmd = (self.localBrewCommand as NSString).abbreviatingWithTildeInPath
 
         let op = update ? "upgrade" : "install" // could use "reinstall", but it doesn't seem to work with `HOMEBREW_INSTALL_FROM_API` when there is no local .git checkout
         cmd += " " + op
@@ -611,7 +624,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         // don't delete the local cask, since we want to re-use it for install
         // defer { try? FileManager.default.removeItem(at: caskPath) }
 
-        var cmd = localBrewCommand.path
+        var cmd = localBrewCommand
         cmd += " info --json=v2 --cask "
         cmd += caskPath.path
         let result = try await run(command: cmd, toolName: .init("info"), askPassAppInfo: cask)
@@ -643,7 +656,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
 
         dbg(cask.token)
-        var cmd = localBrewCommand.path
+        var cmd = localBrewCommand
         let op = "remove"
         cmd += " " + op
         if self.forceInstallCasks { cmd += " --force" }
@@ -701,7 +714,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                 return link
             }
 
-            // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Caches/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
+            // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
             for child in children {
                 if FileManager.default.isDirectory(url: child) == true {
                     dbg("checking sub-child:", child.path)
@@ -802,9 +815,21 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     /// Downloads and installs Homebrew from the source zip
     /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
     @discardableResult func installHomebrew(force: Bool = false, fromLocalOnly: Bool = false, retainCasks: Bool) async throws -> Bool {
+        // migrate old location from: ~/Library/Caches/appfair-homebrew
+        // to new location: ~/Library/Application Support/app.App-Fair/appfair-homebrew
+        if FileManager.default.isDirectory(url: Self.homebrewSupportFolderOLD) == true {
+            dbg("migrating home brew support from:", brewInstallRootDefault.path)
+            do {
+                try FileManager.default.createDirectory(at: Self.appFairSupportFolder, withIntermediateDirectories: true)
+                try FileManager.default.moveItem(at: Self.homebrewSupportFolderOLD, to: Self.localAppSupportFolder)
+            } catch {
+                dbg("error migrating homebrew support folder:", error)
+            }
+        }
+
         if force || (FileManager.default.isDirectory(url: brewInstallRootDefault) != true) {
-            let cacheFolder = Self.localCacheFolder
-            try FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true, attributes: [:])
+            let appSupportFolder = Self.localAppSupportFolder
+            try FileManager.default.createDirectory(at: appSupportFolder, withIntermediateDirectories: true, attributes: [:])
             try await installBrew(to: brewInstallRootDefault, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
             return true
         } else {

@@ -1,7 +1,9 @@
 # The App Fair
 
 **App Fair.app** provides the ability to browse, search for, download,
-install, and updates from the [App Fair](https://www.appfair.net).
+install, and updates from the App Fair app catalogs.
+For more information, visit the home page at
+[appfair.app](https://www.appfair.app).
 
 ## Description
 
@@ -10,16 +12,24 @@ applications from a free and unlimited online catalog.
 
 ## Installation
 
-[Homebrew](https://brew.sh/) users on macOS 12 ("Monterey") can install 
+The latest release can be downloaded from the homepage
+at [appfair.app](https://www.appfair.app), or from
+the [GitHub releases](https://github.com/App-Fair/App/releases)
+page.
+
+Alternatively,
+[Homebrew](https://brew.sh/) users can install 
 App Fair directly with the command:
 
 ```shell
 $ brew install appfair/app/app-fair
 ```
 
-App Fair will be installed in the `/Applications/App Fair/` folder,
-and can be launched by opening it in the Finder, or by running:
+## Development
 
-```
-$ open "/Applications/App Fair.app"
-```
+The App Fair.app is built and maintained using the
+[appfair.net](https://www.appfair.net) system.
+
+Information about contributing to the project can be
+found at [appfair.app](https://www.appfair.app).
+

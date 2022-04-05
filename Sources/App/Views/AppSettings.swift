@@ -196,7 +196,7 @@ struct HomebrewSettingsView: View {
                                 .opacity(homebrewOperationInProgress ? 1.0 : 0.0)
                             Text("Reveal", bundle: .module, comment: "homebrew preference button for showing locating of homebrew installation")
                                 .button {
-                                    NSWorkspace.shared.activateFileViewerSelecting([homeBrewInv.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Caches/appfair-homebrew/' is not an absolute URL”
+                                    NSWorkspace.shared.activateFileViewerSelecting([homeBrewInv.brewInstallRoot.absoluteURL]) // else: “NSURLs written to the pasteboard via NSPasteboardWriting must be absolute URLs.  NSURL 'Homebrew/ -- file:///Users/home/Library/Application Support/app.App-Fair/appfair-homebrew/' is not an absolute URL”
                                 }
                                 .disabled(isBrewInstalled == false)
                                 .help(Text("Browse the Homebrew installation folder using the Finder", bundle: .module, comment: "homebrew preference button tooltip"))
