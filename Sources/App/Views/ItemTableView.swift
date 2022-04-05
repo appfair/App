@@ -18,14 +18,14 @@ extension ItemTableView {
 
     func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, Date?>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: optionalDateComparator) { item in
-            Text(item[keyPath: path]?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
-            //Text(item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
+            Text(verbatim: item[keyPath: path]?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
+            //Text(verbatim: item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
         }
     }
 
     func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableRowValue, T>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: NumericComparator()) { item in
-            Text(item[keyPath: path].localizedNumber())
+            Text(verbatim: item[keyPath: path].localizedNumber())
         }
     }
 
@@ -38,13 +38,13 @@ extension ItemTableView {
     /// Non-optional string column
     func strColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, String>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: .localizedStandard) { item in
-            Text(item[keyPath: path])
+            Text(verbatim: item[keyPath: path])
         }
     }
 
     func ostrColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, String?>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: optionalStringComparator) { item in
-            Text(item[keyPath: path] ?? "")
+            Text(verbatim: item[keyPath: path] ?? "")
         }
     }
 
@@ -57,7 +57,7 @@ extension ItemTableView {
 
     func onumColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableRowValue, T?>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, AlignedText, Text> {
         TableColumn(key, value: path, comparator: optionalComparator(0)) { item in
-            AlignedText(text: Text(item[keyPath: path]?.localizedNumber() ?? ""), alignment: .trailing)
+            AlignedText(text: Text(verbatim: item[keyPath: path]?.localizedNumber() ?? ""), alignment: .trailing)
         }
     }
 }

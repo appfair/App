@@ -67,17 +67,17 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
     func textLabel() -> Text {
         switch self {
         case .harmless:
-            return Text("Harmless", bundle: .module, comment: "risk assessment label 1")
+            return Text("Harmless", bundle: .module, comment: "risk assessment label for level 1 harmless apps")
         case .mostlyHarmless:
-            return Text("Mostly Harmless", bundle: .module, comment: "risk assessment label 2")
+            return Text("Mostly Harmless", bundle: .module, comment: "risk assessment label for level 2 mostlyHarmless apps")
         case .risky:
-            return Text("Risky", bundle: .module, comment: "risk assessment label 3")
+            return Text("Risky", bundle: .module, comment: "risk assessment label for level 3 risky apps")
         case .hazardous:
-            return Text("Hazardous", bundle: .module, comment: "risk assessment label 4")
+            return Text("Hazardous", bundle: .module, comment: "risk assessment label for level 4 hazardous apps")
         case .dangerous:
-            return Text("Dangerous", bundle: .module, comment: "risk assessment label 5")
+            return Text("Dangerous", bundle: .module, comment: "risk assessment label for level 5 dangerous apps")
         case .perilous:
-            return Text("Perilous", bundle: .module, comment: "risk assessment label 6")
+            return Text("Perilous", bundle: .module, comment: "risk assessment label for level 6 perilous apps")
         }
     }
 
@@ -124,17 +124,17 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
 
         switch self {
         case .harmless:
-            return Text("\(prefix) apps are sandboxed and have no ability to connect to the internet, read or write files outside of the sandbox, or connect to a camera, microphone, or other peripheral. They can be considered harmless in terms of the potential risks to your system and personal information.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are sandboxed and have no ability to connect to the internet, read or write files outside of the sandbox, or connect to a camera, microphone, or other peripheral. They can be considered harmless in terms of the potential risks to your system and personal information.", bundle: .module, comment: "risk assessment summary text for level 1 harmless apps")
         case .mostlyHarmless:
-            return Text("\(prefix) apps are granted a single category of permission, which means they can either connect to the internet, connect to a peripheral (such as the camera or microphone) or read files outside of their sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered safe.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are granted a single category of permission, which means they can either connect to the internet, connect to a peripheral (such as the camera or microphone) or read files outside of their sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered safe.", bundle: .module, comment: "risk assessment summary text for level 2 mostlyHarmless apps")
         case .risky:
-            return Text("\(prefix) apps are sandboxed and have a variety of permissions which, in combination, can put your system at risk. For example, they may be able to both read & write user-selected files, as well as connect to the internet, which makes them potential sources of data exfiltration or corruption. You should only install these apps from a reputable source.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are sandboxed and have a variety of permissions which, in combination, can put your system at risk. For example, they may be able to both read & write user-selected files, as well as connect to the internet, which makes them potential sources of data exfiltration or corruption. You should only install these apps from a reputable source.", bundle: .module, comment: "risk assessment summary text for level 3 risky apps")
         case .hazardous:
-            return Text("\(prefix) apps are sandboxed and have a variety of permissions enabled. As such, they can perform many system operations that are unavailable to apps with reduced permission sets. You should only install these apps from a reputable source.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are sandboxed and have a variety of permissions enabled. As such, they can perform many system operations that are unavailable to apps with reduced permission sets. You should only install these apps from a reputable source.", bundle: .module, comment: "risk assessment summary text for level 4 hazardous apps")
         case .dangerous:
-            return Text("\(prefix) apps are still sandboxed, but they are granted a wide array of entitlements that makes them capable of damaging or hijacking your system. You should only install these apps from a trusted source.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are still sandboxed, but they are granted a wide array of entitlements that makes them capable of damaging or hijacking your system. You should only install these apps from a trusted source.", bundle: .module, comment: "risk assessment summary text for level 5 dangerous apps")
         case .perilous:
-            return Text("\(prefix) apps are granted all the categories of permission entitlement, and so can modify your system or damage your system in many ways. Despite being sandboxed, they should be considered to have the maximum possible permissions. You should only install these apps from a very trusted source.", bundle: .module, comment: "risk assessment summary text")
+            return Text("\(prefix) apps are granted all the categories of permission entitlement, and so can modify your system or damage your system in many ways. Despite being sandboxed, they should be considered to have the maximum possible permissions. You should only install these apps from a very trusted source.", bundle: .module, comment: "risk assessment summary text for level 6 perilous apps")
         }
     }
 }

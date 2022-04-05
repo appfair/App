@@ -257,12 +257,6 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 
 ### Advanced User FAQs
 
-#### Is the App Fair available in my language?
-
-Translators are invited to help translate the App Fair strings into
-their local language. The weblate service is used for translations,
-and can he accessed at [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
-
 #### How does the App Fair co-exist with an existing Homebrew installation?
 
 The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Caches/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository.
@@ -271,13 +265,96 @@ marc@zap Fair % ~/Library/Caches/appfair-homebrew/Homebrew/bin/brew uninstall --
 
 #### Can I remove an app using the command line?
 
-
 marc@zap Fair % ~/Library/Caches/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
 ==> Uninstalling Cask rectangle
 ==> Backing App 'Rectangle.app' up to '/Users/marc/Library/Caches/appfair-homebr
 ==> Removing App '/Applications/Rectangle.app'
 ==> Purging files for version 0.51,57 of Cask rectangle
 -->
+
+
+#### What is App Launch Privacy?
+
+The macOS operating system reports all application launches to
+third-party servers, which can be intercepted by other parties
+and reveal which apps you are launching and when.
+`App Fair.app` can prevent this tracking from taking place
+by temporarily blocking network traffic to these servers
+during the launch of an application.
+
+This feature is not enabled by default, but can be turned on
+in the App Fair's Privacy setting.
+Enabling this feature will require authenticating as an administrator,
+and will install a tool named `applaunchprivacy` that
+will be run in order to enable and disable 
+“App Launch Privacy” mode.
+
+App Launch Privacy will block telemetry from being sent
+when an app is opened using the App Fair's “Launch” button,
+or when it is manually enabled using the shield button.
+It accomplishes this by making temporary edits to the system's
+`/etc/hosts` file to redirect the DNS lookup of the
+telemetry servers.
+
+Privacy mode will be automatically de-activated after
+the specified duration (which defaults to 1 minute).
+It is also disabled when quitting App Fair.app.
+
+In addition, once installed, the privacy mode can be enabled
+by running the following command from `Terminal.app`:
+
+```
+$ ~/Library/Application\ Scripts/app.App-Fair/applaunchprivacy enable
+```
+
+Note that when enabling the privacy mode manually, it will
+not automatically expire, but will remain enabled until it is 
+manually deactivated with the command:
+
+```
+$ ~/Library/Application\ Scripts/app.App-Fair/applaunchprivacy disable
+```
+
+App Launch Privacy mode should not be left permanently enabled,
+because it may prevent certificate revocation checks from
+taking place.
+
+You can check the status of App Launch Privacy mode by
+running the tool with no arguments:
+
+```
+$ ~/Library/Application\ Scripts/app.App-Fair/applaunchprivacy
+```
+
+Or you can just check for the blocked entries manually by running:
+
+```
+$ cat /etc/hosts
+```
+
+More information on the topic of tracking app launches
+can be found [here](https://eclecticlight.co/tag/ocsp/).
+
+### App Fair Development FAQs
+
+#### How can I help translate the App Fair?
+
+Translators are invited to help translate the App Fair strings into
+their local language. The weblate service is used for translations,
+and can he accessed at [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
+
+#### Where can I discuss features and improvements to the App Fair?
+
+Bugs and issues should be reported via the App Fair
+GitHub issues page at
+[https://github.com/App-Fair/App/issues](https://github.com/App-Fair/App/issues).
+
+Discussions about features and suggestions should be discussed on the
+GitHub discussions board for the project at
+[https://github.com/App-Fair/App/discussions](https://github.com/App-Fair/App/discussions).
+
+Real time discussion about the project can take place on the
+[App Fair Discord](https://discord.gg/8F6eBUMMNk).
 
 
 <br />

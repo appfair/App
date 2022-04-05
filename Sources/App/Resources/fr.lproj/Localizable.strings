@@ -1,9 +1,6 @@
 // French strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+// Help translate at: https://hosted.weblate.org/projects/appfair/app-fair/fr/
 
 "OK" = "OK";
 "Cancel" = "Annuler";
 "Welcome to %@!" = "Bienvenue sur %@ !";
-
-/* app entitlement info for device.bluetooth */
-"Access bluetooth." = "Access bluetooth devices.";

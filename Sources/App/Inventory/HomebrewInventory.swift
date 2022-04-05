@@ -455,7 +455,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             dbg("command output:", result)
             return result
         } catch {
-            throw AppError(NSLocalizedString("Error running \(toolName)", bundle: .module, comment: "error message title when a tool fails to run"), failureReason: NSLocalizedString("The \(toolName) for \(appName) failed to complete successfully.", bundle: .module, comment: "error message body when a tool fails to run"), underlyingError: error)
+            throw AppError(String(format: NSLocalizedString("Error running %@", bundle: .module, comment: "error message title when a tool fails to run"), toolName), failureReason: String(format: NSLocalizedString("The %@ for %@ failed to complete successfully.", bundle: .module, comment: "error message body when a tool fails to run"), toolName, appName), underlyingError: error)
         }
     }
 
@@ -764,7 +764,9 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                 let result = try Process.spctlAssess(appURL: installPath)
                 if result.exitCode == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
                     dbg("gatekeeper check failed:", result)
-                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"), informativeText: NSLocalizedString("The app “\(item.catalogMetadata.name)” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at \(item.homepage?.absoluteString ?? ""), you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
+                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"),
+                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.catalogMetadata.name, item.homepage?.absoluteString ?? ""),
+                                     accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
                         dbg("cancelling launch due to unidentified developer")
                         return
                     }

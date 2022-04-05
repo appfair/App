@@ -562,7 +562,12 @@ extension FairAppInventory {
                 relaunch()
             } else {
                 // if this is the catalog app, prompt the user to re-launch
-                let response = await prompt(window: window, messageText: NSLocalizedString("App Fair has been updated", bundle: .module, comment: "app updated dialog title"), informativeText: NSLocalizedString("This app has been updated from \(Bundle.main.bundleVersionString ?? "?") to the latest version \(item.version ?? "?"). Would you like to re-launch it?", bundle: .module, comment: "app updated dialog body"), accept: NSLocalizedString("Re-launch", bundle: .module, comment: "app updated re-launch button text"), refuse: NSLocalizedString("Later", bundle: .module, comment: "app updated skip relaunch button text"), suppressionKey: $relaunchUpdatedCatalogApp)
+                let response = await prompt(window: window,
+                                            messageText: String(format: NSLocalizedString("App Fair has been updated", bundle: .module, comment: "app updated dialog title")),
+                                            informativeText: String(format: NSLocalizedString("This app has been updated from %@ to the latest version %@. Would you like to re-launch it?", bundle: .module, comment: "app updated dialog body"), Bundle.main.bundleVersionString ?? "?", item.version ?? "?"),
+                                            accept: NSLocalizedString("Re-launch", bundle: .module, comment: "app updated re-launch button text"),
+                                            refuse: NSLocalizedString("Later", bundle: .module, comment: "app updated skip relaunch button text"),
+                                            suppressionKey: $relaunchUpdatedCatalogApp)
                 dbg("prompt response:", response)
                 if response == true {
                     relaunch()
