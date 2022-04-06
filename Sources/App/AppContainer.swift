@@ -55,6 +55,100 @@ public extension AppContainer {
     }
 }
 
+extension URL {
+    /// Attempts to create a cached file based on the contents of the given URL's folder ending with ".parts".
+    /// This folder is expected to contain individual files which, when concatinated in alphabetical order, will re-create the specified file
+    ///
+    /// This allows large files to be split into individual parts to work around [SPM's lack of git LFS support](https://forums.swift.org/t/swiftpm-with-git-lfs/42396/6).
+    public func assemblePartsCache(overwrite: Bool = false) throws -> URL {
+        let fm = FileManager.default
+
+        if fm.isDirectory(url: self) != true {
+            throw CocoaError(.fileReadUnsupportedScheme)
+        }
+
+        let cacheBase = self.deletingPathExtension().lastPathComponent
+        let cacheFile = try fm.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: self, create: true).appendingPathComponent(cacheBase)
+
+        let parts = try self.fileChildren(deep: false, keys: [.fileSizeKey, .contentModificationDateKey])
+            .filter { fm.isDirectory(url: $0) == false }
+            .filter { $0.lastPathComponent.hasPrefix(".") == false }
+            .sorting(by: \.lastPathComponent)
+
+        let totalSize = try parts.compactMap({ try $0.fileSize() }).reduce(0, +)
+        let lastModified = parts.compactMap(\.modificationDate).sorted().last
+
+        if fm.isReadableFile(atPath: cacheFile.path) && overwrite == false {
+            // ensure that the file size is equal to the sum of the individual path components
+            // note that we skip any checksum validation here, so we expect the resource to be trusted (which it will be if it is included in a signed app bundle)
+            let cacheNewerThanParts = (cacheFile.modificationDate ?? Date()) > (lastModified ?? Date())
+            if try cacheFile.fileSize() == totalSize && cacheNewerThanParts == true {
+                return cacheFile
+            } else {
+                if !cacheNewerThanParts {
+                    dbg("rebuilding cache file:", cacheFile.path, "modified:", cacheFile.modificationDate, "latest part:", lastModified)
+                }
+            }
+        }
+
+        dbg("assembling parts in", self.path, "into:", cacheFile.path, "size:", totalSize.localizedByteCount(), "from:", parts.map(\.lastPathComponent))
+
+        // clear any existing cache file that we aren't using (e.g., due to bad size)
+        try? FileManager.default.removeItem(at: cacheFile)
+
+        // file must exist before writing
+        FileManager.default.createFile(atPath: cacheFile.path, contents: nil, attributes: nil)
+        let fh = try FileHandle(forWritingTo: cacheFile)
+        defer { try? fh.close() }
+
+        for part in parts {
+            try fh.write(contentsOf: Data(contentsOf: part))
+        }
+
+        return cacheFile
+    }
+
+    /// Returns the contents of the given file URL's folder.
+    /// - Parameter deep: whether to retrieve the deep or shallow contents
+    /// - Parameter skipHidden: whether to skip hidden files
+    /// - Parameter keys: resource keys to pre-cache, such as `[.fileSizeKey]`
+    /// - Returns: the list of URL children relative to the current URL's folder
+    public func fileChildren(deep: Bool, skipHidden: Bool = false, keys: [URLResourceKey]? = nil) throws -> [URL] {
+        let fm = FileManager.default
+
+        if fm.isDirectory(url: self) != true {
+            throw CocoaError(.fileReadUnknown)
+        }
+
+        var mask: FileManager.DirectoryEnumerationOptions = skipHidden ? [.skipsHiddenFiles] : []
+
+        if deep == false {
+            // we could alternatively use `enumerator` with the `FileManager.DirectoryEnumerationOptions.skipsSubdirectoryDescendants` mask
+            return try fm.contentsOfDirectory(at: self, includingPropertiesForKeys: keys, options: mask) // “the only supported option is skipsHiddenFiles”
+        } else {
+            #if !os(Linux) && !os(Windows)
+            mask.insert(.producesRelativePathURLs) // unavailable on windows
+            #endif
+
+            guard let walker = fm.enumerator(at: self, includingPropertiesForKeys: keys, options: mask) else {
+                throw CocoaError(.fileReadNoSuchFile)
+            }
+
+            var paths: [URL] = []
+            for path in walker {
+                if let url = path as? URL {
+                    paths.append(url)
+                } else if let path = path as? String {
+                    paths.append(URL(fileURLWithPath: path, relativeTo: self))
+                }
+            }
+
+            return paths
+        }
+    }
+}
+
+
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
