@@ -39,6 +39,7 @@ struct AppsListView : View {
     @ViewBuilder var bottomBar: some View {
         Group {
             if let updated = catalog.catalogUpdated {
+                // FIXME: this doen't change automatically unless some other state has changed; we'd need some kind of refresh timer to mark it as stale in order for the updated status to always be accurate
                 Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
             } else {
                 Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")

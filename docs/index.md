@@ -180,12 +180,6 @@ Many apps utilize an embedded framework called “Sparkle” to check for update
 
 Another difference is that the Sparkle system of auto-downloading updates doesn't “quarantine” the downloaded artifacts, thereby skipping the operating system's gatekeeper check for malware. The App Fair, on the other hand, does respect the quarantine flag by default (subject to the "Quarantine installed apps" preference), which means that both the initial download of an app as well as any updates that are downloaded via the App Fair will be subject to gatekeeper scrutiny.
 
-#### What identifying information does App Fair.app track or transmit?
-
-Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code](https://github.com/App-Fair/App.git).
-
-Since App Fair.app downloads apps directly from the app creator's servers, those servers will see a requestor's IP address (e.g., _255.0.198.255_), their primary language (e.g., _"Accept-Language: en-US"_), and their app version (e.g., _"User-Agent: App Fair/622 CFNetwork/1329 Darwin/21.3.0"_), from which an approximate geographical location could be inferred. While no cookies or personally identifying information is transmitted by App Fair.app, an intermediary (such as an ISP) may be able to infer that, say, someone at address 255.0.198.255 in Lilliput downloaded Signal.app. If this is a concern, you may wish to use a VPN when running App Fair.app.
-
 <!--
 #### How to resolve the error that the app “cannot be opened because the developer cannot be verified”?
 
@@ -205,76 +199,21 @@ More information about this issue can be read at
 If the "Keep catalog app up to date" checkbox is enabled in the App Fair preferences, App Fair.app will automatically install any updates to the catalog app, provided it is installed in the `/Applications/` folder. This will happen the next time the catalog is refreshed, either manually or when the app is next launched.
 
 
-### App Creator FAQs
+<a name="privacy" />
+### Privacy and Security FAQs
 
-#### How can I get my app in the App Fair?
+#### What identifying information does App Fair.app track or transmit?
 
-The App Fair.app supports two separate catalog channels:
+Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code](https://github.com/App-Fair/App.git).
 
-1. **Homebrew Casks**: this community-driven project publishes an index of third-party apps and information about how to download and install them. You can learn more at [  https://brew.sh](https://brew.sh).
-2. **Fairground Apps**: these open-source SwiftUI apps are included in an index of the forks of a base SwiftUI app repository. Learn more at [https://appfair.net](https://appfair.net).
-
-If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as the automated build and release process, landing page generation, support for issues and discussions, and screenshot and icon previews, you can publish a starter app in under an hour using only your web browser with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
-
-If, on the other hand, you already having an existing notarized Mac app that you are distributing, you can add it to the Homebrew Casks index by following the directions in their [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook).
-
-#### How can I add, update, or remove my app's "Cask" information?
-
-The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [list of available casks](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a [pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request) to update or remove it.
-
-If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
-
-<a name="customize_app" />
-#### How can I customize how my app appears in the App Fair.app?
-
-If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide a supplementary app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 
-
-Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
-
-To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather. The file must contain only a single newline and be 1 byte in size. That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
-
-#### How can I link to my app's catalog item?
-
-Create a link formatted as `https://www.appfair.app/fair#cask/<token>`, where `<token>` is your cask's [token](https://docs.brew.sh/Cask-Cookbook#token-reference). This will take the user to a landing page that then tries to launch the `App Fair.app` and display the catalog item as well as offering the user a link to install the app directly. 
-
-For example, a link that directs the user to install Minecraft is: `https://appfair.app/fair#cask/minecraft`.
-
-#### How can I submit an update to my app?
-
-Apps that are distributed through [appfair.net](https://www.appfair.net) will have their updates automatically reflected in the catalog the next time it is generated (hourly).
-
-For apps distributed through Homebrew Casks, updates can be registered by following [these instructions](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#submit-a-new-version-of-an-existing-cask).
-
-<!--
-
-#### Can I distribute an iOS app with the App Fair?
-
-Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their installation on iOS devices. This is expected to change in the near future.
-
--->
+Since App Fair.app downloads apps directly from the app creator's servers, those servers will see a requestor's IP address (e.g., _255.0.198.255_), their primary language (e.g., _"Accept-Language: en-US"_), and their app version (e.g., _"User-Agent: App Fair/622 CFNetwork/1329 Darwin/21.3.0"_), from which an approximate geographical location could be inferred. While no cookies or personally identifying information is transmitted by App Fair.app, an intermediary (such as an ISP) may be able to infer that, say, someone at address 255.0.198.255 in Lilliput downloaded Signal.app. If this is a concern, you may wish to use a VPN when running App Fair.app.
 
 
-### Advanced User FAQs
-
-#### How does the App Fair co-exist with an existing Homebrew installation?
-
-The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository.
-
-$ ~/Library/Application\ Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
-
-#### Can I remove an app using the command line?
-
-$ ~/Library/Application\ Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
-==> Uninstalling Cask rectangle
-==> Backing App 'Rectangle.app' up to '/Users/marc/Library/Application Support/app.App-Fair/appfair-homebr
-==> Removing App '/Applications/Rectangle.app'
-==> Purging files for version 0.51,57 of Cask rectangle
-
-
+<a name="app-launch-privacy" />
 #### What is App Launch Privacy?
 
 The macOS operating system reports all application launches to
-third-party servers, which can be intercepted by other parties
+third-party servers, which can be intercepted by intermediaries
 and reveal which apps you are launching and when.
 `App Fair.app` can prevent this tracking from taking place
 by temporarily blocking network traffic to these servers
@@ -332,6 +271,82 @@ $ cat /etc/hosts
 
 More information on the topic of tracking app launches
 can be found [here](https://eclecticlight.co/tag/ocsp/).
+
+
+### App Creator FAQs
+
+#### How can I get my app in the App Fair?
+
+The App Fair.app supports two separate catalog channels:
+
+1. **Homebrew Casks**: this community-driven project publishes an index of third-party apps and information about how to download and install them. You can learn more at [  https://brew.sh](https://brew.sh).
+2. **Fairground Apps**: these open-source SwiftUI apps are included in an index of the forks of a base SwiftUI app repository. Learn more at [https://appfair.net](https://appfair.net).
+
+If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as the automated build and release process, landing page generation, support for issues and discussions, and screenshot and icon previews, you can publish a starter app in under an hour using only your web browser with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
+
+If, on the other hand, you already having an existing notarized Mac app that you are distributing, you can add it to the Homebrew Casks index by following the directions in their [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook).
+
+#### How can I add, update, or remove my app's "Cask" information?
+
+The App Fair uses the Homebrew casks API directly as the app list presented to users. If your app is already present in the [list of available casks](https://github.com/Homebrew/homebrew-cask/tree/HEAD/Casks), you can submit a [pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request) to update or remove it.
+
+If you would like to add your existing app to the Casks list, and if your app meets their required [notability threshold](https://docs.brew.sh/Acceptable-Casks#exceptions-to-the-notability-threshold), you can get it added by [filing a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#cask-related-pull-request).
+
+<a name="customize_app" />
+#### How can I customize how my app appears in the App Fair.app?
+
+If your app is present in the Homebrew Casks but is lacking an icon (or is using the fallback `/favicon.ico` content from your app's homepage), you can provide a supplementary app catalog entry with an icon and app screenshots by [forking the appcasks repository](https://github.com/appfair/appcasks.git) into an organization whose verified domain matches the homepage of the app. 
+
+Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
+
+To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather. The file must contain only a single newline and be 1 byte in size. That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
+
+#### How can I link to my app's catalog item?
+
+Create a link formatted as `https://www.appfair.app/fair#cask/<token>`, where `<token>` is your cask's [token](https://docs.brew.sh/Cask-Cookbook#token-reference). This will take the user to a landing page that then tries to launch the `App Fair.app` and display the catalog item as well as offering the user a link to install the app directly. 
+
+For example, a link that directs the user to install Minecraft is: `https://appfair.app/fair#cask/minecraft`.
+
+#### How can I submit an update to my app?
+
+Apps that are distributed through [appfair.net](https://www.appfair.net) will have their updates automatically reflected in the catalog the next time it is generated (hourly).
+
+For apps distributed through Homebrew Casks, updates can be registered by following [these instructions](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#submit-a-new-version-of-an-existing-cask).
+
+<!--
+
+#### Can I distribute an iOS app with the App Fair?
+
+Homebrew Casks only support macOS apps. There is experimental support for creating iOS apps through [appfair.net](https://www.appfair.net/#how-do-i-target-either-macos-or-ios-instead-of-both), but there is currently no well-supported channel for their installation on iOS devices. This is expected to change in the near future.
+
+-->
+
+
+
+### Advanced User FAQs
+
+#### How does the App Fair co-exist with an existing Homebrew installation?
+
+The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository and speed up the process of managing cask apps.
+
+Before invoking the `brew install` command, App Fair.app will 
+download cask artifacts to the ` ~/Library/Caches/Homebrew/downloads/` 
+folder (subject to the Homebrew “Use integrated download manager” preference),
+which allows the app to track the progress of downloads and
+handle user cancellation.
+
+#### Can I remove an app using the command line?
+
+Your local `brew` command can be used to manage your Homebrew Casks.
+ 
+```
+$ ~/Library/Application\ Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew uninstall --cask rectangle
+==> Uninstalling Cask rectangle
+==> Removing App '/Applications/Rectangle.app'
+==> Purging files for version 0.51,57 of Cask rectangle
+```
+
+
 
 ### App Fair Development FAQs
 
