@@ -45,12 +45,14 @@ struct MotionEffectViewRepresentable : UXViewRepresentable {
         animationView.animationSpeed = animationSpeed
         animationView.currentTime = animationTime
         if animationView.isAnimationPlaying != playing {
-            if playing {
-                context.coordinator.displayLink?.start()
-                animationView.play()
-            } else {
-                context.coordinator.displayLink?.stop()
-                animationView.pause()
+            Task {
+                if playing {
+                    await context.coordinator.displayLink?.start()
+                    await animationView.play()
+                } else {
+                    await context.coordinator.displayLink?.stop()
+                    await animationView.pause()
+                }
             }
         }
     }

@@ -10,7 +10,6 @@
 		491763402773E08000FBB28B /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* App.swift */; };
 		491763412773E08500FBB28B /* App in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
-		4973D0E1275C1ADF00ED915A /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 4973D0E0275C1ADF00ED915A /* App */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
 /* End PBXBuildFile section */
 
@@ -29,22 +28,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Lottie Motion Quicklook.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4917633F2773E08000FBB28B /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		49555415268931C1003F1B5B /* Lottie Motion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lottie Motion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4917633F2773E08000FBB28B /* AppMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498E852827597DA100EE6F8C /* AppFairApp.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppFairApp.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		4917BBE7275BF84A002FDF81 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4973D0E1275C1ADF00ED915A /* App in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		49555412268931C1003F1B5B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -70,7 +60,6 @@
 			isa = PBXGroup;
 			children = (
 				49555415268931C1003F1B5B /* Lottie Motion.app */,
-				4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,26 +67,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4917BBE9275BF84A002FDF81 /* Lottie Motion Quicklook */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 4917BBFA275BF84B002FDF81 /* Build configuration list for PBXNativeTarget "Lottie Motion Quicklook" */;
-			buildPhases = (
-				4917BBE6275BF84A002FDF81 /* Sources */,
-				4917BBE7275BF84A002FDF81 /* Frameworks */,
-				4917BBE8275BF84A002FDF81 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "Lottie Motion Quicklook";
-			packageProductDependencies = (
-				4973D0E0275C1ADF00ED915A /* App */,
-			);
-			productName = "Lottie Motion Quicklook";
-			productReference = 4917BBEA275BF84A002FDF81 /* Lottie Motion Quicklook.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		49555414268931C1003F1B5B /* AppFairApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "AppFairApp" */;
@@ -125,12 +94,9 @@
 		4955540D268931C1003F1B5B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1310;
+				LastSwiftUpdateCheck = 1300;
 				LastUpgradeCheck = 1300;
 				TargetAttributes = {
-					4917BBE9275BF84A002FDF81 = {
-						CreatedOnToolsVersion = 13.1;
-					};
 					49555414268931C1003F1B5B = {
 						CreatedOnToolsVersion = 13.0;
 						LastSwiftMigration = 1300;
@@ -151,19 +117,11 @@
 			projectRoot = "";
 			targets = (
 				49555414268931C1003F1B5B /* AppFairApp */,
-				4917BBE9275BF84A002FDF81 /* Lottie Motion Quicklook */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4917BBE8275BF84A002FDF81 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		49555413268931C1003F1B5B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -175,13 +133,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		4917BBE6275BF84A002FDF81 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		49555411268931C1003F1B5B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -193,52 +144,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		4917BBF8275BF84B002FDF81 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = Lottie_Motion_Quicklook.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.Lottie-Motion.quicklook";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		4917BBF9275BF84B002FDF81 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = Lottie_Motion_Quicklook.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.Lottie-Motion.quicklook";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 		49555423268931C4003F1B5B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 498E852827597DA100EE6F8C /* AppFairApp.xcconfig */;
@@ -428,15 +333,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4917BBFA275BF84B002FDF81 /* Build configuration list for PBXNativeTarget "Lottie Motion Quicklook" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				4917BBF8275BF84B002FDF81 /* Debug */,
-				4917BBF9275BF84B002FDF81 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		49555410268931C1003F1B5B /* Build configuration list for PBXProject "project" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -458,10 +354,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4973D0E0275C1ADF00ED915A /* App */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = App;
-		};
 		498DD183268CDB4600B79D43 /* App */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = App;
