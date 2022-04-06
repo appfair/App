@@ -1,1 +1,370 @@
 
+
+
+/* app entitlement title for device.audio-input */
+"Audio Input" = "Lydinngang";
+
+/* homebrew preference group box title */
+"About Homebrew Casks" = "Om hjemmebrentsfat";
+
+/* app entitlement title for personal-information.addressbook */
+"Address Book" = "Adressebok";
+
+/* advanced preferences tab title */
+"Advanced" = "Avansert";
+"Auto-Updates" = "Automatiske oppgraderinger";
+
+/* homebrew preference checkbox tooltip */
+"Automatically attempt to install any required dependencies for a cask." = "Prøv å løse påkrevde avhengigheter automatisk for fat.";
+
+/* apps list section header text */
+"Available Updates" = "Tilgjengelige oppgraderinger";
+
+/* app entitlement title for device.bluetooth */
+"Bluetooth" = "Blåtann";
+"Cancel " = "Avbryt ";
+
+/* app category label for appfair.board-games */
+"Board Games" = "Brettspill";
+
+/* app category label for appfair.card-games */
+"Card Games" = "Kortspill";
+
+/* app category label for appfair.business */
+"Business" = "Forretninger";
+
+/* sidebar section header title for homebrew app categories */
+"Categories" = "Kategorier";
+
+/* homebrew preference checkbox */
+"Clear all app info on delete" = "Tøm all programinfo ved sletting";
+
+/* app catalog entry info link title */
+"Checksum" = "Sjekksum";
+
+/* app catalog entry info link title */
+"Cask Token" = "Fat-symbol";
+
+/* homebrew sidebar category title */
+"Casks" = "Fat";
+
+/* app catalog cask entry overview tab title */
+"Description" = "Beskrivelse";
+
+/* app catalog cask entry metadata tab title */
+"Details" = "Detaljer";
+
+/* app catalog entry info link title */
+"Developer" = "Utvikler";
+
+/* app category label for appfair.dice-games */
+"Dice Games" = "Terningsspill";
+
+/* app catalog entry info link title */
+"Discussions" = "Diskusjoner";
+
+/* app catalog entry info link title */
+"Download" = "Last ned";
+
+/* install button confirmation dialog confirm button text */
+"Download & Install %@" = "Last ned og installer %@";
+
+/* catalog entry button tooltip for install action */
+"Download and install the app." = "Last ned og installer programmet.";
+
+/* app catalog entry header box title */
+"Downloads" = "Nedlastinger";
+
+/* app category label for appfair.education */
+"Education" = "Utdannelse";
+
+/* app category label for appfair.games */
+"Games" = "Spill";
+
+/* risk assessment label 1 */
+"Harmless" = "Harmløst";
+
+/* risk assessment label 4 */
+"Hazardous" = "Farlig";
+
+/* app category label for appfair.healthcare-fitness */
+"Healthcare & Fitness" = "Helse og trening";
+
+/* app catalog entry info link title */
+"Home" = "Hjem";
+
+/* app catalog cask entry preview tab title */
+"Home Page" = "Hjemmeside";
+
+/* settings switch title for enabling homebrew cask support */
+"Homebrew Casks" = "Hjemmebrentsfat";
+
+/* app catalog entry info link title */
+"Homepage" = "Hjemmeside";
+
+/* catalog entry button title for install action */
+"Install" = "Installer";
+
+/* app launch privacy text field title for script installation location */
+"Install location:" = "Installasjonsplassering:";
+
+/* homebrew preference checkbox */
+"Install overwrites previous app installation" = "Installasjon overskriver tidligere programinstallasjon";
+
+/* fairapps sidebar category title
+   homebrew sidebar category title */
+"Installed" = "Installert";
+
+/* app launch privacy text field label for installation location */
+"Installed at:" = "Installert i:";
+
+/* app catalog entry header box title for the number of issues for the app
+   app catalog entry info link title */
+"Issues" = "Problemer";
+
+/* app category label for appfair.kids-games */
+"Kids Games" = "Barnespill";
+
+/* app updated skip relaunch button text */
+"Later" = "Senere";
+
+/* catalog entry button title for launch action
+   warning dialog launch anyway button title */
+"Launch" = "Kjør";
+
+/* catalog entry button tooltip for launch action */
+"Launches the app." = "Starter programmet.";
+
+/* app category label for appfair.lifestyle */
+"Lifestyle" = "Livsstil";
+
+/* general preference for theme style in popup menu */
+"Light" = "Lys";
+
+/* app category label for appfair.medical */
+"Medical" = "Medisin";
+
+/* apps list placeholder text while the catalog is loading */
+"Loading…" = "Laster inn …";
+
+/* apps list bottom bar title */
+"Not updated recently" = "Ikke oppgradert nylig";
+
+/* apps list text at the bottom of the list when there are more results to show */
+"More…" = "Mer …";
+
+/* app catalog entry info link tooltip */
+"Opens link to source code repository for this app at: %@" = "Åpner lenken til kildekodelageret for dette programmet på: %@";
+
+/* placeholder string for empty screenshot preview section */
+"No screenshots available" = "Ingen tilgjengelige skjermavbildninger";
+
+/* app catalog entry info link tooltip */
+"Opens link to the appcast for this app at: %@" = "Åpner lenken til appcast for dette programmet på: %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the direct download for this app at: %@" = "Åpner lenken til direktenedlasting av dette programmet på: %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the discussions page for this app at: %@" = "Åpner lenken til diskusjonssiden for dette programmet på: %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the home page for this app at: %@" = "Åpner lenken til hjemmesiden for dette programmet på: %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the issues page for this app at: %@" = "Åpner lenken til problemsiden for dette programmet på: %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the landing page for this app at: %@" = "Åpner lenken til landingssiden for dette programmet på: %@";
+"Opens your web browsers and visits the developer site" = "Åpner nettleserene dine og besøker utviklersiden";
+
+/* app category label for appfair.photography */
+"Photography" = "Fotografi";
+
+/* privacy preferences tab title */
+"Privacy" = "Personvern";
+
+/* app category label for appfair.productivity */
+"Productivity" = "Produktivitet";
+
+/* app category label for appfair.puzzle-games */
+"Puzzle Games" = "Puslespill";
+
+/* catalog entry button title for reveal action
+   homebrew preference button for showing locating of homebrew installation */
+"Reveal" = "Avslør";
+
+/* homebrew preference checkbox */
+"Require cask checksum" = "Krev fat-sjekksum";
+
+/* app catalog cask entry metadata tab title */
+"Risk" = "Risiko";
+
+/* prefix string for risk label */
+"Risk: " = "Risiko: ";
+
+/* label for unknown rick */
+"Risk: Unknown" = "Risiko: Ukjent";
+
+/* risk assessment label 3 */
+"Risky" = "Risikabelt";
+
+/* app catalog cask entry preview tab title */
+"Screen Shots" = "Skjermavbildninger";
+
+/* app catalog cask entry metadata tab title */
+"Security" = "Sikkerhet";
+
+/* app launch privacy button title for displaying location of installed script */
+"Show" = "Vis";
+
+/* app catalog entry info link title */
+"Source" = "Kilde";
+
+/* app catalog entry header box title */
+"Stars" = "Stjerner";
+
+/* app category label for appfair.strategy-games */
+"Strategy Games" = "Strategispill";
+
+/* app catalog entry info link tooltip */
+"The SHA-256 checksum for the app download" = "SHA-256-sjekksum for programnedlastningen";
+
+/* picker title for general preference for theme style */
+"Theme:" = "Drakt:";
+
+/* apps list section header text */
+"Top Apps" = "Topp-programmer";
+
+/* app category label for appfair.travel */
+"Travel" = "Reise";
+
+/* app entitlement title for device.usb */
+"USB" = "USB";
+
+/* app entitlement info for device.camera */
+"Use the device camera." = "Bruk enhetens kamera.";
+
+/* app entitlement info for device.microphone */
+"Use the device microphone." = "Bruk enhetens mikrofon.";
+
+/* app category label for appfair.utilities */
+"Utilities" = "Verktøy";
+
+/* app category label for appfair.word-games */
+"Word Games" = "Ordspill";
+
+/* app entitlement info for temporary-exception.iokit-user-client-class */
+"Ability to specify additional IOUserClient subclasses." = "Mulighet til å angi ytterligere IOUserClient-underklasser.";
+
+/* fairapps sidebar category title */
+"Apps" = "Programmer";
+
+/* general preferences tab title */
+"General" = "Generelt";
+
+/* app entitlement title for application-groups */
+"Application Groups" = "Programgrupper";
+
+/* cancel button title for prompt */
+"Cancel" = "Avbryt";
+
+/* app entitlement title for device.camera */
+"Camera" = "Kamera";
+
+/* app entitlement title for personal-information.calendars */
+"Calendars" = "Kalendere";
+
+/* general preference for theme style in popup menu */
+"Dark" = "Mørk";
+
+/* catalog entry button title for delete action
+   delete button confirmation dialog delete button text */
+"Delete" = "Slett";
+
+/* app category label for appfair.casino-games */
+"Casino Games" = "Casino-spill";
+
+/* app catalog entry header box title for the core size of the app */
+"Core Size" = "Kjernestørrelse";
+
+/* risk assessment label 5 */
+"Dangerous" = "Farlig";
+
+/* catalog entry button tooltip for delete action */
+"Delete the app from your computer." = "Slett programmet fra datamaskinen din.";
+
+/* app category label for appfair.developer-tools */
+"Developer Tools" = "Utviklerverktøy";
+
+/* app entitlement title for cs.debugger */
+"Debugging" = "Avlusing";
+
+/* app launch privacy activation duration menu title */
+"Duration:" = "Varighet:";
+
+/* install button confirmation dialog title */
+"Install %@" = "Installer %@";
+
+/* app entitlement title for network.client */
+"Network Client" = "Nettverksklient";
+
+/* app entitlement title for network.server */
+"Network Server" = "Nettverkstjener";
+
+/* apps list placeholder text where there are no results to display */
+"No results" = "Resultatløst";
+
+/* app entitlement title for device.microphone */
+"Microphone" = "Mikrofon";
+
+/* app category label for appfair.music-games */
+"Music Games" = "Musikkspill";
+
+/* error dialog disclosure button title for showing more information */
+"More Info" = "Mer info";
+
+/* app catalog entry content box placeholder text for a download size that isn't known
+   app catalog entry header box content for an unknown update date
+   fallback text for unknown developer name */
+"Unknown" = "Ukjent";
+
+/* app category label for appfair.music */
+"Music" = "Musikk";
+
+/* app category label for appfair.news */
+"News" = "Nyheter";
+
+/* default button title for prompt
+   error dialog button to dismiss the error */
+"OK" = "OK";
+
+/* app launch privacy button title for previewing location where script will be installed */
+"Preview" = "Forhåndsvisning";
+
+/* app entitlement title for print */
+"Printing" = "Utskrift";
+
+/* general preference for theme style in popup menu */
+"System" = "System";
+
+/* homebrew preference checkbox tooltip */
+"If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched." = "Hvis et fat markerer seg selv for håndtering av egne programvareoppgraderinger internt, blir det utelatt fra visning i «Oppgradert». Dette kan hjelpe deg å vise overflødige oppgraderinger for programmer som forventer å kunne oppgradere seg selv, men kan også lede til at disse programmene blir uoppgraderte når de startes neste gang.";
+
+/* app catalog cask entry overview tab title */
+"Version" = "Versjon";
+
+/* app category label for appfair.weather */
+"Weather" = "Vær";
+
+/* app category label for appfair.video */
+"Video" = "Video";
+
+/* tooltip text for switch to enable homebrew support */
+"Adds homebrew Casks to the sources of available apps." = "Legger til hjemmebrentsfat til i kildene over tilgjengelige programmer.";
+
+/* app category label for appfair.adventure-games */
+"Adventure Games" = "Eventyrspill";
+
+/* apps list section header text */
+"All Apps" = "Alle programmer";
