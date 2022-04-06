@@ -9,6 +9,7 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView()
+                .background(Color.black)
                 .colorScheme(.dark) // always use dark color scheme
                 .environmentObject(store)
         }
