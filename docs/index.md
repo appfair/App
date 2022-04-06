@@ -160,14 +160,6 @@ Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to
 
 The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
 
-#### How safe are the apps?
-
-Apps installed using the App Fair.app are granted the same system-level protections as all the other apps on your Mac, regardless of how they were acquired. This includes proactive defenses like _Gatekeeper_ and _XProtect_. They also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
-
-Apps acquired through the Homebrew Casks catalog are typically “notarized”, which means the app is from a registered developer and has been subject to scanning and compliance assessment. These apps, while signed, may or may not be “sandboxed”, and so may affect your system with elevated permissions.
-
-Apps acquired through the Fairground Apps catalog are always “sandboxed”, which means they are restricted in the activities that can be performed. Any ability to access your documents, photos, network, or peripherals will be identified in the app's description. The sum of the permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app. This rating informs a user's decision whether to trust and install an app or not, and thus provide full disclosure to users of the potential impact of installing an app.
-
 #### What permissions do I need to install apps?
 
 To install apps from the Fairground Apps, the current user needs permission to write to the `/Applications/App Fair/` folder. In the event this is not writable by the current user, the app will attempt to escalate permissions to perform the installation, which will require an administrator password.
@@ -202,6 +194,17 @@ If the "Keep catalog app up to date" checkbox is enabled in the App Fair prefere
 <a name="privacy" />
 ### Privacy and Security FAQs
 
+<a name="safety" />
+#### How safe are the apps?
+
+Apps installed using the App Fair.app are granted the same system-level protections as all the other apps on your Mac, regardless of how they were acquired. This includes proactive defenses like _Gatekeeper_ and _XProtect_. They also benefit from ongoing analysis and remediation by the system's _Malware Removal Tool_. 
+
+Apps acquired through the Homebrew Casks catalog are typically “notarized”, which means the app is from a registered developer and has been subject to scanning and compliance assessment. These apps, while signed, may or may not be “sandboxed”, and so may affect your system with elevated permissions.
+
+Apps acquired through the Fairground Apps catalog are always “sandboxed”, which means they are restricted in the activities that can be performed. Any ability to access your documents, photos, network, or peripherals will be identified in the app's description. The sum of the permissions that are requested by the app are summarized by the “Risk Level” that is displayed by the App Fair.app. This rating informs a user's decision whether to trust and install an app or not, and thus provide full disclosure to users of the potential impact of installing an app.
+
+
+<a name="tracking" />
 #### What identifying information does App Fair.app track or transmit?
 
 Basically, none. The server-side component of the App Fair itself is simply a set of HTML, JSON, and other static binary files hosted on GitHub and periodically updated using GitHub actions. There are no logins, cookies, or trackers built into either the client-side or server-side components. This can be verified by inspecting the [source code](https://github.com/App-Fair/App.git).

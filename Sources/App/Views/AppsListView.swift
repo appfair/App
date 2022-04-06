@@ -19,8 +19,6 @@ struct AppsListView : View {
     @State private var searchText: String = ""
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
 
-    //static let topID = UUID()
-
     var catalog: AppCatalog {
         switch source {
         case .homebrew: return homeBrewInv
@@ -67,13 +65,19 @@ struct AppsListView : View {
                     appListSection(section: nil)
                 }
             }
-            .searchable(text: $searchText)
+            .searchable(text: $searchTextSource)
             .animation(.easeInOut, value: searchText)
             .onChange(of: searchTextSource) { searchString in
                 selection = nil
-                DispatchQueue.main.async {
-                    searchText = searchString
-                    // proxy.scrollTo(Self.topID, anchor: .top) // doesn't work
+                // a brief delay to allow for more responsive typing
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+                    // check to ensure text has not changed since we scheduled it
+                    if searchString == self.searchTextSource {
+                        self.searchText = searchString
+                        //if let topItem = appInfoItems(section: .top).first ?? appInfoItems(section: .all).first {
+                            // proxy.scrollTo(topItem.id, anchor: .top) // doesn't seem to work
+                        //}
+                    }
                 }
             }
 //            .onChange(of: fairManager.refreshing) { refreshing in
@@ -194,19 +198,22 @@ struct AppSectionItems : View {
     @State private var displayCount = 25
 
     var body: some View {
-        sectionContents
+        sectionContents()
+        sectionFooter()
     }
 
-    @ViewBuilder var sectionContents: some View {
+    @ViewBuilder func sectionContents() -> some View {
         ForEach(items.prefix(displayCount)) { item in
             NavigationLink(tag: item.id, selection: $selection, destination: {
                 CatalogItemView(info: item)
             }, label: {
-                label(for: item)
-                //.frame(minHeight: 44, maxHeight: 44) // attempt to speed up list rendering (doesn't seem to help)
+                AppItemLabel(item: item)
+                    .frame(height: 50)
             })
         }
+    }
 
+    @ViewBuilder func sectionFooter() -> some View {
         let itemCount = items.count
 
         Group {
@@ -238,8 +245,17 @@ struct AppSectionItems : View {
     var refreshing: Bool {
         self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
     }
+}
 
-    func label(for item: AppInfo) -> some View {
+struct AppItemLabel : View {
+    let item: AppInfo
+    @EnvironmentObject var fairManager: FairManager
+
+    var body: some View {
+        label(for: item)
+    }
+
+    private func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
             ZStack {
                 fairManager.iconView(for: item, transition: true)
@@ -290,6 +306,5 @@ struct AppSectionItems : View {
             }
             .allowsTightening(true)
         }
-        .frame(height: 50)
     }
 }
