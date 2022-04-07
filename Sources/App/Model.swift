@@ -43,7 +43,7 @@ extension Source : Identifiable {
 }
 
 /// To fetch the latest catalog, run:
-/// curl https://fr1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
+/// curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
 @available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure {
     // parsing as takes takes it from 500ms -> 12724ms
