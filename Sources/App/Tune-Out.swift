@@ -251,7 +251,6 @@ struct StationList<Frame: DataSlice> : View {
         .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
         .onSubmit(of: .search) {
             Task {
-                print("###")
                 //await viewModel.executeQuery()
             }
         }
@@ -515,7 +514,7 @@ struct Sidebar: View {
                         title
                     }
                     .detailLink(false)
-                    .badge(lang.count)
+                    .badge(Text(lang.count, format: .number))
                 }
             }
 
@@ -543,7 +542,7 @@ struct Sidebar: View {
                 }
             }
         } header: {
-            Text("Tags")
+            Text("Tags", bundle: .module, comment: "section header for tags outline sidebar")
         }
     }
 
@@ -596,6 +595,21 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
+    func stationsSectionVideo(frame: DataFrame, count: Int = 200, title: Text = Text("TV")) -> some View {
+        // filted by high-quality audio feeds,
+        let selection = {
+            frame
+                .filter(on: Station.hlsColumn, { ($0 ?? "0") == "1" })
+                .sorted(on: Station.votesColumn, order: .descending)
+                .prefix(count)
+        }
+
+        return NavigationLink(destination: StationList(title: title, frame: selection)) {
+            title.label(symbol: "tv", color: .indigo)
+        }
+        .detailLink(false)
+    }
+
     func stationsSectionAll(frame: DataFrame, count: Int = .max, title: Text = Text("All Stations")) -> some View {
         let selection = {
             frame
@@ -634,6 +648,11 @@ struct Sidebar: View {
                         .keyboardShortcut("3")
                     stationsSectionQuality(frame: frame)
                         .keyboardShortcut("4")
+
+                    // most of these don't seem to work well
+                    //stationsSectionVideo(frame: frame)
+                    //    .keyboardShortcut("5")
+
                     // too slow, sadly
                     // stationsSectionAll(frame: frame)
                     //     .keyboardShortcut("5")
@@ -642,7 +661,7 @@ struct Sidebar: View {
                 .symbolRenderingMode(.multicolor)
             }
         } header: {
-            Text("Stations")
+            Text("Stations", bundle: .module, comment: "section header for stations outline sidebar")
         }
     }
 
@@ -663,7 +682,7 @@ struct Sidebar: View {
                 }
             }
         } header: {
-            Text("Countries")
+            Text("Countries", bundle: .module, comment: "section header for countries outline sidebar")
         }
     }
 
@@ -793,50 +812,50 @@ struct StationView: View {
         VForm { // doesn't scroll correctly in iOS if this is a Form, but VStack does work
             Group {
                 TextField(text: .constant(station.name ?? ""), prompt: unknown) {
-                    Text("Station Name") + Text(":")
+                    Text("Station Name:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(station.stationuuid ?? ""), prompt: unknown) {
-                    Text("ID") + Text(":")
+                    Text("ID:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(station.homepage ?? ""), prompt: unknown) {
-                    (Text("Home Page") + Text(":"))
+                    Text("Home Page:", bundle: .module, comment: "text field label")
                 }
                 .overlink(to: station.homepage.flatMap(URL.init(string:)))
                 TextField(text: .constant(station.tags ?? ""), prompt: unknown) {
-                    Text("Tags") + Text(":")
+                    Text("Tags:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(paranthetically(station.country, station.countrycode)), prompt: unknown) {
-                    Text("Country") + Text(":")
+                    Text("Country:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(station.state ?? ""), prompt: unknown) {
-                    Text("State") + Text(":")
+                    Text("State:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(paranthetically(station.language, station.languagecodes)), prompt: unknown) {
-                    Text("Language") + Text(":")
+                    Text("Language:", bundle: .module, comment: "text field label")
                 }
             }
 
             Group {
                 TextField(text: .constant(station.codec ?? ""), prompt: unknown) {
-                    Text("Codec") + Text(":")
+                    Text("Codec:", bundle: .module, comment: "text field label")
                 }
                 TextField(text: .constant(station.lastchangetime ?? ""), prompt: unknown) {
-                    Text("Last Change") + Text(":")
+                    Text("Last Change:", bundle: .module, comment: "text field label")
                 }
             }
 
             Group {
                 TextField(value: .constant(station.bitrate), format: .number, prompt: unknown) {
-                    Text("Bitrate") + Text(":")
+                    Text("Bitrate:", bundle: .module, comment: "text field label")
                 }
                 TextField(value: .constant(station.votes), format: .number, prompt: unknown) {
-                    Text("Votes") + Text(":")
+                    Text("Votes:", bundle: .module, comment: "text field label")
                 }
                 TextField(value: .constant(station.clickcount), format: .number, prompt: unknown) {
-                    Text("Clicks") + Text(":")
+                    Text("Clicks:", bundle: .module, comment: "text field label")
                 }
                 TextField(value: .constant(station.clicktrend), format: .number, prompt: unknown) {
-                    Text("Trend") + Text(":")
+                    Text("Trend:", bundle: .module, comment: "text field label")
                 }
             }
         }
@@ -864,15 +883,15 @@ struct StationView: View {
             } label: {
                 Group {
                     if self.rate <= 0 {
-                        Text("Play").label(symbol: "play")
+                        Text("Play", bundle: .module, comment: "play button title").label(symbol: "play")
                     } else {
-                        Text("Pause").label(symbol: "pause")
+                        Text("Pause", bundle: .module, comment: "pause button title").label(symbol: "pause")
                     }
                 }
             }
             .keyboardShortcut(.space, modifiers: [])
             .symbolVariant(.fill)
-            .help(self.rate <= 0 ? Text("Play the current track") : Text("Pause the current track"))
+            .help(self.rate <= 0 ? Text("Play the current track", bundle: .module, comment: "play button tooltip") : Text("Pause the current track", bundle: .module, comment: "pause button tooltip"))
         }
 //        } else {
 //            ToolbarItem(id: "play", placement: ToolbarItemPlacement.accessory(), showsByDefault: true) {
@@ -937,8 +956,15 @@ struct StationView: View {
 // TODO: figure out: App[20783:6049981] [] [19:59:59.139] FigICYBytePumpCopyProperty signalled err=-12784 (kFigBaseObjectError_PropertyNotFound) (no such property) at FigICYBytePump.c:1396
 
 
+class RadioTunerBase: NSObject, ObservableObject {
+}
+
+extension RadioTunerBase : AVPlayerItemMetadataOutputPushDelegate {
+
+}
+
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor final class RadioTuner: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
+@MainActor final class RadioTuner: RadioTunerBase {
     static let shared = RadioTuner()
 
     @Published var itemTitle: String? = nil

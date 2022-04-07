@@ -79,7 +79,7 @@ struct Station : Pure {
     var lastchangetime_iso8601: DateString?
     var codec: String? // e.g., "MP3" or "AAC,H.264"
     var bitrate: Double?
-    var hls: DateString?
+    var hls: String?
     var lastcheckok: Int?
     //var lastchecktime: OldDateString?
     var lastchecktime_iso8601: DateString?
@@ -123,7 +123,7 @@ extension Station : Identifiable {
     static let lastchangetime_iso8601Column = ColumnID("lastchangetime_iso8601", DateString.self)
     static let codecColumn = ColumnID("codec", String.self) // e.g., "MP3" or "AAC,H.264.self)
     static let bitrateColumn = ColumnID("bitrate", Double.self)
-    static let hlsColumn = ColumnID("hls", DateString.self)
+    static let hlsColumn = ColumnID("hls", String.self)
     static let lastcheckokColumn = ColumnID("lastcheckok", Int.self)
     //static let lastchecktimeColumn = ColumnID("lastchecktime", OldDateString.self)
     static let lastchecktime_iso8601Column = ColumnID("lastchecktime_iso8601", DateString.self)
