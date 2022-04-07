@@ -535,7 +535,7 @@ struct Sidebar: View {
                         NavigationLink(destination: StationList(title: Text("Tag: ") + info.title, frame: tagsFrame)) {
                             info.title.label(image: info.image.foregroundStyle(info.tint))
                                 .symbolVariant(.fill)
-                                .badge(tag.count)
+                                .badge(Text(tag.count, format: .number))
                         }
                         .detailLink(false)
                     }
@@ -633,7 +633,7 @@ struct Sidebar: View {
             title.label(symbol: "pin", color: .green)
         }
         .detailLink(false)
-        .badge(pinnedStations.count)
+        .badge(Text(pinnedStations.count, format: .number))
     }
 
     var stationsSection: some View {
@@ -676,7 +676,7 @@ struct Sidebar: View {
                     }
                     NavigationLink(destination: StationList(title: navTitle, frame: countriesFrame)) {
                         title.label(image: Text(emojiFlag(countryCode: country.valueCount.value.isEmpty ? "UN" : country.valueCount.value)))
-                            .badge(country.valueCount.count)
+                            .badge(Text(country.valueCount.count, format: .number))
                     }
                     .detailLink(false)
                 }
