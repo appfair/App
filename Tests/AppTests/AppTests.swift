@@ -29,7 +29,8 @@ import FairCore
     func testCaskList() async throws {
         let homeBrewInv = HomebrewInventory()
         XCTAssertEqual(homeBrewInv.casks.count, 0)
-        let casks = try await homeBrewInv.fetchCasks()
+        let (casks, response) = try await homeBrewInv.fetchCasks()
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
         XCTAssertGreaterThan(casks.count, 1000)
     }
 

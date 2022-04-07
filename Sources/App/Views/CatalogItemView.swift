@@ -532,7 +532,7 @@ struct CatalogItemView: View {
                         }
                     case .security:
                         if info.cask != nil {
-                            SecurityBox(info: info)
+                            //SecurityBox(info: info) // TODO: make this human-readable for presentation instead of showing the raw JSON
                         }
                     case .formula:
                         if let cask = info.cask {
@@ -1285,8 +1285,8 @@ struct SecurityBox : View {
                 return .success(AttributedString(scanResult.data.utf8String ?? ""))
             } else {
                 do {
-                    let ob = try JSONSerialization.jsonObject(with: scanResult.data, options: .topLevelDictionaryAssumed)
-                    let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                    let ob = try JSum(json: scanResult.data)
+                    let pretty = try ob.json(outputFormatting: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
                     return .success(AttributedString(pretty.utf8String ?? ""))
                 } catch {
                     return .success(AttributedString(scanResult.data.utf8String ?? ""))
@@ -1388,8 +1388,8 @@ struct CaskFormulaBox : View {
                 let metadata = try await URLSession.shared.fetch(request: URLRequest(url: url))
                 if jsonSource {
                     do {
-                        let ob = try JSONSerialization.jsonObject(with: metadata.data, options: .topLevelDictionaryAssumed)
-                        let pretty = try JSONSerialization.data(withJSONObject: ob, options: [.prettyPrinted, .sortedKeys])
+                        let ob = try JSum(json: metadata.data)
+                        let pretty = try ob.json(outputFormatting: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
                         self.caskSummary = .success(AttributedString(pretty.utf8String ?? ""))
                     } catch {
                         self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))

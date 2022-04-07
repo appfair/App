@@ -1334,7 +1334,7 @@ struct CaskItem : Equatable, Decodable {
     let auto_updates: Bool?
 
     // "artifacts":[["Signal.app"],{"trash":["~/Library/Application Support/Signal","~/Library/Preferences/org.whispersystems.signal-desktop.helper.plist","~/Library/Preferences/org.whispersystems.signal-desktop.plist","~/Library/Saved Application State/org.whispersystems.signal-desktop.savedState"],"signal":{}}]
-    typealias ArtifactItem = XOr<Array<ArtifactNameTarget>>.Or<ArtifactObject>
+    typealias ArtifactItem = XOr<Array<ArtifactNameTarget>>.Or<JSum>
 
     let artifacts: Array<ArtifactItem>?
 
@@ -1345,12 +1345,6 @@ struct CaskItem : Equatable, Decodable {
     /// E.g.: `["Eclipse.app", { "target": "Nodeclipse.app" } ]`
     struct ArtifactTarget : Equatable, Decodable {
         var target: String
-    }
-
-    struct ArtifactObject : Equatable, Decodable {
-        //let trash: Array<String>?
-        //let quit: String?
-        //let signal: Array<SignalItem>?
     }
 
     /// `depends_on` is used to declare dependencies and requirements for a Cask. `depends_on` is not consulted until install is attempted.
