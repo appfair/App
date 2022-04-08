@@ -19,18 +19,19 @@ import WebKit
 @MainActor public final class Store: SceneManager {
     @AppStorage("homePage") public var homePage = "https://start.duckduckgo.com"
     @AppStorage("searchHost") public var searchHost = "duckduckgo.com"
+    @AppStorage("themeStyle") public var themeStyle = ThemeStyle.system
 
     @Published var config: WKWebViewConfiguration = WKWebViewConfiguration()
-}
-
-struct BrowserStateKey: FocusedValueKey {
-    typealias Value = BrowserState
 }
 
 extension FocusedValues {
     var browserState: BrowserState? {
         get { self[BrowserStateKey.self] }
         set { self[BrowserStateKey.self] = newValue }
+    }
+
+    struct BrowserStateKey: FocusedValueKey {
+        typealias Value = BrowserState
     }
 }
 
@@ -61,7 +62,7 @@ public extension AppContainer {
 }
 
 struct BrowserCommands : Commands {
-    @FocusedValue(\.browserState) var browserState
+    @FocusedValue(\.browserState) var state
 
     var body: some Commands {
         SidebarCommands()
@@ -70,17 +71,8 @@ struct BrowserCommands : Commands {
 
         CommandGroup(after: .sidebar) {
             Divider()
-
-            Text("Show Reader", bundle: .module, comment: "label for reader view menu")
-                .label(image: FairSymbol.eyeglasses)
-                .button {
-                    dbg("loading reader view for:", browserState)
-                    Task {
-                        await browserState?.enterReaderView()
-                    }
-                }
+            BrowserState.readerViewCommand(state, brief: false)
                 .keyboardShortcut("R", modifiers: [.command, .shift])
-                //.disabled(browserState?.canEnterReaderView != true)
         }
     }
 
@@ -138,7 +130,6 @@ public struct AppSettingsView : View {
 
 struct GeneralSettingsView : View {
     @EnvironmentObject var store: Store
-    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
 
     var body: some View {
         Form {
@@ -146,7 +137,7 @@ struct GeneralSettingsView : View {
                 Text("Home Page", bundle: .module, comment: "label for general preference text field for the home page")
             }
 
-            ThemeStylePicker(style: $themeStyle)
+            ThemeStylePicker(style: store.$themeStyle)
         }
     }
 }
@@ -238,6 +229,9 @@ extension View {
 
 /// Is this wise?
 extension NSError : LocalizedError {
+    public var errorDescription: String? { self.localizedDescription }
+    public var failureReason: String? { self.localizedFailureReason }
+    public var recoverySuggestion: String? { self.localizedRecoverySuggestion }
 }
 
 /// Returns the localized string for the current module.

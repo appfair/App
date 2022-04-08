@@ -47,11 +47,9 @@ public class BrowserStateBase : ObservableObject {
             objectWillChange.send()
         }
     }
-
-
 }
 
-@MainActor public final class BrowserState : BrowserStateBase {
+public class BrowserState : BrowserStateBase {
     var initialRequest: URLRequest?
     @Published public var errors: [NSError] = []
 
@@ -90,22 +88,7 @@ public class BrowserStateBase : ObservableObject {
     }
 
     @discardableResult func js(_ script: String) async throws -> Any? {
-        try await webView?.callAsyncJavaScript(script, contentWorld: WKContentWorld.defaultClient)
-    }
-
-    public func enterReaderView() async {
-        dbg()
-        await self.trying {
-            let readability = try Bundle.module.loadBundleResource(named: "Readability.js")
-            dbg("loading readability library:", ByteCountFormatter().string(fromByteCount: .init(readability.count)))
-            // load the readbility script
-            try await js(readability.utf8String ?? "")
-
-            // invoke the parser
-            let result = try await js("new Readability(document).parse()")
-
-            dbg("result:", result)
-        }
+        try await webView?.evalJS(script)
     }
 
     public func load(_ url: URL?) {
@@ -139,6 +122,56 @@ public class BrowserStateBase : ObservableObject {
             webView.createPDF(configuration: configuration, completionHandler: completion)
         } else {
             completion(.failure(WKError(.unknown)))
+        }
+    }
+
+    public func enterReaderView() async {
+        dbg()
+        await self.trying {
+            let demo = try await js("1+1")
+            dbg("js:", demo)
+
+            let readability = try Bundle.module.loadBundleResource(named: "Readability.js")
+            dbg("loading readability library:", ByteCountFormatter().string(fromByteCount: .init(readability.count)))
+            // load the readbility script
+            try await js((readability.utf8String ?? ""))
+
+            // invoke the parser
+            let result = try await js("new Readability(document.cloneNode(true)).parse()")
+
+            dbg("result:", result)
+            if let dict = result as? NSDictionary,
+                let content = dict["content"] as? String {
+                dbg("content:", ByteCountFormatter().string(fromByteCount: .init(content.count)))
+                await webView?.loadHTMLString(content, baseURL: webView?.url)
+            }
+        }
+    }
+
+    static func readerViewCommand(_ state: BrowserState?, brief: Bool) -> some View {
+        (brief ? Text("Reader", bundle: .module, comment: "label for brief reader command") : Text("Show Reader", bundle: .module, comment: "label for non-brief reader command"))
+            .label(image: FairSymbol.eyeglasses)
+            .button {
+                dbg("loading reader view for:", state?.url)
+                Task {
+                    await state?.enterReaderView()
+                }
+            }
+            //.disabled(state?.canEnterReaderView != true)
+    }
+}
+
+extension WKWebView {
+    /// Equivalent to `evaluateJavaScript`, except it doesn't crash when a nil is returned.
+    ///
+    /// - Parameters:
+    ///   - js: the JavaScript to evaluate
+    ///   - frame: the frame in which to evaluate the script
+    ///   - contentWorld: the content world in which to perform the evaluation
+    /// - Returns: the result from the JS execution
+    func evalJS(_ js: String, in frame: WKFrameInfo? = nil, in contentWorld: WKContentWorld = .defaultClient) async throws -> Any {
+        try await withCheckedThrowingContinuation { cnt in
+            evaluateJavaScript(js, in: frame, in: contentWorld,completionHandler: cnt.resume)
         }
     }
 }

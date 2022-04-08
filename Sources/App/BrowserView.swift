@@ -18,7 +18,6 @@ import FairApp
 struct BrowserView : View {
     @StateObject private var state: BrowserState
     @EnvironmentObject private var store: Store
-    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     init() {
         self._state = .init(wrappedValue: BrowserState())
@@ -32,10 +31,10 @@ struct BrowserView : View {
                     state.load(url)
                 }
             }
-            .preferredColorScheme(themeStyle.colorScheme)
+            .preferredColorScheme(store.themeStyle.colorScheme)
             .toolbar(id: "ReaderToolbar") {
                 ToolbarItem(id: "ReaderCommand", placement: .automatic, showsByDefault: true) {
-                    readerViewCommand
+                    BrowserState.readerViewCommand(state, brief: true)
                 }
             }
             .alertingError($state.errors)
@@ -92,18 +91,6 @@ struct BrowserView : View {
         }
     }
 
-    private var readerViewCommand: some View {
-        Text("Reader", bundle: .module, comment: "label for toolbar reader view")
-            .label(image: FairSymbol.eyeglasses)
-            .button {
-                dbg("loading reader view for:", state.url)
-                Task {
-                    await state.enterReaderView()
-                }
-            }
-            .disabled(state.canEnterReaderView != true)
-    }
-
     private var goBackCommand: some View {
         Button(action: { state.goBack() }) {
             Text("Back", bundle: .module, comment: "label for toolbar back button").label(image: FairSymbol.chevron_left)
@@ -144,7 +131,9 @@ struct BrowserView : View {
     @Environment(\.openURL) private var openURL
 
     private func decidePolicy(for action: NavigationAction, state: BrowserState) {
-        if let externalURL = action.request.url, !WebView.canHandle(externalURL) {
+        if let externalURL = action.request.url,
+            !WebView.canHandle(externalURL) {
+            dbg(externalURL)
             externalNavigation = ExternalURLNavigation(source: state.url ?? URL(string: "about:blank")!, destination: externalURL)
             action.decidePolicy(.cancel)
         } else {
@@ -236,7 +225,7 @@ struct URLTextField<Accessory> : View where Accessory : View {
     }
 
     private var textField: some View {
-        let view = TextField("Search or website address", text: $text, onEditingChanged: onEditingChange(_:), onCommit: onCommit)
+        let view = TextField("Search or enter website name", text: $text, onEditingChanged: onEditingChange(_:), onCommit: onCommit)
             .textFieldStyle(PlainTextFieldStyle())
             .disableAutocorrection(true)
 
@@ -252,10 +241,10 @@ struct URLTextField<Accessory> : View where Accessory : View {
                 dbg("focusing on URL field")
                 self.focusedField = .field // doesn't work…
                 // …so we hack it in (also doesn't work)
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
-                    if let window = NSApp.keyWindow,
-                       let toolbar = window.toolbar {
-                        dbg("attempt focus in:", toolbar, toolbar.visibleItems)
+//                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+//                    if let window = NSApp.keyWindow,
+//                       let toolbar = window.toolbar {
+//                        dbg("attempt focus in:", toolbar, toolbar.visibleItems)
                         
 //                        if let searchField = toolbar.visibleItems?.compactMap({ $0.view }).last {
 //                            dbg("searchField:", searchField, searchField.subviews)
@@ -269,8 +258,8 @@ struct URLTextField<Accessory> : View where Accessory : View {
 //                                }
 //                            }
 //                        }
-                    }
-                }
+//                    }
+//                }
             }
 
 #endif
@@ -325,7 +314,12 @@ private enum UserInput {
 
         if string.isEmpty {
             self = .invalid
-        } else if !string.contains(where: \.isWhitespace), string.contains("."), let url = URL(string: string) {
+        } else if !string.contains(where: \.isWhitespace),
+                    string.contains("."),
+                    var url = URL(string: string) {
+            if url.scheme == nil { // replace an empty scheme with https
+                url = URL(string: "https://" + string) ?? url
+            }
             self = .url(url)
         } else {
             self = .search(string)
