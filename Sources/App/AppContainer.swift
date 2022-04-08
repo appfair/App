@@ -117,7 +117,7 @@ public struct AppSettingsView : View {
             GeneralSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("General", comment: "General preferences tab title")
+                    Text("General", bundle: .module, comment: "General preferences tab title")
                         .label(image: FairSymbol.switch_2)
                         .symbolVariant(.fill)
                 }
@@ -125,7 +125,7 @@ public struct AppSettingsView : View {
             AdvancedSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Advanced", comment: "Advanced preferences tab title")
+                    Text("Advanced", bundle: .module, comment: "Advanced preferences tab title")
                         .label(image: FairSymbol.gearshape)
                         .symbolVariant(.fill)
                 }
@@ -163,9 +163,9 @@ extension ThemeStyle : Identifiable {
 
     public var label: Text {
         switch self {
-        case .system: return Text("System")
-        case .light: return Text("Light")
-        case .dark: return Text("Dark")
+        case .system: return Text("System", bundle: .module, comment: "theme style preference radio label for using the system theme")
+        case .light: return Text("Light", bundle: .module, comment: "theme style preference radio label for using the light theme")
+        case .dark: return Text("Dark", bundle: .module, comment: "theme style preference radio label for using the dark theme")
         }
     }
 
@@ -189,7 +189,7 @@ struct ThemeStylePicker: View {
                 themeStyle.label
             }
         } label: {
-            Text("Theme:")
+            Text("Theme:", bundle: .module, comment: "label for general preferences picker for choosing the theme style")
         }
         .radioPickerStyle()
     }
@@ -224,6 +224,18 @@ struct AdvancedSettingsView : View {
 
 // MARK: Parochial (package-local) Utilities
 
+extension View {
+    /// Alert if the list of errors in not blank
+    func alertingError<L: LocalizedError>(_ errorBinding: Binding<[L]>) -> some View {
+        alert(isPresented: Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }, error: errorBinding.wrappedValue.last, actions: { _ in
+            // TODO: extra actions, like “Report”?
+        }, message: { _ in
+            // TODO: extra message?
+        })
+
+    }
+}
+
 /// Returns the localized string for the current module.
 ///
 /// - Note: This is boilerplate package-local code that could be copied
@@ -239,6 +251,7 @@ internal func wip<T>(_ value: T) -> T { value }
 
 /// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
 /// Otherwise it will default to the main bundle's strings, which is always empty.
+@available(*, deprecated, message: "use localized bundle/comment initializer instead")
 @usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
     SwiftUI.Text(string, bundle: .module, comment: comment)
 }

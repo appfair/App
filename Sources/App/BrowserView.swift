@@ -14,23 +14,15 @@
  */
 import FairApp
 
-extension View {
-    /// Alert if the list of errors in not blank
-    func alertingError(_ errorBinding: Binding<[NSError]>) -> some View {
-        alert(isPresented: Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }, error: errorBinding.wrappedValue.last, actions: { _ in
-            // TODO: extra actions, like “Report”?
-        }, message: { _ in
-            // TODO: extra message?
-        })
-
-    }
-}
-
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
-    @StateObject private var state = BrowserState()
+    @StateObject private var state: BrowserState
     @EnvironmentObject private var store: Store
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
+
+    init() {
+        self._state = .init(wrappedValue: BrowserState())
+    }
 
     var body: some View {
         browserBody
@@ -161,7 +153,7 @@ struct BrowserView : View {
     }
 
     private func makeExternalNavigationAlert(_ navigation: ExternalURLNavigation) -> Alert {
-        Alert(title: Text("Allow “\(navigation.source.highLevelDomain)” to open “\(navigation.destination.scheme ?? "")”?"), primaryButton: .default(Text("Allow"), action: { openURL(navigation.destination) }), secondaryButton: .cancel())
+        Alert(title: Text("Allow “\(navigation.source.highLevelDomain)” to open “\(navigation.destination.scheme ?? "")”?", bundle: .module, comment: "alert for whether to permit external navigation"), primaryButton: .default(Text("Allow", bundle: .module, comment: "button text for allow text in dialog asking whether to permit external navigation"), action: { openURL(navigation.destination) }), secondaryButton: .cancel())
     }
 }
 
