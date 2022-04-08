@@ -1,5 +1,30 @@
-import SwiftUI
+/**
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairApp
+
+extension View {
+    /// Alert if the list of errors in not blank
+    func alertingError(_ errorBinding: Binding<[NSError]>) -> some View {
+        alert(isPresented: Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }, error: errorBinding.wrappedValue.last, actions: { _ in
+            // TODO: extra actions, like “Report”?
+        }, message: { _ in
+            // TODO: extra message?
+        })
+
+    }
+}
 
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
@@ -21,12 +46,7 @@ struct BrowserView : View {
                     readerViewCommand
                 }
             }
-//            .commands {
-//                CommandGroup(after: CommandGroupPlacement.textFormatting) {
-//                    readerViewCommand
-//                }
-//            }
-
+            .alertingError($state.errors)
     }
 
     var browserBody: some View {
@@ -66,11 +86,11 @@ struct BrowserView : View {
     private var urlTextField: some View {
         URLTextField(url: state.url, isSecure: state.hasOnlySecureContent, loadingProgress: state.estimatedProgress, onNavigate: onNavigate(to:)) {
             if state.isLoading {
-                Button(action: state.stopLoading) {
+                Button(action: { state.stopLoading() }) {
                     Text("Stop Loading").label(image: FairSymbol.xmark)
                 }
             } else {
-                Button(action: state.reload) {
+                Button(action: { state.reload() }) {
                     Text("Reload").label(image: FairSymbol.arrow_clockwise)
                 }
                 .disabled(state.url == nil)
@@ -83,13 +103,15 @@ struct BrowserView : View {
             .label(image: FairSymbol.eyeglasses)
             .button {
                 dbg("loading reader view for:", state.url)
-                state.enterReaderView()
+                Task {
+                    await state.enterReaderView()
+                }
             }
             .disabled(state.canEnterReaderView != true)
     }
 
     private var goBackCommand: some View {
-        Button(action: state.goBack) {
+        Button(action: { state.goBack() }) {
             Text("Back", bundle: .module, comment: "label for toolbar back button").label(image: FairSymbol.chevron_left)
                 .frame(minWidth: 20)
         }
@@ -98,7 +120,7 @@ struct BrowserView : View {
     }
 
     private var goForwardCommand: some View {
-        Button(action: state.goForward) {
+        Button(action: { state.goForward() }) {
             Text("Forward", bundle: .module, comment: "label for toolbar forward button").label(image: FairSymbol.chevron_right)
                 .frame(minWidth: 20)
         }
@@ -222,7 +244,6 @@ struct URLTextField<Accessory> : View where Accessory : View {
     private var textField: some View {
         let view = TextField("Search or website address", text: $text, onEditingChanged: onEditingChange(_:), onCommit: onCommit)
             .textFieldStyle(PlainTextFieldStyle())
-            .focusable(true)
             .disableAutocorrection(true)
 
 #if os(iOS)

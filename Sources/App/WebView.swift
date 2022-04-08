@@ -1,3 +1,17 @@
+/**
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairApp
 import WebKit
 
@@ -449,99 +463,5 @@ extension EnvironmentValues {
     var allowsBackForwardNavigationGestures: Bool? {
         get { self[WebViewAllowsBackForwardNavigationGesturesKey.self] }
         set { self[WebViewAllowsBackForwardNavigationGesturesKey.self] = newValue }
-    }
-}
-
-public final class BrowserState : ObservableObject {
-    var initialRequest: URLRequest?
-
-    var webView: WKWebView? {
-        didSet {
-            webViewObservations.forEach { $0.invalidate() }
-            guard let webView = webView else {
-                webViewObservations.removeAll()
-                return
-            }
-
-            func register<T>(_ keyPath: KeyPath<WKWebView, T>) -> NSKeyValueObservation where T : Equatable {
-                webView.observe(keyPath, options: [.prior, .old, .new], changeHandler: webView(_:didChangeKeyPath:))
-            }
-
-            webViewObservations = [
-                register(\.canGoBack),
-                register(\.canGoForward),
-                register(\.title),
-                register(\.url),
-                register(\.isLoading),
-                register(\.estimatedProgress),
-            ]
-        }
-    }
-
-    private var webViewObservations: [NSKeyValueObservation] = []
-
-    public convenience init(initialURL: URL? = nil, configuration: WKWebViewConfiguration = .init()) {
-        self.init(initialRequest: initialURL.map { URLRequest(url: $0) }, configuration: configuration)
-    }
-
-    public init(initialRequest: URLRequest?, configuration: WKWebViewConfiguration = .init()) {
-        self.initialRequest = initialRequest
-    }
-
-    /// Sends an `objectWillChange` whenever an observed value changes
-    func webView<Value>(_: WKWebView, didChangeKeyPath change: NSKeyValueObservedChange<Value>) where Value : Equatable {
-        if change.isPrior && change.oldValue != change.newValue {
-            objectWillChange.send()
-        }
-    }
-
-    public var canGoBack: Bool { webView?.canGoBack ?? false }
-    public var canGoForward: Bool { webView?.canGoForward ?? false }
-    public var title: String { webView?.title ?? "" }
-    public var url: URL? { webView?.url }
-    public var isLoading: Bool { webView?.isLoading ?? false }
-    public var estimatedProgress: Double? { isLoading ? webView?.estimatedProgress : nil }
-    public var hasOnlySecureContent: Bool { webView?.hasOnlySecureContent ?? false }
-
-    public var canEnterReaderView: Bool {
-        url != nil && isLoading == false
-    }
-
-    public func enterReaderView() {
-        dbg()
-    }
-
-    public func load(_ url: URL?) {
-        if let url = url {
-            load(URLRequest(url: url))
-        }
-    }
-
-    public func load(_ request: URLRequest) {
-        webView?.load(request)
-    }
-
-    public func goBack() {
-        webView?.goBack()
-    }
-
-    public func goForward() {
-        webView?.goForward()
-    }
-
-    public func reload() {
-        webView?.reload()
-    }
-
-    public func stopLoading() {
-        webView?.stopLoading()
-    }
-
-    func createPDF(configuration: WKPDFConfiguration = .init(), completion: @escaping (Result<Data, Error>) -> Void) {
-        if let webView = webView {
-            webView.createPDF(configuration: configuration, completionHandler: completion)
-        } else {
-            completion(.failure(WKError(.unknown)))
-        }
     }
 }

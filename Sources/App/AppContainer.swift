@@ -1,9 +1,23 @@
+/**
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairApp
 import WebKit
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
-    @AppStorage("homePage") public var homePage = "https://duckduckgo.com"
+    @AppStorage("homePage") public var homePage = "https://start.duckduckgo.com"
     @AppStorage("searchHost") public var searchHost = "duckduckgo.com"
 
     @Published var config: WKWebViewConfiguration = WKWebViewConfiguration()
@@ -60,8 +74,10 @@ struct BrowserCommands : Commands {
             Text("Show Reader", bundle: .module, comment: "label for reader view menu")
                 .label(image: FairSymbol.eyeglasses)
                 .button {
-                    dbg("loading reader view for:", browserState, browserState?.url)
-                    browserState?.enterReaderView()
+                    dbg("loading reader view for:", browserState)
+                    Task {
+                        await browserState?.enterReaderView()
+                    }
                 }
                 .keyboardShortcut("R", modifiers: [.command, .shift])
                 //.disabled(browserState?.canEnterReaderView != true)
