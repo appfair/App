@@ -87,11 +87,11 @@ struct BrowserView : View {
         URLTextField(url: state.url, isSecure: state.hasOnlySecureContent, loadingProgress: state.estimatedProgress, onNavigate: onNavigate(to:)) {
             if state.isLoading {
                 Button(action: { state.stopLoading() }) {
-                    Text("Stop Loading").label(image: FairSymbol.xmark)
+                    Text("Stop Loading", bundle: .module, comment: "text for the stop loading button").label(image: FairSymbol.xmark)
                 }
             } else {
                 Button(action: { state.reload() }) {
-                    Text("Reload").label(image: FairSymbol.arrow_clockwise)
+                    Text("Reload", bundle: .module, comment: "text for the reload button").label(image: FairSymbol.arrow_clockwise)
                 }
                 .disabled(state.url == nil)
             }
