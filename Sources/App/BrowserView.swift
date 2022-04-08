@@ -41,8 +41,8 @@ struct BrowserView : View {
                 }
             }
             .preferredColorScheme(themeStyle.colorScheme)
-            .toolbar {
-                ToolbarItemGroup(placement: .automatic) {
+            .toolbar(id: "ReaderToolbar") {
+                ToolbarItem(id: "ReaderCommand", placement: .automatic, showsByDefault: true) {
                     readerViewCommand
                 }
             }
@@ -54,7 +54,7 @@ struct BrowserView : View {
             .webViewNavigationPolicy(onAction: decidePolicy(for:state:))
             .alert(item: $externalNavigation, content: makeExternalNavigationAlert(_:))
 
-        let urlField = ToolbarItem(placement: .principal) {
+        let urlField = ToolbarItem(id: "URLField", placement: .principal, showsByDefault: true) {
             urlTextField
         }
 
@@ -62,10 +62,12 @@ struct BrowserView : View {
         return content
             .edgesIgnoringSafeArea(.all)
             .navigationTitle(state.title.isEmpty ? "Net Skip" : state.title)
-            .toolbar {
-                ToolbarItemGroup(placement: .navigation) {
-                    goBackCommand
-                    goForwardCommand
+            .toolbar(id: "NavigationToolbar") {
+                ToolbarItem(id: "ForwardBackward", placement: .navigation, showsByDefault: true) {
+                    HStack { // we'd rather use a ToolbarItemGroup(placement: .navigation) here, but it doesn't seem to work with customizable toolbars
+                        goBackCommand
+                        goForwardCommand
+                    }
                 }
                 urlField
             }
