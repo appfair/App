@@ -24,7 +24,10 @@ struct BrowserView : View {
     }
 
     var body: some View {
-        browserBody
+        VStack {
+            findBar
+            browserBody
+        }
             .focusedSceneValue(\.browserState, state)
             .onAppear {
                 if !store.homePage.isEmpty, let url = URL(string: store.homePage) {
@@ -38,6 +41,19 @@ struct BrowserView : View {
                 }
             }
             .alertingError($state.errors)
+    }
+
+    var findBar: some View {
+        #if os(macOS)
+        HStack {
+            Spacer()
+            FindBarView()
+                .frame(height: 32)
+                .environmentObject(state)
+        }
+        #else
+        EmptyView()
+        #endif
     }
 
     var browserBody: some View {
@@ -79,14 +95,9 @@ struct BrowserView : View {
     private var urlTextField: some View {
         URLTextField(url: state.url, isSecure: state.hasOnlySecureContent, loadingProgress: state.estimatedProgress, onNavigate: onNavigate(to:)) {
             if state.isLoading {
-                Button(action: { state.stopLoading() }) {
-                    Text("Stop Loading", bundle: .module, comment: "text for the stop loading button").label(image: FairSymbol.xmark)
-                }
+                BrowserState.stopCommand(state, brief: true)
             } else {
-                Button(action: { state.reload() }) {
-                    Text("Reload", bundle: .module, comment: "text for the reload button").label(image: FairSymbol.arrow_clockwise)
-                }
-                .disabled(state.url == nil)
+                BrowserState.reloadCommand(state, brief: true)
             }
         }
     }
@@ -145,6 +156,59 @@ struct BrowserView : View {
         Alert(title: Text("Allow “\(navigation.source.highLevelDomain)” to open “\(navigation.destination.scheme ?? "")”?", bundle: .module, comment: "alert for whether to permit external navigation"), primaryButton: .default(Text("Allow", bundle: .module, comment: "button text for allow text in dialog asking whether to permit external navigation"), action: { openURL(navigation.destination) }), secondaryButton: .cancel())
     }
 }
+
+#if os(macOS)
+
+struct FindBarView : UXViewRepresentable {
+    @EnvironmentObject var state: BrowserState
+
+    func makeUXView(context: Context) -> NSStackView {
+        state.finder.findBarContainer = context.coordinator
+        return context.coordinator.findBarContainer
+    }
+
+    func updateUXView(_ view: NSStackView, context: Context) {
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    static func dismantleUXView(_ view: NSStackView, coordinator: Coordinator) {
+    }
+
+    @objc class Coordinator : NSObject, NSTextFinderBarContainer {
+        let findBarContainer = NSStackView()
+        var isFindBarVisible: Bool = true
+
+        override init() {
+            super.init()
+        }
+
+        @objc var findBarView: NSView? {
+            didSet {
+                dbg("set findBarView:", findBarView)
+                if let findBarView = findBarView {
+                    findBarContainer.setViews([findBarView], in: .trailing)
+                } else {
+                    findBarContainer.setViews([], in: .trailing)
+                }
+//                if let findBarView = findBarView {
+//                    findBarView.frame = NSMakeRect(0, self.view.bounds.height - findBarView.frame.height, self.view.bounds.width, findBarView.frame.height)
+//                }
+            }
+        }
+
+        func findBarViewDidChangeHeight() {
+            dbg(findBarView?.frame.height)
+            if let findBarView = findBarView {
+//                findBarView.frame = NSMakeRect(0, self.view.bounds.height - findBarView.frame.height, self.view.bounds.width, findBarView.frame.height)
+            }
+        }
+    }
+}
+
+#endif
 
 struct URLTextField<Accessory> : View where Accessory : View {
     private var loadingProgress: Double?

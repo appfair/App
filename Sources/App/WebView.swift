@@ -75,6 +75,8 @@ private struct WebViewRepresentable {
         let view = WKWebView()
         view.navigationDelegate = coordinator
         view.uiDelegate = coordinator
+        view.allowsMagnification = true
+        
         coordinator.webView = view
         coordinator.environment = environment
 
@@ -102,35 +104,19 @@ private struct WebViewRepresentable {
     }
 }
 
-#if os(macOS)
-extension WebViewRepresentable : NSViewRepresentable {
-    func makeNSView(context: Context) -> WKWebView {
+extension WebViewRepresentable : UXViewRepresentable {
+    func makeUXView(context: Context) -> WKWebView {
         makeView(coordinator: context.coordinator, environment: context.environment)
     }
 
-    func updateNSView(_ nsView: WKWebView, context: Context) {
-        updateView(nsView, coordinator: context.coordinator, environment: context.environment)
+    func updateUXView(_ uxView: WKWebView, context: Context) {
+        updateView(uxView, coordinator: context.coordinator, environment: context.environment)
     }
 
-    static func dismantleNSView(_ nsView: WKWebView, coordinator: Coordinator) {
-        dismantleView(nsView, coordinator: coordinator)
+    static func dismantleUXView(_ uxView: WKWebView, coordinator: Coordinator) {
+        dismantleView(uxView, coordinator: coordinator)
     }
 }
-#else
-extension WebViewRepresentable : UIViewRepresentable {
-    func makeUIView(context: Context) -> WKWebView {
-        makeView(coordinator: context.coordinator, environment: context.environment)
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        updateView(uiView, coordinator: context.coordinator, environment: context.environment)
-    }
-
-    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
-        dismantleView(uiView, coordinator: coordinator)
-    }
-}
-#endif
 
 @dynamicMemberLookup
 private final class Coordinator : NSObject, WKNavigationDelegate, WKUIDelegate {

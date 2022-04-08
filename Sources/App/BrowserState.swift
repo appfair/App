@@ -36,8 +36,19 @@ public class BrowserStateBase : ObservableObject {
                 register(\.isLoading),
                 register(\.estimatedProgress),
             ]
+
+            finder.client = webView
         }
     }
+
+    #if os(macOS)
+    let finder: NSTextFinder = {
+        let finder = NSTextFinder()
+        finder.isIncrementalSearchingEnabled = true
+        finder.incrementalSearchingShouldDimContentView = true        
+        return finder
+    }()
+    #endif
 
     private var webViewObservations: [NSKeyValueObservation] = []
 
@@ -128,11 +139,9 @@ public class BrowserState : BrowserStateBase {
     public func enterReaderView() async {
         dbg()
         await self.trying {
-            let demo = try await js("1+1")
-            dbg("js:", demo)
-
             let readability = try Bundle.module.loadBundleResource(named: "Readability.js")
             dbg("loading readability library:", ByteCountFormatter().string(fromByteCount: .init(readability.count)))
+
             // load the readbility script
             try await js((readability.utf8String ?? ""))
 
@@ -148,6 +157,26 @@ public class BrowserState : BrowserStateBase {
         }
     }
 
+    static func stopCommand(_ state: BrowserState?, brief: Bool) -> some View {
+        (brief ? Text("Stop", bundle: .module, comment: "label for brief stop command") : Text("Stop Loading", bundle: .module, comment: "label for non-brief stop command"))
+            .label(image: FairSymbol.xmark)
+            .button {
+                dbg("stopping load:", state?.url)
+                state?.stopLoading()
+            }
+            .disabled(state?.url == nil)
+    }
+
+    static func reloadCommand(_ state: BrowserState?, brief: Bool) -> some View {
+        (brief ? Text("Reload", bundle: .module, comment: "label for brief reload command") : Text("Reload Page", bundle: .module, comment: "label for non-brief reload command"))
+            .label(image: FairSymbol.arrow_clockwise)
+            .button {
+                dbg("loading reader view for:", state?.url)
+                state?.reload()
+            }
+            .disabled(state?.url == nil)
+    }
+
     static func readerViewCommand(_ state: BrowserState?, brief: Bool) -> some View {
         (brief ? Text("Reader", bundle: .module, comment: "label for brief reader command") : Text("Show Reader", bundle: .module, comment: "label for non-brief reader command"))
             .label(image: FairSymbol.eyeglasses)
@@ -159,17 +188,37 @@ public class BrowserState : BrowserStateBase {
             }
             //.disabled(state?.canEnterReaderView != true)
     }
+
+    static func zoomCommand(_ state: BrowserState?, brief: Bool, amount: Double?) -> some View {
+        (amount == nil ?
+         (brief ? Text("Actual Size", bundle: .module, comment: "label for brief actual size command") : Text("Actual Size", bundle: .module, comment: "label for non-brief actual size command"))
+         : (amount ?? 1.0) > 1.0 ? (brief ? Text("Bigger", bundle: .module, comment: "label for brief zoom in command") : Text("Zoom In", bundle: .module, comment: "label for non-brief zoom in command"))
+             : (brief ? Text("Smaller", bundle: .module, comment: "label for brief zoom out command") : Text("Zoom Out", bundle: .module, comment: "label for non-brief zoom out command")))
+        .label(image: amount == nil ? FairSymbol.textformat_superscript : (amount ?? 1.0) > 1.0 ? FairSymbol.textformat_size_larger : FairSymbol.textformat_size_smaller)
+            .button {
+                dbg("zooming:", amount)
+                if let webView = state?.webView {
+                    if let amount = amount {
+                        webView.animator().pageZoom *= amount
+                    } else { // reset to zero
+                        webView.animator().pageZoom = 1.0
+                    }
+                }
+            }
+    }
+
+
 }
 
 extension WKWebView {
-    /// Equivalent to `evaluateJavaScript`, except it doesn't crash when a nil is returned.
+    /// Equivalent to the async form of `evaluateJavaScript`, except it doesn't crash when a nil is returned.
     ///
     /// - Parameters:
     ///   - js: the JavaScript to evaluate
     ///   - frame: the frame in which to evaluate the script
     ///   - contentWorld: the content world in which to perform the evaluation
     /// - Returns: the result from the JS execution
-    func evalJS(_ js: String, in frame: WKFrameInfo? = nil, in contentWorld: WKContentWorld = .defaultClient) async throws -> Any {
+    @discardableResult func evalJS(_ js: String, in frame: WKFrameInfo? = nil, in contentWorld: WKContentWorld = .defaultClient) async throws -> Any {
         try await withCheckedThrowingContinuation { cnt in
             evaluateJavaScript(js, in: frame, in: contentWorld,completionHandler: cnt.resume)
         }

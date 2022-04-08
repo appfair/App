@@ -70,9 +70,23 @@ struct BrowserCommands : Commands {
         searchBarCommands
 
         CommandGroup(after: .sidebar) {
-            Divider()
             BrowserState.readerViewCommand(state, brief: false)
                 .keyboardShortcut("R", modifiers: [.command, .shift])
+            Divider()
+            BrowserState.stopCommand(state, brief: false)
+                .keyboardShortcut(".", modifiers: [.command])
+            BrowserState.reloadCommand(state, brief: false)
+                .keyboardShortcut("R", modifiers: [.command])
+            Divider()
+
+            BrowserState.zoomCommand(state, brief: false, amount: nil)
+                .keyboardShortcut("0", modifiers: [.command])
+            BrowserState.zoomCommand(state, brief: false, amount: 1.2)
+                .keyboardShortcut("+", modifiers: [.command])
+            BrowserState.zoomCommand(state, brief: false, amount: 0.8)
+                .keyboardShortcut("-", modifiers: [.command])
+
+            Divider()
         }
     }
 
@@ -80,18 +94,23 @@ struct BrowserCommands : Commands {
         CommandGroup(after: CommandGroupPlacement.textEditing) {
             Section {
                 #if os(macOS)
-                Text("Search", bundle: .module, comment: "search command text").button {
-                    dbg("activating search field")
-                    // there's no official way to do this, so search the NSToolbar for the item and make it the first responder
-                    if let window = NSApp.currentEvent?.window,
-                       let toolbar = window.toolbar,
-                       let searchField = toolbar.visibleItems?.compactMap({ $0 as? NSSearchToolbarItem }).first {
-                        // <SwiftUI.AppKitSearchToolbarItem: 0x13a8721a0> identifier = "com.apple.SwiftUI.search"]
-                        dbg("searchField:", searchField)
-                        window.makeFirstResponder(searchField.searchField)
-                    }
+                Text("Find…", bundle: .module, comment: "find command text").button {
+                    state?.finder.performAction(.showFindInterface)
                 }
                 .keyboardShortcut("F")
+                Text("Find Next", bundle: .module, comment: "find next command text").button {
+                    state?.finder.performAction(.nextMatch)
+                }
+                .keyboardShortcut("G", modifiers: [.command])
+                Text("Find Previous", bundle: .module, comment: "find previous command text").button {
+                    state?.finder.performAction(.previousMatch)
+                }
+                .keyboardShortcut("G", modifiers: [.command, .shift])
+                Text("Hide Find Banner", bundle: .module, comment: "hide find banner command text").button {
+                    // state?.finder.performAction(.hideFindInterface) // doesn't work
+                    // state?.finder.cancelFindIndicator() // also doesn't work
+                }
+                .keyboardShortcut("F", modifiers: [.command, .shift])
                 #endif
             }
         }
