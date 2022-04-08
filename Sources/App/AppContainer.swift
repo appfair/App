@@ -236,6 +236,10 @@ extension View {
     }
 }
 
+/// Is this wise?
+extension NSError : LocalizedError {
+}
+
 /// Returns the localized string for the current module.
 ///
 /// - Note: This is boilerplate package-local code that could be copied
