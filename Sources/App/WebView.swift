@@ -1,9 +1,9 @@
-import SwiftUI
+import FairApp
 import WebKit
 
 /// A view that displays a web page.
 public struct WebView : View {
-    fileprivate var state: WebViewContainer
+    fileprivate var state: BrowserState
     @State private var defaultDialog: Dialog? = nil
     private var customDialog: Binding<Dialog?>? = nil
     fileprivate var dialog: Dialog? {
@@ -12,7 +12,7 @@ public struct WebView : View {
     }
     private var useInternalDialogHandling = true
 
-    public init(state: WebViewContainer, dialog: Binding<Dialog?>? = nil) {
+    public init(state: BrowserState, dialog: Binding<Dialog?>? = nil) {
         self.state = state
         self.customDialog = dialog
         self.useInternalDialogHandling = dialog == nil
@@ -132,7 +132,7 @@ private final class Coordinator : NSObject, WKNavigationDelegate, WKUIDelegate {
         set { owner.state.webView = newValue }
     }
 
-    subscript<T>(dynamicMember keyPath: ReferenceWritableKeyPath<WebViewContainer, T>) -> T {
+    subscript<T>(dynamicMember keyPath: ReferenceWritableKeyPath<BrowserState, T>) -> T {
         get { owner.state[keyPath: keyPath] }
         set { owner.state[keyPath: keyPath] = newValue }
     }
@@ -336,15 +336,15 @@ struct JavaScriptPrompt : View {
 }
 
 extension View {
-    public func webViewNavigationPolicy(onAction actionDecider: @escaping (NavigationAction, WebViewContainer) -> Void) -> some View {
+    public func webViewNavigationPolicy(onAction actionDecider: @escaping (NavigationAction, BrowserState) -> Void) -> some View {
         environment(\.navigationActionDecider, actionDecider)
     }
 
-    public func webViewNavigationPolicy(onResponse responseDecider: @escaping (NavigationResponse, WebViewContainer) -> Void) -> some View {
+    public func webViewNavigationPolicy(onResponse responseDecider: @escaping (NavigationResponse, BrowserState) -> Void) -> some View {
         environment(\.navigationResponseDecider, responseDecider)
     }
 
-    public func webViewNavigationPolicy(onAction actionDecider: @escaping (NavigationAction, WebViewContainer) -> Void, onResponse responseDecider: @escaping (NavigationResponse, WebViewContainer) -> Void) -> some View {
+    public func webViewNavigationPolicy(onAction actionDecider: @escaping (NavigationAction, BrowserState) -> Void, onResponse responseDecider: @escaping (NavigationResponse, BrowserState) -> Void) -> some View {
         environment(\.navigationActionDecider, actionDecider)
             .environment(\.navigationResponseDecider, responseDecider)
     }
@@ -376,7 +376,7 @@ public struct NavigationAction {
     }
 
     fileprivate struct DeciderKey : EnvironmentKey {
-        static let defaultValue: ((NavigationAction, WebViewContainer) -> Void)? = nil
+        static let defaultValue: ((NavigationAction, BrowserState) -> Void)? = nil
     }
 }
 
@@ -401,17 +401,17 @@ public struct NavigationResponse {
     }
 
     fileprivate struct DeciderKey : EnvironmentKey {
-        static let defaultValue: ((NavigationResponse, WebViewContainer) -> Void)? = nil
+        static let defaultValue: ((NavigationResponse, BrowserState) -> Void)? = nil
     }
 }
 
 extension EnvironmentValues {
-    var navigationActionDecider: ((NavigationAction, WebViewContainer) -> Void)? {
+    var navigationActionDecider: ((NavigationAction, BrowserState) -> Void)? {
         get { self[NavigationAction.DeciderKey.self] }
         set { self[NavigationAction.DeciderKey.self] = newValue }
     }
 
-    var navigationResponseDecider: ((NavigationResponse, WebViewContainer) -> Void)? {
+    var navigationResponseDecider: ((NavigationResponse, BrowserState) -> Void)? {
         get { self[NavigationResponse.DeciderKey.self] }
         set { self[NavigationResponse.DeciderKey.self] = newValue }
     }
@@ -452,9 +452,9 @@ extension EnvironmentValues {
     }
 }
 
-public final class WebViewContainer : ObservableObject {
+public final class BrowserState : ObservableObject {
     var initialRequest: URLRequest?
-    var webViewObservations: [NSKeyValueObservation] = []
+
     var webView: WKWebView? {
         didSet {
             webViewObservations.forEach { $0.invalidate() }
@@ -478,6 +478,8 @@ public final class WebViewContainer : ObservableObject {
         }
     }
 
+    private var webViewObservations: [NSKeyValueObservation] = []
+
     public convenience init(initialURL: URL? = nil, configuration: WKWebViewConfiguration = .init()) {
         self.init(initialRequest: initialURL.map { URLRequest(url: $0) }, configuration: configuration)
     }
@@ -486,6 +488,7 @@ public final class WebViewContainer : ObservableObject {
         self.initialRequest = initialRequest
     }
 
+    /// Sends an `objectWillChange` whenever an observed value changes
     func webView<Value>(_: WKWebView, didChangeKeyPath change: NSKeyValueObservedChange<Value>) where Value : Equatable {
         if change.isPrior && change.oldValue != change.newValue {
             objectWillChange.send()
@@ -499,6 +502,14 @@ public final class WebViewContainer : ObservableObject {
     public var isLoading: Bool { webView?.isLoading ?? false }
     public var estimatedProgress: Double? { isLoading ? webView?.estimatedProgress : nil }
     public var hasOnlySecureContent: Bool { webView?.hasOnlySecureContent ?? false }
+
+    public var canEnterReaderView: Bool {
+        url != nil && isLoading == false
+    }
+
+    public func enterReaderView() {
+        dbg()
+    }
 
     public func load(_ url: URL?) {
         if let url = url {

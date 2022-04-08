@@ -1,30 +1,43 @@
 import FairApp
+import WebKit
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
+    @AppStorage("homePage") public var homePage = "https://duckduckgo.com"
     @AppStorage("searchHost") public var searchHost = "duckduckgo.com"
+
+    @Published var config: WKWebViewConfiguration = WKWebViewConfiguration()
+}
+
+struct BrowserStateKey: FocusedValueKey {
+    typealias Value = BrowserState
+}
+
+extension FocusedValues {
+    var browserState: BrowserState? {
+        get { self[BrowserStateKey.self] }
+        set { self[BrowserStateKey.self] = newValue }
+    }
 }
 
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
 #if os(macOS)
         WindowGroup {
-            browserView(store: store)
+            BrowserView()
+                .environmentObject(store)
         }
+        .commands(content: { BrowserCommands() })
         .windowToolbarStyle(UnifiedWindowToolbarStyle(showsTitle: false))
 #elseif os(iOS)
         WindowGroup {
             NavigationView {
-                browserView(store: store)
+                BrowserView()
+                    .environmentObject(store)
             }
             .navigationViewStyle(StackNavigationViewStyle())
         }
 #endif
-    }
-
-    static func browserView(store: Store) -> some View {
-        BrowserView()
-            .environmentObject(store)
     }
 
     /// The app-wide settings view
@@ -33,6 +46,50 @@ public extension AppContainer {
     }
 }
 
+struct BrowserCommands : Commands {
+    @FocusedValue(\.browserState) var browserState
+
+    var body: some Commands {
+        SidebarCommands()
+
+        searchBarCommands
+
+        CommandGroup(after: .sidebar) {
+            Divider()
+
+            Text("Show Reader", bundle: .module, comment: "label for reader view menu")
+                .label(image: FairSymbol.eyeglasses)
+                .button {
+                    dbg("loading reader view for:", browserState, browserState?.url)
+                    browserState?.enterReaderView()
+                }
+                .keyboardShortcut("R", modifiers: [.command, .shift])
+                //.disabled(browserState?.canEnterReaderView != true)
+        }
+    }
+
+    var searchBarCommands: some Commands {
+        CommandGroup(after: CommandGroupPlacement.textEditing) {
+            Section {
+                #if os(macOS)
+                Text("Search", bundle: .module, comment: "search command text").button {
+                    dbg("activating search field")
+                    // there's no official way to do this, so search the NSToolbar for the item and make it the first responder
+                    if let window = NSApp.currentEvent?.window,
+                       let toolbar = window.toolbar,
+                       let searchField = toolbar.visibleItems?.compactMap({ $0 as? NSSearchToolbarItem }).first {
+                        // <SwiftUI.AppKitSearchToolbarItem: 0x13a8721a0> identifier = "com.apple.SwiftUI.search"]
+                        dbg("searchField:", searchField)
+                        window.makeFirstResponder(searchField.searchField)
+                    }
+                }
+                .keyboardShortcut("F")
+                #endif
+            }
+        }
+
+    }
+}
 public struct AppSettingsView : View {
     public enum Tabs: Hashable {
         case general
@@ -64,10 +121,15 @@ public struct AppSettingsView : View {
 }
 
 struct GeneralSettingsView : View {
+    @EnvironmentObject var store: Store
     @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
 
     var body: some View {
         Form {
+            TextField(text: $store.homePage) {
+                Text("Home Page", bundle: .module, comment: "label for general preference text field for the home page")
+            }
+
             ThemeStylePicker(style: $themeStyle)
         }
     }
@@ -135,8 +197,8 @@ struct AdvancedSettingsView : View {
 
     public var body: some View {
         Form {
-            TextField(text:$store.searchHost) {
-                Text("Search Provider")
+            TextField(text: $store.searchHost) {
+                Text("Search Provider", bundle: .module, comment: "label for advanced preference text field for the search provider")
             }
         }
         .padding()

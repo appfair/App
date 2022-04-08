@@ -3,13 +3,30 @@ import FairApp
 
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
-    @EnvironmentObject var store: Store
+    @StateObject private var state = BrowserState()
+    @EnvironmentObject private var store: Store
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
-    @StateObject private var state = WebViewContainer()
 
     var body: some View {
         browserBody
+            .focusedSceneValue(\.browserState, state)
+            .onAppear {
+                if !store.homePage.isEmpty, let url = URL(string: store.homePage) {
+                    state.load(url)
+                }
+            }
             .preferredColorScheme(themeStyle.colorScheme)
+            .toolbar {
+                ToolbarItemGroup(placement: .automatic) {
+                    readerViewCommand
+                }
+            }
+//            .commands {
+//                CommandGroup(after: CommandGroupPlacement.textFormatting) {
+//                    readerViewCommand
+//                }
+//            }
+
     }
 
     var browserBody: some View {
@@ -17,31 +34,31 @@ struct BrowserView : View {
             .webViewNavigationPolicy(onAction: decidePolicy(for:state:))
             .alert(item: $externalNavigation, content: makeExternalNavigationAlert(_:))
 
+        let urlField = ToolbarItem(placement: .principal) {
+            urlTextField
+        }
+
 #if os(macOS)
         return content
             .edgesIgnoringSafeArea(.all)
             .navigationTitle(state.title.isEmpty ? "Net Skip" : state.title)
             .toolbar {
                 ToolbarItemGroup(placement: .navigation) {
-                    backItem
-                    forwardItem
+                    goBackCommand
+                    goForwardCommand
                 }
-                ToolbarItem(placement: .principal) {
-                    urlTextField
-                }
+                urlField
             }
-#else
+#elseif os(iOS)
         return content
             .edgesIgnoringSafeArea(.bottom)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarLeading) {
-                    backItem.labelStyle(IconOnlyLabelStyle())
-                    forwardItem.labelStyle(IconOnlyLabelStyle())
+                    goBackCommand.labelStyle(IconOnlyLabelStyle())
+                    goForwardCommand.labelStyle(IconOnlyLabelStyle())
                 }
-                ToolbarItem(placement: .principal) {
-                    urlTextField
-                }
+                urlField
             }
 #endif
     }
@@ -61,20 +78,32 @@ struct BrowserView : View {
         }
     }
 
-    private var backItem: some View {
+    private var readerViewCommand: some View {
+        Text("Reader", bundle: .module, comment: "label for toolbar reader view")
+            .label(image: FairSymbol.eyeglasses)
+            .button {
+                dbg("loading reader view for:", state.url)
+                state.enterReaderView()
+            }
+            .disabled(state.canEnterReaderView != true)
+    }
+
+    private var goBackCommand: some View {
         Button(action: state.goBack) {
-            Text("Back").label(image: FairSymbol.chevron_left)
+            Text("Back", bundle: .module, comment: "label for toolbar back button").label(image: FairSymbol.chevron_left)
                 .frame(minWidth: 20)
         }
         .disabled(!state.canGoBack)
+        .keyboardShortcut("[")
     }
 
-    private var forwardItem: some View {
+    private var goForwardCommand: some View {
         Button(action: state.goForward) {
-            Text("Forward").label(image: FairSymbol.chevron_right)
+            Text("Forward", bundle: .module, comment: "label for toolbar forward button").label(image: FairSymbol.chevron_right)
                 .frame(minWidth: 20)
         }
         .disabled(!state.canGoForward)
+        .keyboardShortcut("]")
     }
 
     func searchTermURL(_ searchTerm: String) -> URL? {
@@ -98,7 +127,7 @@ struct BrowserView : View {
     @State private var externalNavigation: ExternalURLNavigation?
     @Environment(\.openURL) private var openURL
 
-    private func decidePolicy(for action: NavigationAction, state: WebViewContainer) {
+    private func decidePolicy(for action: NavigationAction, state: BrowserState) {
         if let externalURL = action.request.url, !WebView.canHandle(externalURL) {
             externalNavigation = ExternalURLNavigation(source: state.url ?? URL(string: "about:blank")!, destination: externalURL)
             action.decidePolicy(.cancel)
@@ -128,6 +157,11 @@ struct URLTextField<Accessory> : View where Accessory : View {
     @Namespace private var namespace
 
     @EnvironmentObject var store: Store
+    enum FocusField: Hashable {
+      case field
+    }
+
+    @FocusState private var focusedField: FocusField?
 
     init(url: URL?, isSecure: Bool = false, loadingProgress: Double? = nil, onNavigate: @escaping (String) -> Void, @ViewBuilder accessory: () -> Accessory) {
         self.trailingAccessory = accessory()
@@ -188,15 +222,42 @@ struct URLTextField<Accessory> : View where Accessory : View {
     private var textField: some View {
         let view = TextField("Search or website address", text: $text, onEditingChanged: onEditingChange(_:), onCommit: onCommit)
             .textFieldStyle(PlainTextFieldStyle())
+            .focusable(true)
             .disableAutocorrection(true)
 
 #if os(iOS)
         return view
             .textContentType(.URL)
             .autocapitalization(.none)
-#else
+#elseif os(macOS)
         return view
-            .prefersDefaultFocus(in: namespace) // doesn't seem to work
+            .prefersDefaultFocus(true, in: namespace) // doesn't seem to work
+            .focused($focusedField, equals: .field) // also doesn't work
+            .onAppear {
+                dbg("focusing on URL field")
+                self.focusedField = .field // doesn't work…
+                // …so we hack it in (also doesn't work)
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+                    if let window = NSApp.keyWindow,
+                       let toolbar = window.toolbar {
+                        dbg("attempt focus in:", toolbar, toolbar.visibleItems)
+                        
+//                        if let searchField = toolbar.visibleItems?.compactMap({ $0.view }).last {
+//                            dbg("searchField:", searchField, searchField.subviews)
+//                            for sub in searchField.subviews {
+//                                window.makeFirstResponder(sub)
+//                                for sub2 in sub.subviews {
+//                                    if sub2 is UXTextField {
+//                                        dbg("found searchField:", sub2)
+//                                        window.makeFirstResponder(sub2)
+//                                    }
+//                                }
+//                            }
+//                        }
+                    }
+                }
+            }
+
 #endif
     }
 
