@@ -65,9 +65,10 @@ struct BrowserCommands : Commands {
     @FocusedValue(\.browserState) var state
 
     var body: some Commands {
-        SidebarCommands()
-
         searchBarCommands
+
+        SidebarCommands()
+        ToolbarCommands()
 
         CommandGroup(after: .sidebar) {
             BrowserState.readerViewCommand(state, brief: false)
@@ -91,7 +92,7 @@ struct BrowserCommands : Commands {
 
         #if os(macOS)
         CommandGroup(after: .newItem) {
-            Text("New Tab", bundle: .module, comment: "label for new tab command")
+            Text("New Tab", bundle: .module, comment: "label for new tab menu command")
                 .button {
                     guard let win = NSApp.keyWindow ?? NSApp.mainWindow,
                           let winc = win.windowController else {
@@ -104,9 +105,31 @@ struct BrowserCommands : Commands {
                     win.addTabbedWindow(newWindow, ordered: .above)
                 }
                 .keyboardShortcut("t")
+
+            Text("Open Location", bundle: .module, comment: "label for open location menu command")
+                .button {
+                    guard let win = NSApp.keyWindow ?? NSApp.mainWindow,
+                        let content = win.contentView else {
+                        return
+                    }
+                    // the toolbar view will be a child of the content view's parent that is not the content view itself
+                    let toolbarView = content.superview?.subviews.filter({ $0 != content }) ?? []
+
+                    // we can't really
+                    for field in toolbarView
+                        .flatMap(\.subviewsDepthFirst)
+                        .compactMap({ $0 as? NSTextField }) {
+                        if field.isEditable && field.placeholderString != nil {
+                            // probaby the URLTextField
+                            if win.makeFirstResponder(field) {
+                                break
+                            }
+                        }
+                    }
+                }
+                .keyboardShortcut("l")
         }
         #endif
-
     }
 
     var searchBarCommands: some Commands {
@@ -139,6 +162,7 @@ struct BrowserCommands : Commands {
 
     }
 }
+
 public struct AppSettingsView : View {
     public enum Tabs: Hashable {
         case general
@@ -150,7 +174,7 @@ public struct AppSettingsView : View {
             GeneralSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("General", bundle: .module, comment: "General preferences tab title")
+                    Text("General", bundle: .module, comment: "general preferences tab title")
                         .label(image: FairSymbol.switch_2)
                         .symbolVariant(.fill)
                 }
@@ -158,7 +182,7 @@ public struct AppSettingsView : View {
             AdvancedSettingsView()
                 .padding(20)
                 .tabItem {
-                    Text("Advanced", bundle: .module, comment: "Advanced preferences tab title")
+                    Text("Advanced", bundle: .module, comment: "advanced preferences tab title")
                         .label(image: FairSymbol.gearshape)
                         .symbolVariant(.fill)
                 }
