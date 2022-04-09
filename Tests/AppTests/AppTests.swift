@@ -63,10 +63,42 @@ class EPubFile {
                 throw AppError("Midding full-path in rootfile element in container.xml")
             }
 
-            guard let contentEntry = archive[fullPath] else {
+            guard let packageEntry = archive[fullPath] else {
                 throw AppError("No “\(fullPath)” entry specified in container.xml in epub zip")
             }
 
+            let packageXML = try XMLNode.parse(data: archive.extractData(from: packageEntry))
+            guard let packageRoot = packageXML.elementChildren.first,
+                  packageRoot.elementName == "package" else {
+                throw AppError("Root element of “\(fullPath)” was not 'package'")
+            }
+
+            guard let metadataRoot = packageRoot.elementChildren.first(where: { $0.elementName == "metadata" }) else {
+                throw AppError("Package at “\(fullPath)” had no 'metadata' element")
+            }
+
+            guard let manifestRoot = packageRoot.elementChildren.first(where: { $0.elementName == "manifest" }) else {
+                throw AppError("Package at “\(fullPath)” had no 'manifest' element")
+            }
+
+            var itemMap: [String: (href: String, type: String)] = [:]
+            for itemElement in manifestRoot.elementChildren.filter({ $0.elementName == "item" }) {
+                if let id = itemElement[attribute: "id"],
+                   let href = itemElement[attribute: "href"],
+                   let type = itemElement[attribute: "media-type"] {
+                    itemMap[id] = (href: href, type: type)
+                }
+            }
+
+            dbg("### itemMap:", itemMap)
+            
+            guard let spineRoot = packageRoot.elementChildren.first(where: { $0.elementName == "spine" }) else {
+                throw AppError("Package at “\(fullPath)” had no 'spine' element")
+            }
+
+            guard let guideRoot = packageRoot.elementChildren.first(where: { $0.elementName == "guide" }) else {
+                throw AppError("Package at “\(fullPath)” had no 'guide' element")
+            }
 
             for entry in archive {
                 dbg("### entry:", entry.path)
