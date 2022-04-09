@@ -71,12 +71,12 @@ struct BrowserCommands : Commands {
 
         CommandGroup(after: .sidebar) {
             BrowserState.readerViewCommand(state, brief: false)
-                .keyboardShortcut("R", modifiers: [.command, .shift])
+                .keyboardShortcut("r", modifiers: [.command, .shift])
             Divider()
             BrowserState.stopCommand(state, brief: false)
                 .keyboardShortcut(".", modifiers: [.command])
             BrowserState.reloadCommand(state, brief: false)
-                .keyboardShortcut("R", modifiers: [.command])
+                .keyboardShortcut("r", modifiers: [.command])
             Divider()
 
             BrowserState.zoomCommand(state, brief: false, amount: nil)
@@ -88,11 +88,30 @@ struct BrowserCommands : Commands {
 
             Divider()
         }
+
+        #if os(macOS)
+        CommandGroup(after: .newItem) {
+            Text("New Tab", bundle: .module, comment: "label for new tab command")
+                .button {
+                    guard let win = NSApp.keyWindow ?? NSApp.mainWindow,
+                          let winc = win.windowController else {
+                        return
+                    }
+                    winc.newWindowForTab(nil)
+                    guard let newWindow = NSApp.keyWindow, win != newWindow else {
+                        return
+                    }
+                    win.addTabbedWindow(newWindow, ordered: .above)
+                }
+                .keyboardShortcut("t")
+        }
+        #endif
+
     }
 
     var searchBarCommands: some Commands {
         CommandGroup(after: CommandGroupPlacement.textEditing) {
-            Section {
+            Menu {
                 #if os(macOS)
                 Text("Find…", bundle: .module, comment: "find command text").button {
                     state?.finder.performAction(.showFindInterface)
@@ -106,12 +125,15 @@ struct BrowserCommands : Commands {
                     state?.finder.performAction(.previousMatch)
                 }
                 .keyboardShortcut("G", modifiers: [.command, .shift])
+                Divider()
                 Text("Hide Find Banner", bundle: .module, comment: "hide find banner command text").button {
                     // state?.finder.performAction(.hideFindInterface) // doesn't work
                     // state?.finder.cancelFindIndicator() // also doesn't work
                 }
                 .keyboardShortcut("F", modifiers: [.command, .shift])
                 #endif
+            } label: {
+                Text("Find", bundle: .module, comment: "menu title for find menu")
             }
         }
 

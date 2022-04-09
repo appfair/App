@@ -24,7 +24,7 @@ struct BrowserView : View {
     }
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             findBar
             browserBody
         }
@@ -48,7 +48,6 @@ struct BrowserView : View {
         HStack {
             Spacer()
             FindBarView()
-                .frame(height: 32)
                 .environmentObject(state)
         }
         #else
@@ -180,8 +179,11 @@ struct FindBarView : UXViewRepresentable {
     @objc class Coordinator : NSObject, NSTextFinderBarContainer {
         let findBarContainer = NSStackView()
         var isFindBarVisible: Bool = true
+        let heightConstraint: NSLayoutConstraint
 
         override init() {
+            self.heightConstraint = NSLayoutConstraint(item: findBarContainer, attribute: NSLayoutConstraint.Attribute.height, relatedBy: NSLayoutConstraint.Relation.equal, toItem: nil, attribute: NSLayoutConstraint.Attribute.notAnAttribute, multiplier: 1.0, constant: 0.0)
+            findBarContainer.addConstraint(heightConstraint)
             super.init()
         }
 
@@ -202,7 +204,7 @@ struct FindBarView : UXViewRepresentable {
         func findBarViewDidChangeHeight() {
             dbg(findBarView?.frame.height)
             if let findBarView = findBarView {
-//                findBarView.frame = NSMakeRect(0, self.view.bounds.height - findBarView.frame.height, self.view.bounds.width, findBarView.frame.height)
+                self.heightConstraint.constant = findBarView.frame.height
             }
         }
     }

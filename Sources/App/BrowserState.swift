@@ -208,8 +208,6 @@ public class BrowserState : BrowserStateBase {
                 }
             }
     }
-
-
 }
 
 extension WKWebView {
