@@ -6,6 +6,43 @@
 	<string>$(ICON_SYMBOL)</string>
 	<key>AppFairIconTint</key>
 	<string>$(ICON_TINT)</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
+			</array>
+			<key>NSUbiquitousDocumentUserActivityType</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
+        </dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>EPUB</string>
+			<key>UTTypeIdentifier</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>epub</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/epub+zip</string>
+                </array>
+			</dict>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -36,9 +73,7 @@
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
-		<string>This app needs to read local files in order to load user-selected books</string>
-		<key>com.apple.security.files.user-selected.read-write</key>
-		<string>This app needs to read and write files in order to…</string>
+		<string>This app needs to read epub files</string>
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
 	</dict>

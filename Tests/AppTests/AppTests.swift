@@ -13,15 +13,22 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import Swift
+import FairApp
 import XCTest
 @testable import App
 
 open class AppTests: XCTestCase {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func testAppScene() throws {
-        // awaiting Swift 5.5 final
-        //let _ = AppContainer.rootScene
-        //let _ = AppContainer.settingsView
+    open func testParseBook() throws {
+        guard let ebookURL = Document.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
+            return XCTFail()
+        }
+
+        guard let archive = ZipArchive(url: ebookURL, accessMode: .read, preferredEncoding: .utf8) else {
+            return XCTFail()
+        }
+
+        
     }
 }
 
