@@ -37,7 +37,9 @@ public class BrowserStateBase : ObservableObject {
                 register(\.estimatedProgress),
             ]
 
+            #if os(macOS)
             finder.client = webView
+            #endif
         }
     }
 
@@ -199,9 +201,9 @@ public class BrowserState : BrowserStateBase {
                 dbg("zooming:", amount)
                 if let webView = state?.webView {
                     if let amount = amount {
-                        webView.animator().pageZoom *= amount
+                        webView.pageZoom *= amount
                     } else { // reset to zero
-                        webView.animator().pageZoom = 1.0
+                        webView.pageZoom = 1.0
                     }
                 }
             }

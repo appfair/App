@@ -75,7 +75,9 @@ private struct WebViewRepresentable {
         let view = WKWebView()
         view.navigationDelegate = coordinator
         view.uiDelegate = coordinator
+        #if os(macOS)
         view.allowsMagnification = true
+        #endif
         
         coordinator.webView = view
         coordinator.environment = environment
