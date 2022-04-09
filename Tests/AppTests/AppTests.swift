@@ -25,10 +25,31 @@ open class AppTests: XCTestCase {
         }
 
         guard let archive = ZipArchive(url: ebookURL, accessMode: .read, preferredEncoding: .utf8) else {
-            return XCTFail()
+            throw AppError("Could not open epub zip")
         }
 
-        
+        guard let mimetypeEntry = archive["mimetype"] else {
+            throw AppError("No mimetype in epub zip")
+        }
+
+        let mimetypeContent = try archive.extractData(from: mimetypeEntry)
+        if mimetypeContent.utf8String != "application/epub+zip" {
+            throw AppError("Bad mimetype content")
+        }
+
+        guard let containerEntry = archive["META-INF/container.xml"] else {
+            throw AppError("No container.xml in epub zip")
+        }
+        let containerContent = try archive.extractData(from: containerEntry)
+        let containerXML = try XMLNode.parse(data: containerContent)
+
+        guard let contentEntry = archive["OEBPS/content.opf"] else {
+            throw AppError("No content.opf in epub zip")
+        }
+
+        for entry in archive {
+            dbg("### entry:", entry.path)
+        }
     }
 }
 
