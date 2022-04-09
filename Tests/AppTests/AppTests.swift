@@ -17,17 +17,18 @@ import FairApp
 import XCTest
 @testable import App
 
-open class AppTests: XCTestCase {
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func testParseBook() throws {
-        guard let ebookURL = Document.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
-            return XCTFail()
-        }
+class EPubFile {
+    let archive: ZipArchive
 
-        guard let archive = ZipArchive(url: ebookURL, accessMode: .read, preferredEncoding: .utf8) else {
+    /// Parses and indexes the epub file at the given URL
+    /// - Parameter url: the URL of the epub zip file to load
+    init(url: URL) throws {
+        guard let archive = ZipArchive(url: url, accessMode: .read, preferredEncoding: .utf8) else {
             throw AppError("Could not open epub zip")
         }
 
+        self.archive = archive
+        
         guard let mimetypeEntry = archive["mimetype"] else {
             throw AppError("No mimetype in epub zip")
         }
@@ -40,16 +41,53 @@ open class AppTests: XCTestCase {
         guard let containerEntry = archive["META-INF/container.xml"] else {
             throw AppError("No container.xml in epub zip")
         }
+
         let containerContent = try archive.extractData(from: containerEntry)
         let containerXML = try XMLNode.parse(data: containerContent)
-
-        guard let contentEntry = archive["OEBPS/content.opf"] else {
-            throw AppError("No content.opf in epub zip")
+        guard let containerNode = containerXML.elementChildren.first,
+              containerNode.elementName == "container" else {
+            throw AppError("Root element of container.xml was not 'container'")
         }
 
-        for entry in archive {
-            dbg("### entry:", entry.path)
+        guard let rootNode = containerNode.elementChildren.first,
+              rootNode.elementName == "rootfiles" else {
+            throw AppError("Root sub-element of container.xml was not 'rootfiles'")
         }
+
+        for rootFileNode in rootNode.elementChildren {
+            if rootFileNode.elementName != "rootfile" || rootFileNode[attribute: "media-type"] != "application/oebps-package+xml" {
+                throw AppError("Bad rootfile element in container.xml")
+            }
+
+            guard let fullPath = rootFileNode[attribute: "full-path"] else {
+                throw AppError("Midding full-path in rootfile element in container.xml")
+            }
+
+            guard let contentEntry = archive[fullPath] else {
+                throw AppError("No “\(fullPath)” entry specified in container.xml in epub zip")
+            }
+
+
+            for entry in archive {
+                dbg("### entry:", entry.path)
+            }
+
+        }
+
+
+    }
+}
+
+
+open class AppTests: XCTestCase {
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    open func testParseBook() throws {
+        guard let ebookURL = Document.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
+            return XCTFail()
+        }
+
+        let epub = try EPubFile(url: ebookURL)
+
     }
 }
 

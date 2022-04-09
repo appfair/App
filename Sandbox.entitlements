@@ -3,13 +3,8 @@
 <plist version="1.0">
 <dict>
     <!-- If your app needs to read or write user-selected files outside of the app's sandboxed container, set com.apple.security.files.user-selected.read-write to true and describe in plain language how it is used in your Info.plist FairAppFilesUserSelectedReadWriteUsageDescription property -->
-<<<<<<< HEAD
-    <key>com.apple.security.files.user-selected.read-write</key>
-    <false/>
-=======
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
->>>>>>> 7fee24f (release: 0.0.2)
 
     <!-- If your app needs access to the network, set com.apple.security.network.client to true and describe in plain language how it is used in your Info.plist FairAppNetworkCientUsageDescription property -->
     <key>com.apple.security.network.client</key>
