@@ -19,7 +19,7 @@ import WebKit
 @available(macOS 12.0, iOS 15.0, *)
 public struct EPUBView: View {
     @ObservedObject var document: Document
-    @ObservedObject var webViewState: WebViewState
+    @EnvironmentObject var state: WebViewState
     @EnvironmentObject var store: Store
     @Namespace var mainNamespace
     @State var animationTime: TimeInterval = 0
@@ -27,8 +27,19 @@ public struct EPUBView: View {
 
     public var body: some View {
         webViewBody()
+            .toolbar(id: "EPUBToolbar") {
+                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(self.state, brief: true, amount: 0.8)
+                }
+                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(self.state, brief: true, amount: 1.2)
+                }
+            }
             .onAppear {
-                if let url = document.spinePages()
+                if let url = wip(document.spinePages())
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
                     .dropFirst()
                     .dropFirst()
                     .dropFirst()
@@ -38,13 +49,13 @@ public struct EPUBView: View {
                     .dropFirst()
                     .dropFirst()
                     .first {
-                    webViewState.load(url)
+                    self.state.load(url)
                 }
             }
     }
 
     public func webViewBody() -> some View {
-        WebView(state: webViewState)
+        WebView(state: state)
     }
 }
 
@@ -68,35 +79,98 @@ public extension AppContainer {
 struct EBookScene : Scene {
 
     var body: some Scene {
-        DocumentGroup(viewing: Document.self) { file in
-            epubView(file.document)
-                .focusedSceneValue(\.document, file.document)
-                //.environmentObject(file.document.sceneStore)
+        DocumentGroup(viewing: Document.self, viewer: epubView)
+            .commands { EBookCommands() }
+    }
+
+    func epubView(file: ReferenceFileDocumentConfiguration<Document>) -> some View {
+        let doc: Document = file.document
+        let epub = doc.epub
+
+        let prefs = WKWebpagePreferences()
+        prefs.allowsContentJavaScript = false
+        prefs.preferredContentMode = .mobile
+
+        let config = WKWebViewConfiguration()
+        config.defaultWebpagePreferences = prefs
+        config.suppressesIncrementalRendering = true
+        config.limitsNavigationsToAppBoundDomains = true
+
+        config.setURLSchemeHandler(EPUBSchemeHandler(epub: epub), forURLScheme: "epub")
+
+        let controller = WKUserContentController()
+
+        config.userContentController = controller
+
+        let webViewState = WebViewState(initialRequest: nil, configuration: config)
+
+        return EPUBView(document: doc)
+            .focusedSceneValue(\.document, file.document)
+            .focusedSceneValue(\.webViewState, webViewState)
+            .environmentObject(webViewState)
+    }
+}
+
+/// A scheme handler for loading elements directly from the underlying zip archive.
+/// Entries are resolved relative to the location of the OPF file, and the mime type is
+/// resolved by a lookup against the manifest.
+///
+/// https://www.w3.org/publishing/epub32/epub-ocf.html#sec-container-zip
+final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
+    let epub: EPUB
+
+    init(epub: EPUB) {
+        self.epub = epub
+    }
+
+    public func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        dbg("start urlSchemeTask:", urlSchemeTask.request.url)
+
+        guard let url = urlSchemeTask.request.url else {
+            return urlSchemeTask.didFailWithError(AppError("No path for request"))
         }
-        .commands {
-            EBookCommands()
+
+        // remove slashes from either end of the given string
+        let ts = { (str: String) in str.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
+
+        // entries are resolved relative to the OPF file
+        let opfRoot = ts(URL(fileURLWithPath: "/" + epub.opfPath).deletingLastPathComponent().path)
+
+        let relativePath = ts(url.path)
+
+        let entryPath = !opfRoot.isEmpty ? (opfRoot + "/" + relativePath) : relativePath
+
+        dbg("loading path:", entryPath, "relative to", epub.opfPath)
+
+        guard let entry = epub.archive[entryPath] else {
+            dbg("could not find entry:", entryPath, "in archive:", epub.archive.map(\.path).sorted())
+            return urlSchemeTask.didFailWithError(AppError("Could not find entry: “\(entryPath)”"))
+        }
+
+        do {
+            let mimeType = epub.manifest.values.first {
+                $0.href == relativePath
+            }?.type
+
+            dbg("loading:", relativePath, "mimeType:", mimeType)
+            let data = try epub.archive.extractData(from: entry)
+
+            urlSchemeTask.didReceive(URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: "utf-8"))
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+        } catch {
+            return urlSchemeTask.didFailWithError(error)
         }
     }
 
-    func epubView(_ doc: Document) -> some View {
-        EPUBView(document: doc, webViewState: doc.webViewState)
-            .toolbar(id: "EPUBToolbar") {
-                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(doc.webViewState, brief: true, amount: 0.8)
-                }
-                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(doc.webViewState, brief: true, amount: 1.2)
-                }
-            }
+    public func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+        dbg("stop urlSchemeTask:", urlSchemeTask.request.url)
     }
 }
 
 struct EBookCommands : Commands {
     @FocusedValue(\.document) var document
-
-    var state: WebViewState? {
-        document?.webViewState
-    }
+    @FocusedValue(\.webViewState) var state
 
     var body: some Commands {
         CommandGroup(after: .sidebar) {
@@ -124,13 +198,23 @@ extension FocusedValues {
     }
 }
 
+extension FocusedValues {
+    /// The store for the given scene
+    var webViewState: WebViewState? {
+        get { self[WebViewStateKey.self] }
+        set { self[WebViewStateKey.self] = newValue }
+    }
+
+    private struct WebViewStateKey: FocusedValueKey {
+        typealias Value = WebViewState
+    }
+}
+
 extension UTType {
     static var epub = UTType(importedAs: "app.Stanza-Redux.epub")
 }
 
 final class Document: ReferenceFileDocument {
-    @ObservedObject var webViewState = WebViewState()
-
     static let bundle = Bundle.module
     
     static var readableContentTypes: [UTType] {
@@ -142,7 +226,6 @@ final class Document: ReferenceFileDocument {
     static var writableContentTypes: [UTType] { [] }
 
     let epub: EPUB
-    let extractFolder: URL
 
     required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
@@ -150,14 +233,14 @@ final class Document: ReferenceFileDocument {
         }
 
         self.epub = try EPUB(data: data)
-        self.extractFolder = try epub.extractContents()
     }
 
     /// The extract pages from the spine
     func spinePages() -> [URL] {
         epub.spine.compactMap {
             epub.manifest[$0.idref].flatMap {
-                URL(fileURLWithPath: $0.href, relativeTo: extractFolder)
+                //URL(fileURLWithPath: $0.href, relativeTo: extractFolder)
+                URL(string: "epub:///" + $0.href)
             }
         }
     }

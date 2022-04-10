@@ -37,6 +37,9 @@ public final class EPUB {
     /// “The NCX [OPF2] is a legacy feature that previously provided the table of contents for EPUB Publications. It is replaced in EPUB 3 by the EPUB Navigation Document.”
     public let tocid: String?
 
+    /// The path for the opf file
+    public let opfPath: String
+
     /// The title of the book, as per the metadata
     public var title: String? { metadata["title"]?.first }
 
@@ -106,9 +109,11 @@ public final class EPUB {
         }
 
         guard let fullPath = rootFileNode[attribute: "full-path"] else {
-            throw EPUBError("Midding full-path in rootfile element in container.xml")
+            throw EPUBError("Missing full-path in rootfile element in container.xml")
         }
 
+        self.opfPath = fullPath
+        
         guard let packageEntry = archive[fullPath] else {
             throw EPUBError("No “\(fullPath)” entry specified in container.xml in epub zip")
         }
@@ -180,12 +185,17 @@ public final class EPUB {
 
         let checksum = try (archive.data ?? Data(contentsOf: archive.url, options: .alwaysMapped)).sha256().hex()
 
-        let extractFolder = cacheFolder.appendingPathComponent(checksum)
+        let extractFolder = cacheFolder
+            //            .appendingPathComponent(self.title?.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "untitled")
+            .appendingPathComponent(checksum)
 
         try FileManager.default.createDirectory(at: extractFolder, withIntermediateDirectories: true)
 
         for entry in self.archive {
-            let dest = URL(fileURLWithPath: entry.path, relativeTo: extractFolder)
+
+            let dest = extractFolder
+                .appendingPathComponent(entry.path)
+
             //dbg("path:", entry.path, "size:", entry.uncompressedSize, "dest size:", dest.fileSize())
             // only extract the file if it doesn't exist or is a different size
             if (dest.fileSize() ?? -1) != entry.uncompressedSize {
