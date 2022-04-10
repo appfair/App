@@ -17,28 +17,34 @@ import UniformTypeIdentifiers
 import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)
-public struct ContentView: View {
+public struct EPUBView: View {
+    @ObservedObject var document: Document
+    @ObservedObject var webViewState: WebViewState
+    @EnvironmentObject var store: Store
     @Namespace var mainNamespace
-    let document: Document
-    @EnvironmentObject var appStore: Store
     @State var animationTime: TimeInterval = 0
     @State var searchString = ""
 
     public var body: some View {
-        FairBrowser(url: .constant(wip(document.spinePages()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .dropFirst()
-            .first!)), toolbar: false)
-        //FairBrowser(url: .constant(URL(string: "about:blank")!), toolbar: false)
+        webViewBody()
+            .onAppear {
+                if let url = document.spinePages()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .dropFirst()
+                    .first {
+                    webViewState.load(url)
+                }
+            }
+    }
+
+    public func webViewBody() -> some View {
+        WebView(state: webViewState)
     }
 }
 
@@ -60,17 +66,49 @@ public extension AppContainer {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct EBookScene : Scene {
+
     var body: some Scene {
         DocumentGroup(viewing: Document.self) { file in
-            ContentView(document: file.document)
+            epubView(file.document)
                 .focusedSceneValue(\.document, file.document)
                 //.environmentObject(file.document.sceneStore)
         }
-//        .commands {
-//            CommandGroup(after: .newItem) {
-//                examplesMenu()
-//            }
-//        }
+        .commands {
+            EBookCommands()
+        }
+    }
+
+    func epubView(_ doc: Document) -> some View {
+        EPUBView(document: doc, webViewState: doc.webViewState)
+            .toolbar(id: "EPUBToolbar") {
+                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(doc.webViewState, brief: true, amount: 0.8)
+                }
+                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(doc.webViewState, brief: true, amount: 1.2)
+                }
+            }
+    }
+}
+
+struct EBookCommands : Commands {
+    @FocusedValue(\.document) var document
+
+    var state: WebViewState? {
+        document?.webViewState
+    }
+
+    var body: some Commands {
+        CommandGroup(after: .sidebar) {
+            WebViewState.zoomCommand(state, brief: false, amount: nil)
+                .keyboardShortcut("0", modifiers: [.command])
+            WebViewState.zoomCommand(state, brief: false, amount: 1.2)
+                .keyboardShortcut("+", modifiers: [.command])
+            WebViewState.zoomCommand(state, brief: false, amount: 0.8)
+                .keyboardShortcut("-", modifiers: [.command])
+
+            Divider()
+        }
     }
 }
 
@@ -91,6 +129,8 @@ extension UTType {
 }
 
 final class Document: ReferenceFileDocument {
+    @ObservedObject var webViewState = WebViewState()
+
     static let bundle = Bundle.module
     
     static var readableContentTypes: [UTType] {

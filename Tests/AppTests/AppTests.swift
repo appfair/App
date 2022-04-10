@@ -41,8 +41,10 @@ open class AppTests: XCTestCase {
         }
 
         for epubURL in try fm.contentsOfDirectory(at: booksFolder, includingPropertiesForKeys: nil).filter({ $0.pathExtension == "epub" }) {
-            dbg("testing:", epubURL.path)
+            dbg("testing:", epubURL.lastPathComponent)
             let epub = try EPUB(url: epubURL)
+            XCTAssertNotNil(epub.title)
+            XCTAssertGreaterThan(epub.spine.count, 0)
         }
     }
 }
