@@ -74,17 +74,17 @@ struct BrowserCommands : Commands {
             BrowserState.readerViewCommand(state, brief: false)
                 .keyboardShortcut("r", modifiers: [.command, .shift])
             Divider()
-            BrowserState.stopCommand(state, brief: false)
+            WebViewState.stopCommand(state, brief: false)
                 .keyboardShortcut(".", modifiers: [.command])
-            BrowserState.reloadCommand(state, brief: false)
+            WebViewState.reloadCommand(state, brief: false)
                 .keyboardShortcut("r", modifiers: [.command])
             Divider()
 
-            BrowserState.zoomCommand(state, brief: false, amount: nil)
+            WebViewState.zoomCommand(state, brief: false, amount: nil)
                 .keyboardShortcut("0", modifiers: [.command])
-            BrowserState.zoomCommand(state, brief: false, amount: 1.2)
+            WebViewState.zoomCommand(state, brief: false, amount: 1.2)
                 .keyboardShortcut("+", modifiers: [.command])
-            BrowserState.zoomCommand(state, brief: false, amount: 0.8)
+            WebViewState.zoomCommand(state, brief: false, amount: 0.8)
                 .keyboardShortcut("-", modifiers: [.command])
 
             Divider()
@@ -113,11 +113,11 @@ struct BrowserCommands : Commands {
                         return
                     }
                     // the toolbar view will be a child of the content view's parent that is not the content view itself
-                    let toolbarView = content.superview?.subviews.filter({ $0 != content }) ?? []
-
-                    // we can't really
-                    for field in toolbarView
-                        .flatMap(\.subviewsDepthFirst)
+                    // this will probably be an array of [NSVisualEffectView, NSTitlebarContainerView]
+                    let nonContentViews = content.superview?.subviews.filter({ $0 != content }) ?? []
+                    // we just have to guess what the URL field is
+                    for field in nonContentViews.reversed()
+                        .flatMap(\.subviewsBreadthFirst)
                         .compactMap({ $0 as? NSTextField }) {
                         if field.isEditable && field.placeholderString != nil {
                             // probaby the URLTextField

@@ -13,15 +13,12 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
+import WebKit
 
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
-    @StateObject private var state: BrowserState
+    @StateObject private var state: BrowserState = BrowserState(initialRequest: nil)
     @EnvironmentObject private var store: Store
-
-    init() {
-        self._state = .init(wrappedValue: BrowserState())
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -94,9 +91,9 @@ struct BrowserView : View {
     private var urlTextField: some View {
         URLTextField(url: state.url, isSecure: state.hasOnlySecureContent, loadingProgress: state.estimatedProgress, onNavigate: onNavigate(to:)) {
             if state.isLoading {
-                BrowserState.stopCommand(state, brief: true)
+                WebViewState.stopCommand(state, brief: true)
             } else {
-                BrowserState.reloadCommand(state, brief: true)
+                WebViewState.reloadCommand(state, brief: true)
             }
         }
     }
@@ -140,7 +137,7 @@ struct BrowserView : View {
     @State private var externalNavigation: ExternalURLNavigation?
     @Environment(\.openURL) private var openURL
 
-    private func decidePolicy(for action: NavigationAction, state: BrowserState) {
+    private func decidePolicy(for action: NavigationAction, state: WebViewState) {
         if let externalURL = action.request.url,
             !WebView.canHandle(externalURL) {
             dbg(externalURL)
@@ -153,6 +150,59 @@ struct BrowserView : View {
 
     private func makeExternalNavigationAlert(_ navigation: ExternalURLNavigation) -> Alert {
         Alert(title: Text("Allow “\(navigation.source.highLevelDomain)” to open “\(navigation.destination.scheme ?? "")”?", bundle: .module, comment: "alert for whether to permit external navigation"), primaryButton: .default(Text("Allow", bundle: .module, comment: "button text for allow text in dialog asking whether to permit external navigation"), action: { openURL(navigation.destination) }), secondaryButton: .cancel())
+    }
+}
+
+class BrowserState : WebViewState {
+    override func createWebView() -> WKWebView {
+        let view = super.createWebView()
+        #if os(macOS)
+        view.allowsMagnification = true
+        finder.client = view
+        #endif
+        return view
+    }
+
+    #if canImport(AppKit)
+    let finder: NSTextFinder = {
+        let finder = NSTextFinder()
+        finder.isIncrementalSearchingEnabled = true
+        finder.incrementalSearchingShouldDimContentView = true
+        return finder
+    }()
+    #endif
+
+    public func enterReaderView() async {
+        dbg()
+        await self.trying {
+            let readability = try Bundle.module.loadBundleResource(named: "Readability.js")
+            dbg("loading readability library:", ByteCountFormatter().string(fromByteCount: .init(readability.count)))
+
+            // load the readbility script
+            try await js((readability.utf8String ?? ""))
+
+            // invoke the parser
+            let result = try await js("new Readability(document.cloneNode(true)).parse()")
+
+            dbg("result:", result)
+            if let dict = result as? NSDictionary,
+                let content = dict["content"] as? String {
+                dbg("content:", ByteCountFormatter().string(fromByteCount: .init(content.count)))
+                await webView?.loadHTMLString(content, baseURL: webView?.url)
+            }
+        }
+    }
+
+    static func readerViewCommand(_ state: BrowserState?, brief: Bool) -> some View {
+        (brief ? Text("Reader", bundle: .module, comment: "label for brief reader command") : Text("Show Reader", bundle: .module, comment: "label for non-brief reader command"))
+            .label(image: FairSymbol.eyeglasses)
+            .button {
+                dbg("loading reader view for:", state?.url)
+                Task {
+                    await state?.enterReaderView()
+                }
+            }
+            //.disabled(state?.canEnterReaderView != true)
     }
 }
 
