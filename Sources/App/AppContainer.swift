@@ -1,5 +1,20 @@
+/**
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairApp
 import UniformTypeIdentifiers
+import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
@@ -10,13 +25,20 @@ public struct ContentView: View {
     @State var searchString = ""
 
     public var body: some View {
-        VStack {
-            Text("Welcome to **\(Bundle.main.bundleName!)**")
-                .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)")
-                .font(.headline)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        FairBrowser(url: .constant(wip(document.spinePages()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .dropFirst()
+            .first!)), toolbar: false)
+        //FairBrowser(url: .constant(URL(string: "about:blank")!), toolbar: false)
     }
 }
 
@@ -79,12 +101,25 @@ final class Document: ReferenceFileDocument {
     }
     static var writableContentTypes: [UTType] { [] }
 
+    let epub: EPUB
+    let extractFolder: URL
+
     required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
 
-        #warning("open and parse the book here")
+        self.epub = try EPUB(data: data)
+        self.extractFolder = try epub.extractContents()
+    }
+
+    /// The extract pages from the spine
+    func spinePages() -> [URL] {
+        epub.spine.compactMap {
+            epub.manifest[$0.idref].flatMap {
+                URL(fileURLWithPath: $0.href, relativeTo: extractFolder)
+            }
+        }
     }
 
     func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
