@@ -87,7 +87,7 @@ extension FocusedValues {
 }
 
 extension UTType {
-    static var epub = UTType(importedAs: "app.Lex-Stanza.epub")
+    static var epub = UTType(importedAs: "app.Stanza-Redux.epub")
 }
 
 final class Document: ReferenceFileDocument {
