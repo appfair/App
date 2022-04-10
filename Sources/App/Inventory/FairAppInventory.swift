@@ -394,7 +394,6 @@ extension FairAppInventory {
             try await block()
         } catch {
             reportError(error)
-            //errors.append(error as? AppError ?? AppError(error))
         }
     }
 

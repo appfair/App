@@ -24,6 +24,7 @@ struct CatalogItemView: View {
     @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: .init())
 
     @State private var caskURLFileSize: Int64? = nil
     @State private var caskURLModifiedDate: Date? = nil
@@ -467,7 +468,10 @@ struct CatalogItemView: View {
     /// Use a little mini-browser to show the homepage
     @ViewBuilder func homepageSection() -> some View {
         if let homepage = info.homepage {
-            FairBrowser(url: .constant(homepage), toolbar: false)
+            WebView(state: webViewState)
+                .task {
+                    webViewState.load(homepage)
+                }
         }
     }
 
