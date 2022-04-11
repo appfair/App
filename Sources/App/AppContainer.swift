@@ -25,6 +25,7 @@ public struct EPUBView: View {
     @State var animationTime: TimeInterval = 0
     @State var searchString = ""
     @SceneStorage("pageScale") var pageScale: Double = 2.0
+    @SceneStorage("pageScaleSet") var pageScaleSet: Bool = false
 
     public var body: some View {
         webViewBody()
@@ -41,10 +42,10 @@ public struct EPUBView: View {
             }
             .toolbar(id: "EPUBToolbar") {
                 ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(webViewState, brief: true, amount: 0.8)
+                    webViewState.zoomAction(amount: 0.8)
                 }
                 ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(webViewState, brief: true, amount: 1.2)
+                    webViewState.zoomAction(amount: 1.2)
                 }
             }
     }
@@ -57,6 +58,7 @@ public struct EPUBView: View {
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
     @AppStorage("someToggle") public var someToggle = false
+    @AppStorage("defaultPageScale") public var defaultPageScale = 2.0
 }
 
 public extension AppContainer {
@@ -225,18 +227,17 @@ final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
 struct EBookCommands : Commands {
     @FocusedValue(\.document) var document
     @FocusedValue(\.webViewState) var state
-
+    
     var body: some Commands {
         SidebarCommands()
         ToolbarCommands()
 
         CommandGroup(after: .sidebar) {
-            WebViewState.zoomCommand(state, brief: false, amount: nil)
-                .keyboardShortcut("0", modifiers: [.command])
-            WebViewState.zoomCommand(state, brief: false, amount: 1.2)
-                .keyboardShortcut("+", modifiers: [.command])
-            WebViewState.zoomCommand(state, brief: false, amount: 0.8)
-                .keyboardShortcut("-", modifiers: [.command])
+            state?.observing { state in
+                state.zoomAction(amount: nil).keyboardShortcut("0")
+                state.zoomAction(amount: 1.2).keyboardShortcut("+")
+                state.zoomAction(amount: 0.8).keyboardShortcut("-")
+            }
 
             Divider()
         }
