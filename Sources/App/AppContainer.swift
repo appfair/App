@@ -39,20 +39,24 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
 #if os(macOS)
         WindowGroup {
-            BrowserView()
-                .environmentObject(store)
+            browserView(store: store)
         }
         .commands(content: { BrowserCommands() })
         .windowToolbarStyle(UnifiedWindowToolbarStyle(showsTitle: false))
 #elseif os(iOS)
         WindowGroup {
             NavigationView {
-                BrowserView()
-                    .environmentObject(store)
+                browserView(store: store)
             }
             .navigationViewStyle(StackNavigationViewStyle())
         }
+        .commands(content: { BrowserCommands() })
 #endif
+    }
+
+    static func browserView(store: Store) -> some View {
+        BrowserView()
+            .environmentObject(store)
     }
 
     /// The app-wide settings view
@@ -70,24 +74,32 @@ struct BrowserCommands : Commands {
         SidebarCommands()
         ToolbarCommands()
 
+        CommandMenu(Text("History", bundle: .module, comment: "title for the History command menu")) {
+            state?.observing { state in
+                state.navigateAction(amount: -1).keyboardShortcut("[")
+                state.navigateAction(amount: +1).keyboardShortcut("]")
+
+                // TODO: "Go Home"
+            }
+        }
+
         CommandGroup(after: .sidebar) {
-            BrowserState.readerViewCommand(state, brief: false)
-                .keyboardShortcut("r", modifiers: [.command, .shift])
-            Divider()
-            WebViewState.stopCommand(state, brief: false)
-                .keyboardShortcut(".", modifiers: [.command])
-            WebViewState.reloadCommand(state, brief: false)
-                .keyboardShortcut("r", modifiers: [.command])
-            Divider()
+            state?.observing { state in
+                state.readerAction().keyboardShortcut("r", modifiers: [.command, .shift])
 
-            WebViewState.zoomCommand(state, brief: false, amount: nil)
-                .keyboardShortcut("0", modifiers: [.command])
-            WebViewState.zoomCommand(state, brief: false, amount: 1.2)
-                .keyboardShortcut("+", modifiers: [.command])
-            WebViewState.zoomCommand(state, brief: false, amount: 0.8)
-                .keyboardShortcut("-", modifiers: [.command])
+                Divider()
 
-            Divider()
+                state.stopAction().keyboardShortcut(".")
+                state.reloadAction().keyboardShortcut("r")
+
+                Divider()
+
+                state.zoomAction(amount: nil).keyboardShortcut("0")
+                state.zoomAction(amount: 1.2).keyboardShortcut("+")
+                state.zoomAction(amount: 0.8).keyboardShortcut("-")
+
+                Divider()
+            }
         }
 
         #if os(macOS)

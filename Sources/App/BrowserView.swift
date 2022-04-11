@@ -34,7 +34,7 @@ struct BrowserView : View {
             .preferredColorScheme(store.themeStyle.colorScheme)
             .toolbar(id: "ReaderToolbar") {
                 ToolbarItem(id: "ReaderCommand", placement: .automatic, showsByDefault: true) {
-                    BrowserState.readerViewCommand(state, brief: true)
+                    state.readerAction(brief: true)
                 }
             }
             .alertingError($state.errors)
@@ -68,8 +68,8 @@ struct BrowserView : View {
             .toolbar(id: "NavigationToolbar") {
                 ToolbarItem(id: "ForwardBackward", placement: .navigation, showsByDefault: true) {
                     HStack { // we'd rather use a ToolbarItemGroup(placement: .navigation) here, but it doesn't seem to work with customizable toolbars
-                        goBackCommand
-                        goForwardCommand
+                        state.navigateAction(brief: true, amount: -1)
+                        state.navigateAction(brief: true, amount: +1)
                     }
                 }
                 urlField
@@ -80,8 +80,10 @@ struct BrowserView : View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarLeading) {
-                    goBackCommand.labelStyle(IconOnlyLabelStyle())
-                    goForwardCommand.labelStyle(IconOnlyLabelStyle())
+                    state.navigateAction(brief: true, amount: -1)
+                        .labelStyle(IconOnlyLabelStyle())
+                    state.navigateAction(brief: true, amount: +1)
+                        .labelStyle(IconOnlyLabelStyle())
                 }
                 urlField
             }
@@ -91,29 +93,11 @@ struct BrowserView : View {
     private var urlTextField: some View {
         URLTextField(url: state.url, isSecure: state.hasOnlySecureContent, loadingProgress: state.estimatedProgress, onNavigate: onNavigate(to:)) {
             if state.isLoading {
-                WebViewState.stopCommand(state, brief: true)
+                state.stopAction(brief: true)
             } else {
-                WebViewState.reloadCommand(state, brief: true)
+                state.reloadAction(brief: true)
             }
         }
-    }
-
-    private var goBackCommand: some View {
-        Button(action: { state.goBack() }) {
-            Text("Back", bundle: .module, comment: "label for toolbar back button").label(image: FairSymbol.chevron_left)
-                .frame(minWidth: 20)
-        }
-        .disabled(!state.canGoBack)
-        .keyboardShortcut("[")
-    }
-
-    private var goForwardCommand: some View {
-        Button(action: { state.goForward() }) {
-            Text("Forward", bundle: .module, comment: "label for toolbar forward button").label(image: FairSymbol.chevron_right)
-                .frame(minWidth: 20)
-        }
-        .disabled(!state.canGoForward)
-        .keyboardShortcut("]")
     }
 
     func searchTermURL(_ searchTerm: String) -> URL? {
@@ -193,13 +177,13 @@ class BrowserState : WebViewState {
         }
     }
 
-    static func readerViewCommand(_ state: BrowserState?, brief: Bool) -> some View {
+    func readerAction(brief: Bool = false) -> some View {
         (brief ? Text("Reader", bundle: .module, comment: "label for brief reader command") : Text("Show Reader", bundle: .module, comment: "label for non-brief reader command"))
             .label(image: FairSymbol.eyeglasses)
             .button {
-                dbg("loading reader view for:", state?.url)
+                dbg("loading reader view for:", self.url)
                 Task {
-                    await state?.enterReaderView()
+                    await self.enterReaderView()
                 }
             }
             //.disabled(state?.canEnterReaderView != true)
