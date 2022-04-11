@@ -24,8 +24,8 @@ public struct EPUBView: View {
     @Namespace var mainNamespace
     @State var animationTime: TimeInterval = 0
     @State var searchString = ""
-    @SceneStorage("pageScale") var pageScale: Double = 2.0
-    @SceneStorage("pageScaleSet") var pageScaleSet: Bool = false
+    @SceneStorage("pageScale") var pageScale: Double = 1.0
+    //@SceneStorage("pageScaleSet") var pageScaleSet: Bool = false
 
     public var body: some View {
         webViewBody()
@@ -101,24 +101,16 @@ struct EBookScene : Scene {
 
         let webViewState = WebViewState(initialRequest: nil, configuration: config)
 
-        return epubContainer(document: doc, webViewState: webViewState)
+        return EPubContainerView(document: doc, webViewState: webViewState)
             .focusedSceneValue(\.document, file.document)
             .focusedSceneValue(\.webViewState, webViewState)
     }
-
-    func epubContainer(document doc: Document, webViewState: WebViewState) -> some View {
-        #if os(macOS)
-        EBookSplit(document: doc, webViewState: webViewState)
-        #else
-        EPUBView(document: doc, webViewState: webViewState)
-        #endif
-    }
 }
 
-#if os(macOS)
-struct EBookSplit : View {
+struct EPubContainerView : View {
     @ObservedObject var document: Document
     @ObservedObject var webViewState: WebViewState
+
     @SceneStorage("selectedChapter") var selection: String = ""
 
     /// Conversion from SceneStorage (which cannot take an optional) to the double-optional required by the list selection
@@ -129,25 +121,46 @@ struct EBookSplit : View {
             self.selection = (newValue ?? "") ?? ""
         }
     }
+
+//    func epubContainer(document doc: Document, webViewState: WebViewState) -> some View {
+
+    var body: some View {
+        containerView
+    }
+
+    var containerView: some View {
+        BookTOCView(document: document, webViewState: webViewState, selection: selectionBinding)
+    }
+}
+
+#if os(macOS)
+struct BookTOCView : View {
+    @ObservedObject var document: Document
+    @ObservedObject var webViewState: WebViewState
+    @Binding var selection: String??
+
     var body: some View {
         HSplitView {
-            NCXView(document: document, selection: selectionBinding)
+            TOCListView(document: document, selection: $selection)
                 .frame(maxWidth: 300)
-            EPUBView(document: document, webViewState: webViewState)
-        }
-        .onChange(of: selection) { selection in
-            if let content = document.epub.ncx?.findContent(selection) {
-                dbg("loading content:", content)
-                if let url = URL(string: "epub:///" + content) {
-                    webViewState.load(url)
+                .onChange(of: selection) { selection in
+                    if let selection = selection,
+                       let selection = selection,
+                       let content = document.epub.ncx?.findContent(selection) {
+                        dbg("loading content:", content)
+                        if let url = URL(string: "epub:///" + content) {
+                            webViewState.load(url)
+                        }
+                    }
                 }
-            }
+
+            EPUBView(document: document, webViewState: webViewState)
         }
     }
 }
-#endif
 
-struct NCXView : View {
+/// A selectable list of the table of contents of the book, as defined in the (deprecated) `.ncx` file.
+struct TOCListView : View {
     @ObservedObject var document: Document
     /// The selected navPoint ID
     @Binding var selection: String??
@@ -155,7 +168,7 @@ struct NCXView : View {
     var body: some View {
         List(selection: $selection) {
             Section {
-                ForEach(toc.array(), id: \.element.id) { (indices, element) in
+                ForEach(document.epub.ncx?.toc.array() ?? [], id: \.element.id) { (indices, element) in
                     Text(element.navLabel ?? "?")
                         .padding(.leading, .init(indices.count) * 5) // indent
                 }
@@ -165,11 +178,45 @@ struct NCXView : View {
         }
         .listStyle(.sidebar)
     }
+}
 
-    var toc: AnySequence<(indices: [Int], element: NCX.NavPoint)> {
-        Tree.enumerated(document.epub.ncx?.points ?? [], traverse: .depthFirst, children: \.points)
+#elseif os(iOS)
+
+/// A navigation view for the table of contents, used on iOS to select the chapter
+struct BookTOCView : View {
+    @ObservedObject var document: Document
+    @ObservedObject var webViewState: WebViewState
+    @Binding var selection: String??
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(document.epub.ncx?.toc.array() ?? [], id: \.element.id) { (indices, element) in
+                    NavigationLink(tag: element.id, selection: $selection) {
+                        EPUBView(document: document, webViewState: webViewState)
+                            .onAppear {
+                                if let selection = selection,
+                                   let selection = selection,
+                                   let content = document.epub.ncx?.findContent(selection) {
+                                    dbg("loading content:", content)
+                                    if let url = URL(string: "epub:///" + content) {
+                                        webViewState.load(url)
+                                    }
+                                }
+                            }
+                    } label: {
+                        Text(element.navLabel ?? "?")
+                            .padding(.leading, .init(indices.count) * 5) // indent
+                    }
+                }
+            } header: {
+                Text(document.epub.ncx?.title ?? "")
+            }
+        }
+        .listStyle(.sidebar)
     }
 }
+#endif
 
 
 /// A scheme handler for loading elements directly from the underlying zip archive.
