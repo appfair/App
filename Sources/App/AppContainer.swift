@@ -19,43 +19,38 @@ import WebKit
 @available(macOS 12.0, iOS 15.0, *)
 public struct EPUBView: View {
     @ObservedObject var document: Document
-    @EnvironmentObject var state: WebViewState
+    @ObservedObject var webViewState: WebViewState
     @EnvironmentObject var store: Store
     @Namespace var mainNamespace
     @State var animationTime: TimeInterval = 0
     @State var searchString = ""
+    @SceneStorage("pageScale") var pageScale: Double = 2.0
 
     public var body: some View {
         webViewBody()
-            .toolbar(id: "EPUBToolbar") {
-                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(self.state, brief: true, amount: 0.8)
-                }
-                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
-                    WebViewState.zoomCommand(self.state, brief: true, amount: 1.2)
+            .onChange(of: webViewState.webView?.pageZoom) { zoom in
+                dbg("change page zoom:", zoom)
+                if let zoom = zoom, self.pageScale != zoom {
+                    // FIXME: not getting persisted for some reason
+                    self.pageScale = zoom
                 }
             }
             .onAppear {
-                if let url = wip(document.spinePages())
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .dropFirst()
-                    .first {
-                    self.state.load(url)
+                dbg("init self.pageScale:", self.pageScale)
+                webViewState.webView?.pageZoom = self.pageScale
+            }
+            .toolbar(id: "EPUBToolbar") {
+                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(webViewState, brief: true, amount: 0.8)
+                }
+                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
+                    WebViewState.zoomCommand(webViewState, brief: true, amount: 1.2)
                 }
             }
     }
 
     public func webViewBody() -> some View {
-        WebView(state: state)
+        WebView(state: webViewState)
     }
 }
 
@@ -79,11 +74,11 @@ public extension AppContainer {
 struct EBookScene : Scene {
 
     var body: some Scene {
-        DocumentGroup(viewing: Document.self, viewer: epubView)
+        DocumentGroup(viewing: Document.self, viewer: documentHostView)
             .commands { EBookCommands() }
     }
 
-    func epubView(file: ReferenceFileDocumentConfiguration<Document>) -> some View {
+    func documentHostView(file: ReferenceFileDocumentConfiguration<Document>) -> some View {
         let doc: Document = file.document
         let epub = doc.epub
 
@@ -104,12 +99,76 @@ struct EBookScene : Scene {
 
         let webViewState = WebViewState(initialRequest: nil, configuration: config)
 
-        return EPUBView(document: doc)
+        return epubContainer(document: doc, webViewState: webViewState)
             .focusedSceneValue(\.document, file.document)
             .focusedSceneValue(\.webViewState, webViewState)
-            .environmentObject(webViewState)
+    }
+
+    func epubContainer(document doc: Document, webViewState: WebViewState) -> some View {
+        #if os(macOS)
+        EBookSplit(document: doc, webViewState: webViewState)
+        #else
+        EPUBView(document: doc, webViewState: webViewState)
+        #endif
     }
 }
+
+#if os(macOS)
+struct EBookSplit : View {
+    @ObservedObject var document: Document
+    @ObservedObject var webViewState: WebViewState
+    @SceneStorage("selectedChapter") var selection: String = ""
+
+    /// Conversion from SceneStorage (which cannot take an optional) to the double-optional required by the list selection
+    private var selectionBinding: Binding<String??> {
+        Binding {
+            selection == "" ? nil : selection // blank converts to nil selection
+        } set: { newValue in
+            self.selection = (newValue ?? "") ?? ""
+        }
+    }
+    var body: some View {
+        HSplitView {
+            NCXView(document: document, selection: selectionBinding)
+                .frame(maxWidth: 300)
+            EPUBView(document: document, webViewState: webViewState)
+        }
+        .onChange(of: selection) { selection in
+            if let content = document.epub.ncx?.findContent(selection) {
+                dbg("loading content:", content)
+                if let url = URL(string: "epub:///" + content) {
+                    webViewState.load(url)
+                }
+            }
+        }
+    }
+}
+#endif
+
+struct NCXView : View {
+    @ObservedObject var document: Document
+    /// The selected navPoint ID
+    @Binding var selection: String??
+
+    var body: some View {
+        List(selection: $selection) {
+            Section {
+                ForEach(toc.array(), id: \.element.id) { (indices, element) in
+                    Text(element.navLabel ?? "?")
+                        .padding(.leading, .init(indices.count) * 5) // indent
+                }
+            } header: {
+                Text(document.epub.ncx?.title ?? "")
+            }
+        }
+        .listStyle(.sidebar)
+    }
+
+    var toc: AnySequence<(indices: [Int], element: NCX.NavPoint)> {
+        Tree.enumerated(document.epub.ncx?.points ?? [], traverse: .depthFirst, children: \.points)
+    }
+}
+
 
 /// A scheme handler for loading elements directly from the underlying zip archive.
 /// Entries are resolved relative to the location of the OPF file, and the mime type is
@@ -130,15 +189,10 @@ final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
             return urlSchemeTask.didFailWithError(AppError("No path for request"))
         }
 
-        // remove slashes from either end of the given string
-        let ts = { (str: String) in str.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
+        // the path of the epub:///filename always starts with "/", which we need to trim
+        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
-        // entries are resolved relative to the OPF file
-        let opfRoot = ts(URL(fileURLWithPath: "/" + epub.opfPath).deletingLastPathComponent().path)
-
-        let relativePath = ts(url.path)
-
-        let entryPath = !opfRoot.isEmpty ? (opfRoot + "/" + relativePath) : relativePath
+        let entryPath = epub.resolveRelative(path: path)
 
         dbg("loading path:", entryPath, "relative to", epub.opfPath)
 
@@ -149,10 +203,10 @@ final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
 
         do {
             let mimeType = epub.manifest.values.first {
-                $0.href == relativePath
+                $0.href == path
             }?.type
 
-            dbg("loading:", relativePath, "mimeType:", mimeType)
+            dbg("loading:", path, "mimeType:", mimeType)
             let data = try epub.archive.extractData(from: entry)
 
             urlSchemeTask.didReceive(URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: "utf-8"))
@@ -173,6 +227,9 @@ struct EBookCommands : Commands {
     @FocusedValue(\.webViewState) var state
 
     var body: some Commands {
+        SidebarCommands()
+        ToolbarCommands()
+
         CommandGroup(after: .sidebar) {
             WebViewState.zoomCommand(state, brief: false, amount: nil)
                 .keyboardShortcut("0", modifiers: [.command])

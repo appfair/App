@@ -33,10 +33,6 @@ public final class EPUB {
     /// https://www.w3.org/publishing/epub3/epub-packages.html#sec-spine-elem
     public let spine: [(idref: String, linear: Bool)]
 
-    /// The `manifest` id of the toc element, if any
-    /// “The NCX [OPF2] is a legacy feature that previously provided the table of contents for EPUB Publications. It is replaced in EPUB 3 by the EPUB Navigation Document.”
-    public let tocid: String?
-
     /// The path for the opf file
     public let opfPath: String
 
@@ -48,6 +44,9 @@ public final class EPUB {
 
     /// The subjects of the book, as per the metadata
     public var subjects: [String] { metadata["subjects"] ?? [] }
+
+    /// The NXC file, if any
+    public var ncx: NCX?
 
     /// Parses and indexes the epub file at the given URL
     /// - Parameter url: the URL of the epub zip file to load
@@ -158,7 +157,6 @@ public final class EPUB {
             throw EPUBError("Package at “\(fullPath)” had no 'spine' element")
         }
 
-        self.tocid = spineRoot[attribute: "toc"]
         var spineElements: [(idref: String, linear: Bool)] = []
         for spineElement in spineRoot.elementChildren {
             guard let idref = spineElement[attribute: "idref"] else {
@@ -169,12 +167,32 @@ public final class EPUB {
         }
         self.spine = spineElements
 
+
+        if let tocid = spineRoot[attribute: "toc"],
+            let ncx = manifest[tocid],
+            ncx.type == "application/x-dtbncx+xml",
+            let ncxEntry = archive[resolveRelative(path: ncx.href)] {
+            let ncxContent = try archive.extractData(from: ncxEntry)
+            self.ncx = try NCX(data: ncxContent)
+        }
+
         // dbg("opened zip with spine:", self.spine)
         
         /// “The guide element [OPF2] is a legacy feature that previously provided machine-processable navigation to key structures in an EPUB Publication. It is replaced in EPUB 3 by landmarks in the EPUB Navigation Document.”
 //        guard let guideRoot = packageRoot.elementChildren.first(where: { $0.elementName == "guide" }) else {
 //            throw EPUBError("Package at “\(fullPath)” had no 'guide' element")
 //        }
+    }
+
+    /// Resolves the given path relative to the OPF
+    func resolveRelative(path: String) -> String {
+        // remove slashes from either end of the given string
+        let ts = { (str: String) in str.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
+
+        // entries are resolved relative to the OPF file
+        let opfRoot = ts(URL(fileURLWithPath: "/" + self.opfPath).deletingLastPathComponent().path)
+
+        return !opfRoot.isEmpty ? (opfRoot + "/" + path) : path
     }
 
     func extractContents(to folder: URL? = nil) throws -> URL {
@@ -205,6 +223,85 @@ public final class EPUB {
         }
 
         return extractFolder
+    }
+}
+
+public struct NCX {
+    let title: String
+    let points: [NavPoint]
+
+    public init(data: Data) throws {
+        let node = try XMLNode.parse(data: data)
+
+        guard let ncx = node.elementChildren.first(where: { $0.elementName == "ncx" }) else {
+            throw EPUBError("No ncx root in node")
+        }
+
+        guard let docTitle = ncx.elementChildren.first(where: { $0.elementName == "docTitle" }),
+            let docText = docTitle.elementChildren.first(where: { $0.elementName == "text" }) else {
+            throw EPUBError("No docTitle in node")
+        }
+
+        self.title = docText.childContent.joined()
+
+        guard let navMap = ncx.elementChildren.first(where: { $0.elementName == "navMap" }) else {
+            throw EPUBError("No navMap node in ncx")
+        }
+
+        var points: [NavPoint] = []
+        for childPoint in navMap.elementChildren.filter({ $0.elementName == "navPoint" }) {
+            points.append(try NavPoint(node: childPoint))
+        }
+        self.points = points
+    }
+
+    public var allPoints: AnyIterator<NavPoint> {
+        points.depthFirstIterator(children: \.points)
+    }
+
+    /// Search through the navPoints for the given id
+    func findContent(_ id: String) -> String? {
+        guard let navPoint = allPoints.first(where: { $0.id == id }) else {
+            return nil
+        }
+        return navPoint.content
+    }
+
+    public struct NavPoint {
+        let className: String?
+        let id: String?
+        let playOrder: Int?
+        let navLabel: String?
+        let content: String?
+        /// Nested nav points
+        let points: [NavPoint]
+
+        // TODO: support pageList/pageTarget
+
+        init(node: FairCore.XMLNode) throws {
+            self.className = node[attribute: "class"]
+            self.id = node[attribute: "id"]
+            self.playOrder = node[attribute: "playOrder"].flatMap(Int.init)
+            if let navLabel = node.elementChildren.first(where: { $0.elementName == "navLabel" }),
+               let navLabelText = navLabel.elementChildren.first(where: { $0.elementName == "text" })
+            {
+                self.navLabel = navLabelText.childContent.first
+            } else {
+                self.navLabel = nil
+            }
+
+            if let content = node.elementChildren.first(where: { $0.elementName == "content" }) {
+                self.content = content[attribute: "src"]
+            } else {
+                self.content = nil
+            }
+
+            var points: [NavPoint] = []
+            for childPoint in node.elementChildren.filter({ $0.elementName == "navPoint" }) {
+                points.append(try NavPoint(node: childPoint))
+            }
+            self.points = points
+        }
     }
 }
 

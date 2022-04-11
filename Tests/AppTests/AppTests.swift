@@ -30,6 +30,14 @@ open class AppTests: XCTestCase {
         XCTAssertEqual(14, epub.spine.count)
 
         XCTAssertEqual(["Lewis Carroll"], epub.metadata["creator"])
+
+        // example of the metadata's title and the NCX's title being (slightly) different
+
+        XCTAssertEqual("Alice's Adventures in Wonderland / Illustrated by Arthur Rackham. With a Proem by Austin Dobson", epub.title)
+
+        XCTAssertEqual("Alice's Adventures in Wonderland\nIllustrated by Arthur Rackham. With a Proem by Austin Dobson", epub.ncx?.title)
+
+        XCTAssertEqual(6, epub.ncx?.allPoints.array().count)
     }
 
     func testParseLocalBooks() throws {
@@ -45,6 +53,7 @@ open class AppTests: XCTestCase {
             let epub = try EPUB(url: epubURL)
             XCTAssertNotNil(epub.title)
             XCTAssertGreaterThan(epub.spine.count, 0)
+            XCTAssertNotEqual("", epub.ncx?.title) // might be zero entries for empty TOC, but the title should always exist
         }
     }
 }
