@@ -17,7 +17,7 @@
 			</array>
 			<key>NSUbiquitousDocumentUserActivityType</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
-        </dict>
+		</dict>
 	</array>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
@@ -35,11 +35,11 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>epub</string>
-                </array>
-                <key>public.mime-type</key>
-                <array>
-                    <string>application/epub+zip</string>
-                </array>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/epub+zip</string>
+				</array>
 			</dict>
 		</dict>
 	</array>
