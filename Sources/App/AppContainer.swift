@@ -22,9 +22,9 @@ class BookViewState : WebViewState {
         return webView
     }
 
-    override func didFinish(navigation: WKNavigation) {
-        dbg(navigation.effectiveContentMode)
-    }
+//    override func didFinish(navigation: WKNavigation) {
+//        dbg(navigation.effectiveContentMode)
+//    }
 
     func movePage(by amount: Int) {
         guard let webView = self.webView else {
