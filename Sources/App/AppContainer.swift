@@ -32,6 +32,7 @@ class BookViewState : WebViewState {
         }
         Task {
             do {
+                #if DEBUG
                 let documentClientWidth = try await webView.evalJS("document.documentElement.clientWidth")
                 dbg("documentClientWidth:", documentClientWidth)
 
@@ -49,7 +50,8 @@ class BookViewState : WebViewState {
 
                 let documentWidth = try await webView.evalJS("document.width")
                 dbg("documentWidth:", documentWidth)
-
+                #endif
+                
                 try await webView.evalJS("""
                 // TODO: snap to the current page
                 // window.scrollTo();
