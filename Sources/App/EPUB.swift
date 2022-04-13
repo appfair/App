@@ -260,7 +260,7 @@ public struct NCX {
     }
 
     /// Search through the navPoints for the given id
-    func findContent(_ id: String) -> String? {
+    func findHref(forNavPoint id: String) -> String? {
         guard let navPoint = allPoints.first(where: { $0.id == id }) else {
             return nil
         }

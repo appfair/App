@@ -16,152 +16,9 @@ import FairApp
 import UniformTypeIdentifiers
 import WebKit
 
-class BookViewState : WebViewState {
-    override func createWebView() -> WKWebView {
-        let webView = super.createWebView()
-        return webView
-    }
-
-//    override func didFinish(navigation: WKNavigation) {
-//        dbg(navigation.effectiveContentMode)
-//    }
-
-    func movePage(by amount: Int) {
-        guard let webView = self.webView else {
-            return dbg("no web view installed")
-        }
-        Task {
-            do {
-                #if DEBUG
-                let documentClientWidth = try await webView.evalJS("document.documentElement.clientWidth")
-                dbg("documentClientWidth:", documentClientWidth)
-
-                let documentScrollWidth = try await webView.evalJS("document.documentElement.scrollWidth")
-                dbg("documentScrollWidth:", documentScrollWidth)
-
-                let bodyClientWidth = try await webView.evalJS("document.body.clientWidth")
-                dbg("bodyClientWidth:", bodyClientWidth)
-
-                let bodyWidth = try await webView.evalJS("document.body.width")
-                dbg("bodyWidth:", bodyWidth)
-
-                let windowWidth = try await webView.evalJS("window.innerWidth")
-                dbg("windowWidth:", windowWidth)
-
-                let documentWidth = try await webView.evalJS("document.width")
-                dbg("documentWidth:", documentWidth)
-                #endif
-                
-                try await webView.evalJS("""
-                // TODO: snap to the current page
-                // window.scrollTo();
-                window.scrollBy({ 'left': document.documentElement.clientWidth * \(amount), 'behavior': 'smooth' });
-                """)
-            } catch {
-                dbg("error scrolling:", error)
-            }
-        }
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct EPUBView: View {
-    @ObservedObject var document: Document
-    @ObservedObject var bookViewState: BookViewState
-    @EnvironmentObject var store: Store
-    @Namespace var mainNamespace
-    
-    @Binding var pageScale: Double
-    @State var animationTime: TimeInterval = 0
-    @State var searchString = ""
-
-    public var body: some View {
-        ZStack {
-            bookBody
-            controlOverlay
-        }
-    }
-
-    var controlOverlay: some View {
-        HStack {
-            Button {
-                dbg("previous page")
-                bookViewState.movePage(by: -1)
-            } label: {
-                Text("Previous", bundle: .module, comment: "button text for previous page")
-                    .label(image: FairSymbol.chevron_left)
-            }
-            .keyboardShortcut(.leftArrow, modifiers: [])
-
-            Spacer()
-
-            Button {
-                dbg("next page")
-                bookViewState.movePage(by: +1)
-            } label: {
-                Text("Next", bundle: .module, comment: "button text for next page")
-                    .label(image: FairSymbol.chevron_right)
-            }
-            .keyboardShortcut(.rightArrow, modifiers: [])
-        }
-        .labelStyle(.iconOnly)
-        .foregroundStyle(Color.accentColor)
-        .font(Font.largeTitle.bold())
-        .buttonStyle(.borderless)
-    }
-
-    @ViewBuilder var bookBody: some View {
-        let scale = self.pageScale
-        webViewBody()
-            .onChange(of: bookViewState.webView?.pageZoom) { zoom in
-                dbg("change page zoom:", zoom)
-                if let zoom = zoom, scale != zoom {
-                    // FIXME: not getting persisted for some reason
-                    self.pageScale = zoom
-                }
-            }
-            .onAppear {
-                dbg("init self.pageScale:", self.pageScale)
-                #if !os(iOS) // messes things up whe it is part if the initial load
-                bookViewState.webView?.pageScale = scale
-                #endif
-            }
-            #if os(iOS)
-            .toolbar {
-                ToolbarItemGroup(placement: .bottomBar) {
-                    bookViewState.zoomAction(amount: 0.8)
-                    bookViewState.zoomAction(amount: 1.2)
-                }
-            }
-            #endif
-            #if os(macOS) // customizable toolbar on macOS
-            .toolbar(id: "EPUBToolbar") {
-                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
-                    bookViewState.zoomAction(amount: 0.8)
-                }
-                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
-                    bookViewState.zoomAction(amount: 1.2)
-                }
-            }
-            #endif
-    }
-
-    public func webViewBody() -> some View {
-        WebView(state: bookViewState)
-    }
-}
-
-extension WKWebView {
-    var pageScale: CGFloat {
-        get { self.pageZoom }
-        set { self.pageZoom = newValue }
-    }
-}
-
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle") public var someToggle = false
-    @AppStorage("defaultPageScale") public var defaultPageScale = 2.0
+    @AppStorage("smoothScrolling") public var smoothScrolling = true
 }
 
 public extension AppContainer {
@@ -179,57 +36,29 @@ public extension AppContainer {
 struct EBookScene : Scene {
 
     var body: some Scene {
-        DocumentGroup(viewing: Document.self, viewer: documentHostView)
+        DocumentGroup(viewing: EPUBDocument.self, viewer: documentHostView)
             .commands { EBookCommands() }
     }
 
-    func documentHostView(file: ReferenceFileDocumentConfiguration<Document>) -> some View {
-        let doc: Document = file.document
-        let epub = doc.epub
+    func documentHostView(file: ReferenceFileDocumentConfiguration<EPUBDocument>) -> some View {
+        let doc: EPUBDocument = file.document
 
-        let prefs = WKWebpagePreferences()
-        prefs.allowsContentJavaScript = false
-        prefs.preferredContentMode = .desktop
-
-        let config = WKWebViewConfiguration()
-        config.defaultWebpagePreferences = prefs
-        config.suppressesIncrementalRendering = true
-        //config.limitsNavigationsToAppBoundDomains = true
-
-        // configure loading epub:///file.xhtml directly from the epub zip file
-        config.setURLSchemeHandler(EPUBSchemeHandler(epub: epub), forURLScheme: "epub")
-
-        let controller = WKUserContentController()
-
-        let margin = 20;
-
-        controller.addUserScript(WKUserScript(source: """
-            document.body.style.height = '100vh';
-            document.body.style.columnWidth = '100vh';
-            document.body.style.overflow = 'hidden';
-            document.body.style.webkitLineBoxContain = 'block glyphs replaced';
-
-            document.body.style.marginLeft = '\(margin)px';
-            document.body.style.marginRight = '\(margin)px';
-            document.body.style.columnGap = '\(margin*2)px';
-            """, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
-
-        config.userContentController = controller
-
-        let bookViewState = BookViewState(initialRequest: nil, configuration: config)
-
-        return EPubContainerView(document: doc, bookViewState: bookViewState)
+        return EPubContainerView(document: doc)
             .focusedSceneValue(\.document, file.document)
-            .focusedSceneValue(\.bookViewState, bookViewState)
     }
 }
 
 struct EPubContainerView : View {
-    @ObservedObject var document: Document
-    @ObservedObject var bookViewState: BookViewState
+    @ObservedObject var document: EPUBDocument
+    @StateObject var bookViewState: BookViewState
 
     @SceneStorage("selectedChapter") var selection: String = ""
     @SceneStorage("pageScale") var pageScale: Double = 2.0
+
+    init(document: EPUBDocument) {
+        self.document = document
+        self._bookViewState = .init(wrappedValue: document.createBookViewState())
+    }
 
     /// Conversion from SceneStorage (which cannot take an optional) to the double-optional required by the list selection
     private var selectionBinding: Binding<String??> {
@@ -244,54 +73,347 @@ struct EPubContainerView : View {
 
     var body: some View {
         containerView
+            .focusedSceneValue(\.bookViewState, bookViewState)
+            .alertingError($bookViewState.errors)
     }
 
     var containerView: some View {
-        BookTOCView(document: document, bookViewState: bookViewState, selection: selectionBinding, pageScale: $pageScale)
+        BookTOCView(document: document, bookViewState: bookViewState, selection: selectionBinding)
+    }
+}
+
+class BookViewState : WebViewState {
+    @AppStorage("smoothScrolling") public var smoothScrolling = true
+    #if os(iOS)
+    @AppStorage("pageScale") public var pageScale = 4.0
+    #else
+    @AppStorage("pageScale") public var pageScale = 2.0
+    #endif
+
+    override func createWebView() -> WKWebView {
+        let webView = super.createWebView()
+        return webView
+    }
+
+    func movePage(by amount: Int) async throws -> Double? {
+        guard let webView = self.webView else {
+            throw AppError("No book render host installed")
+        }
+
+        let result = try await webView.evalJS("navigateSection(\(amount), \(smoothScrolling))")
+        dbg("result:", result)
+        if let navigation = result as? Double {
+            return navigation
+        } else {
+            return nil
+        }
+    }
+
+    private static let percentParser: NumberFormatter = {
+        let fmt = NumberFormatter()
+        fmt.numberStyle = .percent
+        return fmt
+    }()
+
+    func scaleAction(brief: Bool = false, amount: Double?, minimumZoomLevel: Double = 0.05, maximumZoomLevel: Double = 100.0) -> some View {
+        return (amount == nil ?
+             (brief ? Text("Actual Size", bundle: .module, comment: "label for brief actual size command") : Text("Actual Size", bundle: .module, comment: "label for non-brief actual size command"))
+             : (amount ?? 1.0) > 1.0 ? (brief ? Text("Bigger", bundle: .module, comment: "label for brief zoom in command") : Text("Zoom In", bundle: .module, comment: "label for non-brief zoom in command"))
+                 : (brief ? Text("Smaller", bundle: .module, comment: "label for brief zoom out command") : Text("Zoom Out", bundle: .module, comment: "label for non-brief zoom out command")))
+            .label(image: amount == nil ? FairSymbol.textformat_superscript : (amount ?? 1.0) > 1.0 ? FairSymbol.textformat_size_larger : FairSymbol.textformat_size_smaller)
+                .button {
+                    Task {
+                        do {
+                            try await self.setPageScale(to: self.pageScale * (amount ?? 1.0))
+                        } catch {
+                            self.reportError(error)
+                        }
+                    }
+                }
+    }
+
+    private func setPageScale(to scale: Double) async throws {
+        // while WKWebView.pageZoom works on macOS, on iOS it simply zooms the page rather than re-flows it, so we need to instead change the fontSize of the document element
+        let newScale = try await webView?.evalJS("scaleText(\(scale))")
+        dbg("zooming to:", scale, "result:", newScale)
+        if let newScaleString = newScale as? NSString,
+            let newScaleAmount = Self.percentParser.number(from: newScaleString as String)?.doubleValue {
+            self.pageScale = newScaleAmount
+        }
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+public struct EPUBView: View {
+    @ObservedObject var document: EPUBDocument
+    @ObservedObject var bookViewState: BookViewState
+    @EnvironmentObject var store: Store
+    @Namespace var mainNamespace
+    /// The currently selected section
+    @Binding var selection: String??
+
+    public var body: some View {
+        ZStack {
+            bookBody
+            controlOverlay
+        }
+    }
+
+    var controlOverlay: some View {
+        HStack {
+            Button {
+                changePage(by: -1)
+            } label: {
+                Text("Previous", bundle: .module, comment: "button text for previous page")
+                    .label(image: FairSymbol.chevron_left)
+            }
+            .keyboardShortcut(.leftArrow, modifiers: [])
+
+            Spacer()
+
+            Button {
+                changePage(by: +1)
+            } label: {
+                Text("Next", bundle: .module, comment: "button text for next page")
+                    .label(image: FairSymbol.chevron_right)
+            }
+            .keyboardShortcut(.rightArrow, modifiers: [])
+        }
+        .labelStyle(.iconOnly)
+        .foregroundStyle(Color.accentColor)
+        .font(Font.largeTitle.bold())
+        .buttonStyle(.borderless)
+    }
+
+    func changePage(by amount: Int) {
+        dbg("change page by:", amount)
+
+        Task {
+            do {
+                guard let result = try await bookViewState.movePage(by: amount) else {
+                    dbg("unable to change page by:", amount)
+                    return
+                }
+                if result >= 1.0 {
+                    try changeSection(next: true)
+                } else if result < 0.0 {
+                    try changeSection(next: false)
+                }
+            } catch {
+                bookViewState.reportError(error)
+            }
+        }
+    }
+
+    func changeSection(next: Bool) throws {
+        dbg("moving to", next ? "next" : "previous", "section")
+        bookViewState.loadSelection($selection, offset: next ? +1 : -1, in: document)
+    }
+
+    @ViewBuilder var bookBody: some View {
+        webViewBody()
+            #if os(iOS)
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    bookViewState.scaleAction(amount: 0.8)
+                    bookViewState.scaleAction(amount: 1.2)
+                }
+            }
+            #endif
+            #if os(macOS) // customizable toolbar on macOS
+            .toolbar(id: "EPUBToolbar") {
+                ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
+                    bookViewState.scaleAction(amount: 0.8)
+                }
+                ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
+                    bookViewState.scaleAction(amount: 1.2)
+                }
+            }
+            #endif
+    }
+
+    public func webViewBody() -> some View {
+        WebView(state: bookViewState)
     }
 }
 
 extension BookViewState {
     /// Loads the selection id from the given document
     /// - Parameters:
-    ///   - selection: the selection to load
+    ///   - selection: the selection binding to load; if the selection has changed, the binding will be updated; this is the NXC identifier, nor the manifest identifier
+    ///   - offset: whether to load the selection at the given offset
     ///   - document: the document in which to load the selection
-    func loadSelection(_ selection: String??, in document: Document) {
-        if let selection = selection,
+    /// - Returns: true if the selection was found and loaded
+    @discardableResult func loadSelection(_ selectionBinding: Binding<String??>, offset adjacentOffset: Int, in document: EPUBDocument) -> Bool {
+        guard let selection = selectionBinding.wrappedValue,
            let selection = selection,
-           let content = document.epub.ncx?.findContent(selection) {
-            dbg("loading content:", content)
-            if let url = URL(string: "epub:///" + content),
-               let webView = self.webView {
-                webView.load(URLRequest(url: url))
+           let ncx = document.epub.ncx,
+           let href = ncx.findHref(forNavPoint: selection) else {
+            dbg("no ncx or selection binding:", selectionBinding.wrappedValue ?? nil)
+            return false
+        }
+
+        if adjacentOffset == 0 {
+            // not loading an adjacent item; simply load the href
+            dbg("loading ncx href:", href)
+            return loadHref(href)
+        }
+
+        // when loading an adjacent selection, locate that NCX in the spine and then load the adjacent spine element; this is because the NXC doesn't necessarily list all the items in the book's manifest, just the TOC-worthy elements, so we need to use the spine as the authoritative ordering of the book's manifest elements
+        let manifest = document.epub.manifest
+        // find the item in the manifest basec on the contect
+        guard let item: (key: String, value: (href: String, type: String)) = manifest.first(where: { item in
+            // TODO: substring search since the NCX href might include a hash
+            href == item.value.href
+        }) else {
+            dbg("no item id found for href:", href)
+            return false
+        }
+
+        let spine = document.epub.spine
+        guard var index = spine.firstIndex(where: { $0.idref == item.key }) else {
+            dbg("no index found for itemid:", item.key)
+            return false
+        }
+
+        if (index + adjacentOffset) < 0 || (index + adjacentOffset) >= spine.count {
+            dbg("offset at index:", index, "is at the edge of the spine bounds:", spine.count)
+            return false
+        }
+
+        index += adjacentOffset
+        let targetSpine = spine[index]
+        dbg("moving to spine offset from index:", index, "for itemid:", item.key, targetSpine)
+
+        guard let targetItem = manifest[targetSpine.idref] else {
+            dbg("no target item for spine:", targetSpine.idref)
+            return false
+        }
+
+        dbg("loading ncx adjacentOffset:", adjacentOffset, "href:", targetItem.href)
+        if !loadHref(targetItem.href, onComplete: {
+            dbg("loaded href section:", targetItem.href)
+            if adjacentOffset < 0 {
+                // when moving backwards through sections, jump to the end of the prior section
+                Task {
+                    do {
+                        let _ = try await self.movePage(by: 9_999_999)
+                    } catch {
+                        dbg("unable to move to end of previous section")
+                    }
+                }
+            }
+        }) {
+            dbg("unable to load adjacent href:", targetItem.href)
+            return false
+        }
+
+        // trim off any anchor elements of an href
+        func trimAnchor(_ href: String) -> String {
+            href.split(separator: "#").first?.description ?? href
+        }
+
+        // a map of the trimmed NXC hrefs to the NCXIDs
+        let ncxHrefs = ncx.allPoints.map({
+            ($0.content.flatMap(trimAnchor), $0.id)
+        })
+            .dictionary(keyedBy: \.0)
+            .compactMapValues(\.1)
+
+        // map of spine IDs to the corresponding manifest href
+        let spineTOC: [(manifestID: String, href: String, ncxID: String?)] = spine.compactMap({
+            guard let href = manifest[$0.idref]?.href else {
+                return nil
+            }
+            let baseHref = trimAnchor(href)
+            return ($0.idref, baseHref, ncxHrefs[baseHref])
+        })
+
+        // locate the first prior spine ID that has an NCX entry
+        guard let spineIndex = spineTOC.firstIndex(where: { $0.manifestID == targetSpine.idref }) else {
+            dbg("unable to locate spine index for spine ID:", targetSpine.idref)
+            return false
+        }
+
+        guard let ownerTOCItem = spineTOC[0...spineIndex].reversed().first(where: {
+            $0.ncxID != nil
+        }) else {
+            dbg("unable to locate preceeding NCX entry from spine ID:", targetSpine.idref)
+            return false
+        }
+
+        dbg("setting selection for adjacentOffset:", adjacentOffset, "to:", ownerTOCItem.ncxID)
+        if let ncxID = ownerTOCItem.ncxID {
+            selectionBinding.wrappedValue = ncxID
+        }
+        return true
+    }
+
+    /// Loads the given href relative to the location of the rootfile in the epub zip.
+    /// - Parameters:
+    ///   - href: the relative href to load
+    ///   - onComplete: a block to execute once the load has completed
+    /// - Returns: true if the webView can initiate the load operation
+    private func loadHref(_ href: String, onComplete: (() -> ())? = nil) -> Bool {
+        guard let url = URL(string: "epub:///" + href),
+           let webView = self.webView else {
+            return false
+        }
+        webView.load(URLRequest(url: url))
+
+        // when an onComplete handler is specified, add an observer to the `isLoading` key that will trigger the given action once it is set to `false`
+        var observer: NSKeyValueObservation? = nil
+        observer = webView.observe(\.isLoading, options: [.new]) { webView, value in
+            if value.newValue == false {
+                observer?.invalidate()
+                observer = nil
+
+                // after loading the view, update the text scale
+                do {
+                    Task {
+                        try await self.setPageScale(to: self.pageScale)
+                        DispatchQueue.main.async {
+                            onComplete?()
+                        }
+                    }
+                } catch {
+                    dbg("error updating page scale:", error)
+                }
             }
         }
+        return true
     }
+
 }
 
 #if os(macOS)
-struct BookTOCView : View {
-    @ObservedObject var document: Document
+typealias BookTOCView = BookSplitView
+#elseif os(iOS)
+typealias BookTOCView = BookNavigationView
+#endif
+
+#if os(macOS)
+struct BookSplitView : View {
+    @ObservedObject var document: EPUBDocument
     @ObservedObject var bookViewState: BookViewState
     @Binding var selection: String??
-    @Binding var pageScale: Double
 
     var body: some View {
         HSplitView {
             TOCListView(document: document, selection: $selection)
                 .frame(maxWidth: 300)
                 .onChange(of: selection) { selection in
-                    bookViewState.loadSelection(selection, in: document)
+                    bookViewState.loadSelection($selection, offset: 0, in: document)
                 }
 
-            EPUBView(document: document, bookViewState: bookViewState, pageScale: $pageScale)
+            EPUBView(document: document, bookViewState: bookViewState, selection: $selection)
         }
     }
 }
 
-/// A selectable list of the table of contents of the book, as defined in the (deprecated) `.ncx` file.
+/// A selectable list of the table of contents of the book, as defined in the  `.ncx` file.
 struct TOCListView : View {
-    @ObservedObject var document: Document
+    @ObservedObject var document: EPUBDocument
     /// The selected navPoint ID
     @Binding var selection: String??
 
@@ -299,7 +421,7 @@ struct TOCListView : View {
         List(selection: $selection) {
             Section {
                 ForEach(document.epub.ncx?.toc.array() ?? [], id: \.element.id) { (indices, element) in
-                    Text(element.navLabel ?? "?")
+                    Text(element.navLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "?")
                         .padding(.leading, .init(indices.count) * 5) // indent
                 }
             } header: {
@@ -310,24 +432,23 @@ struct TOCListView : View {
     }
 }
 
-#elseif os(iOS)
+#endif
 
 /// A navigation view for the table of contents, used on iOS to select the chapter
-struct BookTOCView : View {
-    @ObservedObject var document: Document
+struct BookNavigationView : View {
+    @ObservedObject var document: EPUBDocument
     @ObservedObject var bookViewState: BookViewState
     @Binding var selection: String??
-    @Binding var pageScale: Double
 
     var body: some View {
         List {
             Section {
                 ForEach(document.epub.ncx?.toc.array() ?? [], id: \.element.id) { (indices, element) in
                     NavigationLink(tag: element.id, selection: $selection) {
-                        EPUBView(document: document, bookViewState: bookViewState, pageScale: $pageScale)
+                        EPUBView(document: document, bookViewState: bookViewState, selection: $selection)
                             .onAppear {
                                 dbg("bookViewState.webView:", bookViewState.webView)
-                                bookViewState.loadSelection(selection, in: document)
+                                bookViewState.loadSelection($selection, offset: 0, in: document)
                             }
                     } label: {
                         Text(element.navLabel ?? "?")
@@ -341,7 +462,6 @@ struct BookTOCView : View {
         .listStyle(.sidebar)
     }
 }
-#endif
 
 
 /// A scheme handler for loading elements directly from the underlying zip archive.
@@ -406,9 +526,9 @@ struct EBookCommands : Commands {
 
         CommandGroup(after: .sidebar) {
             state?.observing { state in
-                state.zoomAction(amount: nil).keyboardShortcut("0")
-                state.zoomAction(amount: 1.2).keyboardShortcut("+")
-                state.zoomAction(amount: 0.8).keyboardShortcut("-")
+                state.scaleAction(amount: nil).keyboardShortcut("0")
+                state.scaleAction(amount: 1.2).keyboardShortcut("+")
+                state.scaleAction(amount: 0.8).keyboardShortcut("-")
             }
 
             Divider()
@@ -418,13 +538,13 @@ struct EBookCommands : Commands {
 
 extension FocusedValues {
     /// The store for the given scene
-    var document: Document? {
+    var document: EPUBDocument? {
         get { self[DocumentKey.self] }
         set { self[DocumentKey.self] = newValue }
     }
 
     private struct DocumentKey: FocusedValueKey {
-        typealias Value = Document
+        typealias Value = EPUBDocument
     }
 }
 
@@ -444,7 +564,7 @@ extension UTType {
     static var epub = UTType(importedAs: "app.Stanza-Redux.epub")
 }
 
-final class Document: ReferenceFileDocument {
+final class EPUBDocument: ReferenceFileDocument {
     static let bundle = Bundle.module
     
     static var readableContentTypes: [UTType] {
@@ -453,6 +573,8 @@ final class Document: ReferenceFileDocument {
             UTType.zip, // can also open epub zip files
         ]
     }
+
+    /// Empty `writableContentTypes` because the content is not editable
     static var writableContentTypes: [UTType] { [] }
 
     let epub: EPUB
@@ -462,7 +584,89 @@ final class Document: ReferenceFileDocument {
             throw CocoaError(.fileReadCorruptFile)
         }
 
-        self.epub = try EPUB(data: data)
+        let epub = try EPUB(data: data)
+        self.epub = epub
+    }
+
+    @MainActor func createBookViewState() -> BookViewState {
+        // possible optimization: the EPUBDocument document initializer loads the zip from the FileWrapper's `fileContents` data, which could mean the whole thing is loaded into memory; we could alternatively load it here from the configuration's `fileURL`, but this means that errors wouldn't be handled by the document's initializer. Profiling should be done on large documents, since it is possible that using mapped reads doesn't wind up loading the whole file in memory anyway
+
+        // let url = file.fileURL
+
+        let prefs = WKWebpagePreferences()
+        prefs.allowsContentJavaScript = false
+        prefs.preferredContentMode = .desktop
+
+        let config = WKWebViewConfiguration()
+        config.defaultWebpagePreferences = prefs
+        config.suppressesIncrementalRendering = true
+        //config.limitsNavigationsToAppBoundDomains = true
+
+        // configure loading epub:///file.xhtml directly from the epub zip file
+        config.setURLSchemeHandler(EPUBSchemeHandler(epub: epub), forURLScheme: "epub")
+
+        let controller = WKUserContentController()
+
+        let margin = 20;
+
+        controller.addUserScript(WKUserScript(source: """
+            document.body.style.overflow = 'hidden';
+
+            //document.body.style.scrollSnapType = 'x mandatory';
+            //document.body.style.scrollSnapPointsX = 'repeat(800px)';
+
+            document.body.style.height = '100vh';
+            document.body.style.columnWidth = '100vh';
+            document.body.style.webkitLineBoxContain = 'block glyphs replaced';
+
+            document.body.style.marginLeft = '\(margin)px';
+            document.body.style.marginRight = '\(margin)px';
+            document.body.style.columnGap = '\(margin*2)px';
+
+            //document.body.style.display = 'flex';
+            //document.body.style.flexDirection = 'column';
+
+            // navigate one page in a book section, snapping to column bounds
+            // direction: -1 for previous page, +1 for next page, 0 to simply snap to bounds
+            // smooth: a boolean indicating whether to scroll smoothly or instantly
+            // returns: the position (from 0.0–1.0) in the current section, or -1/+1 to indicate movement beyond the bounds of the section
+            function navigateSection(direction, smooth) {
+                let element = document.documentElement;
+                let totalWidth = element.scrollWidth;
+                let pos = window.scrollX;
+                let screenWidth = element.clientWidth
+                pos = Math.min(totalWidth, pos + (screenWidth * direction));
+                let adjust = (pos % element.clientWidth);
+                pos -= adjust;
+                if (adjust > (screenWidth / 2.0)) {
+                    pos += screenWidth;
+                }
+
+                window.scrollTo({ 'left': pos, 'behavior': smooth == true ? 'smooth' : 'instant' });
+
+                if (pos < 0.0) {
+                    return -1;
+                } else if (pos > (totalWidth - (screenWidth / 2.0))) {
+                    return 1;
+                } else {
+                    let loc = (pos / totalWidth);
+                    return loc;
+                }
+            };
+
+            // Scales the body font size by the given amount, returning the current scale
+            function scaleText(amount) {
+                let style = document.documentElement.style;
+                // TODO: remember relative scroll location and jump back to it
+                style.fontSize = Math.round(amount * 100) + '%';
+                navigateSection(0, false); // snap to nearest page
+                return style.fontSize;
+            };
+            """, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
+
+        config.userContentController = controller
+
+        return BookViewState(initialRequest: nil, configuration: config)
     }
 
     /// The extract pages from the spine
@@ -489,9 +693,44 @@ public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
+        Toggle(isOn: $store.smoothScrolling) {
+            Text("Smooth scroll pages", bundle: .module, comment: "toggle preference title for smooth scrolling of pages")
         }
+        .toggleStyle(.switch)
         .padding()
     }
+}
+
+// MARK: Parochial (package-local) Utilities
+
+extension View {
+    /// Alert if the list of errors in not blank
+    func alertingError<L: LocalizedError>(_ errorBinding: Binding<[L]>) -> some View {
+        alert(isPresented: Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }, error: errorBinding.wrappedValue.last, actions: { _ in
+            // TODO: extra actions, like “Report”?
+        }, message: { _ in
+            // TODO: extra message?
+        })
+
+    }
+}
+
+/// Is this wise?
+extension NSError : LocalizedError {
+    public var errorDescription: String? { self.localizedDescription }
+    public var failureReason: String? { self.localizedFailureReason }
+    public var recoverySuggestion: String? { self.localizedRecoverySuggestion }
+}
+
+
+
+/// Work-in-Progress marker
+@available(*, deprecated, message: "work in progress")
+internal func wip<T>(_ value: T) -> T { value }
+
+/// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
+/// Otherwise it will default to the main bundle's strings, which is always empty.
+@available(*, deprecated, message: "use localized bundle/comment initializer instead")
+@usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
+    SwiftUI.Text(string, bundle: .module, comment: comment)
 }
