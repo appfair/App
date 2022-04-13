@@ -51,9 +51,7 @@ struct EBookScene : Scene {
 struct EPubContainerView : View {
     @ObservedObject var document: EPUBDocument
     @StateObject var bookViewState: BookViewState
-
     @SceneStorage("selectedChapter") var selection: String = ""
-    @SceneStorage("pageScale") var pageScale: Double = 2.0
 
     init(document: EPUBDocument) {
         self.document = document
@@ -84,23 +82,116 @@ struct EPubContainerView : View {
 
 class BookViewState : WebViewState {
     @AppStorage("smoothScrolling") public var smoothScrolling = true
+    @AppStorage("selectedChapter") var selection: String = ""
+    @AppStorage("margin") var margin: Int = 40
+    @AppStorage("pageScale") var pageScale: Double = BookViewState.defaultScale {
+        didSet {
+            // TODO: make this @SceneStorage? We'd need to move it into a view…
+            self.resetUserScripts(webView: self.webView)
+        }
+    }
+
     #if os(iOS)
-    @AppStorage("pageScale") public var pageScale = 4.0
+    static let defaultScale = 4.0
     #else
-    @AppStorage("pageScale") public var pageScale = 2.0
+    static let defaultScale = 2.0
     #endif
 
     override func createWebView() -> WKWebView {
         let webView = super.createWebView()
+        resetUserScripts(webView: webView)
         return webView
     }
 
-    func movePage(by amount: Int) async throws -> Double? {
+    func resetUserScripts(webView: WKWebView?) {
+        guard let controller = webView?.configuration.userContentController else {
+            return dbg("no userContentController")
+        }
+
+        controller.removeAllUserScripts()
+
+        controller.addUserScript(WKUserScript(source: """
+            document.body.style.overflow = 'hidden';
+
+            //document.body.style.scrollSnapType = 'x mandatory';
+            //document.body.style.scrollSnapPointsX = 'repeat(800px)';
+
+            document.body.style.height = '100vh';
+            document.body.style.columnWidth = '100vh';
+            document.body.style.webkitLineBoxContain = 'block glyphs replaced';
+
+            document.body.style.marginLeft = '\(margin)px';
+            document.body.style.marginRight = '\(margin)px';
+            document.body.style.columnGap = '\(margin*2)px';
+
+            //document.body.style.display = 'flex';
+            //document.body.style.flexDirection = 'column';
+
+            // navigate one page in a book section, snapping to column bounds
+            // direction: -1 for previous page, +1 for next page, 0 to simply snap to bounds
+            // smooth: a boolean indicating whether to scroll smoothly or instantly
+            // returns: the position (from 0.0–1.0) in the current section, or -1/+1 to indicate movement beyond the bounds of the section
+            function movePage(direction, smooth) {
+                let element = document.documentElement;
+                let totalWidth = element.scrollWidth;
+                let pos = window.scrollX;
+                let screenWidth = element.clientWidth
+                pos = Math.min(totalWidth, pos + (screenWidth * direction));
+                let adjust = (pos % element.clientWidth);
+                pos -= adjust;
+                if (adjust > (screenWidth / 2.0)) {
+                    pos += screenWidth;
+                }
+
+                window.scrollTo({ 'left': pos, 'behavior': smooth == true ? 'smooth' : 'instant' });
+
+                if (pos < 0.0) {
+                    return -1;
+                } else if (pos > (totalWidth - (screenWidth / 2.0))) {
+                    return 1;
+                } else {
+                    return position();
+                }
+            };
+
+            // with no argument, returns the current scroll position;
+            // with an argument, jumps to the given position and snaps to the nearest
+            // page boundry
+            function position(amount) {
+                if (typeof amount == 'undefined') {
+                    return window.scrollX / document.documentElement.scrollWidth;
+                } else {
+                    let pos = document.documentElement.scrollWidth * amount;
+                    window.scrollTo({ 'left': pos, 'behavior': 'instant' });
+                    movePage(0, false); // snap to nearest page
+                }
+            };
+
+            // Scales the body font size by the given amount, returning the current scale
+            function scaleText(amount) {
+                let style = document.documentElement.style;
+                let pos = position();
+                style.fontSize = Math.round(amount * 100) + '%';
+                position(pos); // restore relative position
+                return style.fontSize;
+            };
+
+            scaleText(\(pageScale)); // perform initial scaling
+
+            function handleResize() {
+                movePage(0, false); // snap to nearest page boundry on resize
+            };
+
+            window.onresize = handleResize;
+            """, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
+    }
+
+    func movePage(by amount: Int, smooth: Bool? = nil) async throws -> Double? {
         guard let webView = self.webView else {
             throw AppError("No book render host installed")
         }
 
-        let result = try await webView.evalJS("navigateSection(\(amount), \(smoothScrolling))")
+        let result = try await webView.evalJS("movePage(\(amount), \(smooth ?? smoothScrolling))")
         dbg("result:", result)
         if let navigation = result as? Double {
             return navigation
@@ -115,7 +206,7 @@ class BookViewState : WebViewState {
         return fmt
     }()
 
-    func scaleAction(brief: Bool = false, amount: Double?, minimumZoomLevel: Double = 0.05, maximumZoomLevel: Double = 100.0) -> some View {
+    func textScaleAction(brief: Bool = false, amount: Double?, minimumZoomLevel: Double = 0.05, maximumZoomLevel: Double = 100.0) -> some View {
         return (amount == nil ?
              (brief ? Text("Actual Size", bundle: .module, comment: "label for brief actual size command") : Text("Actual Size", bundle: .module, comment: "label for non-brief actual size command"))
              : (amount ?? 1.0) > 1.0 ? (brief ? Text("Bigger", bundle: .module, comment: "label for brief zoom in command") : Text("Zoom In", bundle: .module, comment: "label for non-brief zoom in command"))
@@ -124,7 +215,7 @@ class BookViewState : WebViewState {
                 .button {
                     Task {
                         do {
-                            try await self.setPageScale(to: self.pageScale * (amount ?? 1.0))
+                            try await self.setPageScale(to: amount == nil ? Self.defaultScale : (self.pageScale * (amount ?? 1.0)))
                         } catch {
                             self.reportError(error)
                         }
@@ -179,8 +270,10 @@ public struct EPUBView: View {
             }
             .keyboardShortcut(.rightArrow, modifiers: [])
         }
+        .contentShape(.interaction, Rectangle())
         .labelStyle(.iconOnly)
         .foregroundStyle(Color.accentColor)
+        .opacity(0.7)
         .font(Font.largeTitle.bold())
         .buttonStyle(.borderless)
     }
@@ -215,18 +308,18 @@ public struct EPUBView: View {
             #if os(iOS)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
-                    bookViewState.scaleAction(amount: 0.8)
-                    bookViewState.scaleAction(amount: 1.2)
+                    bookViewState.textScaleAction(amount: 0.8)
+                    bookViewState.textScaleAction(amount: 1.2)
                 }
             }
             #endif
             #if os(macOS) // customizable toolbar on macOS
             .toolbar(id: "EPUBToolbar") {
                 ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
-                    bookViewState.scaleAction(amount: 0.8)
+                    bookViewState.textScaleAction(amount: 0.8)
                 }
                 ToolbarItem(id: "ZoomInCommand", placement: .automatic, showsByDefault: true) {
-                    bookViewState.scaleAction(amount: 1.2)
+                    bookViewState.textScaleAction(amount: 1.2)
                 }
             }
             #endif
@@ -297,7 +390,7 @@ extension BookViewState {
                 // when moving backwards through sections, jump to the end of the prior section
                 Task {
                     do {
-                        let _ = try await self.movePage(by: 9_999_999)
+                        let _ = try await self.movePage(by: 9_999_999, smooth: false)
                     } catch {
                         dbg("unable to move to end of previous section")
                     }
@@ -369,15 +462,15 @@ extension BookViewState {
                 observer = nil
 
                 // after loading the view, update the text scale
-                do {
-                    Task {
+                Task {
+                    do {
                         try await self.setPageScale(to: self.pageScale)
-                        DispatchQueue.main.async {
-                            onComplete?()
-                        }
+                    } catch {
+                        dbg("error updating page scale:", error)
                     }
-                } catch {
-                    dbg("error updating page scale:", error)
+                    DispatchQueue.main.async {
+                        onComplete?()
+                    }
                 }
             }
         }
@@ -526,9 +619,9 @@ struct EBookCommands : Commands {
 
         CommandGroup(after: .sidebar) {
             state?.observing { state in
-                state.scaleAction(amount: nil).keyboardShortcut("0")
-                state.scaleAction(amount: 1.2).keyboardShortcut("+")
-                state.scaleAction(amount: 0.8).keyboardShortcut("-")
+                state.textScaleAction(amount: nil).keyboardShortcut("0")
+                state.textScaleAction(amount: 1.2).keyboardShortcut("+")
+                state.textScaleAction(amount: 0.8).keyboardShortcut("-")
             }
 
             Divider()
@@ -588,6 +681,9 @@ final class EPUBDocument: ReferenceFileDocument {
         self.epub = epub
     }
 
+    /// Cretae the initial view state for the book
+    /// - Parameter pageScale: <#pageScale description#>
+    /// - Returns: <#description#>
     @MainActor func createBookViewState() -> BookViewState {
         // possible optimization: the EPUBDocument document initializer loads the zip from the FileWrapper's `fileContents` data, which could mean the whole thing is loaded into memory; we could alternatively load it here from the configuration's `fileURL`, but this means that errors wouldn't be handled by the document's initializer. Profiling should be done on large documents, since it is possible that using mapped reads doesn't wind up loading the whole file in memory anyway
 
@@ -606,63 +702,6 @@ final class EPUBDocument: ReferenceFileDocument {
         config.setURLSchemeHandler(EPUBSchemeHandler(epub: epub), forURLScheme: "epub")
 
         let controller = WKUserContentController()
-
-        let margin = 20;
-
-        controller.addUserScript(WKUserScript(source: """
-            document.body.style.overflow = 'hidden';
-
-            //document.body.style.scrollSnapType = 'x mandatory';
-            //document.body.style.scrollSnapPointsX = 'repeat(800px)';
-
-            document.body.style.height = '100vh';
-            document.body.style.columnWidth = '100vh';
-            document.body.style.webkitLineBoxContain = 'block glyphs replaced';
-
-            document.body.style.marginLeft = '\(margin)px';
-            document.body.style.marginRight = '\(margin)px';
-            document.body.style.columnGap = '\(margin*2)px';
-
-            //document.body.style.display = 'flex';
-            //document.body.style.flexDirection = 'column';
-
-            // navigate one page in a book section, snapping to column bounds
-            // direction: -1 for previous page, +1 for next page, 0 to simply snap to bounds
-            // smooth: a boolean indicating whether to scroll smoothly or instantly
-            // returns: the position (from 0.0–1.0) in the current section, or -1/+1 to indicate movement beyond the bounds of the section
-            function navigateSection(direction, smooth) {
-                let element = document.documentElement;
-                let totalWidth = element.scrollWidth;
-                let pos = window.scrollX;
-                let screenWidth = element.clientWidth
-                pos = Math.min(totalWidth, pos + (screenWidth * direction));
-                let adjust = (pos % element.clientWidth);
-                pos -= adjust;
-                if (adjust > (screenWidth / 2.0)) {
-                    pos += screenWidth;
-                }
-
-                window.scrollTo({ 'left': pos, 'behavior': smooth == true ? 'smooth' : 'instant' });
-
-                if (pos < 0.0) {
-                    return -1;
-                } else if (pos > (totalWidth - (screenWidth / 2.0))) {
-                    return 1;
-                } else {
-                    let loc = (pos / totalWidth);
-                    return loc;
-                }
-            };
-
-            // Scales the body font size by the given amount, returning the current scale
-            function scaleText(amount) {
-                let style = document.documentElement.style;
-                // TODO: remember relative scroll location and jump back to it
-                style.fontSize = Math.round(amount * 100) + '%';
-                navigateSection(0, false); // snap to nearest page
-                return style.fontSize;
-            };
-            """, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
 
         config.userContentController = controller
 
@@ -687,7 +726,6 @@ final class EPUBDocument: ReferenceFileDocument {
         dbg("snapshot:", contentType)
     }
 }
-
 
 public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
