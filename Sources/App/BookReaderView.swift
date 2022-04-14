@@ -77,6 +77,9 @@ class BookViewState : WebViewState {
         }
     }
 
+    /// The most recent tap region as reported by the canvas
+    @Published var touchRegion: Double? = nil
+
     /// TODO: store in scenestorage to restore last position
     private var targetPosition: Double? = nil
 
@@ -85,8 +88,6 @@ class BookViewState : WebViewState {
     #else
     static let defaultScale = 2.0
     #endif
-
-    let messsageHandler = MessageHandler()
 
     #if os(iOS)
     let preventZoomDelegate = PreventZoomDelegate()
@@ -104,21 +105,6 @@ class BookViewState : WebViewState {
     }
     #endif
 
-    class MessageHandler : NSObject, WKScriptMessageHandlerWithReply {
-        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
-            dbg("received message:", message.name, "body:", message.body)
-        }
-
-//        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
-//            <#code#>
-//        }
-
-//        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
-//            dbg("message received:", message)
-//            return (nil, nil)
-//        }
-    }
-
     override func createWebView() -> WKWebView {
         let webView = super.createWebView()
         #if os(iOS)
@@ -128,29 +114,155 @@ class BookViewState : WebViewState {
         return webView
     }
 
+    enum MessageType : String, CaseIterable {
+        case log
+        case click
+        case touchstart
+        case touchcancel
+        case touchleave
+        case touchend
+    }
+
+    class MessageHandler : NSObject, WKScriptMessageHandlerWithReply {
+        weak var state: BookViewState!
+
+        init(_ state: BookViewState) {
+            self.state = state
+        }
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
+            guard let type = MessageType(rawValue: message.name) else {
+                return dbg("invalid message name:", message.name)
+            }
+
+            guard let msg = message.body as? NSDictionary else {
+                return dbg("message was invalid:", message.body)
+            }
+
+            state.handle(type: type, message: msg)
+        }
+    }
+
+    private func handle(type: MessageType, message msg: NSDictionary) {
+        switch type {
+        case .log:
+            dbg("log", type.rawValue, "message:", msg)
+        case .click:
+            dbg("click", type.rawValue, "info:", msg)
+        case .touchstart, .touchend:
+            dbg(type.rawValue, "info:", msg)
+            if let clientWidth = msg["clientWidth"] as? Double,
+               let pageX = msg["pageX"] as? Double {
+                handleTouch(pageX: pageX, clientWidth: clientWidth, clientX: msg["clientX"] as? Double, start: type == .touchstart)
+            }
+        case .touchcancel, .touchleave:
+            dbg("touchcancel", type.rawValue, "info:", msg)
+            break
+        }
+    }
+
+    private var lastTouchStart: Date? = nil
+    private var lastPageX: Double? = nil
+    private var lastClientX: Double? = nil
+
+    func handleTouch(pageX: Double, clientWidth: Double, clientX: Double?, start: Bool) {
+        dbg("touch:", pageX, "clientX:", clientX ?? lastClientX, "/", clientWidth, "start:", start)
+        if start == true {
+            self.lastTouchStart = Date()
+            self.lastPageX = pageX
+            self.lastClientX = clientX
+        } else if start == false,
+            let lastPageX = self.lastPageX,
+            let clientX = self.lastClientX,
+            let lastTouchStart = self.lastTouchStart,
+              lastTouchStart > Date(timeIntervalSinceNow: -0.1) {
+
+            defer {
+                // touch-end resets all properties
+                self.lastPageX = nil
+                self.lastClientX = nil
+                self.lastTouchStart = nil
+            }
+
+            if lastPageX == pageX { // i.e., not a swipe
+                self.touchRegion = clientX / clientWidth
+            }
+
+        }
+    }
+
     func resetUserScripts(webView: WKWebView?) {
         guard let controller = webView?.configuration.userContentController else {
             return dbg("no userContentController")
         }
 
-        let handlerName = "MSGHANDLER"
+        func evt(_ type: MessageType) -> String {
+            type.rawValue
+        }
 
         let script = """
+            function postMessage(name, info) {
+                let handler = window.webkit.messageHandlers[name];
+                if (typeof handler === 'undefined' && name != "log") {
+                    log("message handler" + name + " is not set");
+                } else {
+                    // need to round-trip info to pass to message handlers
+                    let info2 = JSON.parse(JSON.stringify(info));
+                    handler.postMessage(info2);
+                }
+            };
+
             function log(msg) {
-                window.webkit.messageHandlers.\(handlerName).postMessage({ info: msg });
-            }
+                postMessage('\(evt(.log))', { 'message' : msg });
+            };
 
             log("start user script");
 
+            function touchEvent(event) {
+                // touchend doesn't have touches element
+                let touch = event.touches[0] ?? event;
+
+                return {
+                    'identifier': touch.identifier,
+                    'clientX': touch.clientX,
+                    'clientY': touch.clientY,
+                    'pageX': touch.pageX,
+                    'pageY': touch.pageY,
+                    'screenX': touch.screenX,
+                    'screenY': touch.screenY,
+                    'clientWidth': document.documentElement.clientWidth,
+                    'clientHeight': document.documentElement.clientHeight,
+                };
+            };
+
+            window.addEventListener('\(evt(.click))', function(event) {
+                postMessage('\(evt(.click))', touchEvent(event));
+            }, false);
+
+            window.addEventListener('\(evt(.touchstart))', function(event) {
+                postMessage('\(evt(.touchstart))', touchEvent(event));
+            }, false);
+
+            window.addEventListener('\(evt(.touchcancel))', function(event) {
+                postMessage('\(evt(.touchcancel))', touchEvent(event));
+            }, false);
+
+            window.addEventListener('\(evt(.touchleave))', function(event) {
+                postMessage('\(evt(.touchleave))', touchEvent(event));
+            }, false);
+
+            window.addEventListener('\(evt(.touchend))', function(event) {
+                postMessage('\(evt(.touchend))', touchEvent(event));
+            }, false);
+
             var meta = document.createElement('meta');
             meta.name = 'viewport';
-            /*
-            meta.content = 'initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-            */
+
             meta.content = 'user-scalable=no';
             var head = document.getElementsByTagName('head')[0];
             head.appendChild(meta);
 
+            //document.documentElement.style.overflow = 'hidden';
             document.body.style.overflow = 'hidden';
 
             //document.body.style.scrollSnapType = 'x mandatory';
@@ -227,28 +339,28 @@ class BookViewState : WebViewState {
             scaleText(\(pageScale)); // perform initial scaling
             function handleResize() {
                 position(position()); // snap to nearest page boundry on resize
-                log("window resized");
+                //log("window resized");
             };
 
             window.onresize = handleResize;
 
-
             log("complete user script");
-
             """
 
         // user scripts cannot be removed piecemeal, so just remove everything and re-add
         controller.removeAllUserScripts()
         controller.removeAllScriptMessageHandlers()
 
-        controller.addScriptMessageHandler(messsageHandler, contentWorld: .defaultClient, name: handlerName)
+        for messageType in MessageType.allCases {
+            controller.addScriptMessageHandler(MessageHandler(self), contentWorld: .defaultClient, name: messageType.rawValue)
+        }
 
         dbg("adding user script handler")
 
         controller.addUserScript(WKUserScript(source: script, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
     }
 
-    func movePage(by amount: Int, smooth: Bool? = nil) async throws -> Double? {
+    @discardableResult func movePage(by amount: Int, smooth: Bool? = nil) async throws -> Double? {
         guard let webView = self.webView else {
             throw AppError("No book render host installed")
         }
@@ -459,6 +571,7 @@ class BookViewState : WebViewState {
         return true
     }
 }
+
 @available(macOS 12.0, iOS 15.0, *)
 public struct EPUBView: View {
     @ObservedObject var document: EPUBDocument
@@ -467,6 +580,7 @@ public struct EPUBView: View {
     @Namespace var mainNamespace
     /// The currently selected section
     @Binding var selection: String??
+    @Binding var showControls: Bool
 
     public var body: some View {
         ZStack {
@@ -499,7 +613,7 @@ public struct EPUBView: View {
         }
         .labelStyle(.iconOnly)
         .foregroundStyle(Color.accentColor)
-        .opacity(0.7)
+        .opacity(0.01)
         .font(Font.largeTitle.bold())
         .buttonStyle(.borderless)
     }
@@ -532,6 +646,21 @@ public struct EPUBView: View {
 
     @ViewBuilder var bookBody: some View {
         webViewBody()
+            .onChange(of: bookViewState.touchRegion) { region in
+                if let region = region {
+                    dbg("touch region:", region)
+                    // reset the touch region
+                    bookViewState.touchRegion = nil
+
+                    if region < (1.0 / 3.0) {
+                        changePage(by: -1)
+                    } else if region > (2.0 / 3.0) {
+                        changePage(by: +1)
+                    } else {
+                        self.showControls.toggle()
+                    }
+                }
+            }
             #if os(macOS) // customizable toolbar on macOS
             .toolbar(id: "EPUBToolbar") {
                 ToolbarItem(id: "ZoomOutCommand", placement: .automatic, showsByDefault: true) {
@@ -553,11 +682,17 @@ struct BookReaderView : View {
     @ObservedObject var document: EPUBDocument
     @ObservedObject var bookViewState: BookViewState
     @Binding var selection: String??
+    @AppStorage("swipeAdjustsBrightness") var swipeAdjustsBrightness: Bool = true
+
+    /// Whether the overlay controls are currently shown or not
+    @State var showControls = true
+
 //    @GestureState var dragAmount = CGSize.zero
     #if os(iOS)
     //
     @State var showTOCSidebar = false
-    @State var showControls = true
+
+    @GestureState private var tapPosition: CGPoint = .zero
     #endif
 
     var body: some View {
@@ -585,38 +720,65 @@ struct BookReaderView : View {
                 .navigationTitle(document.epub.title ?? "No Title")
                 .navigationBarHidden(!showControls)
                 .statusBar(hidden: !showControls)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    dbg("tapped on book")
-                    withAnimation(.none) {
-                        showControls.toggle()
-                    }
-
-                }
-                .toolbar {
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        if showControls {
-                            bookViewState.textScaleAction(amount: 0.8)
-                            Spacer()
-                            Text("TOC", bundle: .module, comment: "brief button title for displaying the table of contents")
-                                .label(image: FairSymbol.list_bullet)
-                                .button {
-                                    dbg("toggling TOC")
-                                    withAnimation {
-                                        self.showTOCSidebar.toggle()
-                                    }
-                                }
-                            Spacer()
-                            bookViewState.textScaleAction(amount: 1.2)
+//                .edgesIgnoringSafeArea(.all)
+//                .gesture(TapGesture(count: 1)
+////                    .updating($tapPosition) { value, point, transaction in
+////                        dbg("long press updating:", value)
+////                    }
+////                    .onChanged { value in
+////                        dbg("long press changed:", value)
+////                    }
+//
+//                    .onEnded { value in
+//                        dbg("tap ended:", value)
+//                        withAnimation {
+//                            showControls.toggle()
+//                        }
+//                    }
+////                    .onEnded({
+//                )
+//                .gesture(DragGesture(minimumDistance: 5, coordinateSpace: .global)
+//                    .onChanged({ value in
+//                        dbg("drag value:", value.translation)
+//                        if abs(value.translation.height) > abs(value.translation.width) {
+//                            // swipe up brightens, swipe down dimms
+//                            let brightness = -value.translation.height / 300.0
+//                            if swipeAdjustsBrightness {
+//                                UIScreen.main.brightness = max(0.0, min(1.0, brightness))
+//                                dbg("adjusted brightness to:", brightness, "to:", UIScreen.main.brightness)
+//                            }
+//                        }
+//                    })
+//                    .onEnded({ value in
+//                        dbg("ended:", value.predictedEndTranslation)
+//                        if value.translation == .zero { // single tap
+//                        }
+//                    })
+//                )
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                if showControls {
+                    bookViewState.textScaleAction(amount: 0.8)
+                    Spacer()
+                    Text("TOC", bundle: .module, comment: "brief button title for displaying the table of contents")
+                        .label(image: FairSymbol.list_bullet)
+                        .button {
+                            dbg("toggling TOC")
+                            withAnimation {
+                                self.showTOCSidebar.toggle()
+                            }
                         }
-                    }
+                    Spacer()
+                    bookViewState.textScaleAction(amount: 1.2)
                 }
+            }
         }
         #endif
     }
 
     var bookView: some View {
-        EPUBView(document: document, bookViewState: bookViewState, selection: $selection)
+        EPUBView(document: document, bookViewState: bookViewState, selection: $selection, showControls: $showControls)
             .onChange(of: selection) { selection in
                 dbg("selection changed:", selection ?? "")
                 bookViewState.loadSelection($selection, offset: 0, in: document)
