@@ -568,27 +568,24 @@ struct BookReaderView : View {
                 .navigationTitle(document.epub.title ?? "No Title")
         }
         #elseif os(iOS)
-        ZStack {
+        NavigationView {
+            if showTOCSidebar {
+                TOCListView(document: document, selection: $selection, action: { selection in
+                    dbg("selected:", selection ?? nil)
+                    withAnimation {
+                        self.selection = selection
+                        self.showTOCSidebar = false
+                    }
+                })
+                .listStyle(.sidebar) // seems to not be the default on iOS
+                .transition(.slide)
+            }
+
             bookView
-                .edgesIgnoringSafeArea(.all)
                 .navigationTitle(document.epub.title ?? "No Title")
                 .navigationBarHidden(!showControls)
                 .statusBar(hidden: !showControls)
-//                .offset(dragAmount)
-//                .gesture(
-//                    DragGesture().updating($dragAmount) { value, state, transaction in
-//                        state = value.translation
-//                    }
-//                )
-//                .simultaneousGesture(
-//                    TapGesture(count: 1)
-//                        .onEnded { gesture in
-//                            dbg("tapped on book:", gesture)
-//                            withAnimation(.none) {
-//                                showControls.toggle()
-//                            }
-//                        }
-//                )
+                .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
                     dbg("tapped on book")
                     withAnimation(.none) {
@@ -614,25 +611,7 @@ struct BookReaderView : View {
                         }
                     }
                 }
-
-            NavigationView {
-                if showTOCSidebar {
-                    TOCListView(document: document, selection: $selection, action: { selection in
-                        dbg("selected:", selection ?? nil)
-                        withAnimation { 
-                            self.selection = selection
-                            self.showTOCSidebar = false
-                        }
-                    })
-                    .listStyle(.sidebar) // seems to not be the default on iOS
-                    .transition(.slide)
-                }
-                
-                // overlay view
-                Color.black.opacity(0.0)
-            }
         }
-
         #endif
     }
 
