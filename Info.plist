@@ -13,7 +13,7 @@
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
+				<string>org.idpf.epub-container</string>
 			</array>
 			<key>NSUbiquitousDocumentUserActivityType</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
@@ -25,13 +25,18 @@
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
+				<string>public.composite-content</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>EPUB</string>
+			<string>EPUB Book</string>
 			<key>UTTypeIdentifier</key>
-			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
+			<string>org.idpf.epub-container</string>
+			<key>UTTypeReferenceURL</key>
+			<string>http://idpf.org/</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
+				<key>com.apple.ostype</key>
+				<string>EPUB</string>
 				<key>public.filename-extension</key>
 				<array>
 					<string>epub</string>
