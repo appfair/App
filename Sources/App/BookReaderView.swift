@@ -171,12 +171,7 @@ class BookViewState : WebViewState {
             self.lastTouchStart = Date()
             self.lastPageX = pageX
             self.lastClientX = clientX
-        } else if start == false,
-            let lastPageX = self.lastPageX,
-            let clientX = self.lastClientX,
-            let lastTouchStart = self.lastTouchStart,
-              lastTouchStart > Date(timeIntervalSinceNow: -0.1) {
-
+        } else {
             defer {
                 // touch-end resets all properties
                 self.lastPageX = nil
@@ -184,10 +179,15 @@ class BookViewState : WebViewState {
                 self.lastTouchStart = nil
             }
 
-            if lastPageX == pageX { // i.e., not a swipe
-                self.touchRegion = clientX / clientWidth
+            if let lastPageX = self.lastPageX,
+               let clientX = self.lastClientX,
+               let lastTouchStart = self.lastTouchStart,
+               lastTouchStart > Date(timeIntervalSinceNow: -0.2) {
+                dbg("pageX:", pageX, "lastPageX:", lastPageX)
+                if lastPageX == pageX { // i.e., not a swipe
+                    self.touchRegion = clientX / clientWidth
+                }
             }
-
         }
     }
 
@@ -224,10 +224,10 @@ class BookViewState : WebViewState {
 
                 return {
                     'identifier': touch.identifier,
+                    'pageX': event.pageX,
+                    'pageY': event.pageY,
                     'clientX': touch.clientX,
                     'clientY': touch.clientY,
-                    'pageX': touch.pageX,
-                    'pageY': touch.pageY,
                     'screenX': touch.screenX,
                     'screenY': touch.screenY,
                     'clientWidth': document.documentElement.clientWidth,
@@ -340,6 +340,9 @@ class BookViewState : WebViewState {
             function handleResize() {
                 position(position()); // snap to nearest page boundry on resize
                 //log("window resized");
+
+                // for some reason this seems to get reset after a resize
+                //document.body.style.overflow = 'hidden';
             };
 
             window.onresize = handleResize;
@@ -687,12 +690,8 @@ struct BookReaderView : View {
     /// Whether the overlay controls are currently shown or not
     @State var showControls = true
 
-//    @GestureState var dragAmount = CGSize.zero
     #if os(iOS)
-    //
     @State var showTOCSidebar = false
-
-    @GestureState private var tapPosition: CGPoint = .zero
     #endif
 
     var body: some View {
@@ -720,41 +719,6 @@ struct BookReaderView : View {
                 .navigationTitle(document.epub.title ?? "No Title")
                 .navigationBarHidden(!showControls)
                 .statusBar(hidden: !showControls)
-//                .edgesIgnoringSafeArea(.all)
-//                .gesture(TapGesture(count: 1)
-////                    .updating($tapPosition) { value, point, transaction in
-////                        dbg("long press updating:", value)
-////                    }
-////                    .onChanged { value in
-////                        dbg("long press changed:", value)
-////                    }
-//
-//                    .onEnded { value in
-//                        dbg("tap ended:", value)
-//                        withAnimation {
-//                            showControls.toggle()
-//                        }
-//                    }
-////                    .onEnded({
-//                )
-//                .gesture(DragGesture(minimumDistance: 5, coordinateSpace: .global)
-//                    .onChanged({ value in
-//                        dbg("drag value:", value.translation)
-//                        if abs(value.translation.height) > abs(value.translation.width) {
-//                            // swipe up brightens, swipe down dimms
-//                            let brightness = -value.translation.height / 300.0
-//                            if swipeAdjustsBrightness {
-//                                UIScreen.main.brightness = max(0.0, min(1.0, brightness))
-//                                dbg("adjusted brightness to:", brightness, "to:", UIScreen.main.brightness)
-//                            }
-//                        }
-//                    })
-//                    .onEnded({ value in
-//                        dbg("ended:", value.predictedEndTranslation)
-//                        if value.translation == .zero { // single tap
-//                        }
-//                    })
-//                )
         }
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
