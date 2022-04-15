@@ -257,14 +257,15 @@ extension FairAppInventory {
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppCatalogItem] {
+    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
             .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.item == .installed)
             .filter({ matchesExtension(item: $0) })
             .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
-//            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
+            .map({ AppInfo(catalogMetadata: $0) })
+            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
 
     func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
