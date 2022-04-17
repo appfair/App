@@ -35,23 +35,22 @@ struct EBookScene : Scene {
 struct BookContainerView : View {
     @ObservedObject var document: EPUBDocument
     @StateObject var bookViewState: BookViewState
-    @SceneStorage("selectedChapter") var selection: String = ""
 
     init(document: EPUBDocument) {
         self.document = document
         self._bookViewState = .init(wrappedValue: document.createBookViewState())
     }
 
-    /// Conversion from SceneStorage (which cannot take an optional) to the double-optional required by the list selection
-    private var selectionBinding: Binding<String??> {
+    /// The
+    private var sectionBinding: Binding<String??> {
         Binding {
-            selection == "" ? nil : selection // blank converts to nil selection
+            document.currentSection
         } set: { newValue in
-            self.selection = (newValue ?? "") ?? ""
+            if newValue != document.currentSection {
+                document.currentSection = newValue ?? .none
+            }
         }
     }
-
-//    func epubContainer(document doc: Document, bookViewState: BookViewState) -> some View {
 
     var body: some View {
         containerView
@@ -60,7 +59,7 @@ struct BookContainerView : View {
     }
 
     var containerView: some View {
-        BookReaderView(document: document, bookViewState: bookViewState, selection: selectionBinding)
+        BookReaderView(document: document, bookViewState: bookViewState, section: sectionBinding)
     }
 }
 
@@ -80,7 +79,10 @@ class BookViewState : WebViewState {
     /// The most recent tap region as reported by the canvas
     @Published var touchRegion: Double? = nil
 
-    /// TODO: store in scenestorage to restore last position
+    /// The percentage progress in the current section
+    @Published var progress: Double = 0.0
+
+    /// The target position to jump to once the book has loaded
     private var targetPosition: Double? = nil
 
     #if os(iOS)
@@ -108,7 +110,14 @@ class BookViewState : WebViewState {
     override func createWebView() -> WKWebView {
         let webView = super.createWebView()
         #if os(iOS)
-        webView.scrollView.delegate = preventZoomDelegate
+        let scrollView = webView.scrollView
+        scrollView.delegate = preventZoomDelegate
+
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+
+        scrollView.pinchGestureRecognizer?.isEnabled = false
+        scrollView.bounces = false
         #endif
         resetUserScripts(webView: webView)
         return webView
@@ -262,8 +271,12 @@ class BookViewState : WebViewState {
             var head = document.getElementsByTagName('head')[0];
             head.appendChild(meta);
 
-            //document.documentElement.style.overflow = 'hidden';
+            //document.documentElement.style.overflowY = 'hidden';
+
             document.body.style.overflow = 'hidden';
+            document.body.style.overflowX = 'hidden';
+            document.body.style.overflowY = 'hidden';
+
 
             //document.body.style.scrollSnapType = 'x mandatory';
             //document.body.style.scrollSnapPointsX = 'repeat(800px)';
@@ -278,6 +291,10 @@ class BookViewState : WebViewState {
             document.body.style.marginLeft = '\(hmargin)px';
             document.body.style.marginRight = '\(hmargin)px';
             document.body.style.columnGap = '\(hmargin*2)px';
+
+            document.body.style.overflowWrap = 'break-word';
+            document.body.style.hyphens = 'auto';
+
 
             //document.body.style.display = 'flex';
             //document.body.style.flexDirection = 'column';
@@ -305,7 +322,8 @@ class BookViewState : WebViewState {
                 } else if (pos > (totalWidth - (screenWidth / 2.0))) {
                     return 1.1; // more than one indicates past end
                 } else {
-                    return position();
+                    // return position(); // won't work with smooth scrolling
+                    return Math.max(0.0, Math.min(1.0, pos / totalWidth));
                 }
             };
 
@@ -371,6 +389,7 @@ class BookViewState : WebViewState {
         let result = try await webView.evalJS("movePage(\(amount), \(smooth ?? smoothScrolling))")
         dbg("result:", result)
         if let navigation = result as? Double {
+            self.progress = navigation > 1.0 ? 0.0 : navigation
             return navigation
         } else {
             return nil
@@ -386,19 +405,14 @@ class BookViewState : WebViewState {
         }
 
         let result = try await webView.evalJS("position(\(target?.description ?? ""))")
-        dbg("position:", Self.percentParser.string(from: result as? NSNumber ?? -1))
+        dbg("position:", percent(result as? Double))
         if let navigation = result as? Double {
+            self.progress = navigation > 1.0 ? 0.0 : navigation
             return navigation
         } else {
             return nil
         }
     }
-
-    fileprivate static let percentParser: NumberFormatter = {
-        let fmt = NumberFormatter()
-        fmt.numberStyle = .percent
-        return fmt
-    }()
 
     func textScaleAction(brief: Bool = false, amount: Double?, minimumZoomLevel: Double = 0.05, maximumZoomLevel: Double = 100.0) -> some View {
         return (amount == nil ?
@@ -422,7 +436,7 @@ class BookViewState : WebViewState {
         let newScale = try await webView?.evalJS("scaleText(\(scale))")
         dbg("zooming to:", scale, "result:", newScale)
         if let newScaleString = newScale as? NSString,
-            let newScaleAmount = Self.percentParser.number(from: newScaleString as String)?.doubleValue {
+            let newScaleAmount = percentParser.number(from: newScaleString as String)?.doubleValue {
             self.pageScale = newScaleAmount
         }
     }
@@ -443,15 +457,15 @@ class BookViewState : WebViewState {
         super.didFinish(navigation: navigation)
         self.applyPageScale()
         if let targetPosition = self.targetPosition {
-            self.targetPosition = nil
             Task {
                 do {
+                    dbg("jumping to targetPosition:", targetPosition)
                     let _ = try await self.position(targetPosition)
                 } catch {
                     self.reportError(error)
                 }
-
             }
+            self.targetPosition = nil
         }
     }
 
@@ -464,17 +478,28 @@ class BookViewState : WebViewState {
     /// Loads the selection id from the given document
     /// - Parameters:
     ///   - selection: the selection binding to load; if the selection has changed, the binding will be updated; this is the NXC identifier, nor the manifest identifier
-    ///   - offset: whether to load the selection at the given offset
+    ///   - position: the percentage in the section to load
+    ///   - adjacent: whether to load the selection at the given offset
     ///   - document: the document in which to load the selection
     /// - Returns: true if the selection was found and loaded
-    @discardableResult func loadSelection(_ selectionBinding: Binding<String??>, offset adjacentOffset: Int, in document: EPUBDocument) -> Bool {
+    @discardableResult func loadSelection(_ sectionBinding: Binding<String??>, position: Double? = nil, adjacent adjacentOffset: Int = 0, in document: EPUBDocument) -> Bool {
 
-        guard let selection = selectionBinding.wrappedValue,
+        guard let selection = sectionBinding.wrappedValue,
            let selection = selection,
            let ncx = document.epub.ncx,
            let href = ncx.findHref(forNavPoint: selection) else {
-            dbg("no ncx or selection binding:", selectionBinding.wrappedValue ?? nil)
+            dbg("no ncx or selection binding:", sectionBinding.wrappedValue ?? nil)
             return false
+        }
+
+        if let position = position {
+            // if we are trying to load from a target position, jump to it
+            if self.targetPosition == nil {
+                self.targetPosition = position
+            }
+        } else if adjacentOffset < 0 {
+            // when moving back in chapters, always jump to the end of the scroll
+            self.targetPosition = 1.0
         }
 
         if adjacentOffset == 0 {
@@ -515,10 +540,6 @@ class BookViewState : WebViewState {
         }
 
         dbg("loading ncx adjacentOffset:", adjacentOffset, "href:", targetItem.href)
-        if adjacentOffset < 0 {
-            // when moving back in chapters, always jump to the end of the scroll
-            self.targetPosition = 1.0
-        }
         if !loadHref(targetItem.href) {
             dbg("unable to load adjacent href:", targetItem.href)
             return false
@@ -555,7 +576,7 @@ class BookViewState : WebViewState {
 
         dbg("setting selection for adjacentOffset:", adjacentOffset, "to:", ownerTOCItem.ncxID)
         if let ncxID = ownerTOCItem.ncxID {
-            selectionBinding.wrappedValue = ncxID
+            sectionBinding.wrappedValue = ncxID
         }
         return true
     }
@@ -587,9 +608,23 @@ public struct EPUBView: View {
 
     public var body: some View {
         ZStack {
-            bookBody
+            VStack(spacing: 0) {
+                bookBody
+                progressView
+            }
             controlOverlay
         }
+    }
+
+    var progressView: some View {
+        Rectangle()
+            .fill(LinearGradient(stops: [
+                Gradient.Stop(color: Color.accentColor, location: 0.0),
+                Gradient.Stop(color: Color.accentColor, location: bookViewState.progress),
+                Gradient.Stop(color: Color.clear, location: bookViewState.progress),
+                Gradient.Stop(color: Color.clear, location: 1.0),
+            ], startPoint: .leading, endPoint: .trailing))
+            .frame(height: 3)
     }
 
     var controlOverlay: some View {
@@ -630,7 +665,7 @@ public struct EPUBView: View {
                     dbg("unable to change page by:", amount)
                     return
                 }
-                dbg("changed page to:", BookViewState.percentParser.string(from: result as NSNumber))
+                dbg("changed page to:", percent(result))
                 if result >= 1.0 {
                     try changeSection(next: true)
                 } else if result < 0.0 {
@@ -644,7 +679,7 @@ public struct EPUBView: View {
 
     func changeSection(next: Bool) throws {
         dbg("moving to", next ? "next" : "previous", "section")
-        bookViewState.loadSelection($selection, offset: next ? +1 : -1, in: document)
+        bookViewState.loadSelection($selection, adjacent: next ? +1 : -1, in: document)
     }
 
     @ViewBuilder var bookBody: some View {
@@ -684,7 +719,10 @@ public struct EPUBView: View {
 struct BookReaderView : View {
     @ObservedObject var document: EPUBDocument
     @ObservedObject var bookViewState: BookViewState
-    @Binding var selection: String??
+    /// The current book selection
+    @Binding var section: String??
+    /// The current position in the section
+    @State var position: Double = 0.0
     @AppStorage("swipeAdjustsBrightness") var swipeAdjustsBrightness: Bool = true
 
     /// Whether the overlay controls are currently shown or not
@@ -697,17 +735,18 @@ struct BookReaderView : View {
     var body: some View {
         #if os(macOS)
         NavigationView {
-            TOCListView(document: document, selection: $selection)
+            TOCListView(document: document, section: $section)
             bookView
                 .navigationTitle(document.epub.title ?? "No Title")
         }
         #elseif os(iOS)
         NavigationView {
             if showTOCSidebar {
-                TOCListView(document: document, selection: $selection, action: { selection in
-                    dbg("selected:", selection ?? nil)
+                TOCListView(document: document, section: $section, action: { section in
+                    dbg("selected:", section ?? nil)
                     withAnimation {
-                        self.selection = selection
+                        //bookViewState.targetPosition = 0.0 // always jump to beginnings of sections
+                        self.section = section
                         self.showTOCSidebar = false
                     }
                 })
@@ -742,18 +781,26 @@ struct BookReaderView : View {
     }
 
     var bookView: some View {
-        EPUBView(document: document, bookViewState: bookViewState, selection: $selection, showControls: $showControls)
-            .onChange(of: selection) { selection in
-                dbg("selection changed:", selection ?? "")
-                bookViewState.loadSelection($selection, offset: 0, in: document)
+        EPUBView(document: document, bookViewState: bookViewState, selection: $section, showControls: $showControls)
+            .onChange(of: section) { section in
+                dbg("section changed:", section ?? "")
+                bookViewState.loadSelection($section, position: 0.0, in: document)
+            }
+            .onChange(of: bookViewState.progress) { progress in
+                dbg("progress:", percent(progress))
+                // remember the current progress in the section
+                document.sectionProgress = progress
             }
             .onAppear {
                 dbg("appear:", document.epub.title)
-                if selection == .none || selection == .some(.none) {
+                if let section = self.section, let section = section {
+                    dbg("restoring selection:", section)
+                    bookViewState.loadSelection($section, position: document.sectionProgress, in: document)
+                } else {
                     let initialNCXID = self.document.epub.ncx?.points.first
-                    dbg("loading initial selection:", initialNCXID)
+                    dbg("loading initial section:", initialNCXID)
                     DispatchQueue.main.async {
-                        self.selection = initialNCXID?.id
+                        self.section = initialNCXID?.id
                     }
                 }
             }
@@ -764,19 +811,19 @@ struct BookReaderView : View {
 struct TOCListView : View {
     @ObservedObject var document: EPUBDocument
     /// The selected navPoint ID
-    @Binding var selection: String??
+    @Binding var section: String??
     /// The action to perform when an item is selected; this is for platforms (i.e., iOS) where List selection only works with "editable" lists
     var action: ((String??) -> ())? = nil
 
     var body: some View {
         ScrollViewReader { scrollView in
-            List(selection: $selection) {
+            List(selection: $section) {
                 Section {
                     ForEach(document.epub.ncx?.toc.array() ?? [], id: \.element.id) { (indices, element) in
                         let text = Text(element.navLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "?")
                         if let action = action {
                             text
-                                .fontWeight(selection == element.id ? .bold : .regular)
+                                .fontWeight(section == element.id ? .bold : .regular)
                                 .button {
                                     action(element.id)
                                 }
@@ -792,8 +839,8 @@ struct TOCListView : View {
                 }
             }
             .onAppear {
-                if let selection = selection {
-                    scrollView.scrollTo(selection, anchor: .center)
+                if let section = section {
+                    scrollView.scrollTo(section, anchor: .center)
                 }
             }
         }
@@ -907,6 +954,18 @@ final class EPUBDocument: ReferenceFileDocument {
 
     let epub: EPUB
 
+    /// The current section in the document
+    var currentSection: String? {
+        get { self[stringStore: "section"] }
+        set { self[stringStore: "section"] = newValue }
+    }
+
+    /// The progress in the current section
+    var sectionProgress: Double? {
+        get { self[doubleStore: "progress"] }
+        set { self[doubleStore: "progress"] = newValue }
+    }
+
     required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
@@ -916,9 +975,48 @@ final class EPUBDocument: ReferenceFileDocument {
         self.epub = epub
     }
 
-    /// Cretae the initial view state for the book
-    /// - Parameter pageScale: <#pageScale description#>
-    /// - Returns: <#description#>
+    /// A persistent key for the UserDefaults for this particular book
+    /// - Parameter name: the key name
+    /// - Returns: the full defaults key for this book
+    private var persistenceStore: NSMutableDictionary {
+        get {
+            (UserDefaults.standard.object(forKey: ("book-" + epub.opfChecksum.hex())) as? NSDictionary ?? NSDictionary()).mutableCopy() as? NSMutableDictionary ?? .init()
+        }
+
+        set {
+            dbg("storing book:", epub.opfChecksum.hex(), "defaults:", newValue)
+            UserDefaults.standard.set(newValue, forKey: "book-" + epub.opfChecksum.hex())
+            self.objectWillChange.send()
+        }
+    }
+
+    /// A persistent string value for the current book
+    private subscript(stringStore key: String) -> String? {
+        get {
+            persistenceStore[key] as? String
+        }
+
+        set {
+            let store = persistenceStore
+            store[key] = newValue
+            self.persistenceStore = store
+        }
+    }
+
+    /// A persistent double value for the current book
+    private subscript(doubleStore key: String) -> Double? {
+        get {
+            persistenceStore[key] as? Double
+        }
+
+        set {
+            let store = persistenceStore
+            store[key] = newValue
+            self.persistenceStore = store
+        }
+    }
+
+    /// Create the initial view state for the book
     @MainActor func createBookViewState() -> BookViewState {
         // possible optimization: the EPUBDocument document initializer loads the zip from the FileWrapper's `fileContents` data, which could mean the whole thing is loaded into memory; we could alternatively load it here from the configuration's `fileURL`, but this means that errors wouldn't be handled by the document's initializer. Profiling should be done on large documents, since it is possible that using mapped reads doesn't wind up loading the whole file in memory anyway
 
@@ -960,6 +1058,7 @@ final class EPUBDocument: ReferenceFileDocument {
     func snapshot(contentType: UTType) throws -> Void {
         dbg("snapshot:", contentType)
     }
+
 }
 
 public struct AppSettingsView : View {
@@ -1003,6 +1102,19 @@ extension NSError : LocalizedError {
     //public var recoverySuggestion: String? { self.localizedRecoverySuggestion }
 }
 
+
+func percent(_ number: Double?) -> String? {
+    guard let number = number else {
+        return nil
+    }
+    return percentParser.string(from: number as NSNumber)
+}
+
+fileprivate let percentParser: NumberFormatter = {
+    let fmt = NumberFormatter()
+    fmt.numberStyle = .percent
+    return fmt
+}()
 
 
 /// Work-in-Progress marker

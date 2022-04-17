@@ -36,6 +36,9 @@ public final class EPUB {
     /// The path for the opf file
     public let opfPath: String
 
+    /// The checksum of the OPF file, which can be used to uniquely identify a book
+    public let opfChecksum: Data
+
     /// The title of the book, as per the metadata
     public var title: String? { metadata["title"]?.first }
 
@@ -60,7 +63,7 @@ public final class EPUB {
     /// Parses and indexes the epub file at the given URL
     /// - Parameter data: the Zip data to load
     convenience init(data: Data) throws {
-        guard let archive = ZipArchive(data: data, accessMode: ZipArchive.AccessMode.read, preferredEncoding: .utf8) else {
+        guard let archive = ZipArchive(data: data, accessMode: .read, preferredEncoding: .utf8) else {
             throw EPUBError("Could not open epub zip")
         }
         try self.init(zip: archive)
@@ -111,13 +114,18 @@ public final class EPUB {
             throw EPUBError("Missing full-path in rootfile element in container.xml")
         }
 
-        self.opfPath = fullPath
-        
+
         guard let packageEntry = archive[fullPath] else {
             throw EPUBError("No “\(fullPath)” entry specified in container.xml in epub zip")
         }
 
-        let packageXML = try XMLNode.parse(data: archive.extractData(from: packageEntry))
+        let packageData = try archive.extractData(from: packageEntry)
+
+        // the book's identifier can be derived from the checksum of the opf file
+        self.opfChecksum = packageData.sha256()
+        self.opfPath = fullPath
+
+        let packageXML = try XMLNode.parse(data: packageData)
         guard let packageRoot = packageXML.elementChildren.first,
               packageRoot.elementName == "package" else {
             throw EPUBError("Root element of “\(fullPath)” was not 'package'")
