@@ -41,7 +41,6 @@ struct BookContainerView : View {
         self._bookViewState = .init(wrappedValue: document.createBookViewState())
     }
 
-    /// The
     private var sectionBinding: Binding<String??> {
         Binding {
             document.currentSection
@@ -91,33 +90,20 @@ class BookViewState : WebViewState {
     static let defaultScale = 2.0
     #endif
 
-    #if os(iOS)
-    let preventZoomDelegate = PreventZoomDelegate()
-
-
-    // An iOS scroll delegate that disables zooming (which messes up pagination)
-    class PreventZoomDelegate : NSObject, UIScrollViewDelegate {
-        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
-            nil
-        }
-
-        func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
-            scrollView.pinchGestureRecognizer?.isEnabled = false
-        }
-    }
-    #endif
-
     override func createWebView() -> WKWebView {
         let webView = super.createWebView()
         #if os(iOS)
         let scrollView = webView.scrollView
-        scrollView.delegate = preventZoomDelegate
+
+        // allow swiping to settle on page boundries
+        scrollView.isPagingEnabled = true
 
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.showsVerticalScrollIndicator = false
 
         scrollView.pinchGestureRecognizer?.isEnabled = false
         scrollView.bounces = false
+        
         #endif
         resetUserScripts(webView: webView)
         return webView
@@ -273,15 +259,15 @@ class BookViewState : WebViewState {
 
             //document.documentElement.style.overflowY = 'hidden';
 
-            document.body.style.overflow = 'hidden';
-            document.body.style.overflowX = 'hidden';
-            document.body.style.overflowY = 'hidden';
+            //document.body.style.overflow = 'hidden';
+            //document.body.style.overflowX = 'hidden';
+            //document.body.style.overflowY = 'hidden';
 
 
             //document.body.style.scrollSnapType = 'x mandatory';
             //document.body.style.scrollSnapPointsX = 'repeat(800px)';
 
-            document.body.style.height = '100vh';
+            document.body.style.height = '94vh';
             document.body.style.columnWidth = '100vh';
             document.body.style.webkitLineBoxContain = 'block glyphs replaced';
 
@@ -671,6 +657,11 @@ public struct EPUBView: View {
                 } else if result < 0.0 {
                     try changeSection(next: false)
                 }
+
+                if amount != 0 {
+                    self.showControls = false
+                }
+
             } catch {
                 bookViewState.reportError(error)
             }
@@ -756,6 +747,8 @@ struct BookReaderView : View {
 
             bookView
                 .navigationTitle(document.epub.title ?? "No Title")
+                .ignoresSafeArea(.container, edges: .all)
+                .edgesIgnoringSafeArea(.all)
                 .navigationBarHidden(!showControls)
                 .statusBar(hidden: !showControls)
         }
