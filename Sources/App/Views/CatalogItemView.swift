@@ -1131,6 +1131,15 @@ struct CatalogItemView: View {
     }
 }
 
+//private let readmeRegex = Result {
+//    try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
+//}
+
+/// Regular expression to replace headers with bold text (since markdown doesn't yet support headers)
+private let headerRegex = Result {
+    try NSRegularExpression(pattern: #"^#+ (?<text>.*)$"#, options: [.anchorsMatchLines])
+}
+
 fileprivate extension View {
     func textBox(_ text: Result<AttributedString, Error>?) -> some View {
         let astr: AttributedString
@@ -1160,15 +1169,25 @@ fileprivate extension View {
     func fetchMarkdownResource(url: URL, info: AppInfo) async throws -> AttributedString {
         let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
             .fetch(validateFragmentHash: true)
-        let atx = String(data: data, encoding: .utf8) ?? ""
+        var atx = String(data: data, encoding: .utf8) ?? ""
+
 //        // extract the portion of text between the "# Description" and following "#" sections
-//        if let match = try Self.readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
+//        if let match = try readmeRegex.get().firstMatch(in: atx, options: [], range: atx.span)?.range(withName: "description") {
 //            atx = (atx as NSString).substring(with: match)
 //        } else {
 //            if !info.isCask { // casks don't have this requirement; permit full READMEs
 //                atx = ""
 //            }
 //        }
+
+        // replace headers (which are unsupported in AttributedString) with simply bold styling
+        for match in try headerRegex.get().matches(in: atx, options: [], range: atx.span).reversed() {
+            let textRange = match.range(withName: "text")
+            let text = (atx as NSString).substring(with: textRange)
+
+            dbg("replacing header range:", match.range, " with bold text:", text)
+            atx = (atx as NSString).replacingCharacters(in: match.range, with: ["**", text, "**"].joined())
+        }
 
         // the README.md relative location is 2 paths down from the repository base, so for relative links to Issues and Discussions to work the same as they do in the web version, we need to append the path that the README would be rendered in the browser
 
@@ -1188,10 +1207,6 @@ struct ReadmeBox : View {
 
     var body: some View {
         descriptionSection()
-    }
-
-    private static let readmeRegex = Result {
-        try NSRegularExpression(pattern: #".*## Description\n(?<description>[^#]+)\n#.*"#, options: .dotMatchesLineSeparators)
     }
 
     func descriptionSection() -> some View {
