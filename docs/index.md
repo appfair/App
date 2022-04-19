@@ -25,6 +25,7 @@ and
 [Issues](https://github.com/Blunder-Busq/App/issues)
 pages.
 
+
 ## Usage
 
 Information about the following permissions for each app,
