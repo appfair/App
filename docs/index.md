@@ -125,6 +125,9 @@ The apps you get through the App Fair come straight from their creators, with no
 
 Every line of code in the App Fair.app itself is open-source, released under the GNU AGPL license, and available to browse freely on [GitHub](https://github.com/App-Fair/App.git). The build process is completely transparent and the artifacts are verified by [appfair.net reproducible builds](https://www.appfair.net/#what-are-reproducible-builds).
 
+The App Fair is created and maintained by the community, for the community.
+It does not track or advertise, nor does it imposes any Terms or Conditions.
+
 ## Enter the App Fair
 
 Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:

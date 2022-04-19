@@ -1,11 +1,12 @@
+<!DOCTYPE html>
 <html>
     <head>
-        <title>App Fair App</title>
+    <title>App Fair App</title>
       <style>
             body {
                 height: 100vh;
                 margin: 0;
-                background-disabled: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(115,115,115,1) 100%);
+                XXXbackground: radial-gradient(circle, rgba(255,255,255,0.2) 80%, rgba(115,115,115,1) 100%);
             }
 
             .outerlync {
@@ -22,27 +23,18 @@
               /* max-width: 15vw; */
               /* max-height: 15vh; */
             }
-
-            body {
-                color: rgba(255, 255, 255, 1.0);
-                background-color: rgba(0, 0, 0, 1.0);
-            }
         </style>
     </head>
-</html>
 <body>
-    <div class="container-lg px-3 my-5 markdown-body">
+    <div>
         <div class="outerlync" style="text-align: center;">
             <div style="backdrop-filter: blur(10px);">
-            <h1 id="apptitle" style="text-align: center; font-family: ui-rounded, system-ui, Arial, sans-serif;">Welcome to the App Fair</h1>
+            <h1 id="apptitle" style="text-align: center; font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif;">Welcome to the App Fair</h1>
+            <hr />
+            <a id="applink" href="appfair://app/App-Fair"><img class="innerlync" width="150" height="150" id="appicon" onerror="iconError.call(this)" /></a>
             <hr />
 
-            <p style="text-align: center; font-family: system-ui, Arial, sans-serif;">This app can be installed using <code>App Fair.app</code>, which can be downloaded from <a href="https://appfair.app">appfair.app</a></p>
-            <a href="https://appfair.app"><img src="https://www.appfair.net/appfair-free-for-all.svg" width="450" alt="Free for all at the App Fair – https://www.appfair.app" /></a>
-            <hr />
-            <p>
-            <a id="applink" href="appfair://app"><img class="innerlync" width="180" height="180" id="appicon" src="https://github.com/App-Fair/App/releases/latest/download/App-Fair.png" /></a>
-            </p>
+            <h5 id="appdesc" style="text-align: center; font-family: system-ui, Arial, sans-serif;">Install this <span id="apptype">app</span> with <a href="https://appfair.app">App Fair.app</a></h5>
             </div>
         </div>
     </div>
@@ -56,20 +48,32 @@
         let appHash = window.location.hash;
         //console.log("HASH", appHash);
 
-        if (typeof appHash === 'string') {    
+        // change the icon preview to be the given source
+        function updateIcon(source) {
+            document.getElementById("appicon").src = source;
+        }
+
+        function iconError() {
+            console.log("icon load error:", this.src);
+            updateIcon("https://github.com/App-Fair/App/releases/latest/download/App-Fair.png");
+        }
+
+        if (typeof appHash === 'string' && appHash != '') {    
             let appPath = appHash.substring(1)
             let appParts = appPath.split("/");
             let appID = appParts[appParts.length - 1];
             let appName = appID.replace("-", " ");
-            if (appParts[0] == "app") { 
-                let appImageLink = "https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png"
 
-                document.getElementById("appicon").src = appImageLink;
+            if (appParts[0] == "app") {  // App Fair app
+                updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
+                document.getElementById("apptype").innerHTML = "free appfair.net app";
+            } else if (appParts[0] == "cask") {  // Homebrew Cask app
+                updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + appID + "/AppIcon.png");
+                document.getElementById("apptype").innerHTML = "Homebrew Cask";
             }
 
             document.getElementById("apptitle").innerHTML = appName;
 
-            //let launchLink = "appfair://app/" + appID;
             let launchLink = "appfair://" + appPath;
             document.getElementById("applink").href = launchLink;
 
@@ -78,3 +82,5 @@
         }
     </script>
 </body>
+</html>
+
