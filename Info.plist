@@ -36,15 +36,11 @@
 	<key>FairUsage</key>
 	<dict>
 		<key>com.apple.security.files.user-selected.read-only</key>
-		<string>This app needs to read local files in order to load user-selected books</string>
-		<key>com.apple.security.files.user-selected.read-write</key>
-		<string>This app needs to read and write files in order to…</string>
+		<string>This app needs to read local files in order to load user-selected IPAs</string>
 		<key>com.apple.security.network.client</key>
-		<string>This app needs to access the network in order to download books</string>
-		<key>com.apple.security.network.server</key>
-		<string>This app needs to access the network in order to download books</string>
+		<string>This app needs to access the network in order to download apps</string>
 		<key>com.apple.security.device.usb</key>
-		<string>This app needs to access USB devices</string>
+		<string>This app needs to access USB connections to devices</string>
 		<key>com.apple.security.application-groups</key>
 		<string>This app needs to access application groups</string>
 		<key>com.apple.security.temporary-exception.sbpl</key>
