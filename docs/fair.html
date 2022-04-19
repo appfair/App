@@ -6,7 +6,11 @@
             body {
                 height: 100vh;
                 margin: 0;
-                XXXbackground: radial-gradient(circle, rgba(255,255,255,0.2) 80%, rgba(115,115,115,1) 100%);
+            }
+            hr { 
+                border : 0;
+                height: 1px; 
+                background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.90), rgba(0, 0, 0, 0)); 
             }
 
             .outerlync {
@@ -29,58 +33,69 @@
     <div>
         <div class="outerlync" style="text-align: center;">
             <div style="backdrop-filter: blur(10px);">
+                <a id="applink" href="appfair://app/App-Fair"><picture><img class="innerlync" width="150" height="150" id="appicon" referrerpolicy="no-referrer" decoding="sync" onerror="iconError.call(this)" /></picture></a>
             <h1 id="apptitle" style="text-align: center; font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif;">Welcome to the App Fair</h1>
-            <hr />
-            <a id="applink" href="appfair://app/App-Fair"><img class="innerlync" width="150" height="150" id="appicon" onerror="iconError.call(this)" /></a>
+
             <hr />
 
-            <h5 id="appdesc" style="text-align: center; font-family: system-ui, Arial, sans-serif;">Install this <span id="apptype">app</span> with <a href="https://appfair.app">App Fair.app</a></h5>
+            <span id="appdesc" style="text-align: center; font-family: system-ui, Helvetica, Arial, sans-serif;"><span id="appinstall">Install</span> this <span id="appclass">app</span> with <a href="https://appfair.app">App Fair.app</a> for macOS</span>
+            <hr />
             </div>
         </div>
     </div>
-
-
-    <!-- e.g.: 
-        file:///opt/src/github/appfair/App-Fair/docs/app.html#app/Tidal-Zone 
-        file:///opt/src/github/appfair/App-Fair/docs/app.html#homebrew/cask/iterm2 
-    -->
     <script>
+        "use strict";
+
         let appHash = window.location.hash;
-        //console.log("HASH", appHash);
+        let loadIcon = true;
 
         // change the icon preview to be the given source
-        function updateIcon(source) {
-            document.getElementById("appicon").src = source;
+        function updateIcon(source, fallback) {
+            if (loadIcon === true) {
+                document.getElementById("appicon").src = source;
+
+                // also create a favicon for the app
+                const link = document.createElement("link");
+                link.rel = "shortcut icon";
+                link.href = source;
+                document.head.appendChild(link);
+            }
+
+            if (fallback === true) {
+                loadIcon = false; // don't try again after failing the fallback
+            }
         }
 
         function iconError() {
             console.log("icon load error:", this.src);
-            updateIcon("https://github.com/App-Fair/App/releases/latest/download/App-Fair.png");
+            updateIcon("https://github.com/App-Fair/App/releases/latest/download/App-Fair.png", true);
         }
 
-        if (typeof appHash === 'string' && appHash != '') {    
-            let appPath = appHash.substring(1)
-            let appParts = appPath.split("/");
-            let appID = appParts[appParts.length - 1];
-            let appName = appID.replace("-", " ");
+        if (typeof appHash === 'string') {
+            if (appHash != '') {    
+                let appPath = appHash.substring(1)
+                let appParts = appPath.split("/");
+                let appID = appParts[appParts.length - 1];
+                let appName = appID.replace("-", " ");
 
-            if (appParts[0] == "app") {  // App Fair app
-                updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
-                document.getElementById("apptype").innerHTML = 'free appfair.net <a href="http://' + appID + '.github.io/App/">app</a>'
-            } else if (appParts[0] == "cask") {  // Homebrew Cask app
-                updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + appID + "/AppIcon.png");
-                        document.getElementById("apptype").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/' + appPath + '">Cask</a>';
+                if (appParts[0] == "app") {  // App Fair app
+                    updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
+                    document.getElementById("appclass").innerHTML = 'free appfair.net <a href="https://' + appID + '.github.io/App/">Fairapp</a>'
+                } else if (appParts[0] == "cask") {  // Homebrew Cask app
+                    updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + appID + "/AppIcon.png");
+                    document.getElementById("appclass").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/' + appPath + '">Cask</a>';
+                }
+
+                document.getElementById("apptitle").innerHTML = appName;
+
+                let launchLink = "appfair://" + appPath;
+                document.getElementById("applink").href = launchLink;
+                document.getElementById("appinstall").innerHTML = '<a href="' + launchLink + '">Install</a>';
+
+                // attempt to launch the app fair app
+                document.location = launchLink;
             }
-
-            document.getElementById("apptitle").innerHTML = appName;
-
-            let launchLink = "appfair://" + appPath;
-            document.getElementById("applink").href = launchLink;
-
-            // attempt to launch the app fair app
-            document.location = launchLink;
         }
     </script>
 </body>
 </html>
-
