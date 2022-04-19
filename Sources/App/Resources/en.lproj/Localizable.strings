@@ -39,7 +39,7 @@
 "Access Audio Input devices." = "Access Audio Input devices.";
 
 /* app entitlement info for device.bluetooth */
-"Access bluetooth." = "Access bluetooth.";
+"Access bluetooth." = "Access Bluetooth.";
 
 /* app entitlement info for device.firewire */
 "Access Firewire devices." = "Access Firewire devices.";
@@ -127,8 +127,6 @@
 
 /* app entitlement title for device.audio-video-bridging */
 "Audio/Video Bridging" = "Audio/Video Bridging";
-
-/* No comment provided by engineer. */
 "Auto-Updates" = "Auto-Updates";
 
 /* homebrew preference checkbox tooltip */
@@ -148,8 +146,6 @@
 
 /* fairapps preference checkbox */
 "Badge App Icon with update count" = "Badge App Icon with update count";
-
-/* No comment provided by engineer. */
 "Based on the number of permission categories this app requests this app can be considered: " = "Based on the number of permission categories this app requests this app can be considered: ";
 
 /* app entitlement title for device.bluetooth */
@@ -175,8 +171,6 @@
 
 /* cancel button title for prompt */
 "Cancel" = "Cancel";
-
-/* No comment provided by engineer. */
 "Cancel " = "Cancel ";
 
 /* app category label for appfair.card-games */
@@ -417,8 +411,6 @@
 
 /* homebrew preference checkbox */
 "Install overwrites previous app installation" = "Install overwrites previous app installation";
-
-/* No comment provided by engineer. */
 "Installation artifact cannot be verified because it has no associated SHA-256 checksum." = "Installation artifact cannot be verified because it has no associated SHA-256 checksum.";
 
 /* fairapps sidebar category title
@@ -553,8 +545,6 @@
 
 /* app catalog entry info link tooltip */
 "Opens link to the landing page for this app at: %@" = "Opens link to the landing page for this app at: %@";
-
-/* No comment provided by engineer. */
 "Opens your web browsers and visits the developer site" = "Opens your web browsers and visits the developer site";
 
 /* risk assessment label for level 6 perilous apps */
@@ -854,7 +844,7 @@
 "The SHA-256 checksum for the app download" = "The SHA-256 checksum for the app download";
 
 /* app catalog entry info link tooltip */
-"The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.";
+"The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "The SHA-256 checksum for the app is missing, which means that the integrity cannot be verified when it is downloaded.";
 
 /* app catalog entry header box title tooltip text */
 "The total number of downloads for this release" = "The total number of downloads for this release";
@@ -943,8 +933,6 @@
 
 /* app category label for appfair.video */
 "Video" = "Video";
-
-/* No comment provided by engineer. */
 "Visit App Issues Page" = "Visit App Issues Page";
 
 /* install button confirmation dialog visit discussions button text */
@@ -960,9 +948,7 @@
 "Weather" = "Weather";
 
 /* homebrew preference checkbox tooltip */
-"When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";
-
-/* No comment provided by engineer. */
+"When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing information that could be useful if you were to ever re-install the app.";
 "Whether this app handles updating itself" = "Whether this app handles updating itself";
 
 /* tooltip help text for preference */
@@ -973,4 +959,5 @@
 
 /* app category label for appfair.word-games */
 "Word Games" = "Word Games";
+
 
