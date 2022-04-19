@@ -74,10 +74,10 @@ Browse, download and install macOS apps from a vast catalog of both free and com
 
 
 {% assign browsers = '
-<a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
 <a href="https://appfair.app/fair#cask/firefox">Firefox</a>;
 <a href="https://appfair.app/fair#cask/opera">Opera</a>;
-<a href="https://appfair.app/fair#cask/brave">Brave</a>;
+<a href="https://appfair.app/fair#cask/microsoft-edge">Edge</a>;
+<a href="https://appfair.app/fair#cask/brave-browser">Brave</a>;
 <a href="https://appfair.app/fair#cask/google-chrome">Chrome</a>;
 ' | strip | split: ";" | sample: 99 %}
 
