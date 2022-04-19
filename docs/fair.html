@@ -46,7 +46,11 @@
     <script>
         "use strict";
 
-        let appHash = window.location.hash;
+        // the app or cask are specified in the window query
+        const params = new URLSearchParams(window.location.search);
+        const appID = params.get('app');
+        const caskID = params.get('cask');
+
         let loadIcon = true;
 
         // change the icon preview to be the given source
@@ -71,30 +75,27 @@
             updateIcon("https://github.com/App-Fair/App/releases/latest/download/App-Fair.png", true);
         }
 
-        if (typeof appHash === 'string') {
-            if (appHash != '') {    
-                let appPath = appHash.substring(1)
-                let appParts = appPath.split("/");
-                let appID = appParts[appParts.length - 1];
-                let appName = appID.replace("-", " ");
-
-                if (appParts[0] == "app") {  // App Fair app
-                    updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
-                    document.getElementById("appclass").innerHTML = 'free appfair.net <a href="https://' + appID + '.github.io/App/">Fairapp</a>'
-                } else if (appParts[0] == "cask") {  // Homebrew Cask app
-                    updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + appID + "/AppIcon.png");
-                    document.getElementById("appclass").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/' + appPath + '">Cask</a>';
-                }
-
-                document.getElementById("apptitle").innerHTML = appName;
-
-                let launchLink = "appfair://" + appPath;
-                document.getElementById("applink").href = launchLink;
-                document.getElementById("appinstall").innerHTML = '<a href="' + launchLink + '">Install</a>';
-
-                // attempt to launch the app fair app
-                // document.location = launchLink;
+        if (typeof appID === 'string' || typeof caskID === 'string') {    
+            if (typeof appID === 'string') {  // App Fair app
+                var appName = appID.replace('-', ' ');
+                var appPath = "app/" + appID;
+                updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
+                document.getElementById("appclass").innerHTML = 'free appfair.net <a href="https://' + appID + '.github.io/App/">Fairapp</a>'
+            } else if (typeof caskID === 'string') {  // Homebrew Cask app
+                var appName = caskID.replace('-', ' ');
+                var appPath = "cask/" + caskID;
+                updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + caskID + "/AppIcon.png");
+                document.getElementById("appclass").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/cask/' + caskID + '">Cask</a>';
             }
+
+            document.getElementById("apptitle").innerHTML = appName;
+
+            let launchLink = "appfair://" + appPath;
+            document.getElementById("applink").href = launchLink;
+            document.getElementById("appinstall").innerHTML = '<a href="' + launchLink + '">Install</a>';
+
+            // attempt to launch the app fair app
+            // document.location = launchLink;
         }
     </script>
 </body>
