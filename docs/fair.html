@@ -66,10 +66,10 @@
 
             if (appParts[0] == "app") {  // App Fair app
                 updateIcon("https://github.com/" + appID + "/App/releases/latest/download/" + appID + ".png");
-                document.getElementById("apptype").innerHTML = "free appfair.net app";
+                document.getElementById("apptype").innerHTML = 'free appfair.net <a href="http://' + appID + '.github.io/App/">app</a>'
             } else if (appParts[0] == "cask") {  // Homebrew Cask app
                 updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + appID + "/AppIcon.png");
-                document.getElementById("apptype").innerHTML = "Homebrew Cask";
+                        document.getElementById("apptype").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/' + appPath + '">Cask</a>';
             }
 
             document.getElementById("apptitle").innerHTML = appName;

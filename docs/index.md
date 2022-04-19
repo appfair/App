@@ -123,10 +123,11 @@ The apps you get through the App Fair come straight from their creators, with no
 
 ## Free and Fair
 
+The App Fair is created and maintained by the community, for the community.
+It does not track or advertise, nor does it impose any Terms or Conditions.
+
 Every line of code in the App Fair.app itself is open-source, released under the GNU AGPL license, and available to browse freely on [GitHub](https://github.com/App-Fair/App.git). The build process is completely transparent and the artifacts are verified by [appfair.net reproducible builds](https://www.appfair.net/#what-are-reproducible-builds).
 
-The App Fair is created and maintained by the community, for the community.
-It does not track or advertise, nor does it imposes any Terms or Conditions.
 
 ## Enter the App Fair
 
