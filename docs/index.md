@@ -113,6 +113,7 @@ Browse, download and install macOS apps from a vast catalog of both free and com
 <a href="https://appfair.app/fair?cask=minecraft">Minecraft</a>;
 <a href="https://appfair.app/fair?cask=steam">Steam</a>;
 <a href="https://appfair.app/fair?cask=league-of-legends">League of Legends</a>;
+<a href="https://appfair.app/fair?cask=epic-games">Epic Games</a>;
 ' | strip | split: ";" | sample: 99 %}
 
 From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to crucial technologies like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
