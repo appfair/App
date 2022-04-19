@@ -4,3 +4,912 @@
 "OK" = "OK";
 "Cancel" = "Annuler";
 "Welcome to %@!" = "Bienvenue sur %@ !";
+
+/* app entitlement info for temporary-exception.iokit-user-client-class */
+"Ability to specify additional IOUserClient subclasses." = "Possibilité de spécifier des sous-classes supplémentaires de IOUserClient.";
+
+/* app entitlement info for print */
+"Access printers." = "Accéder aux imprimantes.";
+
+/* app launch privacy description group box title */
+"About App Launch Privacy" = "À propos de App Launch Privacy";
+
+/* app entitlement info for personal-information.calendars */
+"Access the user's personal calendar." = "Accéder au calendrier personnel de l'utilisateur.";
+
+/* app entitlement info for device.usb */
+"Access USB devices." = "Accéder aux périphériques USB.";
+
+/* launch privacy button toolbar button title when in the activate state */
+"Active" = "Actif";
+
+/* app entitlement title for personal-information.addressbook */
+"Address Book" = "Carnet d'adresses";
+
+/* app entitlement info for device.serial */
+"Access Serial devices." = "Accès aux périphériques série.";
+
+/* homebrew preference checkbox tooltip */
+"Allow Homebrew to update itself while installing other packages." = "Autoriser Homebrew à se mettre à jour lors de l'installation d'autres paquets.";
+
+/* app updated dialog title */
+"App Fair has been updated" = "App Fait a été mis à jour";
+
+/* tooltip help text for homebrew preference */
+"Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched." = "Permet le lancement d'applications en quarantaine lorsque celles-ci ne sont pas signées et validées. L'utilisateur sera invité à donner sa confirmation à chaque fois qu'une application identifiée comme n'étant pas signée sera lancée.";
+
+/* app entitlement title for temporary-exception.audio-unit-host */
+"Audio Unit Host" = "Hôte de l'unité audio";
+"Auto-Updates" = "Mises à jour automatiques";
+
+/* preference checkbox tooltip */
+"Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app." = "Relancer automatiquement les applications après mise à jour. Sinon, la version mise à jour sera utilisée une fois l'application fermée et relancée.";
+
+/* homebrew preference checkbox tooltip */
+"Automatically attempt to install any required dependencies for a cask." = "Tenter automatiquement d'installer toutes les dépendances requises pour un cask.";
+"Based on the number of permission categories this app requests this app can be considered: " = "Sur la base du nombre de catégories d'autorisation que cette application demande, cette application peut être considérée comme : ";
+
+/* homebrew preference button tooltip */
+"Browse the Homebrew installation folder using the Finder" = "Parcourir les fichiers d'installation de Homebrew dans le Finder";
+
+/* app category label for appfair.business */
+"Business" = "Travail";
+
+/* app entitlement title for personal-information.calendars */
+"Calendars" = "Calendriers";
+
+/* app entitlement title for device.camera */
+"Camera" = "Appareil photo";
+"Cancel " = "Annuler ";
+
+/* app category label for appfair.casino-games */
+"Casino Games" = "Jeux de casino";
+
+/* app catalog entry info link title */
+"Cask Token" = "Jeton du Cask";
+
+/* homebrew sidebar category title */
+"Casks" = "Casks";
+
+/* homebrew preference checkbox */
+"Clear all app info on delete" = "Effacer les informations de l'application à la suppression";
+
+/* risk assessment label for level 5 dangerous apps */
+"Dangerous" = "Dangereuse";
+
+/* app entitlement title for cs.debugger */
+"Debugging" = "Débogage";
+
+/* app catalog entry header box title for the core size of the app */
+"Core Size" = "Taille du noyau";
+
+/* catalog entry button title for delete action
+   delete button confirmation dialog delete button text */
+"Delete" = "Supprimer";
+
+/* preference checkbox tooltip */
+"Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation." = "Lors de la suppression d'une application, une demande de confirmation sera présentée à l'utilisateur. Si cette option est désactivée, les applications seront supprimées sans confirmation.";
+
+/* app catalog cask entry overview tab title */
+"Description" = "Description";
+
+/* app category label for appfair.dice-games */
+"Dice Games" = "Jeux de dé";
+
+/* app entitlement title for cs.disable-library-validation */
+"Disable Library Validation" = "Désactiver la validation des bibliothèques";
+
+/* app catalog entry info link title */
+"Discussions" = "Discussions";
+
+/* app catalog entry info link title */
+"Download" = "Télécharger";
+
+/* fairapps preference checkbox tooltip */
+"Display releases that are not yet production-ready according to the developer's standards." = "Afficher les versions qui ne sont pas encore prêtes pour la production en fonction des spécifications du développeur.";
+
+/* catalog entry button tooltip for install action */
+"Download and install the app." = "Télécharger et installer l'application.";
+
+/* app catalog entry header box title */
+"Downloads" = "Téléchargements";
+
+/* app category label for appfair.education */
+"Education" = "Éducation";
+
+/* homebrew preference checkbox */
+"Enable Homebrew self-update" = "Activer la mise à jour automatique de Homebrew";
+
+/* app entitlement info for files.bookmarks.app-scope */
+"Enables use of app-scoped bookmarks and URLs." = "Permet l'utilisation de signets et d'URL propres à l'application.";
+
+/* app entitlement info for temporary-exception.shared-preference.read-only */
+"Read shared preferences." = "Accéder aux préférences partagées.";
+
+/* app entitlement title for files.user-selected.read-only */
+"Read User-Selected Files" = "Accéder aux fichiers sélectionnés par l'utilisateur";
+
+/* tooltip text */
+"Risk assessment is only available for App Fair Fairground apps" = "L'évaluation des risques n'est disponible que pour les applications du catalogue de App Fair";
+
+/* prefix string for risk label */
+"Risk: " = "Risque : ";
+
+/* fairapps preference title for risk management */
+"Risk Exposure:" = "Exposition au risque :";
+
+/* app category label for appfair.word-games */
+"Word Games" = "Jeux de lettres";
+
+/* app entitlement info for device.bluetooth */
+"Access bluetooth." = "Accéder au Bluetooth.";
+
+/* app catalog cask entry preview tab title */
+"Screen Shots" = "Captures d'écran";
+
+/* app catalog entry info link tooltip */
+"The page for the Homebrew Cask token" = "La page du jeton du Cask de Homebrew";
+
+/* placeholder string */
+"Risk assessment unavailable for Homebrew Casks" = "Évaluation des risques non disponible pour les Casks de Homebrew";
+
+/* tooltip help text for preference */
+"Whether to overwrite a prior installation of a given Cask. This could cause a newer version of an app to be overwritten by an earlier version." = "S'il faut écraser une installation antérieure d'un Cask donné. Cela peut entraîner l'écrasement d'une version plus récente d'une application par une version antérieure.";
+
+/* risk assessment summary text for level 6 perilous apps */
+"%@ apps are granted all the categories of permission entitlement, and so can modify your system or damage your system in many ways. Despite being sandboxed, they should be considered to have the maximum possible permissions. You should only install these apps from a very trusted source." = "Les applications %@ se voient accorder toutes les catégories de permission, et peuvent donc modifier votre système ou l'endommager de diverses façons. Bien qu'elles soient contenues dans un environnement sécurisé (sandbox), elles sont considérées comme pouvant disposer du maximum de permissions possibles. Vous ne devez installer ces applications qu'à partir de sources très fiables.";
+
+/* app entitlement title for files.user-selected.executable */
+"Executables (User-Selected)" = "Exécutables (Sélection utilisateur)";
+
+/* menu title for fairgroup actions */
+"Fair" = "Foire";
+
+/* tooltip text for switch to enable homebrew support */
+"Adds homebrew Casks to the sources of available apps." = "Ajoute les Casks de Homebrew aux sources des applications disponibles.";
+
+/* homebrew preference checkbox */
+"Exclude auto-updating apps from updates list" = "Exclure les applications qui se mettent à jour automatiquement de la liste des mises à jour";
+
+/* fairapps preferences tab title */
+"Fairapps" = "Fairapps";
+
+/* app source title for fairground apps */
+"Fairground" = "Fairground";
+
+/* app catalog entry info link title */
+"Fairseal" = "Fairseal";
+
+/* risk assessment summary text for level 5 dangerous apps */
+"%@ apps are still sandboxed, but they are granted a wide array of entitlements that makes them capable of damaging or hijacking your system. You should only install these apps from a trusted source." = "Les applications %@ sont toujours contenues dans un environnement sécurisé (sandbox), mais elles disposent d'un large éventail de droits qui leur permet d'endommager ou de contourner votre système. Vous ne devez installer ces applications qu'à partir de sources fiables.";
+
+/* app category label for appfair.graphics-design */
+"Graphics Design" = "Graphisme";
+
+/* risk assessment label for level 1 harmless apps */
+"Harmless" = "Inoffensive";
+
+/* risk assessment label for level 4 hazardous apps */
+"Hazardous" = "Risquée";
+
+/* app catalog entry info link title */
+"Home" = "Accueil";
+
+/* app catalog cask entry preview tab title */
+"Home Page" = "Page d'accueil";
+
+/* app source title for homebrew apps
+   homebrew preferences tab title */
+"Homebrew" = "Homebrew";
+
+/* app catalog entry info link title */
+"Homepage" = "Page d'accueil";
+
+/* catalog entry button title for install action */
+"Install" = "Installer";
+
+/* install button confirmation dialog title */
+"Install %@" = "Installer %@";
+
+/* homebrew preference checkbox */
+"Install overwrites previous app installation" = "L'installation écrase l'installation précédente de l'application";
+
+/* fairapps sidebar category title
+   homebrew sidebar category title */
+"Installed" = "Installé";
+
+/* app launch privacy text field label for installation location */
+"Installed at:" = "Installé dans :";
+
+/* app entitlement title for device.firewire */
+"Firewire" = "Firewire";
+
+/* app catalog cask entry metadata tab title */
+"Formula" = "Formule";
+
+/* app entitlement title for temporary-exception.files.absolute-path.read-only */
+"Global Files Read-Only" = "Fichiers globaux en lecture seule";
+
+/* app entitlement info for network.server */
+"Handle network requests from the local network or the internet." = "Traiter les requêtes réseau provenant du réseau local ou d'Internet.";
+
+/* settings switch title for enabling homebrew cask support */
+"Homebrew Casks" = "Casks de Homebrew";
+
+/* homebrew preference checkbox tooltip */
+"If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched." = "Si un cask indique qu'il gère lui-même ses mises à jour, il ne doit pas apparaître dans la section « Mis à jour ». Cela permet d'éviter d'afficher des mises à jour redondantes pour les applications qui sont censées être capables de se mettre à jour elles-mêmes, mais cela peut également conduire à ce que ces applications soient obsolètes lors de leur prochain lancement.";
+"Installation artifact cannot be verified because it has no associated SHA-256 checksum." = "La vérification de l'artefact d'installation est impossible car il n'a pas de somme de contrôle SHA-256 associée.";
+
+/* catalog entry button tooltip for launch action */
+"Launches the app." = "Lance l'application.";
+
+/* app category label for appfair.lifestyle */
+"Lifestyle" = "Style de vie";
+
+/* general preference for theme style in popup menu */
+"Light" = "Clair";
+
+/* apps list placeholder text while the catalog is loading */
+"Loading…" = "Chargement…";
+
+/* app entitlement title for personal-information.location */
+"Location" = "Emplacement";
+
+/* app category label for appfair.medical */
+"Medical" = "Médical";
+
+/* app entitlement title for device.microphone */
+"Microphone" = "Microphone";
+
+/* app entitlement title for temporary-exception.iokit-user-client-class */
+"IOKit User Client" = "Client utilisateur IOKit";
+
+/* app entitlement title for cs.allow-jit */
+"Just-In-Time Compiler" = "Compilateur à la volée";
+
+/* tooltip help text for homebrew preference checkbox */
+"Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run." = "Marque les applications installées avec un Cask de Homebrew comme étant en quarantaine, ce qui provoquera une vérification du contrôleur du système et une confirmation de l'utilisateur la première fois qu'elles seront exécutées.";
+
+/* risk assessment label for level 2 mostlyHarmless apps */
+"Mostly Harmless" = "Relativement inoffensive";
+
+/* app category label for appfair.music */
+"Music" = "Musique";
+
+/* app entitlement title for network.server */
+"Network Server" = "Serveur réseau";
+
+/* app category label for appfair.news */
+"News" = "Actualités";
+
+/* placeholder string for empty screenshot preview section */
+"No screenshots available" = "Aucune capture d'écran disponible";
+
+/* empty app selection detail area placeholder */
+"No Selection" = "Aucune sélection";
+
+/* apps list bottom bar title */
+"Not updated recently" = "Pas mis à jour récemment";
+
+/* app catalog entry info link tooltip */
+"Opens link to source code repository for this app at: %@" = "Ouvre le lien vers le code source de cette application : %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the direct download for this app at: %@" = "Ouvre le lien vers le téléchargement direct de cette application : %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the discussions page for this app at: %@" = "Ouvre le lien vers la page de discussion de cette application : %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the home page for this app at: %@" = "Ouvre le lien de la page d'accueil de cette application : %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the issues page for this app at: %@" = "Ouvre le lien vers la page de signalement des problèmes de cette application : %@";
+
+/* app catalog entry info link tooltip */
+"Opens link to the landing page for this app at: %@" = "Ouvre le lien vers la page de présentation de cette application : %@";
+"Opens your web browsers and visits the developer site" = "Ouvre votre navigateur et le site du développeur";
+
+/* risk assessment label for level 6 perilous apps */
+"Perilous" = "Périlleuse";
+
+/* app category label for appfair.photography */
+"Photography" = "Photographie";
+
+/* app entitlement info for device.audio-video-bridging */
+"Permit Audio/Bridging." = "Permet l'utilisation d'une passerelle audio.";
+
+/* tooltip help text for homebrew preference */
+"Permit gatekeeper bypass" = "Permet d'ignorer le contrôleur du système";
+
+/* app entitlement info for cs.disable-executable-page-protection */
+"Permits the app the disable all code signing protections while launching an app and during its execution." = "Permet à l'application de désactiver toutes les protections de signature de code lors du lancement d'une application et pendant son exécution.";
+
+/* app category label for appfair.puzzle-games */
+"Puzzle Games" = "Jeux de puzzle";
+
+/* homebrew preference checkbox */
+"Quarantine installed apps" = "Applications installées en quarantaine";
+
+/* app entitlement title for files.all */
+"Read & Write All Files" = "Lire et écrire des fichiers";
+
+/* app entitlement title for files.downloads.read-write */
+"Read & Write Downloads Folder" = "Lire et écrire dans le dossier Téléchargements";
+
+/* app entitlement title for assets.movies.read-write */
+"Read & Write Movies" = "Lire et écrire des vidéos";
+
+/* app entitlement title for assets.music.read-write */
+"Read & Write Music" = "Lire et écrire de la musique";
+
+/* app entitlement title for temporary-exception.shared-preference.read-write */
+"Read & Write Shared Preferences" = "Lire et écrire des préférences partagées";
+
+/* app entitlement title for files.user-selected.read-write */
+"Read & Write User-Selected Files" = "Lire et écrire des fichiers sélectionnés par l'utilisateur";
+
+/* app entitlement info for files.user-selected.executable */
+"Read access to executables explicitly selected by the user." = "Accès en lecture à des exécutables explicitement sélectionnés par l'utilisateur.";
+
+/* app entitlement info for files.user-selected.read-only */
+"Read access to files explicitly selected by the user." = "Accès en lecture à des fichiers explicitement sélectionnés par l'utilisateur.";
+
+/* app entitlement info for files.downloads.read-only */
+"Read access to the user's Downloads folder" = "Accès en lecture au dossier Téléchargements de l'utilisateur";
+
+/* fairapps preference description */
+"Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment." = "Les pré-versions sont des versions expérimentales de logiciels qui sont moins testées que les versions stables. Elles sont généralement publiées pour recueillir les retours et l'aide des utilisateurs, et ne doivent donc être installées que par ceux qui sont prêts à les expérimenter.";
+
+/* app entitlement info for assets.music.read-write */
+"Read and write access to the user's Music folder" = "Accès en lecture et écriture au dossier Musique de l'utilisateur";
+
+/* app entitlement info for assets.pictures.read-write */
+"Read and write access to the user's Pictures folder" = "Accès en lecture et écriture au dossier Images de l'utilisateur";
+
+/* app entitlement title for temporary-exception.shared-preference.read-only */
+"Read Shared Preferences" = "Accéder aux préférences partagées";
+
+/* launch privacy activate toolbar button title when in the inactive state */
+"Ready" = "Prêt";
+
+/* delete button confirmation dialog title */
+"Really delete this app?" = "Voulez-vous vraiment supprimer cette application ?";
+
+/* fairapps sidebar category title
+   homebrew sidebar category title */
+"Recent" = "Récent";
+
+/* apps list section header text */
+"Recently Updated" = "Mis à jour récemment";
+
+/* app category label for appfair.reference */
+"Reference" = "Référence";
+
+/* menu title for refreshing the app catalog */
+"Refresh Catalogs" = "Actualiser les catalogues";
+
+/* refresh catalog toolbar button tooltip */
+"Refresh the app catalogs" = "Actualiser les catalogues d'applications";
+
+/* refresh catalog toolbar button title */
+"Reload" = "Recharger";
+
+/* preference checkbox */
+"Require app delete confirmation" = "Requiert une confirmation de suppression";
+
+/* catalog entry button title for reveal action
+   homebrew preference button for showing locating of homebrew installation */
+"Reveal" = "Afficher";
+
+/* label for unknown rick */
+"Risk: Unknown" = "Risque : Inconnu";
+
+/* risk assessment label for level 3 risky apps */
+"Risky" = "Risqué";
+
+/* app entitlement info for application-groups */
+"Share files and preferences between applications." = "Partager les fichiers et les préférences entre les applications.";
+
+/* app launch privacy button title for displaying location of installed script */
+"Show" = "Afficher";
+
+/* fairapps preference checkbox */
+"Show Pre-Releases" = "Afficher les pré-versions";
+
+/* app category label for appfair.simulation-games */
+"Simulation Games" = "Jeux de simulation";
+
+/* app catalog entry header box title */
+"Size" = "Taille";
+
+/* app category label for appfair.social-networking */
+"Social Networking" = "Réseaux sociaux";
+
+/* homebrew preference checkbox */
+"Require cask checksum" = "Nécessite une somme de contrôle du Cask";
+
+/* app catalog entry info link tooltip */
+"Searches for this developer at: %@" = "Rechercher ce développeur sur : %@";
+
+/* app entitlement title for device.serial */
+"Serial" = "Série";
+
+/* homebrew preference checkbox */
+"Show casks without app artifacts" = "Afficher les Casks sans artefact d'application";
+
+/* app catalog entry info link title */
+"Source" = "Source";
+
+/* app category label for appfair.sports */
+"Sports" = "Sport";
+
+/* app category label for appfair.sports-games */
+"Sports Games" = "Jeux de sport";
+
+/* app catalog entry header box title */
+"Stars" = "Étoiles";
+
+/* app category label for appfair.strategy-games */
+"Strategy Games" = "Jeux de stratégie";
+
+/* apps list bottom bar help text */
+"The catalog was last updated on %@" = "Le catalogue a été mis à jour pour la dernière fois le %@";
+
+/* error message body when a tool fails to run */
+"The %@ for %@ failed to complete successfully." = "Le %1$@ pour %2$@ a échoué.";
+
+/* warning dialog body */
+"The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it." = "L'application « %1$@ » provient d'un développeur non identifié et a été mise en quarantaine.\n\nSi vous faites confiance à l'éditeur de l'application à %2$@, vous pouvez passer outre la quarantaine pour cette application afin de la lancer.";
+
+/* app updated dialog body */
+"This app has been updated from %@ to the latest version %@. Would you like to re-launch it?" = "Cette application a été mise à jour de la version %1$@ vers la dernière version %2$@. Voulez-vous la relancer ?";
+
+/* tooltip for empty screenshot preview section */
+"This app has not published any screenshots" = "Cette application n'a publié aucune capture d'écran";
+
+/* homebrew preference checkbox tooltip */
+"This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services." = "Ceci permet l'installation d'applications qui ne listent pas d'artefacts exécutables avec une extension .app. Ces applications ne pourront pas être lancées directement depuis l'application App Fair, mais elles peuvent exister en tant qu'extensions système ou services de lancement.";
+
+/* apps list section header text */
+"Top Apps" = "Tendances";
+
+/* warning dialog title */
+"Unidentified Developer" = "Développeur non identifié";
+
+/* app launch privacy preference menu label */
+"Until App Fair Exit" = "Jusqu'à la fermeture de App Fair";
+
+/* catalog entry button title for update action */
+"Update" = "Mettre à jour";
+
+/* app catalog entry header box title for the date the app was last updated
+   fairapps sidebar category title
+   homebrew sidebar category title */
+"Updated" = "Mis à jour";
+
+/* apps list bottom bar title describing when the catalog was last updated */
+"Updated %@" = "%@ mis à jour";
+
+/* app entitlement title for device.usb */
+"USB" = "USB";
+
+/* homebrew preference checkbox for enabling the integrated download manager */
+"Use integrated download manager" = "Utiliser le gestionnaire de téléchargements intégré";
+
+/* app entitlement info for device.microphone */
+"Use the device microphone." = "Utiliser le microphone de l'appareil.";
+
+/* homebrew preference checkbox tooltip */
+"Use the system-installed Homebrew installation" = "Utiliser l'installation de Homebrew du système";
+
+/* app category label for appfair.utilities */
+"Utilities" = "Utilitaires";
+
+/* app catalog cask entry overview tab title */
+"Version" = "Version";
+
+/* app category label for appfair.video */
+"Video" = "Vidéo";
+
+/* app entitlement title for cs.allow-unsigned-executable-memory */
+"Unsigned Executable Memory" = "Mémoire exécutable non signée";
+
+/* app entitlement title for temporary-exception.files.home-relative-path.read-only */
+"User Home Files Read-Only" = "Fichiers du dossier utilisateur en lecture seule";
+
+/* app entitlement title for temporary-exception.files.home-relative-path.read-write */
+"User Home Files Read-Write" = "Fichiers du dossier utilisateur en lecture-écriture";
+"Visit App Issues Page" = "Consulter la page de signalement des problèmes de l'application";
+
+/* install button confirmation dialog visit discussions button text */
+"Visit Community Forum" = "Consulter le forum communautaire";
+
+/* install button confirmation dialog visit homepage button text */
+"Visit Homepage: %@" = "Consulter la page d'accueil : %@";
+
+/* tooltip help text for preference to enable integrated download homebrew download manager */
+"Whether to use the built-in download manager to handle downloading and previewing Cask artifacts. This will permit Cask installation to be monitored and cancelled from within the app. Disabling this preference will cause brew to use curl for downloading, which will not report progress in the user-interface." = "S'il faut utiliser le gestionnaire de téléchargement intégré pour gérer le téléchargement et la prévisualisation des artefacts Cask. Cela permettra de contrôler et d'annuler l'installation de Cask depuis l'application. Si vous désactivez cette préférence, brew utilisera curl pour le téléchargement, ce qui ne permettra pas d'afficher la progression dans l'interface utilisateur.";
+
+/* app entitlement info for device.audio-input */
+"Access Audio Input devices." = "Accéder aux périphériques d'entrée audio.";
+
+/* app category label for appfair.action-games */
+"Action Games" = "Jeux d'action";
+
+/* formatting string separating the permission title from the permission description */
+"%@ – %@" = "%1$@ – %2$@";
+
+/* formatting string separating entitlement info from usage description in tooltip text
+   formatting string separating navigation title from search text */
+"%@: %@" = "%1$@ : %2$@";
+
+/* app entitlement info for personal-information.addressbook */
+"Access the user's personal address book." = "Accéder au carnet d'adresses personnel de l'utilisateur.";
+
+/* apps list section header text */
+"All Apps" = "Toutes les applications";
+
+/* fairapps preference checkbox */
+"Badge App Icon with update count" = "Badge sur l'icône avec le nombre de mises à jour";
+
+/* advanced preferences tab title */
+"Advanced" = "Avancé";
+
+/* app entitlement info for personal-information.location */
+"Access the user's personal location information." = "Accéder aux informations de localisation de l'utilisateur.";
+
+/* app entitlement info for network.client */
+"Communicate over the internet and any local networks." = "Communiquer sur Internet et sur le réseau local.";
+
+/* app entitlement title for temporary-exception.apple-events */
+"Apple Events" = "Évènements Apple";
+
+/* app entitlement title for application-groups */
+"Application Groups" = "Groupes d'applications";
+
+/* homebrew preference checkbox */
+"Automatically install dependencies" = "Installer automatiquement les dépendances";
+
+/* app category label for appfair.adventure-games */
+"Adventure Games" = "Jeux d'aventure";
+
+/* fairapps sidebar category title */
+"Apps" = "Applications";
+
+/* app category label for appfair.arcade-games */
+"Arcade Games" = "Jeux d'arcade";
+
+/* app entitlement title for device.audio-input */
+"Audio Input" = "Entrée audio";
+
+/* apps list section header text */
+"Available Updates" = "Mises à jour disponibles";
+
+/* app entitlement title for device.bluetooth */
+"Bluetooth" = "Bluetooth";
+
+/* app category label for appfair.board-games */
+"Board Games" = "Jeux de plateau";
+
+/* app category label for appfair.card-games */
+"Card Games" = "Jeux de cartes";
+
+/* general preference for theme style in popup menu */
+"Dark" = "Sombre";
+
+/* sidebar section header title for homebrew app categories */
+"Categories" = "Catégories";
+
+/* app catalog entry info link title */
+"Checksum" = "Somme de contrôle";
+
+/* catalog entry button tooltip for delete action */
+"Delete the app from your computer." = "Supprimer l'application de votre ordinateur.";
+
+/* app catalog entry info link title */
+"Developer" = "Développeur";
+
+/* app category label for appfair.entertainment */
+"Entertainment" = "Divertissement";
+
+/* error message title when a tool fails to run */
+"Error running %@" = "Erreur lors de l'exécution de %@";
+
+/* app catalog cask entry metadata tab title */
+"Details" = "Informations";
+
+/* app category label for appfair.developer-tools */
+"Developer Tools" = "Outils de développement";
+
+/* catalog entry button tooltip for reveal action */
+"Displays the app install location in the Finder." = "Affiche l'emplacement d'installation de l'application dans le Finder.";
+
+/* install button confirmation dialog confirm button text */
+"Download & Install %@" = "Télécharger et installer %@";
+
+/* app category label for appfair.finance */
+"Finance" = "Finance";
+
+/* app launch privacy activation duration menu title */
+"Duration:" = "Durée :";
+
+/* app category label for appfair.educational-games */
+"Educational Games" = "Jeux éducatifs";
+
+/* app category label for appfair.family-games */
+"Family Games" = "Jeux familiaux";
+
+/* general preferences tab title */
+"General" = "Général";
+
+/* app entitlement title for network.client */
+"Network Client" = "Client réseau";
+
+/* app category label for appfair.games */
+"Games" = "Jeux";
+
+/* preference checkbox */
+"Keep catalog app up to date" = "Maintenir le catalogues des applications à jour";
+
+/* app category label for appfair.kids-games */
+"Kids Games" = "Jeux pour enfants";
+
+/* catalog entry button title for launch action
+   warning dialog launch anyway button title */
+"Launch" = "Lancer";
+
+/* app category label for appfair.healthcare-fitness */
+"Healthcare & Fitness" = "Santé et forme";
+
+/* app catalog entry header box title for the number of issues for the app
+   app catalog entry info link title */
+"Issues" = "Problèmes";
+
+/* app updated skip relaunch button text */
+"Later" = "Plus tard";
+
+/* app launch privacy text field title for script installation location */
+"Install location:" = "Emplacement d'installation :";
+
+/* error message when no app description could be found */
+"No description found" = "Aucune description";
+
+/* error dialog disclosure button title for showing more information */
+"More Info" = "Plus d'infos";
+
+/* apps list text at the bottom of the list when there are more results to show */
+"More…" = "Plus…";
+
+/* app category label for appfair.music-games */
+"Music Games" = "Jeux de musique";
+
+/* apps list placeholder text where there are no results to display */
+"No results" = "Aucun résultat";
+
+/* app entitlement info for files.user-selected.read-write */
+"Read and write access to files explicitly selected by the user." = "Accès en lecture et écriture aux fichiers explicitement sélectionnés par l'utilisateur.";
+
+/* app launch privacy button title for previewing location where script will be installed */
+"Preview" = "Aperçu";
+
+/* app entitlement title for assets.pictures.read-write */
+"Read & Write Pictures" = "Lire et écrire des images";
+
+/* app entitlement title for print */
+"Printing" = "Impression";
+
+/* app updated re-launch button text */
+"Re-launch" = "Relancer";
+
+/* privacy preferences tab title */
+"Privacy" = "Confidentialité";
+
+/* app category label for appfair.productivity */
+"Productivity" = "Productivité";
+
+/* app entitlement info for assets.music.read-only */
+"Read access to the user's Music folder" = "Accès en lecture au dossier Musique de l'utilisateur";
+
+/* app category label for appfair.racing-games */
+"Racing Games" = "Jeux de course";
+
+/* preference checkbox */
+"Re-launch updated apps" = "Relancer les applications mises à jour";
+
+/* app entitlement info for assets.movies.read-only */
+"Read access to the user's Movies folder" = "Accès en lecture au dossier Vidéos de l'utilisateur";
+
+/* app entitlement info for assets.pictures.read-only */
+"Read access to the user's Pictures folder" = "Accès en lecture au dossier Images de l'utilisateur";
+
+/* app entitlement info for files.downloads.read-write */
+"Read and write access to the user's Downloads folder" = "Accès en lecture et écriture au dossier Téléchargements de l'utilisateur";
+
+/* app entitlement info for temporary-exception.shared-preference.read-write */
+"Read and write shared preferences." = "Lire et écrire des préférences partagées.";
+
+/* app entitlement title for files.downloads.read-only */
+"Read Download Folder" = "Accéder au dossier Téléchargements";
+
+/* app entitlement info for assets.movies.read-write */
+"Read and write access to the user's Movies folder" = "Accès en lecture et écriture au dossier Vidéos de l'utilisateur";
+
+/* action button title for refreshing the catalog */
+"Refresh Catalog" = "Actualiser le catalogue";
+
+/* app catalog cask entry metadata tab title */
+"Risk" = "Risque";
+
+/* app category label for appfair.travel */
+"Travel" = "Voyage";
+
+/* app entitlement info for files.all */
+"Read and write all files on the system." = "Lire et écrire des fichiers sur le système.";
+
+/* app entitlement title for assets.movies.read-only */
+"Read Movies" = "Accéder au dossier Vidéos";
+
+/* app entitlement title for assets.music.read-only */
+"Read Music" = "Accéder au dossier Musique";
+
+/* app entitlement title for assets.pictures.read-only */
+"Read Pictures" = "Accéder au dossier Images";
+
+/* picker title for general preference for theme style */
+"Theme:" = "Thème :";
+
+/* app category label for appfair.role-playing-games */
+"Role Playing Games" = "Jeux de rôle";
+
+/* preference checkbox */
+"Require app install confirmation" = "Requiert une confirmation d'installation";
+
+/* app catalog cask entry metadata tab title */
+"Security" = "Sécurité";
+
+/* fairapps preference checkbox tooltip */
+"Show the number of updates that are available to install." = "Afficher le nombre de mises à jour disponibles à l'installation.";
+
+/* general preference for theme style in popup menu */
+"System" = "Système";
+
+/* app entitlement title for app-sandbox */
+"Sandbox" = "Sandbox";
+
+/* app catalog entry content box placeholder text for a download size that isn't known
+   app catalog entry header box content for an unknown update date
+   fallback text for unknown developer name */
+"Unknown" = "Inconnu";
+
+/* app catalog entry info link tooltip */
+"The SHA-256 checksum for the app download" = "La somme de contrôle SHA-256 pour l'application téléchargée";
+
+/* delete button confirmation dialog body text */
+"This will remove the application “%@” from your applications folder and place it in the Trash." = "Cela va supprimer l'application « %@ » de votre dossier des applications et la placer dans la Corbeille.";
+
+/* app catalog entry info link tooltip */
+"The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "La somme de contrôle SHA-256 de l'application est manquante, ce qui signifie que son intégrité ne peut pas être vérifiée lorsqu'elle est téléchargée.";
+
+/* app catalog entry header box title tooltip text */
+"The total number of downloads for this release" = "Le nombre total de téléchargements pour cette version";
+
+/* app category label for appfair.trivia-games */
+"Trivia Games" = "Jeux de quiz";
+
+/* catalog entry button tooltip for update action */
+"Update to the latest version of the app." = "Mettre à jour vers la dernière version de l'application.";
+
+/* app entitlement info for device.camera */
+"Use the device camera." = "Utiliser l'appareil photo de l'appareil.";
+
+/* homebrew preference checkbox */
+"Use system Homebrew installation" = "Utiliser l'installation de Homebrew du système";
+
+/* app entitlement info for cs.allow-jit */
+"Enable performace booting." = "Activer le démarrage performant.";
+
+/* app catalog entry header box title for the number of watchers for the app */
+"Watchers" = "Observateurs";
+
+/* app category label for appfair.weather */
+"Weather" = "Météo";
+"Whether this app handles updating itself" = "Si cette application gère elle-même les mises à jour";
+
+/* app entitlement info for scripting-targets */
+"Ability to use specific scripting access groups within a specific scriptable app." = "Possibilité d'utiliser des groupes d'accès de script spécifiques dans une application de script spécifique.";
+
+/* homebrew preference group box title */
+"About Homebrew Casks" = "À propos des Casks de Homebrew";
+
+/* app entitlement info for device.firewire */
+"Access Firewire devices." = "Accéder aux périphériques Firewire.";
+
+/* app entitlement info for cs.debugger */
+"Allows the app to act as a debugger and inspect the internal information of other apps in the system." = "Permet à l'application d'agir comme un débogueur et d'inspecter les informations internes des autres applications du système.";
+
+/* app entitlement info for temporary-exception.apple-events */
+"Enables sending of Apple events to one or more destination apps." = "Permet l'envoi d'évènements Apple à une ou plusieurs applications de destination.";
+
+/* launch privacy button toolbar button title when in the inactivate state */
+"App Launch Privacy is currently active for %@. Click this button to deactivate privacy mode." = "App Launch Privacy est actuellement actif pour %@. Cliquez sur ce bouton pour désactiver le mode de confidentialité.";
+
+/* app privacy preference enable switch tooltip */
+"By default, macOS reports every app launch event to a remote server, which could expose your activities to third parties. Enabling this setting will block this telemetry." = "Par défaut, macOS transmet chaque événement de lancement d'application à un serveur distant, ce qui peut exposer vos activités à des tiers. L'activation de ce paramètre bloque ce type de télémétrie.";
+
+/* app catalog entry info link title */
+"Appcast" = "Appcast";
+
+/* app privacy preference enable switch */
+"App Launch Privacy:" = "App Launch Privacy :";
+
+/* launch privacy activate toolbar button tooltip when in the inactive state */
+"App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in %@" = "Le blocage de la télémétrie au lancement de l'application est activé mais n'est pas encore actif. Il s'activera automatiquement au lancement d'une application à partir de App Fair, ou en cliquant sur ce bouton, il sera activé manuellement puis désactivé dans %@";
+
+/* app entitlement title for device.audio-video-bridging */
+"Audio/Video Bridging" = "Passerelle audio/vidéo";
+
+/* preference checkbox tooltip */
+"Automatically download and apply updates to the App Fair catalog browser app." = "Télécharger et appliquer automatiquement les mises à jour de l'application de navigation du catalogue App Fair.";
+
+/* app catalog cask entry preview overview title */
+"Caveats" = "Avertissements";
+
+/* app entitlement info for temporary-exception.files.absolute-path.read-write */
+"Enables read/write access to the specified files or directories at specified absolute paths." = "Permet l'accès en lecture/écriture aux fichiers ou dossiers spécifiés aux chemins absolus spécifiés.";
+
+/* homebrew preference checkbox */
+"Enable installation telemetry" = "Activer la télémétrie pour les installations";
+
+/* app entitlement info for temporary-exception.files.absolute-path.read-only */
+"Enables read-only access to the specified files or directories at specified absolute paths." = "Permet l'accès en lecture seule aux fichiers ou dossiers spécifiés dans les chemins absolus spécifiés.";
+
+/* app entitlement info for temporary-exception.files.home-relative-path.read-write */
+"Enables read/write access to the specified files or subdirectories in the user's home directory." = "Permet l'accès en lecture/écriture aux fichiers ou sous-dossiers spécifiés dans le dossier personnel de l'utilisateur.";
+
+/* app entitlement info for temporary-exception.files.home-relative-path.read-only */
+"Enables read-only access to the specified files or subdirectories in the user's home directory." = "Permet l'accès en lecture seule aux fichiers ou sous-dossiers spécifiés dans le dossier personnel de l'utilisateur.";
+
+/* app entitlement info for files.bookmarks.document-scope */
+"Enables use of document-scoped bookmarks and URLs." = "Permet l'utilisation de signets et d'URL à l'échelle du document.";
+
+/* app entitlement title for temporary-exception.files.absolute-path.read-write */
+"Global Files Read-Write" = "Fichiers globaux en lecture-écriture";
+
+/* homebrew preference description */
+"Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@\nInstalled: \(isBrewInstalled ? \"yes\" : \"no\")" = "Homebrew est un dépôt d'applications tierces et de programmes d'installation appelés « Casks ». Ces paquets sont installés et gérés à l'aide de la commande `brew` et sont généralement placés dans le dossier `/Applications/`.\n\nLes Casks de Homebrew ne sont pas soumis aux mêmes exigences de sécurité, de transparence des sources et de déclaration des permissions que les applications de App Fair, et ne doivent donc être installés qu'à partir de sources fiables.\n\nPlus d'informations ici : [https://brew.sh](https://brew.sh)\nParcourir tous les Casks : [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nEmplacement : %@\nInstallé : (isBrewInstalled ? \"Oui\" : \"Non\")";
+
+/* app entitlement info for temporary-exception.audio-unit-host */
+"Enables hosting of audio components that are not designated as sandbox-safe." = "Permet d'héberger des composants audio qui ne sont pas considérés comme sûrs dans l'environnement sécurisé (sandbox).";
+
+/* preference checkbox tooltip */
+"Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation." = "Lors de l'installation d'une application, une demande de confirmation sera présentée à l'utilisateur. Si cette option est désactivée, les applications seront installées et mises à jour sans confirmation.";
+
+/* homebrew preference checkbox tooltip */
+"Permit Homebrew to send telemetry to Google about the packages you install and update. See https://docs.brew.sh/Analytics" = "Permet à Homebrew d'envoyer des données télémétriques à Google sur les paquets que vous installez et mettez à jour. Voir https://docs.brew.sh/Analytics";
+
+/* app entitlement info for cs.allow-unsigned-executable-memory */
+"Permit and app to create writable and executable memory without the restrictions imposed by using the MAP_JIT flag." = "Permet à l'application de créer une zone de mémoire accessible en écriture et exécutable sans les restrictions imposées par l'utilisation du drapeau MAP_JIT.";
+
+/* homebrew preference checkbox tooltip */
+"Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default." = "Nécessite que les artefacts téléchargés possèdent une somme de contrôle cryptographique SHA-256 associée pour vérifier qu'ils correspondent à la version qui a été ajoutée au catalogue. Cela permet de garantir l'intégrité du téléchargement, mais peut exclure certains Casks qui ne publient pas leur somme de contrôle, et est donc désactivé par défaut.";
+
+/* app catalog entry header box title tooltip text */
+"The number of downloads of this cask in the past 90 days" = "Le nombre de téléchargements de ce Cask au cours des 90 derniers jours";
+
+/* app entitlement info for app-sandbox */
+"The Sandbox entitlement entitlement ensures that the app will run in a secure container." = "Le dispositif intitulé « Sandbox » garantit que l'application sera exécutée dans un environnement sécurisé.";
+
+/* risk assessment summary text for level 1 harmless apps */
+"%@ apps are sandboxed and have no ability to connect to the internet, read or write files outside of the sandbox, or connect to a camera, microphone, or other peripheral. They can be considered harmless in terms of the potential risks to your system and personal information." = "Les applications %@ sont contenues dans un environnement sécurisé (sandbox) et n'ont pas la possibilité de se connecter à Internet, de lire ou d'écrire des fichiers en dehors de cet environnement, ou de se connecter à l'appareil photo, au microphone ou à un autre périphérique. Elles peuvent être considérées comme inoffensives pour votre système et vos informations personnelles.";
+
+/* risk assessment summary text for level 3 risky apps */
+"%@ apps are sandboxed and have a variety of permissions which, in combination, can put your system at risk. For example, they may be able to both read & write user-selected files, as well as connect to the internet, which makes them potential sources of data exfiltration or corruption. You should only install these apps from a reputable source." = "Les applications %@ sont contenues dans un environnement sécurisé (sandbox) et disposent de diverses autorisations qui, combinées, peuvent mettre votre système en danger. Par exemple, elles peuvent être en mesure de lire et d'écrire des fichiers sélectionnés par l'utilisateur, ainsi que de se connecter à Internet, ce qui en fait des sources potentielles d'exfiltration ou de corruption de données. Vous ne devez installer ces applications qu'à partir de sources fiables.";
+/* risk assessment summary text for level 2 mostlyHarmless apps */
+"%@ apps are granted a single category of permission, which means they can either connect to the internet, connect to a peripheral (such as the camera or microphone) or read files outside of their sandbox, but they cannot perform more than one of these categories of operations. These apps are not entirely without risk, but they can be generally considered safe." = "Les applications %@ se voient accorder une seule catégorie de permission, ce qui signifie qu'elles peuvent soit se connecter à Internet, soit se connecter à un périphérique (comme l'appareil photo ou le microphone), soit lire des fichiers en dehors de leur environnement sécurisé (sandbox), mais qu'elles ne peuvent pas effectuer plus d'une de ces catégories d'opérations. Ces applications ne sont pas entièrement sans risque, mais elles peuvent être considérées comme sûres.";
+
+/* risk assessment summary text for level 4 hazardous apps */
+"%@ apps are sandboxed and have a variety of permissions enabled. As such, they can perform many system operations that are unavailable to apps with reduced permission sets. You should only install these apps from a reputable source." = "Les applications %@ sont contenues dans un environnement sécurisé (sandbox) et disposent d'un grand nombre d'autorisations. En tant que telles, elles peuvent effectuer de nombreuses opérations système qui ne sont pas disponibles pour les applications ayant des autorisations réduites. Vous ne devez installer ces applications qu'à partir de sources fiables.";
+
+/* homebrew preference checkbox tooltip */
+"When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "Lors de la suppression des applications, tente également de supprimer toutes les informations stockées par l'application, y compris les préférences, les données utilisateur et autres informations. Cette opération est connue sous le nom de « nettoyage » de l'application et vise à effacer toutes les traces de l'application de votre système, avec pour effet secondaire possible la suppression d'informations qui pourraient être utiles si vous deviez réinstaller l'application.";
