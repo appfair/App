@@ -10,7 +10,4 @@
    <FileRef
       location = "group:../Busq">
    </FileRef>
-   <FileRef
-      location = "group:../Fair">
-   </FileRef>
 </Workspace>

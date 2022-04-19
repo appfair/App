@@ -1,5 +1,5 @@
 
-Blunder Busq is a free and open-sorce App Fair app
+Blunder Busq is a free and open-source App Fair app
 that enables browsing and
 inspecting iOS devices and apps.
 
