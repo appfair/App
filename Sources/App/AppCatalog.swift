@@ -91,7 +91,7 @@ enum AppRisk : Int, CaseIterable, Hashable, Identifiable, Comparable {
         .symbolVariant(.square)
         .symbolVariant(.fill)
         .symbolRenderingMode(SymbolRenderingMode.hierarchical)
-        //.help(Text("Based on the number of permission categories this app requests this app can be considered: ") + riskLevel.textLabel())
+        //.help(Text("Based on the number of permission categories this app requests this app can be considered: \(riskLevel.textLabel())", bundle: .module, comment: "tooltip text for describing install risk"))
     }
 
 

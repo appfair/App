@@ -419,7 +419,7 @@ extension View {
     /// ```
     /// @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     ///
-    /// Text("Reload")
+    /// Text("Reload", bundle: .module, comment: "help text")
     ///     .label(symbol: "arrow.triangle.2.circlepath.circle")
     ///     .button(command: reloadCommand)
     /// ```

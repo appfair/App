@@ -331,8 +331,8 @@ struct CatalogItemView: View {
                             .help(cask.checksum == nil ? Text("The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.", bundle: .module, comment: "app catalog entry info link tooltip") : Text("The SHA-256 checksum for the app download", bundle: .module, comment: "app catalog entry info link tooltip"))
                     }
 
-//                    linkTextField(Text("Auto-Updates"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
-//                        .help(Text("Whether this app handles updating itself"))
+//                    linkTextField(Text("Auto-Updates", bundle: .module, comment: "app catalog entry info auto-update tooltip"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
+//                        .help(Text("Whether this app handles updating itself", bundle: .module, comment: "tooltip text describing when an app auto-updates"))
 
                 } else {
                     if let landingPage = info.catalogMetadata.landingPage {
@@ -1009,7 +1009,7 @@ struct CatalogItemView: View {
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
             .animation(.easeIn(duration: 0.25), value: currentActivity) // make the enabled state of the button animate
-            .help(currentActivity == activity ? (Text("Cancel ") + activity.info.title) : activity.info.toolTip)
+            .help(currentActivity == activity ? (Text("Cancel \(activity.info.title)", bundle: .module, comment: "cancel catalog activity toooltip text")) : activity.info.toolTip)
     }
 
     func performAction(activity: CatalogActivity) async {
@@ -1027,7 +1027,7 @@ struct CatalogItemView: View {
         switch activity {
         case .install, .update:
             if info.catalogMetadata.sha256 == nil {
-                return Text("Installation artifact cannot be verified because it has no associated SHA-256 checksum.")
+                return Text("Installation artifact cannot be verified because it has no associated SHA-256 checksum.", bundle: .module, comment: "warning text when installing an item without a checksum")
             }
             return nil
 
