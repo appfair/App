@@ -11,11 +11,13 @@ let package = Package(
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
         .package(name: "Busq", url: "https://github.com/Blunder-Busq/Busq.git", .branch("main")),
+        .package(name: "Blunder", url: "https://github.com/Blunder-Busq/Blunder.git", .branch("main")),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
             .product(name: "Busq", package: "Busq"),
+            .product(name: "Blunder", package: "Blunder"),
         ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
