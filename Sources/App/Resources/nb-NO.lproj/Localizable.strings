@@ -368,3 +368,66 @@
 
 /* apps list section header text */
 "All Apps" = "Alle programmer";
+
+/* error message when no app description could be found */
+"No description found" = "Fant ingen beskrivelse";
+
+/* app entitlement info for files.downloads.read-only */
+"Read access to the user's Downloads folder" = "Lesetilgang til brukerens nedlastingsmappe";
+
+/* app entitlement info for files.user-selected.read-only */
+"Read access to files explicitly selected by the user." = "Lesetilgang til filer eksplisitt valgt av brukeren.";
+
+/* app entitlement title for device.serial */
+"Serial" = "Serienummer";
+
+/* app category label for appfair.sports */
+"Sports" = "Sport";
+
+/* app category label for appfair.sports-games */
+"Sports Games" = "Sportsspill";
+
+/* app category label for appfair.finance */
+"Finance" = "Finans";
+
+/* app entitlement title for device.firewire */
+"Firewire" = "Firewire";
+
+/* app entitlement info for files.user-selected.executable */
+"Read access to executables explicitly selected by the user." = "Lesetilgang til kjørbare filer eksplisitt valgt av brukeren.";
+
+/* app entitlement info for assets.music.read-only */
+"Read access to the user's Music folder" = "Lesetilgang til brukerens musikkmappe";
+
+/* app entitlement info for assets.movies.read-write */
+"Read and write access to the user's Movies folder" = "Lese- og skrivetilgang til brukerens filmmappe";
+
+/* app entitlement info for assets.movies.read-only */
+"Read access to the user's Movies folder" = "Lesetilgang til brukerens filmmappe";
+
+/* launch privacy activate toolbar button title when in the inactive state */
+"Ready" = "Klar";
+
+/* refresh catalog toolbar button title */
+"Reload" = "Last inn igjen";
+
+/* app entitlement title for app-sandbox */
+"Sandbox" = "Sandkasse";
+
+/* app entitlement info for application-groups */
+"Share files and preferences between applications." = "Deling av filer og innstillinger mellom programmer.";
+
+/* app catalog entry header box title */
+"Size" = "Størrelse";
+
+/* app entitlement info for assets.pictures.read-only */
+"Read access to the user's Pictures folder" = "Lesetilgang til brukerens bildemappe";
+
+/* app entitlement info for files.user-selected.read-write */
+"Read and write access to files explicitly selected by the user." = "Lese- og skrivetilgang til filer eksplisitt valgt av brukeren.";
+
+/* app entitlement info for files.downloads.read-write */
+"Read and write access to the user's Downloads folder" = "Lese- og skrivetilgang til brukerens nedlastingsmappe";
+
+/* warning dialog title */
+"Unidentified Developer" = "Uidentifisert utvikler";
