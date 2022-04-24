@@ -23,6 +23,9 @@
    formatting string separating navigation title from search text */
 "%@: %@" = "%1$@: %2$@";
 
+/* No comment provided by engineer. */
+"(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)" = "(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)";
+
 /* app entitlement info for temporary-exception.iokit-user-client-class */
 "Ability to specify additional IOUserClient subclasses." = "Ability to specify additional IOUserClient subclasses.";
 
@@ -39,7 +42,7 @@
 "Access Audio Input devices." = "Access Audio Input devices.";
 
 /* app entitlement info for device.bluetooth */
-"Access bluetooth." = "Access Bluetooth.";
+"Access bluetooth." = "Access bluetooth.";
 
 /* app entitlement info for device.firewire */
 "Access Firewire devices." = "Access Firewire devices.";
@@ -127,6 +130,8 @@
 
 /* app entitlement title for device.audio-video-bridging */
 "Audio/Video Bridging" = "Audio/Video Bridging";
+
+/* app catalog entry info auto-update tooltip */
 "Auto-Updates" = "Auto-Updates";
 
 /* homebrew preference checkbox tooltip */
@@ -146,7 +151,9 @@
 
 /* fairapps preference checkbox */
 "Badge App Icon with update count" = "Badge App Icon with update count";
-"Based on the number of permission categories this app requests this app can be considered: " = "Based on the number of permission categories this app requests this app can be considered: ";
+
+/* tooltip text for describing install risk */
+"Based on the number of permission categories this app requests this app can be considered: %@" = "Based on the number of permission categories this app requests this app can be considered: %@";
 
 /* app entitlement title for device.bluetooth */
 "Bluetooth" = "Bluetooth";
@@ -171,7 +178,9 @@
 
 /* cancel button title for prompt */
 "Cancel" = "Cancel";
-"Cancel " = "Cancel ";
+
+/* cancel catalog activity tooltip text */
+"Cancel %@" = "Cancel %@";
 
 /* app category label for appfair.card-games */
 "Card Games" = "Card Games";
@@ -196,6 +205,9 @@
 
 /* homebrew preference checkbox */
 "Clear all app info on delete" = "Clear all app info on delete";
+
+/* No comment provided by engineer. */
+"Click here for information on customizing screenshots and metadata for this app." = "Click here for information on customizing screenshots and metadata for this app.";
 
 /* app entitlement info for network.client */
 "Communicate over the internet and any local networks." = "Communicate over the internet and any local networks.";
@@ -411,6 +423,8 @@
 
 /* homebrew preference checkbox */
 "Install overwrites previous app installation" = "Install overwrites previous app installation";
+
+/* warning text when installing an item without a checksum */
 "Installation artifact cannot be verified because it has no associated SHA-256 checksum." = "Installation artifact cannot be verified because it has no associated SHA-256 checksum.";
 
 /* fairapps sidebar category title
@@ -545,6 +559,8 @@
 
 /* app catalog entry info link tooltip */
 "Opens link to the landing page for this app at: %@" = "Opens link to the landing page for this app at: %@";
+
+/* No comment provided by engineer. */
 "Opens your web browsers and visits the developer site" = "Opens your web browsers and visits the developer site";
 
 /* risk assessment label for level 6 perilous apps */
@@ -713,7 +729,8 @@
 /* app entitlement info for temporary-exception.mach-register.global-name */
 "Register global Mach services." = "Register global Mach services.";
 
-/* refresh catalog toolbar button title */
+/* help text
+   refresh catalog toolbar button title */
 "Reload" = "Reload";
 
 /* preference checkbox */
@@ -844,7 +861,7 @@
 "The SHA-256 checksum for the app download" = "The SHA-256 checksum for the app download";
 
 /* app catalog entry info link tooltip */
-"The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "The SHA-256 checksum for the app is missing, which means that the integrity cannot be verified when it is downloaded.";
+"The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.";
 
 /* app catalog entry header box title tooltip text */
 "The total number of downloads for this release" = "The total number of downloads for this release";
@@ -933,6 +950,8 @@
 
 /* app category label for appfair.video */
 "Video" = "Video";
+
+/* No comment provided by engineer. */
 "Visit App Issues Page" = "Visit App Issues Page";
 
 /* install button confirmation dialog visit discussions button text */
@@ -948,7 +967,9 @@
 "Weather" = "Weather";
 
 /* homebrew preference checkbox tooltip */
-"When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing information that could be useful if you were to ever re-install the app.";
+"When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";
+
+/* tooltip text describing when an app auto-updates */
 "Whether this app handles updating itself" = "Whether this app handles updating itself";
 
 /* tooltip help text for preference */
@@ -959,5 +980,4 @@
 
 /* app category label for appfair.word-games */
 "Word Games" = "Word Games";
-
 

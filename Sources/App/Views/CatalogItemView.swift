@@ -14,6 +14,7 @@
  */
 import FairApp
 import SwiftUI
+import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView: View {
@@ -24,7 +25,12 @@ struct CatalogItemView: View {
     @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
-    @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: .init())
+    @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: {
+        let config = WKWebViewConfiguration()
+        config.processPool = WKProcessPool()
+        config.websiteDataStore = .nonPersistent() // incogito mode
+        return config
+    }())
 
     @State private var caskURLFileSize: Int64? = nil
     @State private var caskURLModifiedDate: Date? = nil
@@ -463,6 +469,13 @@ struct CatalogItemView: View {
                 }
             }
         }
+        .onAppear { // change to homepage when there are no screenshots
+            if metadata.screenshotURLs?.isEmpty == false {
+                previewTab = .screenshots
+            } else if homeBrewInv.enableCaskHomepagePreview == true {
+                previewTab = .homepage
+            }
+        }
     }
 
     /// Use a little mini-browser to show the homepage
@@ -481,13 +494,27 @@ struct CatalogItemView: View {
         }
         .overlay(Group {
             if metadata.screenshotURLs?.isEmpty != false {
-                Text("No screenshots available", bundle: .module, comment: "placeholder string for empty screenshot preview section") // ([contribute…](https://www.appfair.app/#customize_app))")
-                    .label(image: unavailableIcon)
+                VStack {
+                    Spacer()
+                    Label {
+                        Text("No screenshots available", bundle: .module, comment: "placeholder string for empty screenshot preview section") // ([contribute…](https://www.appfair.app/#customize_app))")
+                            .lineLimit(1)
+                            .font(Font.callout)
+                            .help(Text("This app has not published any screenshots", bundle: .module, comment: "tooltip for empty screenshot preview section"))
+                    } icon: {
+                        unavailableIcon
+                    }
                     .padding()
-                    .lineLimit(1)
-                    .font(Font.callout)
-                    .foregroundColor(.secondary)
-                    .help(Text("This app has not published any screenshots", bundle: .module, comment: "tooltip for empty screenshot preview section"))
+                    Spacer()
+
+
+                    Text("(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)")
+                        .font(Font.caption)
+                        .lineLimit(1)
+                        .help(Text("Click here for information on customizing screenshots and metadata for this app."))
+
+                }
+                .foregroundColor(.secondary)
             }
         })
     }
@@ -1009,7 +1036,7 @@ struct CatalogItemView: View {
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
             .animation(.easeIn(duration: 0.25), value: currentActivity) // make the enabled state of the button animate
-            .help(currentActivity == activity ? (Text("Cancel \(activity.info.title)", bundle: .module, comment: "cancel catalog activity toooltip text")) : activity.info.toolTip)
+            .help(currentActivity == activity ? (Text("Cancel \(activity.info.title)", bundle: .module, comment: "cancel catalog activity tooltip text")) : activity.info.toolTip)
     }
 
     func performAction(activity: CatalogActivity) async {

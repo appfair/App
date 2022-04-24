@@ -307,7 +307,33 @@ If your app is present in the Homebrew Casks but is lacking an icon (or is using
 
 Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
 
-To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather. The file must contain only a single newline and be 1 byte in size. That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
+To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: 
+
+    - business
+    - developer-tools
+    - education
+    - entertainment
+    - finance
+    - games
+    - graphics-design
+    - healthcare-fitness
+    - lifestyle
+    - medical
+    - music
+    - news
+    - photography
+    - productivity
+    - reference
+    - social-networking
+    - sports
+    - travel
+    - utilities
+    - video
+    - weather
+
+The file must contain only a byte (one newline). That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
+
+`README.md` and `RELEASE_NOTES.md` files can also be included, which can contain simplified markdown (bold, italics, and links) describing the app and its latest release.
 
 #### How can I link to my app's catalog item?
 
