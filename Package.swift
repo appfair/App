@@ -15,7 +15,8 @@ let package = Package(
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
         ], resources: [.process("Resources"), .copy("Bundle")]),
-        .testTarget(name: "AppTests", dependencies: ["App"]),
+        .testTarget(name: "AppTests", dependencies: ["App"],
+            resources: [.process("Resources"), .copy("Bundle")]),
     ]
 )
 

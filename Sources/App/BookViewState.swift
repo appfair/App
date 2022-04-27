@@ -580,28 +580,33 @@ class BookReaderState : WebViewState {
 
 extension View {
     /// Alert if the list of errors in not blank
-    func alertingError<L: LocalizedError>(_ errorBinding: Binding<[L]>) -> some View {
-        alert(isPresented: Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }, error: errorBinding.wrappedValue.last, actions: { _ in
+    func alertingError(_ errorBinding: Binding<[NSError]>) -> some View {
+        let isPresented = Binding { !errorBinding.wrappedValue.isEmpty } set: { if $0 == false { errorBinding.wrappedValue.removeLast() } }
+
+        return alert(errorBinding.wrappedValue.last?.localizedFailureReason ?? errorBinding.wrappedValue.last?.localizedDescription ?? NSLocalizedString("Error", bundle: .module, comment: "generic error message title"), isPresented: isPresented, presenting: errorBinding.wrappedValue.last) { error in
             // TODO: extra actions, like “Report”?
-        }, message: { error in
-            let err = error as NSError
-            if let failureReason = err.failureReason {
+
+        } message: { error in
+            if let localizedDescription = error.localizedDescription {
+                Text(localizedDescription)
+            }
+            if let failureReason = error.localizedFailureReason {
                 Text(failureReason)
             }
-            if let jserror = err.userInfo["WKJavaScriptExceptionMessage"] as? String {
+            if let jserror = error.userInfo["WKJavaScriptExceptionMessage"] as? String {
                 Text(jserror)
             }
-        })
+        }
     }
 }
 
 /// Is this wise?
-extension NSError : LocalizedError {
-    public var errorDescription: String? { self.localizedDescription }
-    public var failureReason: String? { self.localizedFailureReason }
-    // this can result in an infinite loop, e.g., when failing to save a document
-    //public var recoverySuggestion: String? { self.localizedRecoverySuggestion }
-}
+//extension NSError : LocalizedError {
+//    public var errorDescription: String? { self.localizedDescription }
+//    public var failureReason: String? { self.localizedFailureReason }
+//    // this can result in an infinite loop, e.g., when failing to save a document
+//    //public var recoverySuggestion: String? { self.localizedRecoverySuggestion }
+//}
 
 
 func percent(_ number: Double?) -> String? {

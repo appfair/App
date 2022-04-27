@@ -10,14 +10,36 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>org.idpf.epub-container</string>
 			</array>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>epub</string>
+            </array>
 			<key>NSUbiquitousDocumentUserActivityType</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER).epub</string>
-		</dict>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>app.stanza.sidecar</string>
+            </array>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>stanza</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Stanza book sidecar</string>
+            <key>NSIsRelatedItemType</key>
+            <true/>
+        </dict>
 	</array>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
@@ -77,8 +99,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FairUsage</key>
 	<dict>
-		<key>com.apple.security.files.user-selected.read-only</key>
-		<string>This app needs to read epub files</string>
+		<key>com.apple.security.files.user-selected.read-write</key>
+		<string>This app needs to read epub files and save bookmark progress</string>
 		<key>com.apple.security.network.client</key>
 		<string>This app needs to access the network in order to download books</string>
 	</dict>

@@ -110,17 +110,96 @@ struct BookReaderView : View {
     }
 }
 
+final class BookSidecarFile : NSObject, NSFilePresenter {
+    var fileURL: URL
+    init(fileURL: URL) {
+        self.fileURL = fileURL
+    }
+
+    #if !os(iOS) // unavailable in iOS
+    var primaryPresentedItemURL: URL? {
+        fileURL
+    }
+    #endif
+
+    var presentedItemURL: URL? {
+        fileURL.deletingPathExtension().appendingPathExtension("stanza")
+    }
+
+    var presentedItemOperationQueue: OperationQueue {
+        .main
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 struct EBookScene : Scene {
 
     var body: some Scene {
+        #if false // only works on iPadOS
+        WindowGroup {
+            Button("Create a Scene") {
+              let userActivity = NSUserActivity(
+                activityType: "app.Stanza-Redux.documents"
+              )
+              userActivity.targetContentIdentifier =
+                "app.Stanza-Redux.documents"
+
+              UIApplication.shared.requestSceneSessionActivation(
+                nil,
+                userActivity: userActivity,
+                options: nil,
+                errorHandler: nil
+              )
+            }
+        }
+        .handlesExternalEvents(matching: ["app.Stanza-Redux.scene2"])
+        #endif
+
         DocumentGroup(viewing: EPUBDocument.self, viewer: documentHostView)
             .commands { EBookCommands() }
+            .handlesExternalEvents(matching: ["app.Stanza-Redux.documents"])
     }
 
     func documentHostView(file: ReferenceFileDocumentConfiguration<EPUBDocument>) -> some View {
         let doc: EPUBDocument = file.document
+        doc.fileURL = file.fileURL
 
+        // sidecard support attempt
+
+//        if let fileURL = doc.fileURL {
+//
+//            let sidecar = BookSidecarFile(fileURL: fileURL)
+//            let coord = NSFileCoordinator(filePresenter: sidecar)
+//            NSFileCoordinator.addFilePresenter(sidecar)
+//            defer {
+//                NSFileCoordinator.removeFilePresenter(sidecar)
+//            }
+//            var err: NSError?
+//            if let sidecarURL = sidecar.presentedItemURL {
+////                coord.coordinate(readingItemAt: fileURL, error: &err) { url in
+////                    dbg("### coordinate(readingItemAt:", url.path, sidecarURL.path)
+////                    do {
+////                        let data = try Data(contentsOf: sidecarURL)
+////                        dbg("read from sidecar file:", sidecarURL.path)
+////                    } catch {
+////                        dbg("error reading sidecar file:", error)
+////
+////                    }
+////                }
+//
+//                coord.coordinate(writingItemAt: fileURL, error: &err) { url in
+//                    dbg("### coordinate(writingItemAt:", url.path, sidecarURL.path)
+//                    do {
+//                        //try FileManager.default.copyItem(at: fileURL, to: sidecarURL)
+//                        try String(wip("TEST")).write(to: sidecarURL, atomically: true, encoding: .utf8)
+//                        dbg("wrote to sidecar file:", sidecarURL.path)
+//                    } catch {
+//                        dbg("error writing sidecar file:", error)
+//
+//                    }
+//                }
+//            }
+//        }
         return BookContainerView(document: doc)
             .focusedSceneValue(\.document, file.document)
     }
@@ -427,6 +506,9 @@ final class EPUBDocument: ReferenceFileDocument {
     static var writableContentTypes: [UTType] = []
 
     let epub: EPUB
+
+    /// The underlying URL for the file
+    var fileURL: URL?
 
     /// The current section in the document
     var currentSection: String? {
