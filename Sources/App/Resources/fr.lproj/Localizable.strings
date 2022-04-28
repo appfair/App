@@ -913,3 +913,14 @@
 
 /* homebrew preference checkbox tooltip */
 "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "Lors de la suppression des applications, tente également de supprimer toutes les informations stockées par l'application, y compris les préférences, les données utilisateur et autres informations. Cette opération est connue sous le nom de « nettoyage » de l'application et vise à effacer toutes les traces de l'application de votre système, avec pour effet secondaire possible la suppression d'informations qui pourraient être utiles si vous deviez réinstaller l'application.";
+
+/* tooltip text for describing install risk */
+"Based on the number of permission categories this app requests this app can be considered: %@" = "En fonction du nombre de catégories de permissions que cette application demande, elle peut être considérée comme : %@";
+"(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)" = "(si vous possédez cette application, vous pouvez [contribuer](https://www.appfair.app/#customize_app) aux captures d'écran et aux métadonnées)";
+
+/* app catalog entry info link tooltip */
+"Opens link to the appcast for this app at: %@" = "Ouvre le lien vers le appcast de cette application sur : %@";
+
+/* cancel catalog activity tooltip text */
+"Cancel %@" = "Annuler %@";
+"Click here for information on customizing screenshots and metadata for this app." = "Cliquez ici pour obtenir des informations sur la contribution aux captures d'écran et aux métadonnées de cette application.";
