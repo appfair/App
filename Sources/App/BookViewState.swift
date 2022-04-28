@@ -133,7 +133,10 @@ class BookReaderState : WebViewState {
             dbg(type.rawValue, "info:", msg)
             if let clientWidth = msg["clientWidth"] as? Double,
                let pageX = msg["pageX"] as? Double {
-                handleTouch(pageX: pageX, clientWidth: clientWidth, clientX: msg["clientX"] as? Double, start: type == .touchstart)
+                let selectionCount = (msg["selectionCount"] as? Int) ?? 0
+                if selectionCount == 0 { // only move pages if we don't have a selection
+                    handleTouch(pageX: pageX, clientWidth: clientWidth, clientX: msg["clientX"] as? Double, start: type == .touchstart)
+                }
             }
         case .touchcancel, .touchleave:
             dbg("touchcancel", type.rawValue, "info:", msg)
@@ -220,6 +223,7 @@ class BookReaderState : WebViewState {
                     'screenY': touch.screenY,
                     'clientWidth': document.documentElement.clientWidth,
                     'clientHeight': document.documentElement.clientHeight,
+                    'selectionCount': window.getSelection().rangeCount,
                 };
             };
 
