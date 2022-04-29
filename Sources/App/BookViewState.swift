@@ -17,6 +17,7 @@ import WebKit
 
 final class BookReaderState : WebViewState {
     @AppStorage("smoothScrolling") var smoothScrolling = true
+    @AppStorage("leadingTapAdvances") var leadingTapAdvances = false
 
     @AppStorage("hmargin") var hmargin: Int = 40
     @AppStorage("vmargin") var vmargin: Int = 20
@@ -136,7 +137,7 @@ final class BookReaderState : WebViewState {
             if let clientWidth = msg["clientWidth"] as? Double,
                let pageX = msg["pageX"] as? Double {
                 let selectionCount = (msg["selectionCount"] as? Int) ?? 0
-                if selectionCount == 0 { // only move pages if we don't have a selection
+                if selectionCount == 0 { // only move pages if we don't have any text selected (so we can expand the selection by dragging); a tap in the view will clear the selection automatically
                     handleTouch(pageX: pageX, clientWidth: clientWidth, clientX: msg["clientX"] as? Double, start: type == .touchstart)
                 }
             }
@@ -150,7 +151,7 @@ final class BookReaderState : WebViewState {
     private var lastPageX: Double? = nil
     private var lastClientX: Double? = nil
 
-    func handleTouch(pageX: Double, clientWidth: Double, clientX: Double?, start: Bool) {
+    private func handleTouch(pageX: Double, clientWidth: Double, clientX: Double?, start: Bool) {
         dbg("touch:", pageX, "clientX:", clientX ?? lastClientX, "/", clientWidth, "start:", start)
         if start == true {
             self.lastTouchStart = Date()
@@ -256,32 +257,37 @@ final class BookReaderState : WebViewState {
             var head = document.getElementsByTagName('head')[0];
             head.appendChild(meta);
 
+            var bs = document.body.style;
+
             //document.documentElement.style.overflowY = 'hidden';
 
-            //document.body.style.overflow = 'hidden';
-            document.body.style.overflowX = '\(overflowX)';
-            document.body.style.overflowY = 'hidden';
+            //bs.overflow = 'hidden';
+            bs.overflowX = '\(overflowX)';
+            bs.overflowY = 'hidden';
 
-            //document.body.style.scrollSnapType = 'x mandatory';
-            //document.body.style.scrollSnapPointsX = 'repeat(800px)';
+            //bs.scrollSnapType = 'x mandatory';
+            //bs.scrollSnapPointsX = 'repeat(800px)';
 
-            document.body.style.height = '94vh';
-            document.body.style.columnWidth = '100vh';
-            document.body.style.webkitLineBoxContain = 'block glyphs replaced';
+            //bs.verticalAlign = 'middle';
+            
+            bs.height = '96vh';
+            bs.columnWidth = '100vh';
+            bs.webkitLineBoxContain = 'block glyphs replaced';
 
-            document.body.style.marginTop = '\(vmargin)px';
-            document.body.style.marginBottom = '\(vmargin)px';
+            bs.marginTop = '\(vmargin)px';
+            bs.marginBottom = '\(vmargin)px';
 
-            document.body.style.marginLeft = '\(hmargin)px';
-            document.body.style.marginRight = '\(hmargin)px';
-            document.body.style.columnGap = '\(hmargin*2)px';
+            bs.marginLeft = '\(hmargin)px';
+            bs.marginRight = '\(hmargin)px';
 
-            document.body.style.overflowWrap = 'break-word';
-            document.body.style.hyphens = 'auto';
+            bs.columnGap = '\(hmargin*2)px';
+
+            bs.overflowWrap = 'break-word';
+            bs.hyphens = 'auto';
 
 
-            //document.body.style.display = 'flex';
-            //document.body.style.flexDirection = 'column';
+            //bs.display = 'flex';
+            //bs.flexDirection = 'column';
 
             // navigate one page in a book section, snapping to column bounds
             // direction: -1 for previous page, +1 for next page, 0 to simply snap to bounds
@@ -471,7 +477,7 @@ final class BookReaderState : WebViewState {
         guard let selection = sectionBinding.wrappedValue,
            let selection = selection,
            let ncx = document.epub.ncx,
-           let href = ncx.findHref(forNavPoint: selection) else {
+              let href = ncx.findNavpoint(id: selection)?.content else {
             dbg("no ncx or selection binding:", sectionBinding.wrappedValue ?? nil)
             return false
         }
@@ -482,7 +488,7 @@ final class BookReaderState : WebViewState {
                 self.targetPosition = position
             }
         } else if adjacentOffset < 0 {
-            // when moving back in chapters, always jump to the end of the scroll
+            // when moving back in sections, always jump to the end of the scroll view
             self.targetPosition = 1.0
         }
 
@@ -494,17 +500,25 @@ final class BookReaderState : WebViewState {
 
         // when loading an adjacent selection, locate that NCX in the spine and then load the adjacent spine element; this is because the NXC doesn't necessarily list all the items in the book's manifest, just the TOC-worthy elements, so we need to use the spine as the authoritative ordering of the book's manifest elements
         let manifest = document.epub.opf.manifest
-        // find the item in the manifest basec on the contect
-        guard let item: (key: String, value: (href: String, type: String)) = manifest.first(where: { item in
+
+        let actualHref = self.webView?.url?.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) ?? href
+
+        // find the item in the manifest basec on the context
+        let items: [(key: String, value: (href: String, type: String))] = manifest.filter({ item in
             // substring search since the NCX href might include a hash
-            trimAnchor(href) == trimAnchor(item.value.href)
-        }) else {
-            dbg("no item id found for href:", href)
+            trimAnchor(actualHref) == trimAnchor(item.value.href)
+        })
+
+        dbg("found items for selection:", selection, "href:", actualHref, items)
+        guard let item = items.first else {
+            dbg("no item id found for href:", actualHref)
             return false
         }
 
         let spine = document.epub.opf.spine
-        guard var index = spine.firstIndex(where: { $0.idref == item.key }) else {
+        dbg("scanning for key:", item.key, "in:", spine.map(\.idref))
+
+        guard var index = spine.lastIndex(where: { $0.idref == item.key }) else {
             dbg("no index found for itemid:", item.key)
             return false
         }
@@ -561,8 +575,10 @@ final class BookReaderState : WebViewState {
         dbg("setting selection for adjacentOffset:", adjacentOffset, "to:", ownerTOCItem.ncxID)
         if let ncxID = ownerTOCItem.ncxID {
             sectionBinding.wrappedValue = ncxID
+            return true
         }
-        return true
+        
+        return false
     }
 
     /// Loads the given href relative to the location of the rootfile in the epub zip.

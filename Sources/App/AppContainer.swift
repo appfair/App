@@ -18,11 +18,12 @@ import WebKit
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
     @AppStorage("smoothScrolling") public var smoothScrolling = true
+    @AppStorage("leadingTapAdvances") public var leadingTapAdvances = false
 }
 
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        EBookScene()
+        EBookScene(store: store)
     }
 
     /// The app-wide settings view

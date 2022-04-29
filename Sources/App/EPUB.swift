@@ -288,11 +288,11 @@ public struct NCX {
     }
 
     /// Search through the navPoints for the given id
-    func findHref(forNavPoint id: String) -> String? {
+    func findNavpoint(id: String) -> NavPoint? {
         guard let navPoint = allPoints.first(where: { $0.id == id }) else {
             return nil
         }
-        return navPoint.content
+        return navPoint
     }
 
     public struct NavPoint {

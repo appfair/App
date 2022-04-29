@@ -24,6 +24,9 @@ struct BookReaderView : View {
     @Binding var section: String??
     /// The current position in the section
     @State var position: Double = 0.0
+    /// Whether the settings view is displayed or not
+    @State var showSettings = false
+
     @AppStorage("swipeAdjustsBrightness") var swipeAdjustsBrightness: Bool = true
 
     /// Whether the overlay controls are currently shown or not
@@ -52,11 +55,23 @@ struct BookReaderView : View {
             }
 
             bookView
-                .navigationTitle(document.epub.opf.title ?? "No Title")
+                .navigation(title: document.epub.opf.title.flatMap(Text.init) ?? Text("No Title", bundle: .module, comment: "navigation title for books with no title"), subtitle: navigationSubtitle)
                 .ignoresSafeArea(.container, edges: .all)
                 .edgesIgnoringSafeArea(.all)
+                .navigationViewStyle(.stack)
+                .navigationBarTitleDisplayMode(.large)
                 .navigationBarHidden(!showControls)
                 .statusBar(hidden: !showControls)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Text("Settings", bundle: .module, comment: "title for settings button")
+                    .label(image: FairSymbol.gearshape)
+                    .labelStyle(IconOnlyLabelStyle())
+                    .button {
+                        showSettings = true
+                    }
+            }
         }
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
@@ -76,7 +91,32 @@ struct BookReaderView : View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showSettings) {
+            NavigationView {
+                AppSettingsView()
+                    .navigationTitle(Text("Settings", bundle: .module, comment: "title for the app settings screen"))
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Text("Done", bundle: .module, comment: "title of button close the settings sheet")
+                                .button {
+                                    self.showSettings = false
+                                }
+                        }
+                    }
+            }
+        }
         #endif
+    }
+
+    var navigationSubtitle: Text? {
+        guard let section = self.section,
+           let section = section,
+           let ncx = document.epub.ncx,
+              let navLabel = ncx.findNavpoint(id: section)?.navLabel else {
+            return nil
+        }
+
+        return Text(navLabel)
     }
 
     var bookView: some View {
@@ -129,6 +169,7 @@ final class BookSidecarFile : NSObject, NSFilePresenter {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct EBookScene : Scene {
+    let store: Store
 
     var body: some Scene {
         #if false // only works on iPadOS
@@ -197,6 +238,7 @@ struct EBookScene : Scene {
 //            }
 //        }
         return BookContainerView(document: doc)
+            .environmentObject(store)
             .focusedSceneValue(\.document, file.document)
     }
 }
@@ -251,15 +293,44 @@ public struct EPUBView: View {
         }
     }
 
-    var progressView: some View {
-        Rectangle()
-            .fill(LinearGradient(stops: [
-                Gradient.Stop(color: Color.accentColor, location: 0.0),
-                Gradient.Stop(color: Color.accentColor, location: max(0.0, bookReaderState.progress)),
-                Gradient.Stop(color: Color.white, location: min(1.0, bookReaderState.progress)),
-                Gradient.Stop(color: Color.white, location: 1.0),
-            ], startPoint: .leading, endPoint: .trailing))
-            .frame(height: 3)
+    var pageIndices: [Int]? {
+        #if os(iOS)
+        if let webView = bookReaderState.webView {
+            let visibleWidth = webView.scrollView.visibleSize.width
+            let totalWidth = webView.scrollView.contentSize.width
+            if totalWidth > visibleWidth {
+                let count = Int(totalWidth / visibleWidth)
+                if count > 0 {
+                    return Array(-1..<count)
+                }
+            }
+        }
+        #endif
+        return nil
+    }
+
+    @ViewBuilder var progressView: some View {
+        Group {
+            if let indices = pageIndices {
+                GeometryReader { proxy in
+                    HStack(spacing: indices.count > Int(proxy.size.width) / 4 ? 0.0 : 0.5) {
+                        ForEach(indices, id: \.self) { page in
+                            Rectangle()
+                                .fill(Double(page) / Double(indices.count - 1) < bookReaderState.progress ? Color.accentColor : Color.secondary)
+                        }
+                    }
+                }
+            } else {
+                Rectangle()
+                    .fill(LinearGradient(stops: [
+                        Gradient.Stop(color: Color.accentColor, location: 0.0),
+                        Gradient.Stop(color: Color.accentColor, location: max(0.0, bookReaderState.progress)),
+                        Gradient.Stop(color: Color.white, location: min(1.0, bookReaderState.progress)),
+                        Gradient.Stop(color: Color.white, location: 1.0),
+                    ], startPoint: .leading, endPoint: .trailing))
+            }
+        }
+        .frame(height: 3)
     }
 
     var controlOverlay: some View {
@@ -334,7 +405,7 @@ public struct EPUBView: View {
                         // if the TOC is showing, hide it
                         bookReaderState.showTOCSidebar = false
                     } else if region < (1.0 / 3.0) {
-                        changePage(by: -1)
+                        changePage(by: bookReaderState.leadingTapAdvances ? +1 : -1)
                     } else if region > (2.0 / 3.0) {
                         changePage(by: +1)
                     } else {
@@ -627,6 +698,10 @@ public struct AppSettingsView : View {
         Form {
             Toggle(isOn: $store.smoothScrolling) {
                 Text("Smooth scroll pages:", bundle: .module, comment: "toggle preference title for smooth scrolling of pages")
+            }
+            .toggleStyle(.switch)
+            Toggle(isOn: $store.leadingTapAdvances) {
+                Text("Left tap advances:", bundle: .module, comment: "toggle preference title for whehter a tap on the left side of the screen should advance")
             }
             .toggleStyle(.switch)
         }
