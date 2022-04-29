@@ -269,7 +269,7 @@ final class BookReaderState : WebViewState {
             //bs.scrollSnapPointsX = 'repeat(800px)';
 
             //bs.verticalAlign = 'middle';
-            
+
             bs.height = '96vh';
             bs.columnWidth = '100vh';
             bs.webkitLineBoxContain = 'block glyphs replaced';
@@ -284,7 +284,6 @@ final class BookReaderState : WebViewState {
 
             bs.overflowWrap = 'break-word';
             bs.hyphens = 'auto';
-
 
             //bs.display = 'flex';
             //bs.flexDirection = 'column';
