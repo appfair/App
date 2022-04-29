@@ -23,30 +23,11 @@ public final class EPUB {
     /// The underlying epub archive
     let archive: ZipArchive
 
-    /// The metadata of the book, with keys like: `title`, `date`, `creator`, and `subject`
-    public let metadata: [String: [String]]
+    /// The root of files in the epub, which are relative to the package file
+    public let packageRoot: String
 
-    /// The manifest from the `content.opf` of item id to the type & href location
-    public let manifest: [String: (href: String, type: String)]
-
-    /// “The spine element defines an ordered list of manifest item references that represent the default reading order of the given Rendition.”
-    /// https://www.w3.org/publishing/epub3/epub-packages.html#sec-spine-elem
-    public let spine: [(idref: String, linear: Bool)]
-
-    /// The path for the opf file
-    public let opfPath: String
-
-    /// The checksum of the OPF file, which can be used to uniquely identify a book
-    public let opfChecksum: Data
-
-    /// The title of the book, as per the metadata
-    public var title: String? { metadata["title"]?.first }
-
-    /// The creators of the book, as per the metadata
-    public var creators: [String] { metadata["creators"] ?? [] }
-
-    /// The subjects of the book, as per the metadata
-    public var subjects: [String] { metadata["subjects"] ?? [] }
+    /// The metadata for the epub
+    public let opf: OPF
 
     /// The NXC file, if any
     public var ncx: NCX?
@@ -114,18 +95,99 @@ public final class EPUB {
             throw EPUBError("Missing full-path in rootfile element in container.xml")
         }
 
-
         guard let packageEntry = archive[fullPath] else {
             throw EPUBError("No “\(fullPath)” entry specified in container.xml in epub zip")
         }
 
-        let packageData = try archive.extractData(from: packageEntry)
+        self.packageRoot = URL(fileURLWithPath: "/" + fullPath).deletingLastPathComponent().path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
-        // the book's identifier can be derived from the checksum of the opf file
-        self.opfChecksum = packageData.sha256()
-        self.opfPath = fullPath
+        dbg("loading package:", fullPath, "from root:", self.packageRoot)
 
+        self.opf = try OPF(data: archive.extractData(from: packageEntry), fullPath: fullPath)
+
+
+        if let tocid = opf.tocID,
+           let ncx = opf.manifest[tocid],
+            ncx.type == "application/x-dtbncx+xml",
+            let ncxEntry = archive[resolveRelative(path: ncx.href)] {
+            let ncxContent = try archive.extractData(from: ncxEntry)
+            self.ncx = try NCX(data: ncxContent)
+        }
+
+        // dbg("opened zip with spine:", self.spine)
+        
+        /// “The guide element [OPF2] is a legacy feature that previously provided machine-processable navigation to key structures in an EPUB Publication. It is replaced in EPUB 3 by landmarks in the EPUB Navigation Document.”
+//        guard let guideRoot = packageRoot.elementChildren.first(where: { $0.elementName == "guide" }) else {
+//            throw EPUBError("Package at “\(fullPath)” had no 'guide' element")
+//        }
+    }
+
+    /// Resolves the given path relative to the OPF's root (which isn't necessarily the root of the epub container itself)
+    func resolveRelative(path: String) -> String {
+        packageRoot.isEmpty ? path : (packageRoot + "/" + path)
+    }
+
+    @available(*, deprecated, message: "books are now accessed directly from the container")
+    func extractContents(to folder: URL? = nil) throws -> URL {
+        guard let cacheFolder = folder ??
+                FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("Books") else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+
+        let checksum = try (archive.data ?? Data(contentsOf: archive.url, options: .alwaysMapped)).sha256().hex()
+
+        let extractFolder = cacheFolder
+            //            .appendingPathComponent(self.title?.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "untitled")
+            .appendingPathComponent(checksum)
+
+        try FileManager.default.createDirectory(at: extractFolder, withIntermediateDirectories: true)
+
+        for entry in self.archive {
+
+            let dest = extractFolder
+                .appendingPathComponent(entry.path)
+
+            //dbg("path:", entry.path, "size:", entry.uncompressedSize, "dest size:", dest.fileSize())
+            // only extract the file if it doesn't exist or is a different size
+            if (dest.fileSize() ?? -1) != entry.uncompressedSize {
+                dbg("extracting to:", (dest.path as NSString), "from:", (entry.path as NSString))
+                let _ = try self.archive.extract(entry, to: dest, overwrite: true, skipCRC32: true)
+            }
+        }
+
+        return extractFolder
+    }
+}
+
+/// https://www.w3.org/publishing/epub32/epub-packages.html#sec-package-doc
+public struct OPF {
+    /// The metadata of the book, with keys like: `title`, `date`, `creator`, and `subject`
+    public let metadata: [String: [String]]
+
+    /// The manifest from the `content.opf` of item id to the type & href location
+    public let manifest: [String: (href: String, type: String)]
+
+    /// “The spine element defines an ordered list of manifest item references that represent the default reading order of the given Rendition.”
+    /// https://www.w3.org/publishing/epub3/epub-packages.html#sec-spine-elem
+    public let spine: [(idref: String, linear: Bool)]
+
+    public let tocID: String?
+
+    /// The unique identifier of the book, defaulting to the SHA-256 checksum of the OPF file if the ID is not set
+    public let bookID: String
+
+    /// The title of the book, as per the metadata
+    public var title: String? { metadata["title"]?.first }
+
+    /// The creators of the book, as per the metadata
+    public var creators: [String] { metadata["creators"] ?? [] }
+
+    /// The subjects of the book, as per the metadata
+    public var subjects: [String] { metadata["subjects"] ?? [] }
+
+    public init(data packageData: Data, fullPath: String) throws {
         let packageXML = try XMLNode.parse(data: packageData)
+
         guard let packageRoot = packageXML.elementChildren.first,
               packageRoot.elementName == "package" else {
             throw EPUBError("Root element of “\(fullPath)” was not 'package'")
@@ -175,62 +237,20 @@ public final class EPUB {
         }
         self.spine = spineElements
 
+        self.tocID = spineRoot[attribute: "toc"]
 
-        if let tocid = spineRoot[attribute: "toc"],
-            let ncx = manifest[tocid],
-            ncx.type == "application/x-dtbncx+xml",
-            let ncxEntry = archive[resolveRelative(path: ncx.href)] {
-            let ncxContent = try archive.extractData(from: ncxEntry)
-            self.ncx = try NCX(data: ncxContent)
+        if let uniqueIdentifier = packageRoot[attribute: "unique-identifier"],
+           let identifierNode = metadataRoot.elementChildren.first(where: { node in
+               node.elementName == "identifier" && node[attribute: "id"] == uniqueIdentifier
+           }) {
+            // the "identifier" node referenced by the "package" root's "unique-identifier" attribute uniquely identifies the book
+            self.bookID = identifierNode.childContentTrimmed
+            dbg("loaded book ID:", self.bookID)
+        } else {
+            // the book's identifier can be derived from the checksum of the opf file
+            self.bookID = packageData.sha256().hex()
         }
 
-        // dbg("opened zip with spine:", self.spine)
-        
-        /// “The guide element [OPF2] is a legacy feature that previously provided machine-processable navigation to key structures in an EPUB Publication. It is replaced in EPUB 3 by landmarks in the EPUB Navigation Document.”
-//        guard let guideRoot = packageRoot.elementChildren.first(where: { $0.elementName == "guide" }) else {
-//            throw EPUBError("Package at “\(fullPath)” had no 'guide' element")
-//        }
-    }
-
-    /// Resolves the given path relative to the OPF
-    func resolveRelative(path: String) -> String {
-        // remove slashes from either end of the given string
-        let ts = { (str: String) in str.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
-
-        // entries are resolved relative to the OPF file
-        let opfRoot = ts(URL(fileURLWithPath: "/" + self.opfPath).deletingLastPathComponent().path)
-
-        return !opfRoot.isEmpty ? (opfRoot + "/" + path) : path
-    }
-
-    func extractContents(to folder: URL? = nil) throws -> URL {
-        guard let cacheFolder = folder ??
-                FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("Books") else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-
-        let checksum = try (archive.data ?? Data(contentsOf: archive.url, options: .alwaysMapped)).sha256().hex()
-
-        let extractFolder = cacheFolder
-            //            .appendingPathComponent(self.title?.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "untitled")
-            .appendingPathComponent(checksum)
-
-        try FileManager.default.createDirectory(at: extractFolder, withIntermediateDirectories: true)
-
-        for entry in self.archive {
-
-            let dest = extractFolder
-                .appendingPathComponent(entry.path)
-
-            //dbg("path:", entry.path, "size:", entry.uncompressedSize, "dest size:", dest.fileSize())
-            // only extract the file if it doesn't exist or is a different size
-            if (dest.fileSize() ?? -1) != entry.uncompressedSize {
-                dbg("extracting to:", (dest.path as NSString), "from:", (entry.path as NSString))
-                let _ = try self.archive.extract(entry, to: dest, overwrite: true, skipCRC32: true)
-            }
-        }
-
-        return extractFolder
     }
 }
 

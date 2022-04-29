@@ -15,8 +15,8 @@
 import FairApp
 import WebKit
 
-class BookReaderState : WebViewState {
-    @AppStorage("smoothScrolling") public var smoothScrolling = true
+final class BookReaderState : WebViewState {
+    @AppStorage("smoothScrolling") var smoothScrolling = true
 
     @AppStorage("hmargin") var hmargin: Int = 40
     @AppStorage("vmargin") var vmargin: Int = 20
@@ -33,6 +33,8 @@ class BookReaderState : WebViewState {
 
     /// The percentage progress in the current section
     @Published var progress: Double = 0.0
+
+    @Published var showTOCSidebar = false
 
     /// The target position to jump to once the book has loaded
     private var targetPosition: Double? = nil
@@ -491,7 +493,7 @@ class BookReaderState : WebViewState {
         }
 
         // when loading an adjacent selection, locate that NCX in the spine and then load the adjacent spine element; this is because the NXC doesn't necessarily list all the items in the book's manifest, just the TOC-worthy elements, so we need to use the spine as the authoritative ordering of the book's manifest elements
-        let manifest = document.epub.manifest
+        let manifest = document.epub.opf.manifest
         // find the item in the manifest basec on the contect
         guard let item: (key: String, value: (href: String, type: String)) = manifest.first(where: { item in
             // substring search since the NCX href might include a hash
@@ -501,7 +503,7 @@ class BookReaderState : WebViewState {
             return false
         }
 
-        let spine = document.epub.spine
+        let spine = document.epub.opf.spine
         guard var index = spine.firstIndex(where: { $0.idref == item.key }) else {
             dbg("no index found for itemid:", item.key)
             return false

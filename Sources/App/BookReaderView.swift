@@ -29,26 +29,22 @@ struct BookReaderView : View {
     /// Whether the overlay controls are currently shown or not
     @State var showControls = true
 
-    #if os(iOS)
-    @State var showTOCSidebar = false
-    #endif
-
     var body: some View {
         #if os(macOS)
         NavigationView {
             TOCListView(document: document, section: $section)
             bookView
-                .navigationTitle(document.epub.title ?? "No Title")
+                .navigationTitle(document.epub.opf.title ?? "No Title")
         }
         #elseif os(iOS)
         NavigationView {
-            if showTOCSidebar {
+            if bookReaderState.showTOCSidebar {
                 TOCListView(document: document, section: $section, action: { section in
                     dbg("selected:", section ?? nil)
                     withAnimation {
                         //bookReaderState.targetPosition = 0.0 // always jump to beginnings of sections
                         self.section = section
-                        self.showTOCSidebar = false
+                        bookReaderState.showTOCSidebar = false
                     }
                 })
                 .listStyle(.sidebar) // seems to not be the default on iOS
@@ -56,7 +52,7 @@ struct BookReaderView : View {
             }
 
             bookView
-                .navigationTitle(document.epub.title ?? "No Title")
+                .navigationTitle(document.epub.opf.title ?? "No Title")
                 .ignoresSafeArea(.container, edges: .all)
                 .edgesIgnoringSafeArea(.all)
                 .navigationBarHidden(!showControls)
@@ -72,7 +68,7 @@ struct BookReaderView : View {
                         .button {
                             dbg("toggling TOC")
                             withAnimation {
-                                self.showTOCSidebar.toggle()
+                                bookReaderState.showTOCSidebar.toggle()
                             }
                         }
                     Spacer()
@@ -95,7 +91,7 @@ struct BookReaderView : View {
                 document.sectionProgress = progress
             }
             .onAppear {
-                dbg("appear:", document.epub.title)
+                dbg("appear:", document.epub.opf.title)
                 if let section = self.section, let section = section {
                     dbg("restoring selection:", section)
                     bookReaderState.loadSelection($section, position: document.sectionProgress, in: document)
@@ -259,9 +255,9 @@ public struct EPUBView: View {
         Rectangle()
             .fill(LinearGradient(stops: [
                 Gradient.Stop(color: Color.accentColor, location: 0.0),
-                Gradient.Stop(color: Color.accentColor, location: bookReaderState.progress),
-                Gradient.Stop(color: Color.clear, location: bookReaderState.progress),
-                Gradient.Stop(color: Color.clear, location: 1.0),
+                Gradient.Stop(color: Color.accentColor, location: max(0.0, bookReaderState.progress)),
+                Gradient.Stop(color: Color.white, location: min(1.0, bookReaderState.progress)),
+                Gradient.Stop(color: Color.white, location: 1.0),
             ], startPoint: .leading, endPoint: .trailing))
             .frame(height: 3)
     }
@@ -334,7 +330,10 @@ public struct EPUBView: View {
                     // reset the touch region
                     bookReaderState.touchRegion = nil
 
-                    if region < (1.0 / 3.0) {
+                    if bookReaderState.showTOCSidebar {
+                        // if the TOC is showing, hide it
+                        bookReaderState.showTOCSidebar = false
+                    } else if region < (1.0 / 3.0) {
                         changePage(by: -1)
                     } else if region > (2.0 / 3.0) {
                         changePage(by: +1)
@@ -424,7 +423,7 @@ final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
 
         let entryPath = epub.resolveRelative(path: path)
 
-        dbg("loading path:", entryPath, "relative to", epub.opfPath)
+        dbg("loading path:", entryPath, "relative to:", epub.packageRoot)
 
         guard let entry = epub.archive[entryPath] else {
             dbg("could not find entry:", entryPath, "in archive:", epub.archive.map(\.path).sorted())
@@ -432,7 +431,7 @@ final class EPUBSchemeHandler : NSObject, WKURLSchemeHandler {
         }
 
         do {
-            let mimeType = epub.manifest.values.first {
+            let mimeType = epub.opf.manifest.values.first {
                 $0.href == path
             }?.type
 
@@ -531,17 +530,21 @@ final class EPUBDocument: ReferenceFileDocument {
         self.epub = epub
     }
 
+    var bookDefaultsKey: String {
+        "book-" + (epub.opf.bookID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? epub.opf.bookID)
+    }
+
     /// A persistent key for the UserDefaults for this particular book
     /// - Parameter name: the key name
     /// - Returns: the full defaults key for this book
     private var persistenceStore: NSMutableDictionary {
         get {
-            (UserDefaults.standard.object(forKey: ("book-" + epub.opfChecksum.hex())) as? NSDictionary ?? NSDictionary()).mutableCopy() as? NSMutableDictionary ?? .init()
+            (UserDefaults.standard.object(forKey: bookDefaultsKey) as? NSDictionary ?? NSDictionary()).mutableCopy() as? NSMutableDictionary ?? .init()
         }
 
         set {
-            dbg("storing book:", epub.opfChecksum.hex(), "defaults:", newValue)
-            UserDefaults.standard.set(newValue, forKey: "book-" + epub.opfChecksum.hex())
+            dbg("storing book:", bookDefaultsKey, "defaults:", newValue)
+            UserDefaults.standard.set(newValue, forKey: bookDefaultsKey)
             self.objectWillChange.send()
         }
     }
@@ -599,8 +602,8 @@ final class EPUBDocument: ReferenceFileDocument {
 
     /// The extract pages from the spine
     func spinePages() -> [URL] {
-        epub.spine.compactMap {
-            epub.manifest[$0.idref].flatMap {
+        epub.opf.spine.compactMap {
+            epub.opf.manifest[$0.idref].flatMap {
                 //URL(fileURLWithPath: $0.href, relativeTo: extractFolder)
                 URL(string: "epub:///" + $0.href)
             }
