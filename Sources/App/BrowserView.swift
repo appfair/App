@@ -151,7 +151,7 @@ struct BrowserView : View {
 }
 
 class BrowserState : WebViewState {
-    override func createWebView() -> WKWebView {
+    override func createWebView() -> WebEngineView {
         let view = super.createWebView()
         #if os(macOS)
         view.allowsMagnification = true
