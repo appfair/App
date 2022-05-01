@@ -12,18 +12,21 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
-import WebKit
+import FairKit
 
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
     @StateObject private var state: BrowserState = BrowserState(initialRequest: nil)
     @EnvironmentObject private var store: Store
+    @State var hoveredLink: String?
 
     var body: some View {
         VStack(spacing: 0) {
             findBar
             browserBody
+            #if os(macOS)
+            //statusBar
+            #endif
         }
             .focusedSceneValue(\.browserState, state)
             .onAppear {
@@ -38,6 +41,16 @@ struct BrowserView : View {
                 }
             }
             .alertingError($state.errors)
+    }
+
+    var statusBar: some View {
+        HStack {
+            Text(hoveredLink ?? "Ready")
+                .font(.caption)
+                .padding(.horizontal)
+            Spacer()
+        }
+        .frame(height: 24)
     }
 
     var findBar: some View {
