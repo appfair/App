@@ -12,8 +12,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
-import WebKit
+import FairKit
 
 final class BookReaderState : WebViewState {
     @AppStorage("smoothScrolling") var smoothScrolling = true
@@ -458,12 +457,6 @@ final class BookReaderState : WebViewState {
         }
     }
 
-    // trim off any anchor elements of an href
-    private func trimAnchor(_ href: String) -> String {
-        href.split(separator: "#").first?.description ?? href
-    }
-
-
     /// Loads the selection id from the given document
     /// - Parameters:
     ///   - selection: the selection binding to load; if the selection has changed, the binding will be updated; this is the NXC identifier, nor the manifest identifier
@@ -497,87 +490,16 @@ final class BookReaderState : WebViewState {
             return loadHref(href)
         }
 
-        // when loading an adjacent selection, locate that NCX in the spine and then load the adjacent spine element; this is because the NXC doesn't necessarily list all the items in the book's manifest, just the TOC-worthy elements, so we need to use the spine as the authoritative ordering of the book's manifest elements
-        let manifest = document.epub.opf.manifest
-
         let actualHref = self.webView?.url?.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) ?? href
 
-        // find the item in the manifest basec on the context
-        let items: [(key: String, value: (href: String, type: String))] = manifest.filter({ item in
-            // substring search since the NCX href might include a hash
-            trimAnchor(actualHref) == trimAnchor(item.value.href)
-        })
-
-        dbg("found items for selection:", selection, "href:", actualHref, items)
-        guard let item = items.first else {
-            dbg("no item id found for href:", actualHref)
+        guard let ncxID = document.epub.navigateToSection(of: actualHref, offset: adjacentOffset, loadHref: loadHref) else {
+            dbg("failed to navigate to href:", actualHref)
             return false
         }
 
-        let spine = document.epub.opf.spine
-        dbg("scanning for key:", item.key, "in:", spine.map(\.idref))
-
-        guard var index = spine.lastIndex(where: { $0.idref == item.key }) else {
-            dbg("no index found for itemid:", item.key)
-            return false
-        }
-
-        if (index + adjacentOffset) < 0 || (index + adjacentOffset) >= spine.count {
-            dbg("offset at index:", index, "is at the edge of the spine bounds:", spine.count)
-            return false
-        }
-
-        index += adjacentOffset
-        let targetSpine = spine[index]
-        dbg("moving to spine offset from index:", index, "for itemid:", item.key, targetSpine)
-
-        guard let targetItem = manifest[targetSpine.idref] else {
-            dbg("no target item for spine:", targetSpine.idref)
-            return false
-        }
-
-        dbg("loading ncx adjacentOffset:", adjacentOffset, "href:", targetItem.href)
-        if !loadHref(targetItem.href) {
-            dbg("unable to load adjacent href:", targetItem.href)
-            return false
-        }
-
-        // a map of the trimmed NXC hrefs to the NCXIDs
-        let ncxHrefs = ncx.allPoints.map({
-            ($0.content.flatMap(trimAnchor), $0.id)
-        })
-            .dictionary(keyedBy: \.0)
-            .compactMapValues(\.1)
-
-        // map of spine IDs to the corresponding manifest href
-        let spineTOC: [(manifestID: String, href: String, ncxID: String?)] = spine.compactMap({
-            guard let href = manifest[$0.idref]?.href else {
-                return nil
-            }
-            let baseHref = trimAnchor(href)
-            return ($0.idref, baseHref, ncxHrefs[baseHref])
-        })
-
-        // locate the first prior spine ID that has an NCX entry
-        guard let spineIndex = spineTOC.firstIndex(where: { $0.manifestID == targetSpine.idref }) else {
-            dbg("unable to locate spine index for spine ID:", targetSpine.idref)
-            return false
-        }
-
-        guard let ownerTOCItem = spineTOC[0...spineIndex].reversed().first(where: {
-            $0.ncxID != nil
-        }) else {
-            dbg("unable to locate preceeding NCX entry from spine ID:", targetSpine.idref)
-            return false
-        }
-
-        dbg("setting selection for adjacentOffset:", adjacentOffset, "to:", ownerTOCItem.ncxID)
-        if let ncxID = ownerTOCItem.ncxID {
-            sectionBinding.wrappedValue = ncxID
-            return true
-        }
-        
-        return false
+        dbg("setting selection for adjacentOffset:", adjacentOffset, "to:", ncxID)
+        sectionBinding.wrappedValue = ncxID
+        return true
     }
 
     /// Loads the given href relative to the location of the rootfile in the epub zip.
@@ -595,7 +517,98 @@ final class BookReaderState : WebViewState {
     }
 }
 
+// trim off any anchor elements of an href
+private func trimAnchor(_ href: String) -> String {
+    href.split(separator: "#").first?.description ?? href
+}
 
+extension EPUB {
+    /// Calculate the ajcacent visible section to the given href. It does this by scanning the spine for the given href, moving to the adjacent section, and then returns the ncxID of the resulting page.
+    /// - Parameters:
+    ///   - actualHref: <#actualHref description#>
+    ///   - adjacentOffset: <#adjacentOffset description#>
+    ///   - loadHref: <#loadHref description#>
+    /// - Returns: <#description#>
+    func navigateToSection(of href: String, offset adjacentOffset: Int, loadHref: (String) -> Bool) -> String? {
+        // when loading an adjacent selection, locate that NCX in the spine and then load the adjacent spine element; this is because the NXC doesn't necessarily list all the items in the book's manifest, just the TOC-worthy elements, so we need to use the spine as the authoritative ordering of the book's manifest elements
+
+        // find the item in the manifest basec on the context
+        let items: [(key: String, value: (href: String, type: String))] = opf.manifest.filter({ item in
+            // substring search since the NCX href might include a hash
+            trimAnchor(href) == trimAnchor(item.value.href)
+        })
+
+        dbg("found items for href:", href, items)
+        guard let item = items.first else {
+            dbg("no item id found for href:", href)
+            return nil
+        }
+
+        let spine = opf.spine
+        dbg("scanning for key:", item.key, "in:", spine.map(\.idref))
+
+        guard var index = spine.lastIndex(where: { $0.idref == item.key }) else {
+            dbg("no index found for itemid:", item.key)
+            return nil
+        }
+
+        if (index + adjacentOffset) < 0 || (index + adjacentOffset) >= spine.count {
+            dbg("offset at index:", index, "is at the edge of the spine bounds:", spine.count)
+            return nil
+        }
+
+        index += adjacentOffset
+        let targetSpine = spine[index]
+        dbg("moving to spine offset from index:", index, "for itemid:", item.key, targetSpine)
+
+        guard let targetItem = opf.manifest[targetSpine.idref] else {
+            dbg("no target item for spine:", targetSpine.idref)
+            return nil
+        }
+
+        dbg("loading ncx adjacentOffset:", adjacentOffset, "href:", targetItem.href)
+        if !loadHref(targetItem.href) {
+            dbg("unable to load adjacent href:", targetItem.href)
+            return nil
+        }
+
+        guard let ncx = ncx else {
+            dbg("no table of contents for href:", targetItem.href)
+            return nil
+        }
+
+        // a map of the trimmed NXC hrefs to the NCXIDs
+        let ncxHrefs = ncx.allPoints.map({
+            ($0.content.flatMap(trimAnchor), $0.id)
+        })
+            .dictionary(keyedBy: \.0)
+            .compactMapValues(\.1)
+
+        // map of spine IDs to the corresponding manifest href
+        let spineTOC: [(manifestID: String, href: String, ncxID: String?)] = spine.compactMap({
+            guard let href = opf.manifest[$0.idref]?.href else {
+                return nil
+            }
+            let baseHref = trimAnchor(href)
+            return ($0.idref, baseHref, ncxHrefs[baseHref])
+        })
+
+        // locate the first prior spine ID that has an NCX entry
+        guard let spineIndex = spineTOC.firstIndex(where: { $0.manifestID == targetSpine.idref }) else {
+            dbg("unable to locate spine index for spine ID:", targetSpine.idref)
+            return nil
+        }
+
+        guard let ownerTOCItem = spineTOC[0...spineIndex].reversed().first(where: {
+            $0.ncxID != nil
+        }) else {
+            dbg("unable to locate preceeding NCX entry from spine ID:", targetSpine.idref)
+            return nil
+        }
+
+        return ownerTOCItem.ncxID
+    }
+}
 
 // MARK: Parochial (package-local) Utilities
 

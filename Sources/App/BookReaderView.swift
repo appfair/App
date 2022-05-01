@@ -12,10 +12,8 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
+import FairKit
 import UniformTypeIdentifiers
-import WebKit
-
 
 struct BookReaderView : View {
     @ObservedObject var document: EPUBDocument
@@ -294,7 +292,7 @@ public struct EPUBView: View {
     }
 
     var pageIndices: [Int]? {
-        #if os(iOS)
+        #if os(iOS) // scrollView only available on iOS
         if let webView = bookReaderState.webView {
             let visibleWidth = webView.scrollView.visibleSize.width
             let totalWidth = webView.scrollView.contentSize.width
@@ -313,12 +311,8 @@ public struct EPUBView: View {
         Group {
             if let indices = pageIndices {
                 GeometryReader { proxy in
-                    HStack(spacing: indices.count > Int(proxy.size.width) / 4 ? 0.0 : 0.5) {
-                        ForEach(indices, id: \.self) { page in
-                            Rectangle()
-                                .fill(Double(page) / Double(indices.count - 1) < bookReaderState.progress ? Color.accentColor : Color.secondary)
-                        }
-                    }
+                    SectionProgressBars(indices: indices, progress: bookReaderState.progress, width: proxy.size.width)
+                        .equatable()
                 }
             } else {
                 Rectangle()
@@ -330,30 +324,58 @@ public struct EPUBView: View {
                     ], startPoint: .leading, endPoint: .trailing))
             }
         }
-        .frame(height: 3)
+        .frame(height: 5)
     }
 
     var controlOverlay: some View {
-        HStack {
+        VStack {
             Button {
-                changePage(by: -1)
+                Task { try? await bookReaderState.position(0.0) }
             } label: {
-                Text("Previous", bundle: .module, comment: "button text for previous page")
+                Text("Beginning of Section", bundle: .module, comment: "button text for jumping to the beginning of the section")
                     .label(image: FairSymbol.chevron_left_circle_fill)
             }
             .contentShape(Rectangle().inset(by: -200))
-            .keyboardShortcut(.leftArrow, modifiers: [])
+            .keyboardShortcut(.home, modifiers: [])
 
-            Spacer()
+            HStack {
+                Button {
+                    changePage(by: -1)
+                } label: {
+                    Text("Previous", bundle: .module, comment: "button text for previous page")
+                        .label(image: FairSymbol.chevron_left_circle_fill)
+                }
+                .contentShape(Rectangle().inset(by: -200))
+                .keyboardShortcut(.leftArrow, modifiers: [])
+
+                Spacer()
+
+                let nextButton = Button {
+                    changePage(by: +1)
+                } label: {
+                    Text("Next", bundle: .module, comment: "button text for next page")
+                        .label(image: FairSymbol.chevron_right_circle_fill)
+                }
+                .contentShape(Rectangle().inset(by: -200))
+
+                ZStack {
+                    // since a single button cannot receive multiple keyboard shortcuts, use a stack of the same button
+                    nextButton
+                        .keyboardShortcut(.rightArrow, modifiers: [])
+                    nextButton
+                        .keyboardShortcut(.space, modifiers: [])
+                }
+            }
 
             Button {
-                changePage(by: +1)
+                Task { try? await bookReaderState.position(1.0) }
             } label: {
-                Text("Next", bundle: .module, comment: "button text for next page")
-                    .label(image: FairSymbol.chevron_right_circle_fill)
+                Text("End of Section", bundle: .module, comment: "button text for jumping to the end of the section")
+                    .label(image: FairSymbol.chevron_left_circle_fill)
             }
             .contentShape(Rectangle().inset(by: -200))
-            .keyboardShortcut(.rightArrow, modifiers: [])
+            .keyboardShortcut(.end, modifiers: [])
+
         }
         .labelStyle(.iconOnly)
         .foregroundStyle(Color.accentColor)
@@ -427,6 +449,23 @@ public struct EPUBView: View {
 
     public func webViewBody() -> some View {
         WebView(state: bookReaderState)
+    }
+}
+
+/// Evenly spaced bars representing individual pages in a section.
+struct SectionProgressBars : View, Equatable {
+    let indices: [Int]
+    let progress: Double
+    let width: Double
+
+    var body: some View {
+        HStack(spacing: indices.count > Int(width) / 4 ? 0.0 : 0.5) {
+            ForEach(indices, id: \.self) { page in
+                Rectangle()
+                    .fill(Double(page) / Double(indices.count - 1) < progress ? Color.accentColor : Color.secondary)
+            }
+        }
+        .drawingGroup()
     }
 }
 
