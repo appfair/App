@@ -1,5 +1,4 @@
-import FairApp
-import SwiftUI
+import FairKit
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {

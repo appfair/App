@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 
 /// List version of the `AppsTableView` for list browsing mode.
 @available(macOS 12.0, iOS 15.0, *)

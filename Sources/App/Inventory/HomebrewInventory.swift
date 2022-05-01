@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 import Foundation
 import TabularData
 

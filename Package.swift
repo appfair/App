@@ -19,11 +19,8 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
-        ], resources: [.process("Resources"), .copy("Bundle")],
-        swiftSettings:
-            []
-            //runningInXcode ? [ .define("CASK_SUPPORT") ] : []
-        ),
+            .product(name: "FairKit", package: "Fair"),
+        ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )

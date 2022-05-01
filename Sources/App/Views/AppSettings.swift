@@ -1,5 +1,4 @@
-import FairApp
-import SwiftUI
+import FairKit
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView: View {

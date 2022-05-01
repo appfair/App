@@ -12,8 +12,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
-import SwiftUI
+import FairKit
 
 /// A capsule-shaped button for an action that dislays progress in the background of the button.
 struct ActionButtonStyle: ButtonStyle {

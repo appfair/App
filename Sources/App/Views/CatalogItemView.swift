@@ -12,8 +12,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
-import SwiftUI
+import FairKit
 import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)

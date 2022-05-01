@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 
 #if os(macOS)
 

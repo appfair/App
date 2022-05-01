@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 
 /// An image that tried to load the favicon for a given page
 public struct FaviconImage<V: View> : View {

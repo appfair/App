@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 
 /// The `AppCatalog` defined non-generic metadata for a catalog
 protocol AppCatalog {
