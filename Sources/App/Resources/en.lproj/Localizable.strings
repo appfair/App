@@ -24,7 +24,7 @@
 "%@: %@" = "%1$@: %2$@";
 
 /* No comment provided by engineer. */
-"(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)" = "(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)";
+"(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)" = "(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)";
 
 /* app entitlement info for temporary-exception.iokit-user-client-class */
 "Ability to specify additional IOUserClient subclasses." = "Ability to specify additional IOUserClient subclasses.";

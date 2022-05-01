@@ -508,10 +508,10 @@ struct CatalogItemView: View {
                     Spacer()
 
 
-                    Text("(if you own this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and metadata)")
+                    Text("(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)")
                         .font(Font.caption)
                         .lineLimit(1)
-                        .help(Text("Click here for information on customizing screenshots and metadata for this app."))
+                        .help(Text("Click here for information on customizing screenshots and other metadata for this app."))
 
                 }
                 .foregroundColor(.secondary)
