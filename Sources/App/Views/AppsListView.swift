@@ -276,7 +276,7 @@ struct AppItemLabel : View {
                 HStack {
                     if let category = item.displayCategories.first {
                         // category.tintedLabel
-                        TintedLabel(title: category.text, systemName: category.symbol.symbolName, tint: item.catalogMetadata.itemTintColor(), mode: .hierarchical)
+                        TintedLabel(title: category.text, symbol: category.symbol, tint: item.catalogMetadata.itemTintColor(), mode: .hierarchical)
                             .symbolVariant(.fill)
                             .labelStyle(.iconOnly)
                             .help(category.text)

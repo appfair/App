@@ -173,7 +173,7 @@ struct SimpleTableView : View {
 }
 #endif
 
-/// The current selected instance, which can either be a release or a workflow run
+/// The current selected instance
 @available(macOS 12.0, iOS 15.0, *)
 enum Selection {
     case app(AppInfo)
@@ -480,26 +480,26 @@ enum SidebarItem : Hashable {
         case .fairapps:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), systemName: AppSource.fairapps.symbol.symbolName, tint: Color.accentColor, mode: .multicolor)
+                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: Color.accentColor, mode: .multicolor)
             case .recent:
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.clock_fill.symbolName, tint: Color.yellow, mode: .multicolor)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: Color.yellow, mode: .multicolor)
             case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.externaldrive_fill.symbolName, tint: Color.orange, mode: .multicolor)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: Color.orange, mode: .multicolor)
             case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), systemName: FairSymbol.arrow_down_app_fill.symbolName, tint: Color.green, mode: .multicolor)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: Color.green, mode: .multicolor)
             case .category(let category):
                 return category.tintedLabel
             }
         case .homebrew:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), systemName: AppSource.homebrew.symbol.symbolName, tint: Color.yellow, mode: .hierarchical)
+                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: Color.yellow, mode: .hierarchical)
             case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.internaldrive.symbolName, tint: Color.orange, mode: .hierarchical)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: Color.orange, mode: .hierarchical)
             case .recent: // not supported with casks
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.clock.symbolName, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: Color.green, mode: .hierarchical)
             case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), systemName: FairSymbol.arrow_down_app.symbolName, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: Color.green, mode: .hierarchical)
             case .category(let category):
                 return category.tintedLabel
             }
@@ -666,7 +666,7 @@ struct NavigationRootView : View {
             AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
             #endif
         } content: {
-            AppDetailView()
+            AppDetailView(sidebarSelection: sidebarSelection)
         }
         // warning: this spikes CPU usage when idle
 //        .focusedSceneValue(\.reloadCommand, .constant({
@@ -687,7 +687,7 @@ public struct AppTableDetailSplitView : View {
         VSplitView {
             AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
                 .frame(minHeight: 150)
-            AppDetailView()
+            AppDetailView(sidebarSelection: sidebarSelection)
                 .layoutPriority(1.0)
         }
     }
@@ -695,8 +695,15 @@ public struct AppTableDetailSplitView : View {
 #endif
 
 
+extension SidebarSelection {
+    var sourceLabel: TintedLabel {
+        self.item.label(for: self.source)
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
+    let sidebarSelection: SidebarSelection?
     @FocusedBinding(\.selection) private var selection: Selection??
 
     public var body: some View {
@@ -704,10 +711,10 @@ public struct AppDetailView : View {
             switch selection {
             case .app(let app):
                 CatalogItemView(info: app)
-            case .none:
-                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder").font(.title)
-            case .some(.none):
-                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder").font(.title)
+            case .some(.none), .none:
+                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
+                    .label(image: sidebarSelection?.sourceLabel.symbol.image)
+                    .font(.largeTitle)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -719,7 +726,7 @@ public struct AppDetailView : View {
 public struct TintedLabel : View {
     @Environment(\.colorScheme) var colorScheme
     public var title: Text
-    public let systemName: String
+    public let symbol: FairSymbol
     public var tint: Color? = nil
     public var mode: SymbolRenderingMode? = nil
 
@@ -727,15 +734,15 @@ public struct TintedLabel : View {
         Label(title: { title }) {
             if let tint = tint {
                 if let mode = mode {
-                    Image(systemName: systemName.description)
+                    symbol.image
                         .symbolRenderingMode(mode)
                         .foregroundStyle(tint)
                 } else {
-                    Image(systemName: systemName.description)
+                    symbol.image
                         .fairTint(simple: false, color: tint, scheme: colorScheme)
                 }
             } else {
-                Image(systemName: systemName.description)
+                symbol.image
             }
         }
     }
@@ -1039,7 +1046,7 @@ public extension AppCategory {
     }
 
     var tintedLabel: TintedLabel {
-        TintedLabel(title: text, systemName: symbol.symbolName, tint: tint)
+        TintedLabel(title: text, symbol: symbol, tint: tint)
     }
 }
 
