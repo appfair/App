@@ -124,7 +124,6 @@ struct BookReaderView : View {
                 bookReaderState.loadSelection($section, position: 0.0, in: document)
             }
             .onChange(of: bookReaderState.progress) { progress in
-                dbg("progress:", percent(progress))
                 // remember the current progress in the section
                 document.sectionProgress = progress
             }
@@ -292,18 +291,27 @@ public struct EPUBView: View {
     }
 
     var pageIndices: [Int]? {
-        #if os(iOS) // scrollView only available on iOS
         if let webView = bookReaderState.webView {
-            let visibleWidth = webView.scrollView.visibleSize.width
-            let totalWidth = webView.scrollView.contentSize.width
+            let visibleWidth = webView.bounds.width
+            let totalWidth = bookReaderState.sectionWidth
             if totalWidth > visibleWidth {
                 let count = Int(totalWidth / visibleWidth)
                 if count > 0 {
                     return Array(-1..<count)
                 }
             }
+
+//#if os(iOS) // scrollView only available on iOS
+//            let visibleWidth = webView.scrollView.visibleSize.width
+//            let totalWidth = webView.scrollView.contentSize.width
+//            if totalWidth > visibleWidth {
+//                let count = Int(totalWidth / visibleWidth)
+//                if count > 0 {
+//                    return Array(-1..<count)
+//                }
+//            }
+//#endif
         }
-        #endif
         return nil
     }
 

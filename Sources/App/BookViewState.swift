@@ -34,6 +34,9 @@ final class BookReaderState : WebViewState {
     /// The percentage progress in the current section
     @Published var progress: Double = 0.0
 
+    /// The total width in the section
+    @Published var sectionWidth: Double = 0.0
+
     @Published var showTOCSidebar = false
 
     /// The target position to jump to once the book has loaded
@@ -71,10 +74,9 @@ final class BookReaderState : WebViewState {
             }
         }
     }
-
     #endif
 
-    override func createWebView() -> WKWebView {
+    override func createWebView() -> WebEngineView {
         let webView = super.createWebView()
         #if os(iOS)
         let scrollView = webView.scrollView
@@ -283,6 +285,8 @@ final class BookReaderState : WebViewState {
 
             bs.overflowWrap = 'break-word';
             bs.hyphens = 'auto';
+            // webkitHyphens is also needed or else pages won't hyphenate
+            bs.webkitHyphens = 'auto';
 
             //bs.display = 'flex';
             //bs.flexDirection = 'column';
@@ -305,14 +309,16 @@ final class BookReaderState : WebViewState {
 
                 window.scrollTo({ 'left': pos, 'behavior': smooth == true ? 'smooth' : 'instant' });
 
+                var p = 0.0;
                 if (pos < 0.0) {
-                    return -1; // less than one indicates before beginning
+                    p = -1; // less than one indicates before beginning
                 } else if (pos > (totalWidth - (screenWidth / 2.0))) {
-                    return 1.1; // more than one indicates past end
+                    p = 1.1; // more than one indicates past end
                 } else {
-                    // return position(); // won't work with smooth scrolling
-                    return Math.max(0.0, Math.min(1.0, pos / totalWidth));
+                    p = Math.max(0.0, Math.min(1.0, pos / totalWidth));
                 }
+
+                return { "pos": p, "x": window.scrollX, "y": window.scrollY, "width": document.documentElement.scrollWidth, "height": document.documentElement.scrollHeight }
             };
 
             // with no argument, returns the current scroll position;
@@ -322,14 +328,9 @@ final class BookReaderState : WebViewState {
                 if (typeof amount !== 'undefined') {
                     let pos = document.documentElement.scrollWidth * amount;
                     window.scrollTo({ 'left': pos, 'behavior': 'instant' });
-                    movePage(0, false); // snap to nearest page
+                    return movePage(0, false); // snap to nearest page
                 }
-                // always return the resulting position
-                let width = document.documentElement.scrollWidth
-                if (typeof width !== 'number' || width <= 0) {
-                    return 0.0;
-                }
-                return Math.max(0.0, Math.min(1.0, window.scrollX / width));
+                return { }
             };
 
             // Scales the body font size by the given amount, returning the current scale
@@ -374,14 +375,24 @@ final class BookReaderState : WebViewState {
             throw AppError("No book render host installed")
         }
 
-        let result = try await webView.evalJS("movePage(\(amount), \(smooth ?? smoothScrolling))")
+        return handleNavigation(try await webView.evalJS("movePage(\(amount), \(smooth ?? smoothScrolling))"))
+    }
+
+    func handleNavigation(_ result: Any) -> Double? {
         dbg("result:", result)
-        if let navigation = result as? Double {
-            self.progress = navigation > 1.0 ? 0.0 : navigation
-            return navigation
-        } else {
-            return nil
+        if let navigation = result as? NSDictionary {
+            if let pos = navigation["pos"] as? Double,
+               //let x = navigation["x"] as? Double,
+               let width = navigation["width"] as? Double {
+                //let prog = width * pos
+                self.sectionWidth = width
+                self.progress = pos > 1.0 ? 0.0 : pos
+                dbg("set progress to:", self.progress)
+                return pos
+            }
         }
+
+        return nil
     }
 
     /// Sets the position in the current section to the given value
@@ -392,14 +403,7 @@ final class BookReaderState : WebViewState {
             throw AppError("No book render host installed")
         }
 
-        let result = try await webView.evalJS("position(\(target?.description ?? ""))")
-        dbg("position:", percent(result as? Double))
-        if let navigation = result as? Double {
-            self.progress = navigation > 1.0 ? 0.0 : navigation
-            return navigation
-        } else {
-            return nil
-        }
+        return handleNavigation(try await webView.evalJS("position(\(target?.description ?? ""))"))
     }
 
     func textScaleAction(brief: Bool = false, amount: Double?, minimumZoomLevel: Double = 0.05, maximumZoomLevel: Double = 100.0) -> some View {
@@ -545,7 +549,7 @@ extension EPUB {
         }
 
         let spine = opf.spine
-        dbg("scanning for key:", item.key, "in:", spine.map(\.idref))
+        //dbg("scanning for key:", item.key, "in:", spine.map(\.idref))
 
         guard var index = spine.lastIndex(where: { $0.idref == item.key }) else {
             dbg("no index found for itemid:", item.key)
