@@ -201,26 +201,41 @@ struct HomebrewSettingsView: View {
                                 .help(Text("Browse the Homebrew installation folder using the Finder", bundle: .module, comment: "homebrew preference button tooltip"))
 
                             #if DEBUG
-                            Text(isBrewInstalled ? "Reset Homebrew" : "Setup Homebrew")
-                                .button {
-                                    homebrewOperationInProgress = true
-                                    do {
-                                        if isBrewInstalled {
+
+                            if isBrewInstalled {
+                                Text("Reset Homebrew", bundle: .module, comment: "button text on Homebrew preferences for resetting the Homebrew installation")
+                                    .button {
+                                        homebrewOperationInProgress = true
+                                        do {
                                             try await homeBrewInv.uninstallHomebrew()
                                             dbg("caskManager.uninstallHomebrew success")
-                                        } else {
+                                            self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
+                                        } catch {
+                                            self.fairManager.fairAppInv.reportError(error)
+                                        }
+                                        self.homebrewOperationInProgress = false
+                                    }
+                                    .disabled(self.homebrewOperationInProgress)
+                                    .help(Text("This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards.", bundle: .module, comment: "tooltip text for button to uninstall homebrew on brew preferences panel"))
+                                    .padding()
+                            } else {
+                                Text("Setup Homebrew", bundle: .module, comment: "button text on Homebrew preferences for installing Homebrew")
+                                    .button {
+                                        homebrewOperationInProgress = true
+                                        do {
                                             try await homeBrewInv.installHomebrew(retainCasks: false)
                                             dbg("caskManager.installHomebrew success")
+                                            self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
+                                        } catch {
+                                            self.fairManager.fairAppInv.reportError(error)
                                         }
-                                        self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
-                                    } catch {
-                                        self.fairManager.fairAppInv.reportError(error)
+                                        self.homebrewOperationInProgress = false
                                     }
-                                    self.homebrewOperationInProgress = false
-                                }
-                                .disabled(self.homebrewOperationInProgress)
-                                .help(isBrewInstalled ? "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards." : "Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system.")
-                                .padding()
+                                    .disabled(self.homebrewOperationInProgress)
+                                    .help(Text("Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system.", bundle: .module, comment: "tooltip text for button to install homebrew on brew preferences panel"))
+                                    .padding()
+
+                            }
                             #endif
                         }
                     }
@@ -377,53 +392,66 @@ struct AdvancedSettingsView: View {
     var body: some View {
         VStack {
             Form {
-                Toggle(isOn: $fairAppInv.relaunchUpdatedApps) {
-                    Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
-                }
-                    .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
+                Group {
+                    Toggle(isOn: $fairAppInv.relaunchUpdatedApps) {
+                        Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
+                    }
+                        .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
 
-                Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
-                    Text("Keep catalog app up to date", bundle: .module, comment: "preference checkbox")
-                }
-                .help(Text("Automatically download and apply updates to the App Fair catalog browser app.", bundle: .module, comment: "preference checkbox tooltip"))
-                .toggleStyle(.checkbox)
+                    Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
+                        Text("Keep catalog app up to date", bundle: .module, comment: "preference checkbox")
+                    }
+                    .help(Text("Automatically download and apply updates to the App Fair catalog browser app.", bundle: .module, comment: "preference checkbox tooltip"))
+                    .toggleStyle(.checkbox)
 
-                Toggle(isOn: $fairManager.enableInstallWarning) {
-                    Text("Require app install confirmation", bundle: .module, comment: "preference checkbox")
-                }
-                .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
-                .toggleStyle(.checkbox)
+                    Toggle(isOn: $fairManager.enableInstallWarning) {
+                        Text("Require app install confirmation", bundle: .module, comment: "preference checkbox")
+                    }
+                    .help(Text("Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
+                    .toggleStyle(.checkbox)
 
-                Toggle(isOn: $fairManager.enableDeleteWarning) {
-                    Text("Require app delete confirmation", bundle: .module, comment: "preference checkbox")
+                    Toggle(isOn: $fairManager.enableDeleteWarning) {
+                        Text("Require app delete confirmation", bundle: .module, comment: "preference checkbox")
+                    }
+                    .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
+                    .toggleStyle(.checkbox)
                 }
-                .help(Text("Deleting an app will present a confirmation alert to the user. If disabled, apps will be deleted without confirmation.", bundle: .module, comment: "preference checkbox tooltip"))
-                .toggleStyle(.checkbox)
 
                 Divider()
 
+                Text("Clear caches", bundle: .module, comment: "button label for option to clear local cache data in the app settings")
+                    .button {
+                        URLCache.shared.removeAllCachedResponses()
+                    }
+                    .help(Text("Purges the local cache of icons and app descriptions", bundle: .module, comment: "button help text for option to clear local cache data in the app settings"))
 
-                Divider().padding()
+                Group {
+                    HStack {
+                        TextField(text: fairManager.$hubProvider) {
+                            Text("Hub Host", bundle: .module, comment: "advanced preference text field label for the GitHub host")
+                        }
+                        checkButton(fairManager.hubProvider)
+                    }
+                    HStack {
+                        TextField(text: fairManager.$hubOrg) {
+                            Text("Organization", bundle: .module, comment: "advanced preference text field label for the GitHub organization")
+                        }
+                        checkButton(fairManager.hubProvider, fairManager.hubOrg)
+                    }
+                    HStack {
+                        TextField(text: fairManager.$hubRepo) {
+                            Text("Repository", bundle: .module, comment: "advanced preference text field label for the GitHub repository")
+                        }
+                        checkButton(fairManager.hubProvider, fairManager.hubOrg, fairManager.hubRepo)
+                    }
+    //                HStack {
+    //                    SecureField("Token", text: fairManager.$hubToken)
+    //                }
+    //
+    //                Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
 
-                HStack {
-                    TextField("Hub Host", text: fairManager.$hubProvider)
-                    checkButton(fairManager.hubProvider)
+                    HelpButton(url: "https://github.com/settings/tokens")
                 }
-                HStack {
-                    TextField("Organization", text: fairManager.$hubOrg)
-                    checkButton(fairManager.hubProvider, fairManager.hubOrg)
-                }
-                HStack {
-                    TextField("Repository", text: fairManager.$hubRepo)
-                    checkButton(fairManager.hubProvider, fairManager.hubOrg, fairManager.hubRepo)
-                }
-//                HStack {
-//                    SecureField("Token", text: fairManager.$hubToken)
-//                }
-//
-//                Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
-
-                HelpButton(url: "https://github.com/settings/tokens")
             }
             .padding(20)
         }

@@ -724,8 +724,8 @@ extension FairAppInventory {
         .count
     }
 
-    func appInstalled(item: AppCatalogItem) -> Bool {
-        installedInfo(for: item.bundleIdentifier) != nil
+    func appInstalled(item: AppCatalogItem) -> String? {
+        installedInfo(for: item.bundleIdentifier)?.versionString
     }
 
     func appUpdated(item: AppCatalogItem) -> Bool {
@@ -753,7 +753,7 @@ extension FairAppInventory {
         case .updated:
             return appUpdated(item: item)
         case .installed:
-            return appInstalled(item: item)
+            return appInstalled(item: item) != nil
         case .recent:
             return isRecentlyUpdated(item: item)
         case .category(let category):

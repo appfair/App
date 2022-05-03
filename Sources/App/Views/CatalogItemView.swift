@@ -212,7 +212,9 @@ struct CatalogItemView: View {
         if homeBrewInv.manageCaskDownloads == true {
             do {
                 dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
-                let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .reloadRevalidatingCacheData)
+
+                let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .returnCacheDataElseLoad)
+                
                 // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
                 withAnimation {
                     self.caskURLFileSize = head.expectedContentLength
@@ -507,10 +509,10 @@ struct CatalogItemView: View {
                     Spacer()
 
 
-                    Text("(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)")
+                    Text("(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)", bundle: .module, comment: "footer markdown text of screenshots page indicating how to update catalog metadata")
                         .font(Font.caption)
                         .lineLimit(1)
-                        .help(Text("Click here for information on customizing screenshots and other metadata for this app."))
+                        .help(Text("Click here for information on customizing screenshots and other metadata for this app.", bundle: .module, comment: "tooltip text for footer of screenshots page indicating how to update catalog metadata"))
 
                 }
                 .foregroundColor(.secondary)
@@ -922,14 +924,13 @@ struct CatalogItemView: View {
         info.catalogMetadata
     }
 
-
     /// Whether the app is successfully installed
     var appInstalled: Bool {
         // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
         if info.isCask {
-            return homeBrewInv.appInstalled(item: info)
+            return homeBrewInv.appInstalled(item: info) != nil
         } else {
-            return fairAppInv.appInstalled(item: info.catalogMetadata)
+            return fairAppInv.appInstalled(item: info.catalogMetadata) != nil
         }
 
         // return appPropertyList?.successValue?.bundleID == info.id.rawValue
@@ -1452,7 +1453,7 @@ struct CaskFormulaBox : View {
     }
 }
 
-private extension CatalogActivity {
+extension CatalogActivity {
     var info: (title: Text, systemSymbol: FairSymbol, tintColor: Color?, toolTip: Text) {
         switch self {
         case .install:
@@ -1464,21 +1465,10 @@ private extension CatalogActivity {
         case .reveal:
             return (Text("Reveal", bundle: .module, comment: "catalog entry button title for reveal action"), .doc_viewfinder_fill, Color.indigo, Text("Displays the app install location in the Finder.", bundle: .module, comment: "catalog entry button tooltip for reveal action"))
         case .launch:
-            return (Text("Launch", bundle: .module, comment: "catalog entry button title for launch action"), .checkmark_seal_fill, Color.green, Text("Launches the app.", bundle: .module, comment: "catalog entry button tooltip for launch action"))
+            return (Text("Launch", bundle: .module, comment: "catalog entry button title for launch action"), .checkmark_seal, Color.green, Text("Launches the app.", bundle: .module, comment: "catalog entry button tooltip for launch action"))
         }
     }
 }
-
-///// Internal cache to prevent icons from needing to reload so much
-//private let iconCache = NSCache<NSURL, ImageInfo>()
-//
-//private final class ImageInfo {
-//    let image: SwiftUI.Image
-//
-//    init(image: SwiftUI.Image) {
-//        self.image = image
-//    }
-//}
 
 extension AppCatalogItem {
     @ViewBuilder func iconImage() -> some View {
@@ -1487,10 +1477,12 @@ extension AppCatalogItem {
                 switch phase {
                 case .success(let image):
                     //let _ = iconCache.setObject(ImageInfo(image: image), forKey: iconURL as NSURL)
+                    //let _ = dbg("success image for:", self.name, image)
                     image
-                        .resizable(resizingMode: .stretch)
+                        .resizable()
                         .aspectRatio(contentMode: .fit)
                 case .failure(let error):
+                    let _ = dbg("error image for:", self.name, error)
                     if !error.isURLCancelledError { // happens when items are scrolled off the screen
                         let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
                     }
@@ -1498,6 +1490,7 @@ extension AppCatalogItem {
                         .grayscale(0.9)
                         .help(error.localizedDescription)
                 case .empty:
+                    let _ = dbg("empty image for:", self.name)
 //                    if let image = iconCache.object(forKey: iconURL as NSURL) {
 //                        image.image
 //                            .resizable(resizingMode: .stretch)

@@ -250,9 +250,19 @@ struct AppSectionItems : View {
 struct AppItemLabel : View {
     let item: AppInfo
     @EnvironmentObject var fairManager: FairManager
+    @EnvironmentObject var fairAppInv: FairAppInventory
+    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     var body: some View {
         label(for: item)
+    }
+
+    var installedVersion: String? {
+        if item.isCask {
+            return homeBrewInv.appInstalled(item: item)
+        } else {
+            return fairAppInv.appInstalled(item: item.catalogMetadata)
+        }
     }
 
     private func label(for item: AppInfo) -> some View {
@@ -273,19 +283,11 @@ struct AppItemLabel : View {
                 Text(verbatim: item.catalogMetadata.name)
                     .font(.headline)
                     .lineLimit(1)
-                HStack {
-                    if let category = item.displayCategories.first {
-                        // category.tintedLabel
-                        TintedLabel(title: category.text, symbol: category.symbol, tint: item.catalogMetadata.itemTintColor(), mode: .hierarchical)
-                            .symbolVariant(.fill)
-                            .labelStyle(.iconOnly)
-                            .help(category.text)
-                            .frame(width: 20)
-                    }
-                    Text(verbatim: item.catalogMetadata.subtitle ?? "")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                }
+                TintedLabel(title: Text(item.catalogMetadata.subtitle ?? item.catalogMetadata.name), symbol: (item.displayCategories.first ?? .utilities).symbol, tint: item.catalogMetadata.itemTintColor(), mode: .hierarchical)
+                    .font(.subheadline)
+                    .lineLimit(1)
+                    .symbolVariant(.fill)
+                //.help(category.text)
                 HStack {
                     if item.catalogMetadata.permissions != nil {
                         item.catalogMetadata.riskLevel.riskLabel()
@@ -294,11 +296,29 @@ struct AppItemLabel : View {
                             .frame(width: 20)
                     }
 
-                    Text(verbatim: item.catalogMetadata.version ?? "")
-                        .font(.subheadline)
+
+                    if let catalogVersion = item.catalogMetadata.version {
+                        Label {
+                            Text(verbatim: catalogVersion)
+                                .font(.subheadline)
+                        } icon: {
+                            if let installedVersion = self.installedVersion {
+                                if installedVersion == catalogVersion {
+                                    CatalogActivity.launch.info.systemSymbol
+                                        .foregroundStyle(CatalogActivity.launch.info.tintColor ?? .accentColor) // same as launchButton()
+                                        .help(Text("The latest version of this app is installed", bundle: .module, comment: "tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version"))
+                                } else {
+                                    CatalogActivity.update.info.systemSymbol
+                                        .foregroundStyle(CatalogActivity.update.info.tintColor ?? .accentColor) // same as updateButton()
+                                        .help(Text("An update to this app is available", bundle: .module, comment: "tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available"))
+                                }
+                            }
+                        }
+                    }
 
                     if let versionDate = item.catalogMetadata.versionDate {
                         Text(versionDate, format: .relative(presentation: .numeric, unitsStyle: .narrow))
+                            .font(.subheadline)
                     }
 
                 }

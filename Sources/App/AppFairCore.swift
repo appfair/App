@@ -1,4 +1,5 @@
 import FairKit
+import Combine
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
@@ -474,33 +475,33 @@ enum SidebarItem : Hashable {
         }
     }
 
-    func label(for source: AppSource) -> TintedLabel {
+    func label(for source: AppSource, monochrome: Bool) -> TintedLabel {
         switch source {
         case .fairapps:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: Color.accentColor, mode: .multicolor)
+                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
             case .recent:
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: Color.yellow, mode: .multicolor)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .multicolor)
             case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: Color.orange, mode: .multicolor)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .multicolor)
             case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: Color.green, mode: .multicolor)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .multicolor)
             case .category(let category):
-                return category.tintedLabel
+                return category.tintedLabel(monochrome: monochrome)
             }
         case .homebrew:
             switch self {
             case .top:
-                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: Color.yellow, mode: .hierarchical)
+                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
             case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: Color.orange, mode: .hierarchical)
+                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
             case .recent: // not supported with casks
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
             case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: Color.green, mode: .hierarchical)
+                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
             case .category(let category):
-                return category.tintedLabel
+                return category.tintedLabel(monochrome: monochrome)
             }
         }
 
@@ -536,6 +537,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
+    /// The current selection in the sidebar, defaulting to the `top` item of the initial `AppSource`.
     @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
     //@State var sidebarSelection: SidebarSelection? = wip(SidebarSelection(source: AppSource.fairapps, item: .installed))
 
@@ -651,18 +653,26 @@ struct NavigationRootView : View {
     }
 
     /// The currently selected source for the sidebar
-    var sidebarSource: AppSource {
-        return sidebarSelection?.source ?? .fairapps
+    var sidebarSource: AppSource? {
+        return sidebarSelection?.source
     }
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
             SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: $sidebarSelection, displayMode: $displayMode, searchText: $searchText)
         } list: {
-            AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
+            if let sidebarSource = sidebarSource {
+                AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
+            } else {
+                EmptyView() // TODO: better placeholder view for un-selected sidebar item
+            }
         } table: {
             #if os(macOS)
-            AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
+            if let sidebarSource = sidebarSource {
+                AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
+            } else {
+                EmptyView()
+            }
             #endif
         } content: {
             AppDetailView(sidebarSelection: sidebarSelection)
@@ -695,8 +705,8 @@ public struct AppTableDetailSplitView : View {
 
 
 extension SidebarSelection {
-    var sourceLabel: TintedLabel {
-        self.item.label(for: self.source)
+    func sourceLabel(monochrome: Bool) -> TintedLabel {
+        self.item.label(for: self.source, monochrome: monochrome)
     }
 }
 
@@ -711,12 +721,42 @@ public struct AppDetailView : View {
             case .app(let app):
                 CatalogItemView(info: app)
             case .some(.none), .none:
-                Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
-                    .label(image: sidebarSelection?.sourceLabel.symbol.image)
-                    .font(.largeTitle)
+                if let sidebarSelection = sidebarSelection {
+                    // placeholderView(for: sidebarSelection) // TODO
+                    sidebarSelection.sourceLabel(monochrome: true)
+                        .font(.title)
+                } else {
+                    Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
+                        .font(.largeTitle)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder func placeholderView(for selection: SidebarSelection) -> some View {
+        let color = selection.sourceLabel(monochrome: false).tint ?? .accentColor
+
+        VStack(spacing: 0) {
+            ZStack {
+                selection.sourceLabel(monochrome: true)
+                    .foregroundColor(Color.primary)
+                    .font(.largeTitle)
+                LinearGradient(colors: [
+                    color.opacity(0.5),
+                    color.opacity(0.2),
+                ], startPoint: .top, endPoint: .bottom)
+            }
+            .frame(height: 60)
+
+            Divider()
+
+            Spacer()
+        }
+//                    Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
+//                        .label(image: sidebarSelection?.sourceLabel.symbol.image)
+//                        .font(.largeTitle)
+
     }
 }
 
@@ -727,7 +767,7 @@ public struct TintedLabel : View {
     public var title: Text
     public let symbol: FairSymbol
     public var tint: Color? = nil
-    public var mode: SymbolRenderingMode? = nil
+    public var mode: SymbolRenderingMode?
 
     public var body: some View {
         Label(title: { title }) {
@@ -784,6 +824,8 @@ extension SwiftUI.Color {
 }
 
 public extension AppCategory {
+    /// The description of an app category.
+    /// TODO: add in an extended description tuple
     @available(macOS 12.0, iOS 15.0, *)
     var text: Text {
         switch self {
@@ -1044,8 +1086,8 @@ public extension AppCategory {
         }
     }
 
-    var tintedLabel: TintedLabel {
-        TintedLabel(title: text, symbol: symbol, tint: tint)
+    func tintedLabel(monochrome: Bool) -> TintedLabel {
+        TintedLabel(title: text, symbol: symbol, tint: monochrome ? nil : tint, mode: monochrome ? .monochrome : nil)
     }
 }
 
@@ -1133,10 +1175,10 @@ struct SidebarView: View {
         //.symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
         .toolbar(id: "SidebarView") {
-            tool(.top)
-            tool(.recent)
-            tool(.updated)
-            tool(.installed)
+            tool(source: .fairapps, .top)
+            tool(source: .fairapps, .recent)
+            tool(source: .fairapps, .updated)
+            tool(source: .fairapps, .installed)
 
 //            tool(.category(.entertain))
 //            tool(.category(.research))
@@ -1168,7 +1210,7 @@ struct SidebarView: View {
 
     func item(_ source: AppSource, item: SidebarItem) -> some View {
         let selection = SidebarSelection(source: source, item: item)
-        let label = selection.item.label(for: source)
+        let label = selection.item.label(for: source, monochrome: false)
         var navtitle = label.title
         if !searchText.isEmpty {
             navtitle = Text("\(navtitle): \(Text(searchText))", bundle: .module, comment: "formatting string separating navigation title from search text")
@@ -1201,12 +1243,12 @@ struct SidebarView: View {
         }
     }
 
-    func tool(source: AppSource = .fairapps, _ item: SidebarItem) -> some CustomizableToolbarContent {
+    func tool(source: AppSource, _ item: SidebarItem) -> some CustomizableToolbarContent {
         ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
             }, label: {
-                item.label(for: source)
+                item.label(for: source, monochrome: false)
                     //.symbolVariant(.fill)
 //                    .symbolRenderingMode(.multicolor)
             })
@@ -1291,6 +1333,7 @@ internal func wip<T>(_ value: T) -> T { value }
 
 /// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
 /// Otherwise it will default to the main bundle's strings, which is always empty.
+@available(*, deprecated, message: "use bundle: .module, comment: arguments literally")
 @usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
     SwiftUI.Text(string, bundle: .module, comment: comment)
 }

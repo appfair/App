@@ -1141,8 +1141,8 @@ extension HomebrewInventory {
         appCategories[category] ?? []
     }
 
-    func appInstalled(item: AppInfo) -> Bool {
-        installedCasks[item.id.rawValue]?.isEmpty == false
+    func appInstalled(item: AppInfo) -> String? {
+        installedCasks[item.id.rawValue]?.max() // max isn't the right thing to do here (since 1.10 < 1.90), but we want a consistent result
     }
 
     func appUpdated(item: AppInfo) -> Bool {
@@ -1320,7 +1320,7 @@ struct CaskItem : Equatable, Decodable {
     let appcast: String?
 
     /// E.g., `5.8.3.2240`
-    let installed: String? // always nil whe taked from API
+    let installed: String? // always nil when taken from API
 
     // TODO
     // let versions": {},

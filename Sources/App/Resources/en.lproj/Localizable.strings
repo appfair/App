@@ -23,7 +23,7 @@
    formatting string separating navigation title from search text */
 "%@: %@" = "%1$@: %2$@";
 
-/* No comment provided by engineer. */
+/* footer markdown text of screenshots page indicating how to update catalog metadata */
 "(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)" = "(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)";
 
 /* app entitlement info for temporary-exception.iokit-user-client-class */
@@ -94,6 +94,9 @@
 
 /* tooltip help text for homebrew preference */
 "Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched." = "Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched.";
+
+/* tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available */
+"An update to this app is available" = "An update to this app is available";
 
 /* app updated dialog title */
 "App Fair has been updated" = "App Fair has been updated";
@@ -206,8 +209,11 @@
 /* homebrew preference checkbox */
 "Clear all app info on delete" = "Clear all app info on delete";
 
-/* No comment provided by engineer. */
-"Click here for information on customizing screenshots and metadata for this app." = "Click here for information on customizing screenshots and metadata for this app.";
+/* button label for option to clear local cache data in the app settings */
+"Clear caches" = "Clear caches";
+
+/* tooltip text for footer of screenshots page indicating how to update catalog metadata */
+"Click here for information on customizing screenshots and other metadata for this app." = "Click here for information on customizing screenshots and other metadata for this app.";
 
 /* app entitlement info for network.client */
 "Communicate over the internet and any local networks." = "Communicate over the internet and any local networks.";
@@ -272,6 +278,9 @@
 
 /* catalog entry button tooltip for install action */
 "Download and install the app." = "Download and install the app.";
+
+/* tooltip text for button to install homebrew on brew preferences panel */
+"Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system." = "Download homebrew and set it up for use by the App Fair. It will be installed locally to the App Fair and will not affect any other version that may be installed on the system. This operation will be performed automatically if any cask is installed and there is no local version of Homebrew found on the system.";
 
 /* app catalog entry header box title */
 "Downloads" = "Downloads";
@@ -408,6 +417,9 @@
 
 /* app catalog entry info link title */
 "Homepage" = "Homepage";
+
+/* advanced preference text field label for the GitHub host */
+"Hub Host" = "Hub Host";
 
 /* homebrew preference checkbox tooltip */
 "If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched." = "If a cask marks itself as handling its own software updates internally, exclude the cask from showing up in the “Updated” section. This can help avoid showing redundant updates for apps that expect to be able to update themselves, but can also lead to these apps being stale when they are next launched.";
@@ -563,6 +575,9 @@
 /* No comment provided by engineer. */
 "Opens your web browsers and visits the developer site" = "Opens your web browsers and visits the developer site";
 
+/* advanced preference text field label for the GitHub organization */
+"Organization" = "Organization";
+
 /* risk assessment label for level 6 perilous apps */
 "Perilous" = "Perilous";
 
@@ -604,6 +619,9 @@
 
 /* app category label for appfair.productivity */
 "Productivity" = "Productivity";
+
+/* button help text for option to clear local cache data in the app settings */
+"Purges the local cache of icons and app descriptions" = "Purges the local cache of icons and app descriptions";
 
 /* app category label for appfair.puzzle-games */
 "Puzzle Games" = "Puzzle Games";
@@ -733,6 +751,9 @@
    refresh catalog toolbar button title */
 "Reload" = "Reload";
 
+/* advanced preference text field label for the GitHub repository */
+"Repository" = "Repository";
+
 /* preference checkbox */
 "Require app delete confirmation" = "Require app delete confirmation";
 
@@ -744,6 +765,9 @@
 
 /* homebrew preference checkbox tooltip */
 "Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default." = "Requires that downloaded artifacts have an associated SHA-256 cryptographic checksum to verify that they match the version that was added to the catalog. This help ensure the integrity of the download, but may exclude some casks that do not publish their checksums, and so is disabled by default.";
+
+/* button text on Homebrew preferences for resetting the Homebrew installation */
+"Reset Homebrew" = "Reset Homebrew";
 
 /* catalog entry button title for reveal action
    homebrew preference button for showing locating of homebrew installation */
@@ -790,6 +814,9 @@
 
 /* app entitlement title for device.serial */
 "Serial" = "Serial";
+
+/* button text on Homebrew preferences for installing Homebrew */
+"Setup Homebrew" = "Setup Homebrew";
 
 /* app entitlement info for application-groups */
 "Share files and preferences between applications." = "Share files and preferences between applications.";
@@ -845,6 +872,9 @@
 /* apps list bottom bar help text */
 "The catalog was last updated on %@" = "The catalog was last updated on %@";
 
+/* tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version */
+"The latest version of this app is installed" = "The latest version of this app is installed";
+
 /* app launch privacy description text */
 "The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application. Enabling this feature will require authenticating as an administrator.\n\nApp Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.\n\nPrivacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place." = "The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application. Enabling this feature will require authenticating as an administrator.\n\nApp Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.\n\nPrivacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place.";
 
@@ -880,6 +910,9 @@
 
 /* delete button confirmation dialog body text */
 "This will remove the application “%@” from your applications folder and place it in the Trash." = "This will remove the application “%@” from your applications folder and place it in the Trash.";
+
+/* tooltip text for button to uninstall homebrew on brew preferences panel */
+"This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards." = "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards.";
 
 /* apps list section header text */
 "Top Apps" = "Top Apps";

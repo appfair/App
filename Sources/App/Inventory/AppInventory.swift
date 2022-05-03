@@ -10,8 +10,8 @@ protocol AppInventory : AppCatalog {
     /// The inventory item associated with this inventory list
     associatedtype InventoryItem : Equatable
 
-    /// Returns true if the given inventory item is currently installed
-    @MainActor func appInstalled(item: InventoryItem) -> Bool
+    /// Returns the version string if the given inventory item is currently installed
+    @MainActor func appInstalled(item: InventoryItem) -> String?
 
     /// Returns true if the given inventory item can be updated
     @MainActor func appUpdated(item: InventoryItem) -> Bool
