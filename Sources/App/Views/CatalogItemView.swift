@@ -20,8 +20,6 @@ struct CatalogItemView: View {
     let info: AppInfo
 
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: {
@@ -38,11 +36,11 @@ struct CatalogItemView: View {
 
     private var currentOperation: CatalogOperation? {
         get {
-            fairAppInv.operations[info.id]
+            fairManager.fairAppInv.operations[info.id]
         }
 
         nonmutating set {
-            fairAppInv.operations[info.id] = newValue
+            fairManager.fairAppInv.operations[info.id] = newValue
         }
     }
 
@@ -209,7 +207,7 @@ struct CatalogItemView: View {
     }
 
     private func fetchDownloadURLStats() async {
-        if homeBrewInv.manageCaskDownloads == true {
+        if fairManager.homeBrewInv.manageCaskDownloads == true {
             do {
                 dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
 
@@ -473,7 +471,7 @@ struct CatalogItemView: View {
         .onAppear { // change to homepage when there are no screenshots
             if metadata.screenshotURLs?.isEmpty == false {
                 previewTab = .screenshots
-            } else if homeBrewInv.enableCaskHomepagePreview == true {
+            } else if fairManager.homeBrewInv.enableCaskHomepagePreview == true {
                 previewTab = .homepage
             }
         }
@@ -926,25 +924,12 @@ struct CatalogItemView: View {
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
-        // dbg("token:", info.id.rawValue, "plist:", appPropertyList?.successValue)
-        if info.isCask {
-            return homeBrewInv.appInstalled(item: info) != nil
-        } else {
-            return fairAppInv.appInstalled(item: info.catalogMetadata) != nil
-        }
-
-        // return appPropertyList?.successValue?.bundleID == info.id.rawValue
-
-        //!appInstallURLs.isEmpty // this is more accurate, but NSWorkspace.shared.urlsForApplications has a delay in returning the correct information sometimes
+        fairManager.installedVersion(for: info) != nil
     }
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
-        if info.isCask {
-            return homeBrewInv.appUpdated(item: info)
-        } else {
-            return fairAppInv.appUpdated(item: info.catalogMetadata)
-        }
+        fairManager.appUpdated(for: info)
     }
 
     func confirmationBinding(_ activity: CatalogActivity) -> Binding<Bool> {
@@ -1135,11 +1120,11 @@ struct CatalogItemView: View {
         dbg("revealButtonTapped")
         if info.isCask == true {
             await fairManager.trying {
-                try await homeBrewInv.reveal(item: info)
+                try await fairManager.homeBrewInv.reveal(item: info)
             }
         } else {
             await fairManager.trying {
-                try await fairAppInv.reveal(item: info.catalogMetadata)
+                try await fairManager.fairAppInv.reveal(item: info.catalogMetadata)
             }
         }
     }
@@ -1148,11 +1133,11 @@ struct CatalogItemView: View {
         dbg("deleteButtonTapped")
         if info.isCask {
             return await fairManager.trying {
-                try await homeBrewInv.delete(item: info)
+                try await fairManager.homeBrewInv.delete(item: info)
             }
         } else {
             return await fairManager.trying {
-                try await fairAppInv.delete(item: info.catalogMetadata)
+                try await fairManager.fairAppInv.delete(item: info.catalogMetadata)
             }
         }
     }
@@ -1405,7 +1390,7 @@ struct CaskFormulaBox : View {
     let cask: CaskItem
     let json: Bool
 
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
+    @EnvironmentObject var fairManager: FairManager
 
     @State private var caskSummary: Result<AttributedString, Error>? = nil
     @State private var fetchingFormula = 0
@@ -1427,7 +1412,7 @@ struct CaskFormulaBox : View {
     }
 
     private func fetchCaskSummary(json jsonSource: Bool) async {
-        if self.caskSummary == nil, let url = jsonSource ? homeBrewInv.caskMetadata(name: cask.token) : homeBrewInv.caskSource(name: cask.token) {
+        if self.caskSummary == nil, let url = jsonSource ? fairManager.homeBrewInv.caskMetadata(name: cask.token) : fairManager.homeBrewInv.caskSource(name: cask.token) {
             // self.caskSummary = NSLocalizedString("Loading…", bundle: .module, comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)
@@ -1608,7 +1593,7 @@ extension ButtonStyle where Self == ZoomableButtonStyle {
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
         CatalogItemView(info: AppInfo(catalogMetadata: AppCatalogItem.sample))
-            .environmentObject(FairAppInventory())
+            .environmentObject(FairAppInventory.default)
             .frame(width: 700)
             .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))

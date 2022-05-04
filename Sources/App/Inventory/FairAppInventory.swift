@@ -126,7 +126,7 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
     private var fsobserver: FileSystemObserver? = nil
 
-    internal init() {
+    private init() {
         if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
             Task {
                 try? await Self.createInstallFolder()
@@ -144,8 +144,10 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         }
     }
 
-    func refreshAll() async throws {
-        self.catalog = []
+    func refreshAll(clearCatalog: Bool) async throws {
+        if clearCatalog {
+            self.catalog = []
+        }
         
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }

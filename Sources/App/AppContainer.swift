@@ -3,7 +3,8 @@ import FairApp
 public extension AppContainer {
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
-            RootView(fairManager: fairManager)
+            RootView()
+                .environmentObject(fairManager)
                 .preferredColorScheme(fairManager.themeStyle.colorScheme)
         }
         .commands {
@@ -26,7 +27,5 @@ public extension AppContainer {
         AppSettingsView()
             .preferredColorScheme(fairManager.themeStyle.colorScheme)
             .environmentObject(fairManager)
-            .environmentObject(fairManager.fairAppInv)
-            .environmentObject(fairManager.homeBrewInv)
     }
 }

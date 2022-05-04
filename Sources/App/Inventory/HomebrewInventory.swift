@@ -67,7 +67,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
         didSet {
             Task {
                 // whenever the enableHomebrew setting is changed, perform a scan of the casks
-                try await refreshAll()
+                try await refreshAll(clearCatalog: true)
             }
         }
     }
@@ -248,7 +248,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
 
     private var fsobserver: FileSystemObserver? = nil
 
-    internal init() {
+    private init() {
         watchCaskroomFolder()
     }
 
@@ -280,16 +280,18 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
-    func refreshAll() async throws {
+    func refreshAll(clearCatalog: Bool) async throws {
         if enableHomebrew == false {
             dbg("skipping cask refresh because not isEnabled")
             return
         }
 
-        self.casks = []
-        self.appcasks = nil
-        self.appstats = nil
-        
+        if clearCatalog {
+            self.casks = []
+            self.appcasks = nil
+            self.appstats = nil
+        }
+
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
         async let installedCasks = scanInstalledCasks()
@@ -304,6 +306,8 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
         let caskResponse = try await casks
         self.casks = caskResponse.casks
         self.catalogUpdated = caskResponse.response.lastModifiedDate
+
+        self.objectWillChange.send()
     }
 
     /// Fetches the cask list and populates it in the `casks` property
@@ -322,7 +326,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
 
     /// Fetches the cask stats and populates it in the `stats` property
     fileprivate func fetchAppStats(statsURL: URL? = nil) async throws -> CaskStats {
-        let url = statsURL ?? self.caskStats365
+        let url = statsURL ?? self.caskStats30
         dbg("loading cask stats:", url.absoluteString)
         let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
 
@@ -984,8 +988,8 @@ extension HomebrewInventory {
             let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
             // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
 
-            // downloads from the UI itself boost the count by 1K; this is a stopgap effort to phase out the reliance on the cask-based analytics that we don't participate in by default
-            let downloads = ((downloadCount ?? 0) * 1000) + (ancillaryDownloadCount ?? 0)
+            // downloads from the UI itself boost the count by 100; this is a stopgap effort to phase out the reliance on the cask-based analytics that we don't participate in by default
+            let downloads = ((downloadCount ?? 0) * wip(100)) + (ancillaryDownloadCount ?? 0)
 
             let readmeURL = caskInfo?.first?.readmeURL
             let releaseNotesURL = caskInfo?.first?.releaseNotesURL

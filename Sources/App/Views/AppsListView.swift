@@ -7,8 +7,6 @@ struct AppsListView : View {
     let sidebarSelection: SidebarSelection?
 
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
@@ -21,8 +19,8 @@ struct AppsListView : View {
 
     var catalog: AppCatalog {
         switch source {
-        case .homebrew: return homeBrewInv
-        case .fairapps: return fairAppInv
+        case .homebrew: return fairManager.homeBrewInv
+        case .fairapps: return fairManager.fairAppInv
         }
     }
 
@@ -136,9 +134,9 @@ struct AppsListView : View {
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         switch source {
         case .homebrew:
-            return homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairManager.homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         case .fairapps:
-            return fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            return fairManager.fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
@@ -190,8 +188,6 @@ struct AppSectionItems : View {
     @Binding var searchTextSource: String
 
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     /// The number of items to initially display to keep the list rendering responsive;
     /// when the list is scrolled to the bottom, this count will increment to give the appearance of infinite scrolling
@@ -243,15 +239,13 @@ struct AppSectionItems : View {
 
     /// Returns true is there are any refreshes in progress
     var refreshing: Bool {
-        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
+        fairManager.fairAppInv.updateInProgress > 0 || fairManager.homeBrewInv.updateInProgress > 0
     }
 }
 
 struct AppItemLabel : View {
     let item: AppInfo
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     var body: some View {
         label(for: item)
@@ -259,9 +253,9 @@ struct AppItemLabel : View {
 
     var installedVersion: String? {
         if item.isCask {
-            return homeBrewInv.appInstalled(item: item)
+            return fairManager.homeBrewInv.appInstalled(item: item)
         } else {
-            return fairAppInv.appInstalled(item: item.catalogMetadata)
+            return fairManager.fairAppInv.appInstalled(item: item.catalogMetadata)
         }
     }
 

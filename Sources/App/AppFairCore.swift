@@ -217,7 +217,7 @@ struct AppFairCommands: Commands {
     func reloadAll() {
         Task {
             await fairManager.trying {
-                try await fairManager.refresh()
+                try await fairManager.refresh(clearCatalog: false)
             }
         }
     }
@@ -437,13 +437,8 @@ extension View {
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct RootView : View {
-    let fairManager: FairManager
-
     public var body: some View {
         NavigationRootView()
-            .environmentObject(fairManager)
-            .environmentObject(fairManager.fairAppInv)
-            .environmentObject(fairManager.homeBrewInv)
     }
 }
 
@@ -528,8 +523,6 @@ enum SidebarItem : Hashable {
 @available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
@@ -550,7 +543,7 @@ struct NavigationRootView : View {
     public var body: some View {
         triptychView
             .frame(minHeight: 500) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
-            .displayingFirstAlert($fairAppInv.errors)
+            .displayingFirstAlert($fairManager.fairAppInv.errors)
             .toolbar(id: "NavToolbar") {
 //                ToolbarItem(placement: .navigation) {
 //                    Button(action: toggleSidebar) {
@@ -567,7 +560,7 @@ struct NavigationRootView : View {
                         .label(image: FairSymbol.arrow_triangle_2_circlepath.symbolRenderingMode(.hierarchical).foregroundStyle(Color.teal, Color.yellow, Color.blue))
                         .button {
                             await fairManager.trying {
-                                try await fairManager.refresh()
+                                try await fairManager.refresh(clearCatalog: false) // TODO: true when option or control key is down?
                             }
                         }
                         .hoverSymbol(activeVariant: .fill)
@@ -582,12 +575,12 @@ struct NavigationRootView : View {
             .task(priority: .userInitiated) {
                 dbg("refreshing fairground")
                 await fairManager.trying {
-                    try await fairManager.refresh()
+                    try await fairManager.refresh(clearCatalog: false)
                 }
             }
             .task(priority: .low) {
                 do {
-                    try await homeBrewInv.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
+                    try await fairManager.homeBrewInv.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
                 } catch {
                     dbg("error unpacking homebrew in local cache:", error)
                 }
@@ -1110,8 +1103,6 @@ public struct EnabledView<V: View> : View {
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: FairAppInventory
-    @EnvironmentObject var homeBrewInv: HomebrewInventory
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
     @Binding var sidebarSelection: SidebarSelection?
@@ -1135,11 +1126,11 @@ struct SidebarView: View {
             ForEach(AppSource.allCases, id: \.self) { source in
                 switch source {
                 case .homebrew:
-                    if homeBrewInv.enableHomebrew {
+                    if fairManager.homeBrewInv.enableHomebrew {
                         Section {
                             homebrewItems()
                         } header: {
-                            sectionHeader(label: source.label, updating: homeBrewInv.updateInProgress != 0)
+                            sectionHeader(label: source.label, updating: fairManager.homeBrewInv.updateInProgress != 0)
                          }
                     }
 
@@ -1147,7 +1138,7 @@ struct SidebarView: View {
                     Section {
                         fairappsItems()
                     } header: {
-                        sectionHeader(label: source.label, updating: fairAppInv.updateInProgress != 0)
+                        sectionHeader(label: source.label, updating: fairManager.fairAppInv.updateInProgress != 0)
 
                     }
                 }
@@ -1155,16 +1146,16 @@ struct SidebarView: View {
 
             // categories section
             // TODO: merge homebrew
-            if homeBrewInv.enableHomebrew {
+            if fairManager.homeBrewInv.enableHomebrew {
                 Section {
                     ForEach(AppCategory.allCases) { cat in
-                        if homeBrewInv.apps(for: cat).isEmpty == false {
+                        if fairManager.homeBrewInv.apps(for: cat).isEmpty == false {
                             item(.homebrew, item: .category(cat))
                         }
                     }
                     .symbolVariant(.fill)
                 } header: {
-                    sectionHeader(label: Label(title: { Text("Categories", bundle: .module, comment: "sidebar section header title for homebrew app categories") }, icon: { FairSymbol.list_dash.image }), updating: homeBrewInv.updateInProgress != 0)
+                    sectionHeader(label: Label(title: { Text("Categories", bundle: .module, comment: "sidebar section header title for homebrew app categories") }, icon: { FairSymbol.list_dash.image }), updating: fairManager.homeBrewInv.updateInProgress != 0)
                 }
             }
         }
@@ -1226,9 +1217,9 @@ struct SidebarView: View {
     func badgeCount(for item: SidebarSelection) -> Text? {
         switch item.source {
         case .fairapps:
-            return fairAppInv.badgeCount(for: item.item)
+            return fairManager.fairAppInv.badgeCount(for: item.item)
         case .homebrew:
-            return homeBrewInv.badgeCount(for: item.item)
+            return fairManager.homeBrewInv.badgeCount(for: item.item)
         }
     }
 

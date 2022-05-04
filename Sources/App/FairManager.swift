@@ -1,12 +1,8 @@
 import FairApp
+import Combine
 
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairManager: SceneManager {
-    /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    let fairAppInv: FairAppInventory
-    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    let homeBrewInv: HomebrewInventory
-
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning = true
@@ -28,17 +24,33 @@ import FairApp
     /// The duration to continue blocking launch telemtry after an app has been launched (since the OS retries for a certain amount of time if the initial connection fails)
     @AppStorage("appLaunchPrivacyDuration") public var appLaunchPrivacyDuration: TimeInterval = 60.0
 
+    /// The appManager, which should be extracted as a separate `EnvironmentObject`
+    @Published var fairAppInv: FairAppInventory
+    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
+    @Published var homeBrewInv: HomebrewInventory
+
     /// The apps that have been installed or updated in this session
     @Published var sessionInstalls: Set<AppInfo.ID> = []
 
     /// The current app exit observer for app launch privacy; it will be cleared when the observer expires
     @Published private var appLaunchPrivacyDeactivator: NSObjectProtocol? = nil
 
+    private var observers: [AnyCancellable] = []
+
     required internal init() {
-        self.fairAppInv = FairAppInventory()
-        self.homeBrewInv = HomebrewInventory()
-        
+        self.fairAppInv = FairAppInventory.default
+        self.homeBrewInv = HomebrewInventory.default
+
         super.init()
+
+        // track any changes to fairAppInv and homeBrewInv and broadcast their changes
+        self.observers.append(self.fairAppInv.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        })
+        self.observers.append(self.homeBrewInv.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        })
+
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
@@ -52,9 +64,9 @@ import FairApp
         ]
     }
 
-    func refresh() async throws {
-        async let v1: () = fairAppInv.refreshAll()
-        async let v2: () = homeBrewInv.refreshAll()
+    func refresh(clearCatalog: Bool) async throws {
+        async let v1: () = fairAppInv.refreshAll(clearCatalog: clearCatalog)
+        async let v2: () = homeBrewInv.refreshAll(clearCatalog: clearCatalog)
         let _ = try await (v1, v2) // perform the two refreshes in tandem
     }
 
@@ -115,6 +127,21 @@ import FairApp
         }
     }
 
+    func installedVersion(for item: AppInfo) -> String? {
+        if item.isCask {
+            return homeBrewInv.appInstalled(item: item)
+        } else {
+            return fairAppInv.appInstalled(item: item.catalogMetadata)
+        }
+    }
+
+    func appUpdated(for item: AppInfo) -> Bool {
+        if item.isCask {
+            return homeBrewInv.appUpdated(item: item)
+        } else {
+            return fairAppInv.appUpdated(item: item.catalogMetadata)
+        }
+    }
 }
 
 // MARK: App Launch Privacy support
