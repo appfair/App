@@ -325,7 +325,7 @@ final class BookReaderState : WebViewState {
             // with an argument, jumps to the given position and snaps to the nearest
             // page boundry
             function position(amount) {
-                if (typeof amount !== 'undefined') {
+                if (typeof amount === 'number') {
                     let pos = document.documentElement.scrollWidth * amount;
                     window.scrollTo({ 'left': pos, 'behavior': 'instant' });
                     return movePage(0, false); // snap to nearest page
@@ -345,7 +345,10 @@ final class BookReaderState : WebViewState {
 
             scaleText(\(pageScale)); // perform initial scaling
             function handleResize() {
-                position(position()); // snap to nearest page boundry on resize
+
+                // position(position()); // snap to nearest page boundry on resize // TODO: need to know the position before we resize; so just snap to the page instead
+                movePage(0, false);
+
                 //log("window resized");
 
                 // for some reason this seems to get reset after a resize
