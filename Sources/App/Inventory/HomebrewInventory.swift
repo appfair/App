@@ -988,8 +988,7 @@ extension HomebrewInventory {
             let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
             // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
 
-            // downloads from the UI itself boost the count by 100; this is a stopgap effort to phase out the reliance on the cask-based analytics that we don't participate in by default
-            let downloads = ((downloadCount ?? 0) * wip(100)) + (ancillaryDownloadCount ?? 0)
+            let downloads = (downloadCount ?? 0) + (ancillaryDownloadCount ?? 0)
 
             let readmeURL = caskInfo?.first?.readmeURL
             let releaseNotesURL = caskInfo?.first?.releaseNotesURL
@@ -1208,6 +1207,103 @@ extension HomebrewInventory {
         }
     }
 }
+
+extension HomebrewInventory {
+    /// Fetches livecheck for the given cask
+    func fetchLivecheck(for cask: String) async throws -> (strategy: String, url: URL)? {
+        guard let caskSource = self.caskSource(name: cask) else {
+            throw AppError("no metadata for package")
+        }
+        dbg("caskSource:", caskSource)
+        let (data, _) = try await URLSession.shared.fetch(request: URLRequest(url: caskSource))
+
+        let ruby = String(data: data, encoding: .utf8) ?? ""
+        //dbg("retrieved cask for", cask, ":", ruby)
+        guard let livecheck = HomebrewInventory.extractStanza(named: "livecheck", from: ruby) else {
+            // throw AppError("unable to parse stanza")
+            return nil // it is legal for an app to not have the livecheck stanza
+        }
+
+        guard let strategy = livecheck["strategy"] else {
+            throw AppError("unable to parse stanza for strategy property")
+        }
+
+        guard let lcURL = livecheck["url"], let url = URL(string: lcURL.trimmedEvenly(["'", "\""])) else {
+            throw AppError("unable to parse stanza for url property")
+        }
+
+        return (strategy, url)
+    }
+
+    /// Parses the stanza name from the specified ruby code and returns a dictionary of the keys and values it sees.
+    /// Note: this is not a full-feratures ruby parser, but just enough to extract static key/value definitions from some very well-formed ruby source
+    static func extractStanza(named stanza: String, from rubyCode: String) -> [String: String]? {
+        let lines = rubyCode.components(separatedBy: .newlines)
+        let stanzaOpen = (stanza + " do")
+        guard let lcBegin = lines.firstIndex(where: { $0.trimmed() == stanzaOpen }) else {
+            dbg("no opening clause to stanza:", stanza)
+            return nil
+        }
+
+        // the closing stanza should be "end" with matching indentation
+        let stanzaClose = lines[lcBegin].replacingOccurrences(of: stanzaOpen, with: "end")
+
+        guard let lcEnd = lines[lcBegin...].firstIndex(where: { $0 == stanzaClose }) else {
+            dbg("no matching end segment to stanza:", stanza)
+            return nil
+        }
+
+        if lcEnd <= lcBegin {
+            dbg("bad stanza match range:", lcBegin, lcEnd)
+            return nil
+        }
+
+        let stanzaContents = lines[lcBegin+1...lcEnd-1]
+
+        //dbg("stanza clause:", stanzaContents)
+        var props = [String: String]()
+        for line in stanzaContents {
+            if let key = line.trimmed().split(separator: " ").first, !key.isEmpty {
+                // the value is everything after the key (with spaces trimmed)
+                let value = line.trimmed()[key.endIndex...].trimmed()
+                props[String(key)] = value
+            }
+        }
+        return props
+    }
+}
+
+typealias AppcastFeed = WebFeed<AppcastWebFeedAdditions>
+
+/// Additional properties for various elements of a `WebFeed`.
+enum AppcastWebFeedAdditions : WebFeedAdditions {
+    typealias FeedAdditions = Never
+    typealias ChannelAdditions = Never
+
+    /// Appcast-specific attributes for `<item>` nodes
+    struct ItemAdditions : XMLNodeExpressible, Pure {
+        var sparkleVersion: String?
+
+        init?(node: FairCore.XMLNode) throws {
+            let elements = node.elementDictionary(attributes: false, childNodes: true)
+            self.sparkleVersion = elements["sparkle:version"]
+        }
+    }
+
+    /// Appcast-specific attributes for `<enclosure>` nodes
+    struct EnclosureAdditions : XMLNodeExpressible, Pure {
+        var sparkleEdSignature: String?
+
+        init?(node: FairCore.XMLNode) throws {
+            let elements = node.elementDictionary(attributes: true, childNodes: false)
+            self.sparkleEdSignature = elements["sparkle:edSignature"]
+        }
+    }
+
+}
+
+
+
 
 extension ProcessInfo {
     /// Returns `true` if we are running on an ARM Mac, even if we are running under Rosetta emulation
