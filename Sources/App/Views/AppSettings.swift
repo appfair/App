@@ -80,7 +80,7 @@ struct HomebrewSettingsView: View {
                         Text("Homebrew Casks", bundle: .module, comment: "settings switch title for enabling homebrew cask support")
                     }
                     .onChange(of: fairManager.homeBrewInv.enableHomebrew) { enabled in
-                        if wip(false) && (enabled == false) { // un-installing also removes all the casks, and so re-installation won't know about existing apps; disable this behavior until we can find a different location for the Caskroom (and support migration from older clients)
+                        if false && (enabled == false) { // un-installing also removes all the casks, and so re-installation won't know about existing apps; disable this behavior until we can find a different location for the Caskroom (and support migration from older clients)
                             // un-install the local homebrew cache if we ever disable it; this makes it so we don't need a local cache location
                             Task {
                                 try await fairManager.homeBrewInv.uninstallHomebrew()

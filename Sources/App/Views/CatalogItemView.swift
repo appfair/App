@@ -408,16 +408,16 @@ struct CatalogItemView: View {
 
     enum MetadataTab : CaseIterable, Hashable {
         case details
-        case risk
+        case permissions
         case formula
         case security
 
         var title: Text {
             switch self {
-            case .details: return Text("Details", bundle: .module, comment: "app catalog cask entry metadata tab title")
-            case .risk: return Text("Risk", bundle: .module, comment: "app catalog cask entry metadata tab title")
-            case .formula: return Text("Formula", bundle: .module, comment: "app catalog cask entry metadata tab title")
-            case .security: return Text("Security", bundle: .module, comment: "app catalog cask entry metadata tab title")
+            case .details: return Text("Details", bundle: .module, comment: "app catalog cask entry metadata tab title for app details")
+            case .permissions: return Text("Permissions", bundle: .module, comment: "app catalog cask entry metadata tab title for app permissions")
+            case .formula: return Text("Formula", bundle: .module, comment: "app catalog cask entry metadata tab title for app formula")
+            case .security: return Text("Security", bundle: .module, comment: "app catalog cask entry metadata tab title for app secutiry")
             }
         }
     }
@@ -556,9 +556,9 @@ struct CatalogItemView: View {
                     switch tab {
                     case .details:
                         detailsListView()
-                    case .risk:
+                    case .permissions:
                         if info.cask == nil {
-                            riskSection()
+                            permissionsSection()
                         }
                     case .security:
                         if info.cask != nil {
@@ -587,7 +587,7 @@ struct CatalogItemView: View {
 
     // MARK: Description / Summary
 
-    func riskSection() -> some View {
+    func permissionsSection() -> some View {
         let riskLabel = info.isCask ? Text("Risk: Unknown", bundle: .module, comment: "label for unknown rick") : Text("Risk: ", bundle: .module, comment: "prefix string for risk label") + metadata.riskLevel.textLabel().fontWeight(.regular)
 
         let riskIcon = (info.isCask ? nil : metadata)?.riskLevel.riskLabel()
@@ -1365,9 +1365,27 @@ struct ReleaseNotesBox : View {
                 //withAnimation { // the effect here is weird: it expands from zero width
                     self.releaseNotesText = .success(notes)
                 //}
+            } else if let cask = info.cask {
+                guard let (strategy, appcastURL) = try await HomebrewInventory.default.fetchLivecheck(for: cask.token) else {
+                    self.releaseNotesText = .success(AttributedString("Missing release notes"))
+                    return
+                }
+
+                if !strategy.hasPrefix(":sparkle") {
+                    self.releaseNotesText = .success(AttributedString("Incompatible release notes"))
+                    return
+                }
+
+                let (contents, _) = try await URLSession.shared.fetch(request: URLRequest(url: appcastURL))
+                let webFeed = try AppcastFeed(xmlData: contents)
+
+                guard let channel = webFeed.channels.first else {
+                    self.releaseNotesText = .success(AttributedString("No release channel"))
+                    return
+                }
+                self.releaseNotesText = .success(AttributedString(channel.title ?? "No title"))
             } else {
                 self.releaseNotesText = .success(AttributedString("No release notes"))
-
             }
         } catch {
             dbg("error handling release notes:", error)

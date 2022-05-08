@@ -293,8 +293,14 @@ struct AppItemLabel : View {
 
                     if let catalogVersion = item.catalogMetadata.version {
                         Label {
-                            Text(verbatim: catalogVersion)
-                                .font(.subheadline)
+                            if let installedVersion = self.installedVersion,
+                               catalogVersion != installedVersion {
+                                Text("\(installedVersion) (\(catalogVersion))", bundle: .module, comment: "formatting text for the app list version section displaying the installed version with the currently available version in parenthesis")
+                                    .font(.subheadline)
+                            } else {
+                                Text(verbatim: catalogVersion)
+                                    .font(.subheadline)
+                            }
                         } icon: {
                             if let installedVersion = self.installedVersion {
                                 if installedVersion == catalogVersion {
