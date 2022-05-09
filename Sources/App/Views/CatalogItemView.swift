@@ -36,11 +36,11 @@ struct CatalogItemView: View {
 
     private var currentOperation: CatalogOperation? {
         get {
-            fairManager.fairAppInv.operations[info.id]
+            fairManager.operations[info.id]
         }
 
         nonmutating set {
-            fairManager.fairAppInv.operations[info.id] = newValue
+            fairManager.operations[info.id] = newValue
         }
     }
 

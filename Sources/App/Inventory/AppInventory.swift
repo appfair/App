@@ -23,7 +23,7 @@ protocol AppInventory : AppCatalog {
     @MainActor func launch(item: InventoryItem) async throws
 
     /// Installs the given item
-    @MainActor func install(item: InventoryItem, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
+    //@MainActor func install(item: InventoryItem, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
 
     /// Instructs the system to reveal the path of the item using the Finder
     @MainActor func reveal(item: InventoryItem) async throws

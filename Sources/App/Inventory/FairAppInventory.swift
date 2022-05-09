@@ -83,9 +83,6 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
 
-    /// The current activities that are taking place
-    @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
-
     /// The current catalog of apps
     @Published var catalog: [AppCatalogItem] = []
 
@@ -216,20 +213,23 @@ extension FairAppInventory {
     /// If the catalog app is updated,
     private func updateCatalogApp() async throws {
         // auto-update the App Fair app itself to the latest non-pre-release version
-        guard let catalogApp = catalogAppInfo else {
+        guard let catalogApp = self.catalogAppInfo else {
             return dbg("could not locate current app in app list")
         }
 
-        // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This avoids issues around app translocation 
+        dbg("checking catalog app update from installed version:", Bundle.main.bundleVersionString, "to:", catalogApp.releasedVersion?.versionString, "at:", Bundle.main.bundleURL.path)
+
+        // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This prevents updating while running while developing.
+        #if DEBUG
         if Bundle.main.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
-            return dbg("skipping update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
+            // only skip update while debugging
+            return dbg("skipping DEBUG update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
-
-        dbg("updating:", Bundle.main.bundleURL.path, "from installed:", catalogApp.id, "to:", catalogApp.releasedVersion?.versionString)
-
+        #endif
+        
         // if the release version is greater than the installed version, download and install it automatically
         if (catalogApp.releasedVersion ?? .min) > (installedVersion(for: catalogApp.id) ?? .max) {
-            try await install(item: catalogApp, progress: nil, update: true)
+            try await install(item: catalogApp, progress: nil, update: true, removingURLAt: Bundle.main.bundleURL)
         }
     }
 
@@ -471,7 +471,7 @@ extension FairAppInventory {
     }
 
     /// Install or update the given catalog item.
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool = true, verbose: Bool = true) async throws {
+    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
         let window = NSApp.currentEvent?.window
 
         if update == false, let installPath = installedPath(for: item) {
@@ -536,8 +536,20 @@ extension FairAppInventory {
 
         try Task.checkCancellation()
 
+        if let removingURLAt = removingURLAt {
+            // if we've specified a URL that is being replaced, try to delete it; this is to support being able to update the App Fair.app from the Downloads folder; the app will be installed in /Applications, but the launched application should be the one that is deleted
+            do {
+                try await trash(removingURLAt)
+            } catch {
+                // tolerate errors, which may result from translocation issues
+                dbg("error removingURLAt:", removingURLAt.path)
+            }
+            try Task.checkCancellation()
+        }
+
         dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
         try await Self.withPermission(installFolderURL) { installFolderURL in
+            // try FileManager.default.replaceItemAt(destinationURL, withItemAt: expandedAppPath)
             try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
         }
         if let parentProgress = parentProgress {
@@ -552,13 +564,14 @@ extension FairAppInventory {
         }
 
         if self.relaunchUpdatedApps == true {
-            @MainActor func relaunch() {
-                dbg("re-launching app:", item.bundleIdentifier)
-                terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false)
-            }
-
             // the catalog app is special, since re-launching requires quitting the current app
             let isCatalogApp = item.bundleIdentifier.rawValue == Bundle.main.bundleID
+
+            @MainActor func relaunch() {
+                dbg("re-launching app:", item.bundleIdentifier)
+                terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false, overrideLaunchURL: isCatalogApp ? destinationURL : nil)
+            }
+
             if !isCatalogApp {
                 // automatically re-launch any app that isn't a catalog app
                 relaunch()
@@ -587,18 +600,18 @@ extension FairAppInventory {
     }
 
     /// Kills the process with the given `bundleID` and re-launches it.
-    private func terminateAndRelaunch(bundleID: BundleIdentifier, force: Bool) {
+    private func terminateAndRelaunch(bundleID: BundleIdentifier, force: Bool, overrideLaunchURL: URL? = nil) {
 #if os(macOS)
         // re-launch the current app once it has been killed
         // note that NSRunningApplication cannot be used from a sandboxed app
-        if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID.rawValue).first, let path = runningApp.bundleURL {
+        if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID.rawValue).first, let bundleURL = runningApp.bundleURL {
             dbg("runningApp:", runningApp)
             // when the app is this process (i.e., the catalog browser), we need to re-start using a spawned shell script
             let pid = runningApp.processIdentifier
 
             // spawn a script that waits for the pid to die and then re-launches it
             // we need to do this prior to attempting termination, since we may be terminating ourself
-            let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\(path)\") &"
+            let relaunch = "(while /bin/kill -0 \(pid) >&/dev/null; do /bin/sleep 0.1; done; /usr/bin/open \"\((overrideLaunchURL ?? bundleURL).path)\") &"
             Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", relaunch])
 
             // Note: “Sandboxed applications can’t use this method to terminate other applciations [sic]. This method returns false when called from a sandboxed application.”

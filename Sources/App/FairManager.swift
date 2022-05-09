@@ -35,6 +35,9 @@ import Combine
     /// The current app exit observer for app launch privacy; it will be cleared when the observer expires
     @Published private var appLaunchPrivacyDeactivator: NSObjectProtocol? = nil
 
+    /// The current activities that are taking place for each bundle identifier
+    @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
+
     private var observers: [AnyCancellable] = []
 
     required internal init() {
