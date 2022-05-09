@@ -217,7 +217,12 @@ extension FairAppInventory {
             return dbg("could not locate current app in app list")
         }
 
-        dbg("checking catalog app update from installed version:", Bundle.main.bundleVersionString, "to:", catalogApp.releasedVersion?.versionString, "at:", Bundle.main.bundleURL.path)
+
+        // if the release version is greater than the installed version, download and install it automatically
+        // let installedCatalogVersion = installedVersion(for: catalogApp.id) // we should use the currently-running version as the authoritative version for checking
+        let installedCatalogVersion = Bundle.main.bundleVersionString.flatMap { AppVersion(string: $0, prerelease: false) }
+
+        dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.releasedVersion?.versionString, "at:", Bundle.main.bundleURL.path)
 
         // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This prevents updating while running while developing.
         #if DEBUG
@@ -226,9 +231,8 @@ extension FairAppInventory {
             return dbg("skipping DEBUG update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
         #endif
-        
-        // if the release version is greater than the installed version, download and install it automatically
-        if (catalogApp.releasedVersion ?? .min) > (installedVersion(for: catalogApp.id) ?? .max) {
+
+        if (catalogApp.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
             try await install(item: catalogApp, progress: nil, update: true, removingURLAt: Bundle.main.bundleURL)
         }
     }
