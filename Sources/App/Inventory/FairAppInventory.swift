@@ -211,29 +211,28 @@ extension FairAppInventory {
     }
 
     /// If the catalog app is updated,
-    private func updateCatalogApp() async throws {
+    private func updateCatalogApp(catalogAppBundle: Bundle = Bundle.main) async throws {
         // auto-update the App Fair app itself to the latest non-pre-release version
         guard let catalogApp = self.catalogAppInfo else {
             return dbg("could not locate current app in app list")
         }
 
-
         // if the release version is greater than the installed version, download and install it automatically
         // let installedCatalogVersion = installedVersion(for: catalogApp.id) // we should use the currently-running version as the authoritative version for checking
-        let installedCatalogVersion = Bundle.main.bundleVersionString.flatMap { AppVersion(string: $0, prerelease: false) }
+        let installedCatalogVersion = catalogAppBundle.bundleVersionString.flatMap { AppVersion(string: $0, prerelease: false) }
 
-        dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.releasedVersion?.versionString, "at:", Bundle.main.bundleURL.path)
+        dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.releasedVersion?.versionString, "at:", catalogAppBundle.bundleURL.path)
 
         // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This prevents updating while running while developing.
         #if DEBUG
-        if Bundle.main.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
+        if catalogAppBundle.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
             // only skip update while debugging
-            return dbg("skipping DEBUG update to catalog app:", Bundle.main.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
+            return dbg("skipping DEBUG update to catalog app:", catalogAppBundle.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
         #endif
 
         if (catalogApp.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
-            try await install(item: catalogApp, progress: nil, update: true, removingURLAt: Bundle.main.bundleURL)
+            try await install(item: catalogApp, progress: nil, update: true, removingURLAt: catalogAppBundle.bundleURL)
         }
     }
 
