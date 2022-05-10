@@ -196,7 +196,10 @@ enum Selection {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
+    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SidebarSelection??
+
 //    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+
     var fairManager: FairManager
 
     var body: some Commands {
@@ -219,13 +222,40 @@ struct AppFairCommands: Commands {
 //            ShareAppButton()
 //        }
 
-        CommandMenu(Text("Fair", bundle: .module, comment: "menu title for fairgroup actions")) {
+        CommandMenu(Text("Sources", bundle: .module, comment: "menu title for fairground sources actions")) {
+
+            Section {
+                let items = SidebarSelection.homebrewItems
+                navitem(items.0.sel).keyboardShortcut(items.0.key)
+                navitem(items.1.sel).keyboardShortcut(items.1.key)
+                navitem(items.2.sel).keyboardShortcut(items.2.key)
+            } header: {
+                Text("Homebrew", bundle: .module, comment: "source menu header text for section with homebrew catalog selection options")
+            }
+
+            Section {
+                let items = SidebarSelection.fairappsItems
+                navitem(items.0.sel).keyboardShortcut(items.0.key)
+                navitem(items.1.sel).keyboardShortcut(items.1.key)
+                navitem(items.2.sel).keyboardShortcut(items.2.key)
+                navitem(items.3.sel).keyboardShortcut(items.3.key)
+            } header: {
+                Text("Fairground", bundle: .module, comment: "source menu header text for section with fairground catalog selection options").font(Font.caption)
+            }
+
             Text("Refresh Catalogs", bundle: .module, comment: "menu title for refreshing the app catalog")
                 .button(action: reloadAll)
                 .keyboardShortcut("R")
 //                .disabled(reloadCommand == nil)
         }
+    }
 
+    func navitem(_ selection: SidebarSelection) -> some View {
+        Button {
+            sidebarSelection = selection
+        } label: {
+            selection.sourceInfo.tintedLabel(monochrome: true).title
+        }
     }
 
     func reloadAll() {
@@ -513,8 +543,8 @@ struct NavigationRootView : View {
     @State var scrollToSelection: Bool = false
 
     /// The current selection in the sidebar, defaulting to the `top` item of the initial `AppSource`.
-    @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
-//    @State var sidebarSelection: SidebarSelection? = wip(nil)
+    // @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
+    @State var sidebarSelection: SidebarSelection? = nil
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -635,6 +665,7 @@ struct NavigationRootView : View {
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
             SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: $sidebarSelection, displayMode: $displayMode, searchText: $searchText)
+                .focusedSceneValue(\.sidebarSelection, $sidebarSelection)
         } list: {
             if let sidebarSource = sidebarSource {
                 AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
@@ -650,7 +681,7 @@ struct NavigationRootView : View {
             }
             #endif
         } content: {
-            AppDetailView(sidebarSelection: sidebarSelection)
+            AppDetailView(sidebarSelection: $sidebarSelection)
         }
         // warning: this spikes CPU usage when idle
 //        .focusedSceneValue(\.reloadCommand, .constant({
@@ -665,13 +696,13 @@ public struct AppTableDetailSplitView : View {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var searchText: String
-    let sidebarSelection: SidebarSelection?
+    @Binding var sidebarSelection: SidebarSelection?
 
     @ViewBuilder public var body: some View {
         VSplitView {
             AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
                 .frame(minHeight: 150)
-            AppDetailView(sidebarSelection: sidebarSelection)
+            AppDetailView(sidebarSelection: $sidebarSelection)
                 .layoutPriority(1.0)
         }
     }
@@ -725,14 +756,12 @@ extension SidebarSelection {
             if let overview = sourceInfo.overviewText {
                 ScrollView {
                     overview
+                        .padding()
+                        .padding()
                 }
                     // .textSelection(.enabled) // unwraps and converts to a single line when selecting
                     .font(Font.title2)
-                    .padding()
-                    .padding()
             }
-
-            Spacer()
         }
     }
 
@@ -740,19 +769,17 @@ extension SidebarSelection {
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
-    let sidebarSelection: SidebarSelection?
+    @Binding var sidebarSelection: SidebarSelection?
     @FocusedBinding(\.selection) private var selection: Selection??
 
-    public var body: some View {
+    @ViewBuilder public var body: some View {
         VStack {
             switch selection {
             case .app(let app):
                 CatalogItemView(info: app)
             case .some(.none), .none:
-                if let sidebarSelection = sidebarSelection {
-                    sidebarSelection.sourceOverviewView()
-                } else {
-                    VStack {
+                VStack {
+                    if sidebarSelection == nil {
                         Text("Welcome to the App Fair", bundle: .module, comment: "header text for detail screen with no selection")
                             .font(Font.system(size: 40, weight: .regular, design: .rounded))
                             .padding()
@@ -760,17 +787,47 @@ public struct AppDetailView : View {
                         Text("The App Fair enables browsing, installing, and updating apps from community sources.", bundle: .module, comment: "header sub-text for detail screen with no selection")
                             .font(Font.title)
                             .padding()
+                    }
 
+                    if let sidebarSelection = sidebarSelection {
+                        sidebarSelection.sourceOverviewView()
+                        Spacer()
+                    } else {
+                        let sb1 = SidebarSelection(source: .homebrew, item: .top)
+                        let sb2 = SidebarSelection(source: .fairapps, item: .top)
                         HStack(spacing: 0) {
-                            SidebarSelection(source: .homebrew, item: .top).sourceOverviewView()
-                            SidebarSelection(source: .fairapps, item: .top).sourceOverviewView()
+                            sb1.sourceOverviewView()
+                            sb2.sourceOverviewView()
                         }
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            browseButton(sb1)
+                            Spacer()
+                            Spacer()
+                            Spacer()
+                            browseButton(sb2)
+                            Spacer()
+                        }
+                        .padding()
                     }
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    func browseButton(_ sidebarSelection: SidebarSelection) -> some View {
+        Button {
+            withAnimation {
+                self.sidebarSelection = sidebarSelection
+                self.selection = .some(.none)
+            }
+        } label: {
+            Text("Browse \(sidebarSelection.sourceInfo.fullTitle)", bundle: .module, comment: "format pattern for the label of the button at the bottom of the category info screen")
+        }
+    }
+
 }
 
 /// A label that tints its image
@@ -898,6 +955,7 @@ struct SidebarView: View {
                     if fairManager.homeBrewInv.enableHomebrew {
                         Section {
                             homebrewItems()
+                                .symbolVariant(.fill)
                         } header: {
                             sectionHeader(label: source.label, updating: fairManager.homeBrewInv.updateInProgress != 0)
                          }
@@ -906,6 +964,7 @@ struct SidebarView: View {
                 case .fairapps:
                     Section {
                         fairappsItems()
+                            .symbolVariant(.fill)
                     } header: {
                         sectionHeader(label: source.label, updating: fairManager.fairAppInv.updateInProgress != 0)
 
@@ -914,12 +973,12 @@ struct SidebarView: View {
             }
 
             // categories section
-            // TODO: merge homebrew
+            // TODO: merge homebrew and fairapps into single category
             if fairManager.homeBrewInv.enableHomebrew {
                 Section {
                     ForEach(AppCategory.allCases) { cat in
                         if fairManager.homeBrewInv.apps(for: cat).isEmpty == false {
-                            item(.homebrew, item: .category(cat))
+                            navitem(SidebarSelection(source: .homebrew, item: .category(cat)))
                         }
                     }
                     .symbolVariant(.fill)
@@ -951,25 +1010,24 @@ struct SidebarView: View {
 
     func homebrewItems() -> some View {
         Group {
-            item(.homebrew, item: .top).keyboardShortcut("1")
-            // item(.homebrew, .recent) // casks don't have a last-updated date
-            item(.homebrew, item: .installed).keyboardShortcut("2")
-            item(.homebrew, item: .updated).keyboardShortcut("3")
-                .symbolVariant(.fill)
+            let items = SidebarSelection.homebrewItems
+            navitem(items.0.sel)
+            navitem(items.1.sel)
+            navitem(items.2.sel)
         }
     }
 
     func fairappsItems() -> some View {
         Group {
-            item(.fairapps, item: .top).keyboardShortcut("4")
-            item(.fairapps, item: .recent).keyboardShortcut("5")
-            item(.fairapps, item: .installed).keyboardShortcut("6")
-            item(.fairapps, item: .updated).keyboardShortcut("7")
+            let items = SidebarSelection.fairappsItems
+            navitem(items.0.sel)
+            navitem(items.1.sel)
+            navitem(items.2.sel)
+            navitem(items.3.sel)
         }
     }
 
-    func item(_ source: AppSource, item: SidebarItem) -> some View {
-        let selection = SidebarSelection(source: source, item: item)
+    func navitem(_ selection: SidebarSelection) -> some View {
         let label = selection.sourceInfo.tintedLabel(monochrome: false)
         var navtitle = label.title
         if !searchText.isEmpty {
@@ -998,7 +1056,7 @@ struct SidebarView: View {
             AppsListView(source: item.source, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
         #if os(macOS)
         case .table:
-            AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sidebarSelection: sidebarSelection)
+            AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sidebarSelection: $sidebarSelection)
         #endif
         }
     }
@@ -1020,6 +1078,22 @@ struct SidebarView: View {
     }
 }
 
+extension SidebarSelection {
+    static let homebrewItems = (
+        (sel: SidebarSelection(source: .homebrew, item: .top), key: "1" as KeyEquivalent),
+        (sel: SidebarSelection(source: .homebrew, item: .installed), key: "2" as KeyEquivalent),
+        (sel: SidebarSelection(source: .homebrew, item: .updated), key: "3" as KeyEquivalent)
+    )
+
+    static let fairappsItems = (
+        (sel: SidebarSelection(source: .fairapps, item: .top), key: "4" as KeyEquivalent),
+        (sel: SidebarSelection(source: .fairapps, item: .recent), key: "5" as KeyEquivalent),
+        (sel: SidebarSelection(source: .fairapps, item: .installed), key: "6" as KeyEquivalent),
+        (sel: SidebarSelection(source: .fairapps, item: .updated), key: "7" as KeyEquivalent)
+    )
+}
+
+
 @available(macOS 12.0, iOS 15.0, *)
 extension FocusedValues {
 
@@ -1039,6 +1113,15 @@ extension FocusedValues {
     var selection: Binding<Selection?>? {
         get { self[FocusedSelection.self] }
         set { self[FocusedSelection.self] = newValue }
+    }
+
+    private struct FocusedSidebarSelection: FocusedValueKey {
+        typealias Value = Binding<SidebarSelection?>
+    }
+
+    var sidebarSelection: Binding<SidebarSelection?>? {
+        get { self[FocusedSidebarSelection.self] }
+        set { self[FocusedSidebarSelection.self] = newValue }
     }
 
     private struct FocusedReloadCommand: FocusedValueKey {

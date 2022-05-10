@@ -1493,7 +1493,7 @@ extension AppCatalogItem {
                         .grayscale(0.9)
                         .help(error.localizedDescription)
                 case .empty:
-                    let _ = dbg("empty image for:", self.name)
+//                    let _ = dbg("empty image for:", self.name)
 //                    if let image = iconCache.object(forKey: iconURL as NSURL) {
 //                        image.image
 //                            .resizable(resizingMode: .stretch)

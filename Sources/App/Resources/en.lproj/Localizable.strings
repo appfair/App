@@ -168,6 +168,9 @@
 /* app category label for appfair.board-games */
 "Board Games" = "Board Games";
 
+/* format pattern for the label of the button at the bottom of the category info screen */
+"Browse %@" = "Browse %@";
+
 /* homebrew preference button tooltip */
 "Browse the Homebrew installation folder using the Finder" = "Browse the Homebrew installation folder using the Finder";
 
@@ -346,13 +349,11 @@
 /* app entitlement title for files.user-selected.executable */
 "Executables (User-Selected)" = "Executables (User-Selected)";
 
-/* menu title for fairgroup actions */
-"Fair" = "Fair";
-
 /* fairapps preferences tab title */
 "Fairapps" = "Fairapps";
 
-/* app source title for fairground apps */
+/* app source title for fairground apps
+   source menu header text for section with fairground catalog selection options */
 "Fairground" = "Fairground";
 
 /* fairapps top apps info: full title */
@@ -425,7 +426,8 @@
 "Home Page" = "Home Page";
 
 /* app source title for homebrew apps
-   homebrew preferences tab title */
+   homebrew preferences tab title
+   source menu header text for section with homebrew catalog selection options */
 "Homebrew" = "Homebrew";
 
 /* homebrew top apps info: full title */
@@ -872,6 +874,9 @@
 
 /* app catalog entry info link title */
 "Source" = "Source";
+
+/* menu title for fairground sources actions */
+"Sources" = "Sources";
 
 /* app category label for appfair.sports */
 "Sports" = "Sports";
