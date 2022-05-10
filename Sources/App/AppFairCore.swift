@@ -1,3 +1,17 @@
+/**
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import FairKit
 import Combine
 
@@ -470,38 +484,6 @@ enum SidebarItem : Hashable {
         }
     }
 
-    func label(for source: AppSource, monochrome: Bool) -> TintedLabel {
-        switch source {
-        case .fairapps:
-            switch self {
-            case .top:
-                return TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
-            case .recent:
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .multicolor)
-            case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .multicolor)
-            case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .multicolor)
-            case .category(let category):
-                return category.tintedLabel(monochrome: monochrome)
-            }
-        case .homebrew:
-            switch self {
-            case .top:
-                return TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
-            case .installed:
-                return TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
-            case .recent: // not supported with casks
-                return TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
-            case .updated:
-                return TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
-            case .category(let category):
-                return category.tintedLabel(monochrome: monochrome)
-            }
-        }
-
-    }
-
     /// True indicates that this sidebar specifies to filter for locally-installed packages
     var isLocalFilter: Bool {
         switch self {
@@ -532,7 +514,7 @@ struct NavigationRootView : View {
 
     /// The current selection in the sidebar, defaulting to the `top` item of the initial `AppSource`.
     @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
-    //@State var sidebarSelection: SidebarSelection? = wip(SidebarSelection(source: AppSource.fairapps, item: .installed))
+//    @State var sidebarSelection: SidebarSelection? = wip(nil)
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     @AppStorage("iconBadge") private var iconBadge = true
@@ -698,9 +680,62 @@ public struct AppTableDetailSplitView : View {
 
 
 extension SidebarSelection {
-    func sourceLabel(monochrome: Bool) -> TintedLabel {
-        self.item.label(for: self.source, monochrome: monochrome)
+    /// The default font to use to render headlines for this catalog type
+    func sourceFont(sized size: CGFloat) -> Font {
+        switch self.source {
+        case .homebrew:
+            switch self.item {
+            case .top, .updated, .installed, .recent:
+                return Font.system(size: size, weight: .regular, design: .monospaced)
+            case .category(_):
+                return Font.system(size: size, weight: .regular, design: .default)
+            }
+        case .fairapps:
+            switch self.item {
+            case .top, .updated, .installed, .recent:
+                return Font.system(size: size, weight: .regular, design: .rounded)
+            case .category(_):
+                return Font.system(size: size, weight: .regular, design: .default)
+            }
+        }
     }
+
+    /// The view that will summarize the app source in the detail panel when no app is selected.
+    func sourceOverviewView() -> some View {
+        var label = sourceInfo.tintedLabel(monochrome: false)
+        let color = label.tint ?? .accentColor
+        label.title = sourceInfo.fullTitle
+
+        return VStack(spacing: 0) {
+            Divider()
+                .background(color)
+                .padding(.top, 1)
+
+            label
+                .foregroundColor(Color.primary)
+                //.font(.largeTitle)
+                .symbolVariant(.fill)
+                .font(Font.largeTitle)
+                //.font(self.sourceFont(sized: 40))
+                .frame(height: 60)
+
+            Divider()
+                .background(color)
+
+            if let overview = sourceInfo.overviewText {
+                ScrollView {
+                    overview
+                }
+                    // .textSelection(.enabled) // unwraps and converts to a single line when selecting
+                    .font(Font.title2)
+                    .padding()
+                    .padding()
+            }
+
+            Spacer()
+        }
+    }
+
 }
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -715,66 +750,69 @@ public struct AppDetailView : View {
                 CatalogItemView(info: app)
             case .some(.none), .none:
                 if let sidebarSelection = sidebarSelection {
-                    // placeholderView(for: sidebarSelection) // TODO
-                    sidebarSelection.sourceLabel(monochrome: true)
-                        .font(.title)
+                    sidebarSelection.sourceOverviewView()
                 } else {
-                    Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
-                        .font(.largeTitle)
+                    VStack {
+                        Text("Welcome to the App Fair", bundle: .module, comment: "header text for detail screen with no selection")
+                            .font(Font.system(size: 40, weight: .regular, design: .rounded))
+                            .padding()
+
+                        Text("The App Fair enables browsing, installing, and updating apps from community sources.", bundle: .module, comment: "header sub-text for detail screen with no selection")
+                            .font(Font.title)
+                            .padding()
+
+                        HStack(spacing: 0) {
+                            SidebarSelection(source: .homebrew, item: .top).sourceOverviewView()
+                            SidebarSelection(source: .fairapps, item: .top).sourceOverviewView()
+                        }
+                    }
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-
-    @ViewBuilder func placeholderView(for selection: SidebarSelection) -> some View {
-        let color = selection.sourceLabel(monochrome: false).tint ?? .accentColor
-
-        VStack(spacing: 0) {
-            ZStack {
-                selection.sourceLabel(monochrome: true)
-                    .foregroundColor(Color.primary)
-                    .font(.largeTitle)
-                LinearGradient(colors: [
-                    color.opacity(0.5),
-                    color.opacity(0.2),
-                ], startPoint: .top, endPoint: .bottom)
-            }
-            .frame(height: 60)
-
-            Divider()
-
-            Spacer()
-        }
-//                    Text("No Selection", bundle: .module, comment: "empty app selection detail area placeholder")
-//                        .label(image: sidebarSelection?.sourceLabel.symbol.image)
-//                        .font(.largeTitle)
-
-    }
 }
 
 /// A label that tints its image
 @available(macOS 12.0, iOS 15.0, *)
-public struct TintedLabel : View {
-    @Environment(\.colorScheme) var colorScheme
+public struct TintedLabel : View, Equatable {
+    //@Environment(\.colorScheme) var colorScheme
     public var title: Text
     public let symbol: FairSymbol
     public var tint: Color? = nil
-    public var mode: SymbolRenderingMode?
+    public var mode: RenderingMode?
 
     public var body: some View {
         Label(title: { title }) {
             if let tint = tint {
                 if let mode = mode {
                     symbol.image
-                        .symbolRenderingMode(mode)
+                        .symbolRenderingMode(mode.symbolRenderingMode)
                         .foregroundStyle(tint)
                 } else {
                     symbol.image
-                        .fairTint(simple: false, color: tint, scheme: colorScheme)
+                        .fairTint(simple: true, color: tint)
                 }
             } else {
                 symbol.image
+            }
+        }
+    }
+
+    /// An equatable form of the struct based SymbolRenderingMode instances
+    public enum RenderingMode : Equatable {
+        case monochrome
+        case hierarchical
+        case multicolor
+        case palette
+
+        /// The instance of `SymbolRenderingMode` that matches this renderig mode.
+        var symbolRenderingMode: SymbolRenderingMode {
+            switch self {
+            case .monochrome: return SymbolRenderingMode.monochrome
+            case .hierarchical: return SymbolRenderingMode.hierarchical
+            case .multicolor: return SymbolRenderingMode.multicolor
+            case .palette: return SymbolRenderingMode.palette
             }
         }
     }
@@ -783,7 +821,7 @@ public struct TintedLabel : View {
 extension View {
     /// The custom tinting style for the App Fair
     @available(macOS 12.0, iOS 15.0, *)
-    @ViewBuilder func fairTint(simple: Bool, color: Color, scheme: ColorScheme) -> some View {
+    @ViewBuilder func fairTint(simple: Bool, color: Color) -> some View {
         if simple {
             foregroundStyle(.linearGradient(colors: [color, color], startPoint: .top, endPoint: .bottom))
                 .opacity(0.8)
@@ -815,275 +853,6 @@ extension SwiftUI.Color {
 
     }
 }
-
-public extension AppCategory {
-    /// The description of an app category.
-    /// TODO: add in an extended description tuple
-    @available(macOS 12.0, iOS 15.0, *)
-    var text: Text {
-        switch self {
-        case .business:
-            return Text("Business", bundle: .module, comment: "app category label for appfair.business")
-        case .developertools:
-            return Text("Developer Tools", bundle: .module, comment: "app category label for appfair.developer-tools")
-        case .education:
-            return Text("Education", bundle: .module, comment: "app category label for appfair.education")
-        case .entertainment:
-            return Text("Entertainment", bundle: .module, comment: "app category label for appfair.entertainment")
-        case .finance:
-            return Text("Finance", bundle: .module, comment: "app category label for appfair.finance")
-        case .graphicsdesign:
-            return Text("Graphics Design", bundle: .module, comment: "app category label for appfair.graphics-design")
-        case .healthcarefitness:
-            return Text("Healthcare & Fitness", bundle: .module, comment: "app category label for appfair.healthcare-fitness")
-        case .lifestyle:
-            return Text("Lifestyle", bundle: .module, comment: "app category label for appfair.lifestyle")
-        case .medical:
-            return Text("Medical", bundle: .module, comment: "app category label for appfair.medical")
-        case .music:
-            return Text("Music", bundle: .module, comment: "app category label for appfair.music")
-        case .news:
-            return Text("News", bundle: .module, comment: "app category label for appfair.news")
-        case .photography:
-            return Text("Photography", bundle: .module, comment: "app category label for appfair.photography")
-        case .productivity:
-            return Text("Productivity", bundle: .module, comment: "app category label for appfair.productivity")
-        case .reference:
-            return Text("Reference", bundle: .module, comment: "app category label for appfair.reference")
-        case .socialnetworking:
-            return Text("Social Networking", bundle: .module, comment: "app category label for appfair.social-networking")
-        case .sports:
-            return Text("Sports", bundle: .module, comment: "app category label for appfair.sports")
-        case .travel:
-            return Text("Travel", bundle: .module, comment: "app category label for appfair.travel")
-        case .utilities:
-            return Text("Utilities", bundle: .module, comment: "app category label for appfair.utilities")
-        case .video:
-            return Text("Video", bundle: .module, comment: "app category label for appfair.video")
-        case .weather:
-            return Text("Weather", bundle: .module, comment: "app category label for appfair.weather")
-
-        case .games:
-            return Text("Games", bundle: .module, comment: "app category label for appfair.games")
-        case .actiongames:
-            return Text("Action Games", bundle: .module, comment: "app category label for appfair.action-games")
-        case .adventuregames:
-            return Text("Adventure Games", bundle: .module, comment: "app category label for appfair.adventure-games")
-        case .arcadegames:
-            return Text("Arcade Games", bundle: .module, comment: "app category label for appfair.arcade-games")
-        case .boardgames:
-            return Text("Board Games", bundle: .module, comment: "app category label for appfair.board-games")
-        case .cardgames:
-            return Text("Card Games", bundle: .module, comment: "app category label for appfair.card-games")
-        case .casinogames:
-            return Text("Casino Games", bundle: .module, comment: "app category label for appfair.casino-games")
-        case .dicegames:
-            return Text("Dice Games", bundle: .module, comment: "app category label for appfair.dice-games")
-        case .educationalgames:
-            return Text("Educational Games", bundle: .module, comment: "app category label for appfair.educational-games")
-        case .familygames:
-            return Text("Family Games", bundle: .module, comment: "app category label for appfair.family-games")
-        case .kidsgames:
-            return Text("Kids Games", bundle: .module, comment: "app category label for appfair.kids-games")
-        case .musicgames:
-            return Text("Music Games", bundle: .module, comment: "app category label for appfair.music-games")
-        case .puzzlegames:
-            return Text("Puzzle Games", bundle: .module, comment: "app category label for appfair.puzzle-games")
-        case .racinggames:
-            return Text("Racing Games", bundle: .module, comment: "app category label for appfair.racing-games")
-        case .roleplayinggames:
-            return Text("Role Playing Games", bundle: .module, comment: "app category label for appfair.role-playing-games")
-        case .simulationgames:
-            return Text("Simulation Games", bundle: .module, comment: "app category label for appfair.simulation-games")
-        case .sportsgames:
-            return Text("Sports Games", bundle: .module, comment: "app category label for appfair.sports-games")
-        case .strategygames:
-            return Text("Strategy Games", bundle: .module, comment: "app category label for appfair.strategy-games")
-        case .triviagames:
-            return Text("Trivia Games", bundle: .module, comment: "app category label for appfair.trivia-games")
-        case .wordgames:
-            return Text("Word Games", bundle: .module, comment: "app category label for appfair.word-games")
-        }
-    }
-
-    @available(macOS 12.0, iOS 15.0, *)
-    var symbol: FairSymbol {
-        switch self {
-        case .business:
-            return .building_2
-        case .developertools:
-            return .keyboard
-        case .education:
-            return .graduationcap
-        case .entertainment:
-            return .tv
-        case .finance:
-            return .diamond
-        case .graphicsdesign:
-            return .paintpalette
-        case .healthcarefitness:
-            return .figure_walk
-        case .lifestyle:
-            return .suitcase
-        case .medical:
-            return .cross_case
-        case .music:
-            return .radio
-        case .news:
-            return .newspaper
-        case .photography:
-            return .camera
-        case .productivity:
-            return .puzzlepiece
-        case .reference:
-            return .books_vertical
-        case .socialnetworking:
-            return .person_3
-        case .sports:
-            return .rosette
-        case .travel:
-            return .suitcase
-        case .utilities:
-            return .crown
-        case .video:
-            return .film
-        case .weather:
-            return .cloud
-
-        case .games:
-            return .gamecontroller
-            
-        case .actiongames:
-            return .gamecontroller
-        case .adventuregames:
-            return .gamecontroller
-        case .arcadegames:
-            return .gamecontroller
-        case .boardgames:
-            return .gamecontroller
-        case .cardgames:
-            return .gamecontroller
-        case .casinogames:
-            return .gamecontroller
-        case .dicegames:
-            return .gamecontroller
-        case .educationalgames:
-            return .gamecontroller
-        case .familygames:
-            return .gamecontroller
-        case .kidsgames:
-            return .gamecontroller
-        case .musicgames:
-            return .gamecontroller
-        case .puzzlegames:
-            return .gamecontroller
-        case .racinggames:
-            return .gamecontroller
-        case .roleplayinggames:
-            return .gamecontroller
-        case .simulationgames:
-            return .gamecontroller
-        case .sportsgames:
-            return .gamecontroller
-        case .strategygames:
-            return .gamecontroller
-        case .triviagames:
-            return .gamecontroller
-        case .wordgames:
-            return .gamecontroller
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .business:
-            return Color.green
-        case .developertools:
-            return Color.orange
-        case .education:
-            return Color.blue
-        case .entertainment:
-            return Color.purple
-        case .finance:
-            return Color.green
-        case .graphicsdesign:
-            return Color.teal
-        case .healthcarefitness:
-            return Color.mint
-        case .lifestyle:
-            return Color.orange
-        case .medical:
-            return Color.white
-        case .music:
-            return Color.yellow
-        case .news:
-            return Color.brown
-        case .photography:
-            return Color.pink
-        case .productivity:
-            return Color.cyan
-        case .reference:
-            return Color.gray
-        case .socialnetworking:
-            return Color.yellow
-        case .sports:
-            return Color.teal
-        case .travel:
-            return Color.indigo
-        case .utilities:
-            return Color.purple
-        case .video:
-            return Color.yellow
-        case .weather:
-            return Color.blue
-        case .games:
-            return Color.red
-        case .actiongames:
-            return Color.red
-        case .adventuregames:
-            return Color.red
-        case .arcadegames:
-            return Color.red
-        case .boardgames:
-            return Color.red
-        case .cardgames:
-            return Color.red
-        case .casinogames:
-            return Color.red
-        case .dicegames:
-            return Color.red
-        case .educationalgames:
-            return Color.red
-        case .familygames:
-            return Color.red
-        case .kidsgames:
-            return Color.red
-        case .musicgames:
-            return Color.red
-        case .puzzlegames:
-            return Color.red
-        case .racinggames:
-            return Color.red
-        case .roleplayinggames:
-            return Color.red
-        case .simulationgames:
-            return Color.red
-        case .sportsgames:
-            return Color.red
-        case .strategygames:
-            return Color.red
-        case .triviagames:
-            return Color.red
-        case .wordgames:
-            return Color.red
-        }
-    }
-
-    func tintedLabel(monochrome: Bool) -> TintedLabel {
-        TintedLabel(title: text, symbol: symbol, tint: monochrome ? nil : tint, mode: monochrome ? .monochrome : nil)
-    }
-}
-
 
 /// A view that passes its enabled state to the given content closure
 public struct EnabledView<V: View> : View {
@@ -1201,7 +970,7 @@ struct SidebarView: View {
 
     func item(_ source: AppSource, item: SidebarItem) -> some View {
         let selection = SidebarSelection(source: source, item: item)
-        let label = selection.item.label(for: source, monochrome: false)
+        let label = selection.sourceInfo.tintedLabel(monochrome: false)
         var navtitle = label.title
         if !searchText.isEmpty {
             navtitle = Text("\(navtitle): \(Text(searchText))", bundle: .module, comment: "formatting string separating navigation title from search text")
@@ -1239,7 +1008,7 @@ struct SidebarView: View {
             Button(action: {
                 selectItem(item)
             }, label: {
-                item.label(for: source, monochrome: false)
+//                item.label(for: source, monochrome: false)
                     //.symbolVariant(.fill)
 //                    .symbolRenderingMode(.multicolor)
             })
@@ -1247,7 +1016,7 @@ struct SidebarView: View {
     }
 
     func selectItem(_ item: SidebarItem) {
-        dbg("selected:", item.label, item.id)
+        dbg("selected:", item.id)
     }
 }
 
