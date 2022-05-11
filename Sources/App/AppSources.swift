@@ -25,6 +25,9 @@ protocol AppSourceInfo {
     /// A textual description of this source
     var overviewText: Text? { get }
 
+    /// Footer text for this source
+    var footerText: Text? { get }
+
     /// A list of the features of this source, which will be laid in order
     var featureInfo: [(FairSymbol, Text)] { get }
 }
@@ -78,10 +81,12 @@ extension SidebarSelection {
                 Text("""
                 The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.
 
-                Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be “sandboxed”, meaning they could have unmediated access to files and the device & network resources of the host machine.
-
-                Learn more about the Homebrew community at [https://brew.sh](https://brew.sh).
+                Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.
                 """, bundle: .module, comment: "homebrew top apps info: overview text")
+            }
+
+            var footerText: Text? {
+                Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", bundle: .module, comment: "homebrew top apps info: footer link text")
             }
 
             /// A list of the features of this source, which will be laid in order
@@ -102,6 +107,11 @@ extension SidebarSelection {
 
             /// A textual description of this source
             var overviewText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            var footerText: Text? {
                 nil
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
@@ -128,6 +138,11 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew installed apps info: overview text")
             }
 
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
             /// A list of the features of this source, which will be laid in order
             var featureInfo: [(FairSymbol, Text)] {
                 []
@@ -148,6 +163,11 @@ extension SidebarSelection {
             var overviewText: Text? {
                 nil
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew updated apps info: overview text")
+            }
+
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
             /// A list of the features of this source, which will be laid in order
@@ -171,12 +191,14 @@ extension SidebarSelection {
             /// A textual description of this source
             var overviewText: Text? {
                 Text("""
-                Fairground apps are created through the appfair.net process. They are guaranteed to be completely open-source and to disclose all their permissions on the App Fair catalog.
+                Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.
 
-                Apps installed from the Fairground catalog are guaranteed to be sandboxed, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented and disclosed. Fairground apps publish a “risk level” which summarizes the number of permission categories in the app's entitlements.
-
-                Learn more about the fairground process at [https://appfair.net](https://appfair.net).
+                Apps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests.
                 """, bundle: .module, comment: "fairapps top apps info: overview text")
+            }
+
+            var footerText: Text? {
+                Text("Learn more about the fairground process at [https://appfair.net](https://appfair.net)", bundle: .module, comment: "fairground top apps info: footer link text")
             }
 
             /// A list of the features of this source, which will be laid in order
@@ -201,6 +223,11 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "fairapps recent apps info: overview text")
             }
 
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
             /// A list of the features of this source, which will be laid in order
             var featureInfo: [(FairSymbol, Text)] {
                 []
@@ -223,6 +250,11 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "fairapps installed apps info: overview text")
             }
 
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
             /// A list of the features of this source, which will be laid in order
             var featureInfo: [(FairSymbol, Text)] {
                 []
@@ -243,6 +275,11 @@ extension SidebarSelection {
             var overviewText: Text? {
                 nil
                 // Text(wip("XXX"), bundle: .module, comment: "fairapps updated apps info: overview text")
+            }
+
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
             /// A list of the features of this source, which will be laid in order
@@ -268,6 +305,11 @@ extension SidebarSelection {
         var overviewText: Text? {
             nil
             // Text(wip("XXX"), bundle: .module, comment: "app category info: overview text")
+        }
+
+        var footerText: Text? {
+            nil
+            // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
         }
 
         /// A list of the features of this source, which will be laid in order

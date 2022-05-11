@@ -554,7 +554,6 @@ struct NavigationRootView : View {
 
     public var body: some View {
         triptychView
-            .frame(minHeight: 500) // we'd rather set idealWidth/idealHeight as a hint to what the original size should be, but they are ignored
             .displayingFirstAlert($fairManager.fairAppInv.errors)
             .toolbar(id: "NavToolbar") {
 //                ToolbarItem(placement: .navigation) {
@@ -756,11 +755,11 @@ extension SidebarSelection {
             if let overview = sourceInfo.overviewText {
                 ScrollView {
                     overview
+                        .font(Font.title2)
                         .padding()
                         .padding()
                 }
                     // .textSelection(.enabled) // unwraps and converts to a single line when selecting
-                    .font(Font.title2)
             }
         }
     }
@@ -791,6 +790,7 @@ public struct AppDetailView : View {
 
                     if let sidebarSelection = sidebarSelection {
                         sidebarSelection.sourceOverviewView()
+                            .font(.body)
                         Spacer()
                     } else {
                         let sb1 = SidebarSelection(source: .homebrew, item: .top)
@@ -799,22 +799,29 @@ public struct AppDetailView : View {
                             sb1.sourceOverviewView()
                             sb2.sourceOverviewView()
                         }
-                        Spacer()
                         HStack {
                             Spacer()
                             browseButton(sb1)
-                            Spacer()
                             Spacer()
                             Spacer()
                             browseButton(sb2)
                             Spacer()
                         }
                         .padding()
+                        HStack {
+                            Spacer()
+                            sb1.sourceInfo.footerText
+                                .font(.footnote)
+                            Spacer()
+                            Spacer()
+                            sb2.sourceInfo.footerText
+                                .font(.footnote)
+                            Spacer()
+                        }
                     }
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     func browseButton(_ sidebarSelection: SidebarSelection) -> some View {

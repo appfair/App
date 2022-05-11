@@ -895,26 +895,29 @@ struct CatalogItemView: View {
     }
 
     func installMessage() -> some View {
+        let developerName = info.catalogMetadata.developerName ?? ""
+
         if info.isCask {
-            return Text(atx: """
-                This will use the Homebrew package manager to download and install the application “\(info.catalogMetadata.name)” from the developer “\(info.catalogMetadata.developerName ?? "")” at:
+            return Text("""
+                This will use the Homebrew package manager to download and install the application “\(info.catalogMetadata.name)” from the developer “\(developerName)” at:
 
                 [\(info.catalogMetadata.downloadURL.absoluteString)](\(info.catalogMetadata.downloadURL.absoluteString))
 
                 This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
                 Before installing, you should first review the home page for the app to learn more about it.
-                """)
+                """, bundle: .module, comment: "installation warning for homebrew apps")
         } else {
-            return Text(atx: """
-                This will download and install the application “\(info.catalogMetadata.name)” from the developer “\(info.catalogMetadata.developerName ?? "")” at:
+            let metaURL = info.catalogMetadata.sourceURL?.absoluteString ?? ""
+            return Text("""
+                This will download and install the application “\(info.catalogMetadata.name)” from the developer “\(developerName)” at:
 
-                \(info.catalogMetadata.sourceURL?.absoluteString ?? "")
+                \(metaURL)
 
                 This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
                 Before installing, you should first review the Discussions, Issues, and Documentation pages to learn more about the app.
-                """)
+                """, bundle: .module, comment: "installation warning for fairground apps")
         }
     }
 

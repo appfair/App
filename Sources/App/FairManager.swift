@@ -19,6 +19,8 @@ import Combine
 @MainActor public final class FairManager: SceneManager {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
+    @AppStorage("firstLaunchV1") public var firstLaunchV1 = true
+
     @AppStorage("enableInstallWarning") public var enableInstallWarning = true
     @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
 
