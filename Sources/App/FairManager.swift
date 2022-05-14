@@ -40,6 +40,9 @@ import Combine
     /// The duration to continue blocking launch telemtry after an app has been launched (since the OS retries for a certain amount of time if the initial connection fails)
     @AppStorage("appLaunchPrivacyDuration") public var appLaunchPrivacyDuration: TimeInterval = 60.0
 
+    /// Whether links clicked in the embedded browser should open in a new browser window
+    @AppStorage("openLinksInNewBrowser") var openLinksInNewBrowser = true
+
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
     @Published var fairAppInv: FairAppInventory
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`

@@ -446,7 +446,7 @@
 "Homebrew Casks" = "Homebrew Casks";
 
 /* homebrew preference description */
-"Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@\nInstalled: \(isBrewInstalled ? \"yes\" : \"no\")" = "Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@\nInstalled: \(isBrewInstalled ? \"yes\" : \"no\")";
+"Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@" = "Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@";
 
 /* app catalog entry info link title */
 "Homepage" = "Homepage";
@@ -580,12 +580,18 @@
 /* placeholder string for empty screenshot preview section */
 "No screenshots available" = "No screenshots available";
 
+/* placeholder text for detail panel indicating there is no app currently selected */
+"No Selection" = "No Selection";
+
 /* apps list bottom bar title */
 "Not updated recently" = "Not updated recently";
 
 /* default button title for prompt
    error dialog button to dismiss the error */
 "OK" = "OK";
+
+/* fairapps preference checkbox for whether links in the embedded browser should be opened in a new browser */
+"Open links in new browser window" = "Open links in new browser window";
 
 /* app catalog entry info link tooltip */
 "Opens link to source code repository for this app at: %@" = "Opens link to source code repository for this app at: %@";
@@ -1055,6 +1061,9 @@
 
 /* homebrew preference checkbox tooltip */
 "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";
+
+/* fairapps preference checkbox tooltip */
+"When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself." = "When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself.";
 
 /* tooltip text describing when an app auto-updates */
 "Whether this app handles updating itself" = "Whether this app handles updating itself";

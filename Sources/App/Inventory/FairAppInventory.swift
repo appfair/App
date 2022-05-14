@@ -807,5 +807,4 @@ extension FairAppInventory {
             return nil
         }
     }
-
 }

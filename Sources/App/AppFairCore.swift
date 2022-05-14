@@ -731,7 +731,7 @@ extension SidebarSelection {
     }
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
-    func sourceOverviewView() -> some View {
+    func sourceOverviewView(showText: Bool) -> some View {
         var label = sourceInfo.tintedLabel(monochrome: false)
         let color = label.tint ?? .accentColor
         label.title = sourceInfo.fullTitle
@@ -752,7 +752,7 @@ extension SidebarSelection {
             Divider()
                 .background(color)
 
-            if let overview = sourceInfo.overviewText {
+            if showText, let overview = sourceInfo.overviewText {
                 ScrollView {
                     overview
                         .font(Font.title2)
@@ -777,48 +777,57 @@ public struct AppDetailView : View {
             case .app(let app):
                 CatalogItemView(info: app)
             case .some(.none), .none:
-                VStack {
-                    if sidebarSelection == nil {
-                        Text("Welcome to the App Fair", bundle: .module, comment: "header text for detail screen with no selection")
-                            .font(Font.system(size: 40, weight: .regular, design: .rounded))
-                            .padding()
+                emptySelectionView()
+            }
+        }
+    }
 
-                        Text("The App Fair enables browsing, installing, and updating apps from community sources.", bundle: .module, comment: "header sub-text for detail screen with no selection")
-                            .font(Font.title)
-                            .padding()
-                    }
+    @ViewBuilder func emptySelectionView() -> some View {
+        VStack {
+            if sidebarSelection == nil {
+                Text("Welcome to the App Fair", bundle: .module, comment: "header text for detail screen with no selection")
+                    .font(Font.system(size: 40, weight: .regular, design: .rounded))
+                    .padding()
 
-                    if let sidebarSelection = sidebarSelection {
-                        sidebarSelection.sourceOverviewView()
-                            .font(.body)
-                        Spacer()
-                    } else {
-                        let sb1 = SidebarSelection(source: .homebrew, item: .top)
-                        let sb2 = SidebarSelection(source: .fairapps, item: .top)
-                        HStack(spacing: 0) {
-                            sb1.sourceOverviewView()
-                            sb2.sourceOverviewView()
-                        }
-                        HStack {
-                            Spacer()
-                            browseButton(sb1)
-                            Spacer()
-                            Spacer()
-                            browseButton(sb2)
-                            Spacer()
-                        }
-                        .padding()
-                        HStack {
-                            Spacer()
-                            sb1.sourceInfo.footerText
-                                .font(.footnote)
-                            Spacer()
-                            Spacer()
-                            sb2.sourceInfo.footerText
-                                .font(.footnote)
-                            Spacer()
-                        }
-                    }
+                Text("The App Fair enables browsing, installing, and updating apps from community sources.", bundle: .module, comment: "header sub-text for detail screen with no selection")
+                    .font(Font.title)
+                    .padding()
+            }
+
+            if let sidebarSelection = sidebarSelection {
+                sidebarSelection.sourceOverviewView(showText: false)
+                    .font(.body)
+                Spacer()
+
+                Text("No Selection", bundle: .module, comment: "placeholder text for detail panel indicating there is no app currently selected")
+                    .font(Font.title)
+                    .foregroundColor(Color.secondary)
+                Spacer()
+            } else {
+                let sb1 = SidebarSelection(source: .homebrew, item: .top)
+                let sb2 = SidebarSelection(source: .fairapps, item: .top)
+                HStack(spacing: 0) {
+                    sb1.sourceOverviewView(showText: true)
+                    sb2.sourceOverviewView(showText: true)
+                }
+                HStack {
+                    Spacer()
+                    browseButton(sb1)
+                    Spacer()
+                    Spacer()
+                    browseButton(sb2)
+                    Spacer()
+                }
+                .padding()
+                HStack {
+                    Spacer()
+                    sb1.sourceInfo.footerText
+                        .font(.footnote)
+                    Spacer()
+                    Spacer()
+                    sb2.sourceInfo.footerText
+                        .font(.footnote)
+                    Spacer()
                 }
             }
         }

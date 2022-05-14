@@ -186,6 +186,7 @@ struct HomebrewSettingsView: View {
             Section {
                 GroupBox {
                     VStack {
+                        let brewPath = (fairManager.homeBrewInv.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath
                         Text("""
                             Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.
 
@@ -193,8 +194,7 @@ struct HomebrewSettingsView: View {
 
                             Read more at: [https://brew.sh](https://brew.sh)
                             Browse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)
-                            Location: \((fairManager.homeBrewInv.brewInstallRoot.path as NSString).abbreviatingWithTildeInPath)
-                            Installed: \(isBrewInstalled ? "yes" : "no")
+                            Location: \(brewPath)
                             """, bundle: .module, comment: "homebrew preference description")
                             // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
                             .multilineTextAlignment(.leading)
@@ -305,12 +305,12 @@ struct FairAppsSettingsView: View {
 
 @available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
-    @AppStorage("themeStyle") private var themeStyle = ThemeStyle.system
+    @EnvironmentObject var fairManager: FairManager
     @AppStorage("iconBadge") private var iconBadge = true
 
     var body: some View {
         Form {
-            ThemeStylePicker(style: $themeStyle)
+            ThemeStylePicker(style: $fairManager.themeStyle)
 
             Divider()
 
@@ -318,6 +318,11 @@ struct GeneralSettingsView: View {
                 Text("Badge App Icon with update count", bundle: .module, comment: "fairapps preference checkbox")
             }
                 .help(Text("Show the number of updates that are available to install.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+
+            Toggle(isOn: $fairManager.openLinksInNewBrowser) {
+                Text("Open links in new browser window", bundle: .module, comment: "fairapps preference checkbox for whether links in the embedded browser should be opened in a new browser")
+            }
+                .help(Text("When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
         }
     }
 }

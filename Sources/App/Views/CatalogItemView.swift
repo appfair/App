@@ -481,6 +481,16 @@ struct CatalogItemView: View {
     @ViewBuilder func homepageSection() -> some View {
         if let homepage = info.homepage {
             WebView(state: webViewState)
+                .webViewNavigationActionPolicy(decide: { action, state in
+                    dbg("navigation:", action, "type:", action.navigationType)
+                    // clicking on links will open in a new browser
+                    if fairManager.openLinksInNewBrowser, action.navigationType == .linkActivated, let url = action.request.url {
+                        openURLAction(url)
+                        return (.cancel, nil)
+                    } else {
+                        return (.allow, nil)
+                    }
+                })
                 .task {
                     webViewState.load(homepage)
                 }
