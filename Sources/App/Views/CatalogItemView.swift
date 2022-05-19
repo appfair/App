@@ -22,12 +22,6 @@ struct CatalogItemView: View {
     @EnvironmentObject var fairManager: FairManager
     @Environment(\.openURL) var openURLAction
     @Environment(\.colorScheme) var colorScheme
-    @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: {
-        let config = WKWebViewConfiguration()
-        config.processPool = WKProcessPool()
-        config.websiteDataStore = .nonPersistent() // incogito mode
-        return config
-    }())
 
     @State private var caskURLFileSize: Int64? = nil
     @State private var caskURLModifiedDate: Date? = nil
@@ -439,11 +433,13 @@ struct CatalogItemView: View {
 
     enum PreviewTab : CaseIterable, Hashable {
         case screenshots
+        case discussions
         case homepage
 
         var title: Text {
             switch self {
             case .screenshots: return Text("Screen Shots", bundle: .module, comment: "app catalog cask entry preview tab title")
+            case .discussions: return Text("Discussions", bundle: .module, comment: "app catalog cask entry preview tab title")
             case .homepage: return Text("Home Page", bundle: .module, comment: "app catalog cask entry preview tab title")
             }
         }
@@ -458,6 +454,8 @@ struct CatalogItemView: View {
                     switch tab {
                     case .screenshots:
                         screenshotsSection()
+                    case .discussions:
+                        discussionsSection()
                     case .homepage:
                         homepageSection()
                     }
@@ -477,23 +475,18 @@ struct CatalogItemView: View {
         }
     }
 
-    /// Use a little mini-browser to show the homepage
+    @ViewBuilder func discussionsSection() -> some View {
+        webViewSection(page: info.isCask ? nil : info.catalogMetadata.discussionsURL)
+    }
+
     @ViewBuilder func homepageSection() -> some View {
-        if let homepage = info.homepage {
-            WebView(state: webViewState)
-                .webViewNavigationActionPolicy(decide: { action, state in
-                    dbg("navigation:", action, "type:", action.navigationType)
-                    // clicking on links will open in a new browser
-                    if fairManager.openLinksInNewBrowser, action.navigationType == .linkActivated, let url = action.request.url {
-                        openURLAction(url)
-                        return (.cancel, nil)
-                    } else {
-                        return (.allow, nil)
-                    }
-                })
-                .task {
-                    webViewState.load(homepage)
-                }
+        webViewSection(page: info.homepage ?? info.catalogMetadata.landingPage)
+    }
+
+    /// Use an embedded mini-browser to show the given URL
+    @ViewBuilder private func webViewSection(page: URL?) -> some View {
+        if let page = page {
+            CatalogItemBrowserView(page: page, openLinksInNewBrowser: fairManager.openLinksInNewBrowser)
         }
     }
 
@@ -1617,6 +1610,42 @@ extension ButtonStyle where Self == ZoomableButtonStyle {
 
     static func zoomable(level: Double = 0.95) -> ZoomableButtonStyle {
         ZoomableButtonStyle(zoomLevel: level)
+    }
+}
+
+struct CatalogItemBrowserView : View {
+    let page: URL
+    let openLinksInNewBrowser: Bool // TODO: fairManager.openLinksInNewBrowser
+    @Environment(\.openURL) var openURLAction
+
+    @StateObject private var webViewState = WebViewState(initialRequest: nil, configuration: {
+        let config = WKWebViewConfiguration()
+        config.defaultWebpagePreferences.preferredContentMode = .mobile
+        config.processPool = WKProcessPool()
+        config.websiteDataStore = .nonPersistent() // incogito mode
+        config.preferences.javaScriptCanOpenWindowsAutomatically = false
+        return config
+    }())
+
+    var body: some View {
+        WebView(state: webViewState)
+            .webViewNavigationActionPolicy(decide: { action, state in
+                dbg("navigation:", action, "type:", action.navigationType)
+                // clicking on links will open in a new browser
+                if openLinksInNewBrowser,
+                    action.navigationType == .linkActivated,
+                    let url = action.request.url {
+                    openURLAction(url)
+                    return (.cancel, nil)
+                } else {
+                    return (.allow, nil)
+                }
+            })
+            .task {
+                if webViewState.url != page {
+                    webViewState.load(page)
+                }
+            }
     }
 }
 
