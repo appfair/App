@@ -13,4 +13,7 @@
    <FileRef
       location = "group:../Blunder">
    </FileRef>
+   <FileRef
+      location = "group:../Fair">
+   </FileRef>
 </Workspace>

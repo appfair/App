@@ -16,6 +16,7 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"),
+            .product(name: "FairKit", package: "Fair"),
             .product(name: "Busq", package: "Busq"),
             .product(name: "Blunder", package: "Blunder"),
         ], resources: [.process("Resources"), .copy("Bundle")]),
