@@ -336,7 +336,7 @@ public struct NCX {
 extension NCX {
     /// The flattened table of contents, which included an index path for each `navPoint`
     public var toc: AnySequence<(indices: [Int], element: NavPoint)> {
-        Tree.enumerated(self.points, traverse: .depthFirst, children: \.points)
+        TreeEnumerations.enumerated(self.points, traverse: .depthFirst, children: \.points)
     }
 }
 
