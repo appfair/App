@@ -1102,10 +1102,10 @@ extension SidebarSelection {
     )
 
     static let fairappsItems = (
-        (sel: SidebarSelection(source: .fairapps, item: .top), key: "4" as KeyEquivalent),
-        (sel: SidebarSelection(source: .fairapps, item: .recent), key: "5" as KeyEquivalent),
-        (sel: SidebarSelection(source: .fairapps, item: .installed), key: "6" as KeyEquivalent),
-        (sel: SidebarSelection(source: .fairapps, item: .updated), key: "7" as KeyEquivalent)
+        (sel: SidebarSelection(source: .fairapps, item: .top), key: KeyEquivalent("4")),
+        (sel: SidebarSelection(source: .fairapps, item: .recent), key: KeyEquivalent("5")),
+        (sel: SidebarSelection(source: .fairapps, item: .installed), key: KeyEquivalent("6")),
+        (sel: SidebarSelection(source: .fairapps, item: .updated), key: KeyEquivalent("7"))
     )
 }
 
