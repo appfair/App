@@ -370,18 +370,20 @@ extension FairAppInventory {
         }
     }
 
+    static let appSuffix = ".app"
+    
     /// Returns the installed path for this app; this will always be
     /// `/Applications/Fair Ground/App Name.app`, except for the
     /// `Fair Ground.app` catalog app itself, which will be at:
     /// `/Applications/Fair Ground.app`.scanInstalledApps
     static func appInstallPath(for item: AppCatalogItem) -> URL {
         // e.g., "App Fair.app" matches "/Applications/App Fair"
-        URL(fileURLWithPath: item.name + FairCLI.appSuffix, isDirectory: true, relativeTo: installFolderURL.lastPathComponent == item.name ? installFolderURL.deletingLastPathComponent() : installFolderURL)
+        URL(fileURLWithPath: item.name + appSuffix, isDirectory: true, relativeTo: installFolderURL.lastPathComponent == item.name ? installFolderURL.deletingLastPathComponent() : installFolderURL)
     }
 
     /// The catalog app itself is the same as the name of the install path with the ".app" suffix
     static var catalogAppURL: URL {
-        URL(fileURLWithPath: installFolderURL.lastPathComponent + FairCLI.appSuffix, relativeTo: installFolderURL.deletingLastPathComponent())
+        URL(fileURLWithPath: installFolderURL.lastPathComponent + appSuffix, relativeTo: installFolderURL.deletingLastPathComponent())
     }
 
     /// The bundle IDs for all the installed apps
