@@ -67,7 +67,7 @@ struct BrowserView : View {
 
     var browserBody: some View {
         let content = WebView(state: state)
-//            .webViewNavigationPolicy(onAction: decidePolicy(for:state:))
+            .webViewNavigationResponsePolicy(decide: decidePolicy(for:state:))
             .alert(item: $externalNavigation, content: makeExternalNavigationAlert(_:))
 
         let urlField = ToolbarItem(id: "URLField", placement: .principal, showsByDefault: true) {
@@ -134,16 +134,16 @@ struct BrowserView : View {
     @State private var externalNavigation: ExternalURLNavigation?
     @Environment(\.openURL) private var openURL
 
-//    private func decidePolicy(for action: NavigationAction, state: WebViewState) {
-//        if let externalURL = action.request.url,
-//            !WebView.canHandle(externalURL) {
-//            dbg(externalURL)
-//            externalNavigation = ExternalURLNavigation(source: state.url ?? URL(string: "about:blank")!, destination: externalURL)
-//            action.decidePolicy(.cancel)
-//        } else {
-//            action.decidePolicy(.allow)
-//        }
-//    }
+    private func decidePolicy(for response: WKNavigationResponse, state: WebViewState) -> WKNavigationResponsePolicy {
+        if let externalURL = response.response.url,
+            !WebView.canHandle(externalURL) {
+            dbg(externalURL)
+            externalNavigation = ExternalURLNavigation(source: state.url ?? URL(string: "about:blank")!, destination: externalURL)
+            return .cancel
+        } else {
+            return .allow
+        }
+    }
 
     private func makeExternalNavigationAlert(_ navigation: ExternalURLNavigation) -> Alert {
         Alert(title: Text("Allow “\(navigation.source.highLevelDomain)” to open “\(navigation.destination.scheme ?? "")”?", bundle: .module, comment: "alert for whether to permit external navigation"), primaryButton: .default(Text("Allow", bundle: .module, comment: "button text for allow text in dialog asking whether to permit external navigation"), action: { openURL(navigation.destination) }), secondaryButton: .cancel())
