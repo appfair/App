@@ -1109,19 +1109,8 @@ extension SidebarSelection {
     )
 }
 
-
 @available(macOS 12.0, iOS 15.0, *)
 extension FocusedValues {
-
-//    private struct FocusedGardenKey: FocusedValueKey {
-//        typealias Value = Binding<Selection?>
-//    }
-//
-//    var garden: Binding<Garden>? {
-//        get { self[FocusedGardenKey.self] }
-//        set { self[FocusedGardenKey.self] = newValue }
-//    }
-
     private struct FocusedSelection: FocusedValueKey {
         typealias Value = Binding<Selection?>
     }

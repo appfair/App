@@ -73,11 +73,13 @@ import FairCore
             guard let enc = proxyman.items.first?.enclosures.first else {
                 return XCTFail("no enclosure")
             }
-            XCTAssertEqual("33436697", enc.length)
             XCTAssertEqual("application/octet-stream", enc.type)
-            XCTAssertEqual("MC0CFClWh6mZMHIyWtezyyNkAUMF27JTAhUAp0duxxXgtGm0XFGqSQnRipCCgB8=", enc.dsaSignature)
-            XCTAssertEqual("30400", enc.version)
-            XCTAssertEqual("3.4.0", enc.shortVersionString)
+
+            // version-specific checks
+            //XCTAssertEqual("33436697", enc.length)
+            //XCTAssertEqual("MC0CFClWh6mZMHIyWtezyyNkAUMF27JTAhUAp0duxxXgtGm0XFGqSQnRipCCgB8=", enc.dsaSignature)
+            //XCTAssertEqual("30400", enc.version)
+            //XCTAssertEqual("3.4.0", enc.shortVersionString)
         }
     }
 
@@ -389,3 +391,4 @@ import FairCore
         XCTAssertEqual("windows", windows.enclosures.last?.additions?.os)
     }
 }
+
