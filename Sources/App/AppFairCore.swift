@@ -543,7 +543,7 @@ struct NavigationRootView : View {
     @State var scrollToSelection: Bool = false
 
     /// The current selection in the sidebar, defaulting to the `top` item of the initial `AppSource`.
-    // @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
+    //@State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
     @State var sidebarSelection: SidebarSelection? = nil
 
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!

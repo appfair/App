@@ -31,7 +31,7 @@ struct AppsListView : View {
     @State private var searchText: String = ""
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
 
-    var catalog: AppCatalog {
+    var catalog: AppInventoryCatalog {
         switch source {
         case .homebrew: return fairManager.homeBrewInv
         case .fairapps: return fairManager.fairAppInv

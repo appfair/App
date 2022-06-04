@@ -569,7 +569,7 @@ struct CatalogItemView: View {
                         }
                     case .formula:
                         if let cask = info.cask {
-                            CaskFormulaBox(cask: cask, json: true)
+                            CaskFormulaBox(cask: cask, json: false)
                         }
                     }
                 }
@@ -614,7 +614,7 @@ struct CatalogItemView: View {
         }
     }
 
-    func permissionListItem(permission: AppPermission) -> some View {
+    func permissionListItem(permission: AppLegacyPermission) -> some View {
         let entitlement = permission.type
 
         var title = entitlement.localizedInfo.title
@@ -633,7 +633,7 @@ struct CatalogItemView: View {
 
     /// The entitlements that will appear in the list.
     /// These filter out entitlements that are pre-requisites (e.g., sandboxing) as well as harmless entitlements (e.g., JIT).
-    var listedPermissions: [AppPermission] {
+    var listedPermissions: [AppLegacyPermission] {
         metadata.orderedPermissions(filterCategories: [.harmless, .prerequisite])
     }
 

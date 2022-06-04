@@ -22,9 +22,25 @@ extension AppCatalogItem {
         version.flatMap({ AppVersion(string: $0, prerelease: self.beta == true) })
     }
 
+    var permissionsLegacy: [AppLegacyPermission]? {
+        permissions?.compactMap({ $0.infer()?.infer() })
+    }
+
+    var permissionsEntitlements: [AppEntitlementPermission]? {
+        permissions?.compactMap({ $0.infer() })
+    }
+
+    var permissionsUsage: [AppUsagePermission]? {
+        permissions?.compactMap({ $0.infer()?.infer()?.infer() })
+    }
+
+    var permissionsBackgroundMode: [AppBackgroundModePermission]? {
+        permissions?.compactMap({ $0.infer()?.infer()?.infer() })
+    }
+
     /// All the entitlements, ordered by their index in the `AppEntitlement` cases.
-    public func orderedPermissions(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppPermission> {
-        (self.permissions ?? [])
+    public func orderedPermissions(filterCategories: Set<AppEntitlement.Category> = []) -> Array<AppLegacyPermission> {
+        (self.permissionsLegacy ?? [])
             .filter {
                 $0.type.categories.intersection(filterCategories).isEmpty
             }
@@ -33,7 +49,7 @@ extension AppCatalogItem {
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5
     var riskLevel: AppRisk {
         // let groups = Set(item.displayCategories.flatMap(\.groupings))
-        let categories = Set((self.permissions ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
+        let categories = Set((self.permissionsLegacy ?? []).flatMap(\.type.categories)).subtracting([.prerequisite, .harmless])
         // the risk level is simply the number of categories the permissions fall into. E.g.:
         // nothing -> harmless
         // network -> mostly harmless
@@ -385,6 +401,12 @@ extension AppEntitlement : Identifiable {
                 Text("Read & Write Shared Preferences", bundle: .module, comment: "app entitlement title for temporary-exception.shared-preference.read-write"),
                 Text("Read and write shared preferences.", bundle: .module, comment: "app entitlement info for temporary-exception.shared-preference.read-write"),
                 .list_star)
+        default:
+            return (
+                Text(self.rawValue),
+                Text("Unknown entitlement: \(self.rawValue).", bundle: .module, comment: "app entitlement info an unrecognized entitlement"),
+                .questionmark_app)
+
         }
     }
 }
@@ -395,5 +417,5 @@ extension AppCatalogItem {
     private static var rndgen = SeededRandomNumberGenerator(uuids: UUID(uuidString: "E3C3FF63-EF95-4BF4-BE53-EC88EE097556")!)
     private static func rnd() -> UInt8 { UInt8.random(in: .min...(.max), using: &rndgen) }
 
-    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: .init("app.App-Fair"), subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#FF0000", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.metadataIdentifier], downloadCount: 1_234, impressionCount: nil, viewCount: nil, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: AppEntitlement.allCases.map { AppPermission(type: $0, usageDescription: "This app needs this entitlement") }, metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plist"), readmeURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/README.md"), releaseNotesURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/RELEASE_NOTES.md"), homepage: URL(string: "https://www.appfair.app"))
+    static let sample = AppCatalogItem(name: "App Fair", bundleIdentifier: .init("app.App-Fair"), subtitle: "The App Fair catalog browser app", developerName: "appfair@appfair.net", localizedDescription: "This app allows you to browse, download, and install apps from the App Fair. The App Fair catalog browser is the nexus for finding and installing App Fair apps", size: 1_234_567, version: "1.2.3", versionDate: Date(timeIntervalSinceNow: -60*60*24*2), downloadURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.zip")!, iconURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair.png")!, screenshotURLs: nil, versionDescription: nil, tintColor: "#FF0000", beta: false, sourceIdentifier: nil, categories: [AppCategory.games.metadataIdentifier], downloadCount: 1_234, impressionCount: nil, viewCount: nil, starCount: 123, watcherCount: 43, issueCount: 12, sourceSize: 2_210_000, coreSize: 223_197, sha256: UUID(bytes: rnd).uuidString, permissions: AppEntitlement.allCases.map { AppLegacyPermission(type: $0, usageDescription: "This app needs this entitlement") }.map { .init($0) }, metadataURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/App-Fair-macOS.plist"), readmeURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/README.md"), releaseNotesURL: URL(string: "https://github.com/appfair/App/releases/download/App-Fair/RELEASE_NOTES.md"), homepage: URL(string: "https://www.appfair.app"))
 }

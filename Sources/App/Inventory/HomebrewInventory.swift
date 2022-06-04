@@ -150,7 +150,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     @Published private var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
 
     /// Enhanced metadata about individual apps
-    @Published private var appcasks: FairAppCatalog? { didSet { updateAppInfo() } }
+    @Published private var appcasks: AppCatalog? { didSet { updateAppInfo() } }
 
     @Published private var sortOrder: [KeyPathComparator<AppInfo>] = [
         // don't have any initial sort so we can sort by the ranking
@@ -348,12 +348,12 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
         return try CaskStats(json: data)
     }
 
-    fileprivate func fetchAppCasks() async throws -> FairAppCatalog {
+    fileprivate func fetchAppCasks() async throws -> AppCatalog {
         dbg("loading appcasks")
         let url = appfairCaskAppsURL
         let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
-        let appcasks = try FairAppCatalog(json: data, dateDecodingStrategy: .iso8601)
+        let appcasks = try AppCatalog(json: data, dateDecodingStrategy: .iso8601)
         dbg("loaded appcasks:", appcasks.apps.count)
         return appcasks
     }
