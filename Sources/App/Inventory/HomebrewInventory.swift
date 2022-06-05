@@ -507,7 +507,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Application Support/app.App-Fair/Homebrew/Cask/iterm2--3.4.15.zip`
 
         /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
-        let targetURL = URL(fileURLWithPath: cask.cacheBasePath(for: candidateURL), relativeTo: cacheDir)
+        let targetURL = URL(fileURLWithPath: candidateURL.cachePathName, relativeTo: cacheDir)
 
         //let size = try await URLSession.shared.fetchExpectedContentLength(url: downloadURL)
         //dbg("fetchExpectedContentLength:", size)
@@ -1636,16 +1636,6 @@ extension CaskItem : Identifiable {
             }
         }
         return appNames
-    }
-}
-
-extension CaskItem {
-    /// The basename of the local cache file for this item's download URL
-    fileprivate func cacheBasePath(for url: URL) -> String {
-        let urlHash = url.absoluteString.utf8Data.sha256().hex()
-        let baseName = url.lastPathComponent
-        let cachePath = urlHash + "--" + baseName
-        return cachePath
     }
 }
 
