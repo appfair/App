@@ -622,7 +622,7 @@ struct CatalogItemView: View {
             title = Text("\(title) – \(Text(permission.usageDescription))", bundle: .module, comment: "formatting string separating the permission title from the permission description").foregroundColor(.secondary).italic()
         }
 
-        return title.label(symbol: entitlement.localizedInfo.symbol.symbolName)
+        return title.label(image: entitlement.localizedInfo.symbol.image)
             .listItemTint(ListItemTint.monochrome)
             .symbolRenderingMode(SymbolRenderingMode.monochrome)
             .lineLimit(1)
