@@ -683,7 +683,7 @@ struct AppInfoLink : View {
         } label: {
             AppItemLabel(appInfo: appInfo)
         }
-        .task {
+        .task(id: appInfo.CFBundleIdentifier, priority: .userInitiated) {
             if let bundleID = appInfo.CFBundleIdentifier {
                 do {
                     if let pngData = try manager.sbclient?.getIconPNGData(bundleIdentifier: bundleID) {
