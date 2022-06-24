@@ -131,8 +131,8 @@ struct ClockView: View {
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class Store: SceneManager {
-    @AppStorage("someToggle")
-    public var someToggle = false
+    @AppStorage("autoplayStation") public var autoplayStation = true
+
     #if os(macOS)
     public var statusItem: NSStatusItem? = nil
     #endif
@@ -172,11 +172,13 @@ public struct AppSettingsView : View {
     @AppStorage("searchCount") var searchCount: Int = 250
 
     public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
+        Form {
+            Toggle(isOn: $store.autoplayStation) {
+                Text("Auto-play stations when selected", bundle: .module, comment: "preferences toggle for auto-playing stations")
+            }
+            .help(Text("Whether to automatically start playing selected stations.", bundle: .module, comment: "help text for preferences toggle for auto-playing stations"))
         }
         .padding()
-
     }
 }
 

@@ -572,8 +572,8 @@ struct Sidebar: View {
     }
 
     func stationsSectionPopular(frame: DataFrame, count: Int = 200, title: Text = Text("Popular")) -> some View {
-        //let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
-        let popularFrame = { frame.sorted(on: Station.votesColumn, order: .descending).prefix(count) }
+        let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
+//        let popularFrame = { frame.sorted(on: Station.votesColumn, order: .descending).prefix(count) }
         return NavigationLink(destination: StationList(title: title, frame: popularFrame)) {
             title.label(symbol: "star", color: .yellow)
         }
@@ -695,12 +695,12 @@ struct Sidebar: View {
     }
 }
 
-
 @available(macOS 12.0, iOS 15.0, *)
 struct StationView: View {
     let station: Station
     @State var collapseInfo = false
     @EnvironmentObject var tuner: RadioTuner
+    @EnvironmentObject var store: Store
     @Binding var itemTitle: String?
     /// The current play rate
     @State var rate: Float = 0.0
@@ -754,7 +754,11 @@ struct StationView: View {
             //tuner.player.prepareToPlay()
             if let url = station.streamingURL {
                 tuner.stream(url: url)
-                tuner.player.play()
+                if store.autoplayStation == true {
+                    tuner.player.play()
+                } else {
+                    tuner.player.pause()
+                }
             } else {
                 tuner.player.pause()
             }

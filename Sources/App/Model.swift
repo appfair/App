@@ -412,6 +412,13 @@ struct StationCatalog {
         stations.successValue?.frame
     }
 
+    /// The stations frame sorted on the click trends
+    static let trending: Result<DataFrame, Error> = {
+        prf {
+            Result { try stations.get().frame.sorted(on: Station.clicktrendColumn, order: .descending) }
+        }
+    }()
+
     static let stations: Result<StationCatalog, Error> = {
         prf { // 479ms
             Result {
@@ -480,6 +487,9 @@ struct StationCatalog {
             .filter { _ in true }
         }
     }()
+
+
+    
 }
 
 extension String {

@@ -1,107 +1,447 @@
-// English strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+/* No comment provided by engineer. */
+": " = ": ";
 
-"OK" = "OK";
-"Cancel" = "Cancel";
-"Welcome to %@!" = "Welcome to %@!";
+/* No comment provided by engineer. */
+"All Stations" = "All Stations";
 
-"tag-pop" = "Pop";
-"tag-news" = "News";
-"tag-rock" = "Rock";
-"tag-music" = "Music";
-"tag-talk" = "Talk";
-"tag-public-radio" = "Public Radio";
-"tag-english" = "English";
-"tag-dance" = "Dance";
-"tag-spanish" = "Spanish";
-"tag-top-40" = "Top 40";
-"tag-80s" = "80s";
-"tag-español" = "Español";
-"tag-greek" = "Greek";
-"tag-radio" = "Radio";
-"tag-oldies" = "Oldies";
-"tag-estación" = "Estación";
-"tag-community-radio" = "Community Radio";
-"tag-mex" = "Mex";
-"tag-fm" = "FM";
-"tag-méxico" = "México";
-"tag-christian" = "Christian";
-"tag-mx" = "MX";
-"tag-jazz" = "Jazz";
-"tag-hits" = "Hits";
-"tag-classical" = "Classical";
-"tag-90s" = "90s";
-"tag-electronic" = "Electronic";
-"tag-folk" = "Folk";
-"tag-classic-rock" = "Classic Rock";
-"tag-adult-contemporary" = "Adult Contemporary";
-"tag-mexico" = "Mexico";
-"tag-local-news" = "Local News";
-"tag-house" = "House";
-"tag-alternative" = "Alternative";
-"tag-german" = "German";
-"tag-70s" = "70s";
-"tag-música" = "Música";
-"tag-classic-hits" = "Classic Hits";
-"tag-commercial" = "Commercial";
-"tag-npr" = "NPR";
-"tag-hiphop" = "Hiphop";
-"tag-country" = "Country";
-"tag-pop-music" = "Pop Music";
-"tag-soul" = "Soul";
-"tag-musica" = "Musica";
-"tag-s" = "S";
-"tag-indie" = "Indie";
-"tag-deutsch" = "Deutsch";
-"tag-information" = "Information";
-"tag-university-radio" = "University Radio";
-"tag-chillout" = "Chillout";
-"tag-ambient" = "Ambient";
-"tag-xp_5" = "XP 5";
-"tag-g_7" = "G 7";
-"tag-techno" = "Techno";
-"tag-sport" = "Sport";
-"tag-world-music" = "World Music";
-"tag-noticias" = "Noticias";
-"tag-french" = "French";
-"tag-música-pop" = "Música Pop";
-"tag-pop-rock" = "Pop Rock";
-"tag-local-music" = "Local Music";
-"tag-metal" = "Metal";
-"tag-lounge" = "Lounge";
-"tag-disco" = "Disco";
-"tag-mainstream" = "Maintream";
-"tag-alternative-rock" = "Alternative Rock";
-"tag-religion" = "Religion";
-"tag-regional-mexican" = "Regional Mexican";
-"tag-60s" = "60s";
-"tag-on" = "On";
-"tag-electro" = "Electro";
-"tag-talk-&-speech" = "Talk & Speech";
-"tag-funk" = "Funk";
-"tag-college-radio" = "College Radio";
-"tag-catholic" = "Catholic";
-"tag-regional-radio" = "Regional Radio";
-"tag-aac" = "AAC";
-"tag-musica-regional-mexicana" = "Musica Regional Mexicana";
-"tag-rnb" = "R&B";
-"tag-hard-rock" = "Hard Rock";
-"tag-juvenil" = "Juvenil";
-"tag-charts" = "Charts";
-"tag-regional" = "Regional";
-"tag-grupera" = "Grupera";
-"tag-blues" = "Blues";
-"tag-reggae" = "Reggae";
-"tag-russian" = "Russian";
-"tag-news-talk" = "Talk News";
-"tag-trance" = "Trance";
-"tag-rap" = "Rap";
-"tag-musica-regional" = "Muscia Regional";
-"tag-latin-music" = "Latin Music";
-"tag-edm" = "EDM";
-"tag-easy-listening" = "Easy Listening";
-"tag-culture" = "Culture";
-"tag-entertainment" = "Entertainment";
-"tag-variety" = "Variety";
-"tag-entretenimiento" = "Entretenimiento";
+/* text field label */
+"Bitrate:" = "Bitrate:";
+
+/* text field label */
+"Clicks:" = "Clicks:";
+
+/* text field label */
+"Codec:" = "Codec:";
+
+/* No comment provided by engineer. */
+"Collapse" = "Collapse";
+
+/* section header for countries outline sidebar */
+"Countries" = "Countries";
+
+/* text field label */
+"Country:" = "Country:";
+
+/* No comment provided by engineer. */
+"Country: " = "Country: ";
+
+/* No comment provided by engineer. */
+"Expand" = "Expand";
+
+/* No comment provided by engineer. */
+"Hi–Fi" = "Hi–Fi";
+
+/* text field label */
+"Home Page:" = "Home Page:";
+
+/* text field label */
+"ID:" = "ID:";
+
+/* No comment provided by engineer. */
+"k" = "k";
+
+/* text field label */
+"Language:" = "Language:";
+
+/* No comment provided by engineer. */
+"Language: " = "Language: ";
+
+/* No comment provided by engineer. */
+"Languages" = "Languages";
+
+/* text field label */
+"Last Change:" = "Last Change:";
+
+/* No comment provided by engineer. */
+"Next" = "Next";
+
+/* pause button title */
+"Pause" = "Pause";
+
+/* pause button tooltip */
+"Pause the current track" = "Pause the current track";
+
+/* No comment provided by engineer. */
+"Pin" = "Pin";
+
+/* No comment provided by engineer. */
+"Pinned" = "Pinned";
+
+/* play button title */
+"Play" = "Play";
+
+/* play button tooltip */
+"Play the current track" = "Play the current track";
+
+/* No comment provided by engineer. */
+"Popular" = "Popular";
+
+/* No comment provided by engineer. */
+"Previous" = "Previous";
+
+/* No comment provided by engineer. */
+"Search" = "Search";
+
+/* No comment provided by engineer. */
+"Select Station" = "Select Station";
+
+/* No comment provided by engineer. */
+"Select the next station" = "Select the next station";
+
+/* No comment provided by engineer. */
+"Select the previous station" = "Select the previous station";
+
+/* No comment provided by engineer. */
+"Show or hide the station information" = "Show or hide the station information";
+
+/* No comment provided by engineer. */
+"Shuffle" = "Shuffle";
+
+/* No comment provided by engineer. */
+"Shuffle the current selection" = "Shuffle the current selection";
+
+/* text field label */
+"State:" = "State:";
+
+/* No comment provided by engineer. */
+"Station List" = "Station List";
+
+/* text field label */
+"Station Name:" = "Station Name:";
+
+/* section header for stations outline sidebar */
+"Stations" = "Stations";
+
+/* station tag name */
+"tag-60s" = "tag-60s";
+
+/* station tag name */
+"tag-70s" = "tag-70s";
+
+/* station tag name */
+"tag-80s" = "tag-80s";
+
+/* station tag name */
+"tag-90s" = "tag-90s";
+
+/* station tag name */
+"tag-aac" = "tag-aac";
+
+/* station tag name */
+"tag-adult-contemporary" = "tag-adult-contemporary";
+
+/* station tag name */
+"tag-alternative" = "tag-alternative";
+
+/* station tag name */
+"tag-alternative-rock" = "tag-alternative-rock";
+
+/* station tag name */
+"tag-ambient" = "tag-ambient";
+
+/* station tag name */
+"tag-blues" = "tag-blues";
+
+/* station tag name */
+"tag-catholic" = "tag-catholic";
+
+/* station tag name */
+"tag-charts" = "tag-charts";
+
+/* station tag name */
+"tag-chillout" = "tag-chillout";
+
+/* station tag name */
+"tag-christian" = "tag-christian";
+
+/* station tag name */
+"tag-classic-hits" = "tag-classic-hits";
+
+/* station tag name */
+"tag-classic-rock" = "tag-classic-rock";
+
+/* station tag name */
+"tag-classical" = "tag-classical";
+
+/* station tag name */
+"tag-college-radio" = "tag-college-radio";
+
+/* station tag name */
+"tag-commercial" = "tag-commercial";
+
+/* station tag name */
+"tag-community-radio" = "tag-community-radio";
+
+/* station tag name */
+"tag-country" = "tag-country";
+
+/* station tag name */
+"tag-culture" = "tag-culture";
+
+/* station tag name */
+"tag-dance" = "tag-dance";
+
+/* station tag name */
+"tag-deutsch" = "tag-deutsch";
+
+/* station tag name */
+"tag-disco" = "tag-disco";
+
+/* station tag name */
+"tag-easy-listening" = "tag-easy-listening";
+
+/* station tag name */
+"tag-edm" = "tag-edm";
+
+/* station tag name */
+"tag-electro" = "tag-electro";
+
+/* station tag name */
+"tag-electronic" = "tag-electronic";
+
+/* station tag name */
+"tag-english" = "tag-english";
+
+/* station tag name */
+"tag-entertainment" = "tag-entertainment";
+
+/* station tag name */
+"tag-entretenimiento" = "tag-entretenimiento";
+
+/* station tag name */
+"tag-español" = "tag-español";
+
+/* station tag name */
+"tag-estación" = "tag-estación";
+
+/* station tag name */
+"tag-fm" = "tag-fm";
+
+/* station tag name */
+"tag-folk" = "tag-folk";
+
+/* station tag name */
+"tag-french" = "tag-french";
+
+/* station tag name */
+"tag-funk" = "tag-funk";
+
+/* station tag name */
+"tag-g_7" = "tag-g_7";
+
+/* station tag name */
+"tag-german" = "tag-german";
+
+/* station tag name */
+"tag-greek" = "tag-greek";
+
+/* station tag name */
+"tag-grupera" = "tag-grupera";
+
+/* station tag name */
+"tag-hard-rock" = "tag-hard-rock";
+
+/* station tag name */
+"tag-hiphop" = "tag-hiphop";
+
+/* station tag name */
+"tag-hits" = "tag-hits";
+
+/* station tag name */
+"tag-house" = "tag-house";
+
+/* station tag name */
+"tag-indie" = "tag-indie";
+
+/* station tag name */
+"tag-information" = "tag-information";
+
+/* station tag name */
+"tag-jazz" = "tag-jazz";
+
+/* station tag name */
+"tag-juvenil" = "tag-juvenil";
+
+/* station tag name */
+"tag-latin-music" = "tag-latin-music";
+
+/* station tag name */
+"tag-local-music" = "tag-local-music";
+
+/* station tag name */
+"tag-local-news" = "tag-local-news";
+
+/* station tag name */
+"tag-lounge" = "tag-lounge";
+
+/* station tag name */
+"tag-mainstream" = "tag-mainstream";
+
+/* station tag name */
+"tag-metal" = "tag-metal";
+
+/* station tag name */
+"tag-mex" = "tag-mex";
+
+/* station tag name */
+"tag-mexico" = "tag-mexico";
+
+/* station tag name */
+"tag-méxico" = "tag-méxico";
+
+/* station tag name */
+"tag-music" = "tag-music";
+
+/* station tag name */
+"tag-musica" = "tag-musica";
+
+/* station tag name */
+"tag-musica-regional" = "tag-musica-regional";
+
+/* station tag name */
+"tag-musica-regional-mexicana" = "tag-musica-regional-mexicana";
+
+/* station tag name */
+"tag-música" = "tag-música";
+
+/* station tag name */
+"tag-música-pop" = "tag-música-pop";
+
+/* station tag name */
+"tag-mx" = "tag-mx";
+
+/* station tag name */
+"tag-news" = "tag-news";
+
+/* station tag name */
+"tag-news-talk" = "tag-news-talk";
+
+/* station tag name */
+"tag-noticias" = "tag-noticias";
+
+/* station tag name */
+"tag-npr" = "tag-npr";
+
+/* station tag name */
+"tag-oldies" = "tag-oldies";
+
+/* station tag name */
+"tag-on" = "tag-on";
+
+/* station tag name */
+"tag-pop" = "tag-pop";
+
+/* station tag name */
+"tag-pop-music" = "tag-pop-music";
+
+/* station tag name */
+"tag-pop-rock" = "tag-pop-rock";
+
+/* station tag name */
+"tag-public-radio" = "tag-public-radio";
+
+/* station tag name */
+"tag-radio" = "tag-radio";
+
+/* station tag name */
+"tag-rap" = "tag-rap";
+
+/* station tag name */
+"tag-reggae" = "tag-reggae";
+
+/* station tag name */
+"tag-regional" = "tag-regional";
+
+/* station tag name */
+"tag-regional-mexican" = "tag-regional-mexican";
+
+/* station tag name */
+"tag-regional-radio" = "tag-regional-radio";
+
+/* station tag name */
+"tag-religion" = "tag-religion";
+
+/* station tag name */
+"tag-rnb" = "tag-rnb";
+
+/* station tag name */
+"tag-rock" = "tag-rock";
+
+/* station tag name */
+"tag-russian" = "tag-russian";
+
+/* station tag name */
+"tag-s" = "tag-s";
+
+/* station tag name */
+"tag-soul" = "tag-soul";
+
+/* station tag name */
+"tag-spanish" = "tag-spanish";
+
+/* station tag name */
+"tag-sport" = "tag-sport";
+
+/* station tag name */
+"tag-talk" = "tag-talk";
+
+/* station tag name */
+"tag-talk-&-speech" = "tag-talk-&-speech";
+
+/* station tag name */
+"tag-techno" = "tag-techno";
+
+/* station tag name */
+"tag-top-40" = "tag-top-40";
+
+/* station tag name */
+"tag-trance" = "tag-trance";
+
+/* station tag name */
+"tag-university-radio" = "tag-university-radio";
+
+/* station tag name */
+"tag-variety" = "tag-variety";
+
+/* station tag name */
+"tag-world-music" = "tag-world-music";
+
+/* station tag name */
+"tag-xp_5" = "tag-xp_5";
+
+/* No comment provided by engineer. */
+"Tag: " = "Tag: ";
+
+/* section header for tags outline sidebar */
+"Tags" = "Tags";
+
+/* text field label */
+"Tags:" = "Tags:";
+
+/* No comment provided by engineer. */
+"Tags: " = "Tags: ";
+
+/* No comment provided by engineer. */
+"Toggle" = "Toggle";
+
+/* text field label */
+"Trend:" = "Trend:";
+
+/* No comment provided by engineer. */
+"Trending" = "Trending";
+
+/* No comment provided by engineer. */
+"TV" = "TV";
+
+/* No comment provided by engineer. */
+"Unknown" = "Unknown";
+
+/* No comment provided by engineer. */
+"Unknown Name" = "Unknown Name";
+
+/* No comment provided by engineer. */
+"Unknown Station" = "Unknown Station";
+
+/* text field label */
+"Votes:" = "Votes:";
 

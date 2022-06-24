@@ -69,6 +69,8 @@ Tune Out uses the station database from the free
 
 ## TODO:
 
+  - [ ] Add "shuffle" button to randomly select from the current group
+  - [ ] Add custom URL
   - [ ] Make form un-editable
   - [ ] Merge play/pause buttons 
   - [ ] Table-based frame browsing
