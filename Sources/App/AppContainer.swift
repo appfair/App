@@ -1,4 +1,5 @@
 import FairApp
+import FairKit
 import AVKit
 import TabularData
 

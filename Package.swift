@@ -15,6 +15,7 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [ 
             .product(name: "FairApp", package: "Fair"),
+            .product(name: "FairKit", package: "Fair"),
             .product(name: "AudioKit", package: "AudioKit"),
         ], 
         resources: [
