@@ -775,12 +775,15 @@ extension FairAppInventory {
 
 // MARK: Sidebar
 
-@available(macOS 12.0, iOS 15.0, *)
-extension FairAppInventory {
+extension AppInventory {
     /// Returns true if the item was recently updated
     func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = (60 * 60 * 24 * 30)) -> Bool {
         (item.versionDate ?? .distantPast) > (Date() - interval)
     }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+extension FairAppInventory {
 
     func selectionFilter(_ selection: SidebarSelection?, item: AppCatalogItem) -> Bool {
         switch selection?.item {

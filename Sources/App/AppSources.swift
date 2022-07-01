@@ -53,7 +53,7 @@ extension SidebarSelection {
             switch self.item {
             case .top:
                 return HomebrewSourceInfo.TopAppInfo()
-            case .recent: // not supported with casks
+            case .recent:
                 return HomebrewSourceInfo.RecentAppInfo()
             case .installed:
                 return HomebrewSourceInfo.InstalledAppInfo()
@@ -73,7 +73,7 @@ extension SidebarSelection {
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Apps", bundle: .module, comment: "homebrew top apps info: full title")
+                Text("Homebrew Casks", bundle: .module, comment: "homebrew top apps info: full title")
             }
 
             /// A textual description of this source

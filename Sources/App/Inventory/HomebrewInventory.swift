@@ -142,9 +142,6 @@ private struct HomebrewDefaults {
     /// The date the catalog was most recently updated
     @Published private(set) var catalogUpdated: Date? = nil
 
-    /// The download stats for cask tokens
-    @Published fileprivate var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
-
     /// Map of installed apps from `[token: [versions]]`
     @Published fileprivate var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
 
@@ -287,7 +284,6 @@ private struct HomebrewDefaults {
         if clearCatalog {
             self.casks = []
             self.appcasks = nil
-            self.appstats = nil
         }
 
         self.updateInProgress += 1
@@ -295,12 +291,10 @@ private struct HomebrewDefaults {
         async let installedCasks = scanInstalledCasks()
         async let appcasks = fetchAppCasks()
         async let casks = homebrewAPI.fetchCasks()
-        async let appstats = homebrewAPI.fetchAppStats()
 
         //(self.stats, self.appcasks, self.installedCasks, self.casks) = try await (stats, appcasks, installedCasks, casks)
         self.installedCasks = try await installedCasks
         self.appcasks = try await appcasks
-        self.appstats = try await appstats
         let caskResponse = try await casks
         self.casks = caskResponse.casks
         self.catalogUpdated = caskResponse.response?.lastModifiedDate
@@ -348,7 +342,7 @@ private struct HomebrewDefaults {
                 var names = Set(subfiles.map(\.lastPathComponent)) // e.g.: .metadata, 94.0.1, 95.0.2
                 if names.remove(".metadata") != nil { // only handle folders with a metadata dir
                     // TODO: how to handle non-homebrew (e.g., appfair/app) casks? All the taps seem to go into /opt/homebrew/Caskroom/, so there doesn't seem to be a way to distinguish between different cask sources?
-                    let token = "homebrew/cask/" + dirName
+                    let token = dirName // "homebrew/cask/" + dirName
                     tokenVersions[token] = names
                 }
             }
@@ -980,14 +974,18 @@ extension HomebrewInventory {
 
     func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
         switch sidebarSelection?.item {
+        case .none:
+            return true
         case .installed:
             return installedCasks[item.catalogMetadata.id.rawValue] != nil
         case .updated:
             return appUpdated(item: item)
         case .category(let cat):
             return item.catalogMetadata.categories?.contains(cat.metadataIdentifier) == true
-        default:
+        case .top:
             return true
+        case .recent:
+            return isRecentlyUpdated(item: item.catalogMetadata)
         }
     }
 
@@ -1016,7 +1014,7 @@ extension HomebrewInventory {
     }
 
     func versionNotInstalled(cask: CaskItem) -> Bool {
-        if let installedCasks = installedCasks[cask.id] {
+        if let installedCasks = installedCasks[cask.token] {
             return !installedCasks.contains(cask.version)
         } else {
             return false
@@ -1052,11 +1050,12 @@ extension HomebrewInventory {
         case .installed:
             return fmt(installedCasks.count)
         case .recent:
-            return nil
+            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0.catalogMetadata) }).count)
         case .category(let cat):
             return fmt(apps(for: cat).count)
         }
     }
+    
 }
 
 extension HomebrewInventory {
@@ -1111,7 +1110,7 @@ extension HomebrewInventory {
         let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
             .grouping(by: \.abbreviatedToken)
 
-        let ancillaryStats = appstats?.formulae ?? [:]
+        //let ancillaryStats = appstats?.formulae ?? [:]
 
         // the position of the cask in the ranks, which is used to control the initial sort order
         let caskRanks: [String : Int] = (appcasks?.apps ?? [])
@@ -1126,7 +1125,8 @@ extension HomebrewInventory {
         //dbg("checking all casks:", casks.map(\.id).sorted())
 
         func downloadStatsCount(for token: String) -> Int? {
-            ancillaryStats[token]?.first?.count
+            //ancillaryStats[token]?.first?.count
+            nil
         }
 
         for cask in self.casks {

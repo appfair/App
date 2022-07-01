@@ -235,12 +235,12 @@ struct AppFairCommands: Commands {
 //        }
 
         CommandMenu(Text("Sources", bundle: .module, comment: "menu title for fairground sources actions")) {
-
             Section {
                 let items = SidebarSelection.homebrewItems
                 navitem(items.0.sel).keyboardShortcut(items.0.key)
                 navitem(items.1.sel).keyboardShortcut(items.1.key)
                 navitem(items.2.sel).keyboardShortcut(items.2.key)
+                navitem(items.3.sel).keyboardShortcut(items.3.key)
             } header: {
                 Text("Homebrew", bundle: .module, comment: "source menu header text for section with homebrew catalog selection options")
             }
@@ -1050,6 +1050,7 @@ struct SidebarView: View {
             navitem(items.0.sel)
             navitem(items.1.sel)
             navitem(items.2.sel)
+            navitem(items.3.sel)
         }
     }
 
@@ -1115,17 +1116,23 @@ struct SidebarView: View {
 }
 
 extension SidebarSelection {
+    struct SidebarInfo {
+        let sel: SidebarSelection
+        let key: KeyEquivalent
+    }
+
     static let homebrewItems = (
-        (sel: SidebarSelection(source: .homebrew, item: .top), key: "1" as KeyEquivalent),
-        (sel: SidebarSelection(source: .homebrew, item: .installed), key: "2" as KeyEquivalent),
-        (sel: SidebarSelection(source: .homebrew, item: .updated), key: "3" as KeyEquivalent)
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .top), key: "1"),
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .recent), key: "2"),
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .installed), key: "3"),
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .updated), key: "4")
     )
 
     static let fairappsItems = (
-        (sel: SidebarSelection(source: .fairapps, item: .top), key: KeyEquivalent("4")),
-        (sel: SidebarSelection(source: .fairapps, item: .recent), key: KeyEquivalent("5")),
-        (sel: SidebarSelection(source: .fairapps, item: .installed), key: KeyEquivalent("6")),
-        (sel: SidebarSelection(source: .fairapps, item: .updated), key: KeyEquivalent("7"))
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .top), key: "5"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .recent), key: "6"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .installed), key: "7"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .updated), key: "8")
     )
 }
 
