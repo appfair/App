@@ -1078,8 +1078,8 @@ extension HomebrewInventory {
 
 extension HomebrewInventory {
     fileprivate func synthesizeCaskCatalog() -> [AppInfo] {
-        synthesizeCaskCatalogLegacy()
-        //synthesizeCaskCatalogFromAppcasks()
+        //synthesizeCaskCatalogLegacy()
+        synthesizeCaskCatalogFromAppcasks()
     }
 
     private func synthesizeCaskCatalogFromAppcasks() -> [AppInfo] {
