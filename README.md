@@ -30,6 +30,3 @@ $ brew install appfair/app/app-fair
 The App Fair.app is built and maintained using the
 [appfair.net](https://www.appfair.net) system.
 
-Information about contributing to the project can be
-found at [appfair.app](https://www.appfair.app).
-

@@ -45,5 +45,68 @@ protocol AppInventory : AppInventoryCatalog {
     /// Deletes the given item from the system
     @MainActor func delete(item: InventoryItem, verbose: Bool) async throws
 
+    @MainActor var imageCache: Cache<URL, Image> { get }
+}
+
+extension AppInventory {
+
+    /// Cache the given image parameter for later re-use
+    @MainActor private func caching(image: Image, for url: URL?) -> Image {
+        if let url = url {
+            imageCache[url] = image
+            dbg("cached image:", url.absoluteString)
+        }
+        return image
+    }
+
+    @MainActor func iconImage(item: AppCatalogItem) -> some View {
+        @MainActor func imageContent(phase: AsyncImagePhase) -> some View {
+            Group {
+                switch phase {
+                case .success(let image):
+                    //let _ = iconCache.setObject(ImageInfo(image: image), forKey: iconURL as NSURL)
+                    //let _ = dbg("success image for:", self.name, image)
+                    let img = image
+                        .resizable()
+                    caching(image: img, for: item.iconURL)
+                case .failure(let error):
+                    let _ = dbg("error image for:", item.name, error)
+                    if !error.isURLCancelledError { // happens when items are scrolled off the screen
+                        let _ = dbg("error fetching icon from:", item.iconURL?.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
+                    }
+                    fallbackIcon(grayscale: 0.9)
+                        .help(error.localizedDescription)
+                case .empty:
+                    fallbackIcon(grayscale: 0.5)
+
+                @unknown default:
+                    fallbackIcon(grayscale: 0.8)
+                }
+            }
+        }
+
+        @ViewBuilder func fallbackIcon(grayscale: Double) -> some View {
+            let baseColor = item.itemTintColor()
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(baseColor)
+                .opacity(0.5)
+                .grayscale(grayscale)
+        }
+
+        return Group {
+            if let url = item.iconURL {
+                if let cachedImage = self.imageCache[url] {
+                    cachedImage
+                } else {
+                    AsyncImage(url: url, scale: 1.0, transaction: Transaction(animation: .easeIn)) {
+                        imageContent(phase: $0)
+                    }
+                }
+            } else {
+                fallbackIcon(grayscale: 1.0)
+            }
+        }
+        .aspectRatio(contentMode: .fit)
+    }
 }
 

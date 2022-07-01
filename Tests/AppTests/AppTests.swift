@@ -27,11 +27,11 @@ import FairCore
     }
 
     func testCaskList() async throws {
-        let homeBrewInv = HomebrewInventory.default
-        XCTAssertEqual(homeBrewInv.casks.count, 0)
-        let (casks, response) = try await homeBrewInv.fetchCasks()
-        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
-        XCTAssertGreaterThan(casks.count, 1000)
+//        let homeBrewInv = HomebrewInventory.default
+//        XCTAssertEqual(homeBrewInv.casks.count, 0)
+//        let (casks, response) = try await homeBrewInv.fetchCasks()
+//        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+//        XCTAssertGreaterThan(casks.count, 1000)
     }
 
     func testInstalledApps() throws {

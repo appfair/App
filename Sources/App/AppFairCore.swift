@@ -13,6 +13,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairKit
+import FairExpo
 import Combine
 
 /// The source of the apps
@@ -155,11 +156,22 @@ extension Plist {
 
 public typealias AppIdentifier = BundleIdentifier
 
+/// A type wrapper for a bundle identifier string
+public struct BundleIdentifier: Pure, RawRepresentable, Comparable {
+    public let rawValue: String
+    public init(_ rawValue: String) { self.rawValue = rawValue }
+    public init(rawValue: String) { self.rawValue = rawValue }
+
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
 // TODO: potentially separate these into separate types
 // typealias AppIdentifier = XOr<BundleIdentifier>.Or<CaskIdentifier>
 
 extension AppCatalogItem : Identifiable {
-    public var id: AppIdentifier { bundleIdentifier }
+    public var id: AppIdentifier { BundleIdentifier(bundleIdentifier) }
 }
 
 
@@ -306,7 +318,6 @@ public struct HelpButton : View {
         }
         .buttonStyle(.bordered)
     }
-
 }
 
 extension View {
@@ -535,6 +546,7 @@ enum SidebarItem : Hashable {
 @available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
+    @Environment(\.scenePhase) var scenePhase
 
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
@@ -594,6 +606,11 @@ struct NavigationRootView : View {
                     try await fairManager.homeBrewInv.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
                 } catch {
                     dbg("error unpacking homebrew in local cache:", error)
+                }
+            }
+            .onChange(of: scenePhase) { phase in
+                if phase == .background || phase == .inactive {
+                    fairManager.inactivate()
                 }
             }
             .onChange(of: fairManager.updateCount()) { updateCount in
@@ -1148,17 +1165,20 @@ extension NSUserScriptTask {
     /// Performs the given shell command and returns the output via an `NSAppleScript` operation
     /// - Parameters:
     ///   - command: the command to execute
+    ///   - name: the name of the script command to run
     ///   - async: whether to fork async using `NSUserAppleScriptTask` as opposed to synchronously with `NSAppleScript`
     ///   - admin: whether to execute the script `with administrator privileges`
     /// - Returns: the string contents of the response
-    public static func fork(command: String, admin: Bool = false) async throws -> String? {
+    public static func fork(command: String, name: String = "App Fair Command", admin: Bool = false) async throws -> String? {
         let withAdmin = admin ? " with administrator privileges" : ""
 
         let cmd = "do shell script \"\(command)\"" + withAdmin
 
         let scriptURL = URL.tmpdir
             .appendingPathComponent("scriptcmd-" + UUID().uuidString)
-            .appendingPathExtension("scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
+            .appendingPathComponent(name + ".scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
+        try FileManager.default.createDirectory(at: scriptURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+
         try cmd.write(to: scriptURL, atomically: true, encoding: .utf8)
         dbg("running NSUserAppleScriptTask in:", scriptURL.path, "command:", cmd)
         let task = try NSUserAppleScriptTask(url: scriptURL)

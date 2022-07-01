@@ -74,7 +74,6 @@ import Combine
             self?.objectWillChange.send()
         })
 
-
         /// The gloal quick actions for the App Fair
         self.quickActions = [
             QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", bundle: .module, comment: "action button title for refreshing the catalog")) { completion in
@@ -91,6 +90,12 @@ import Combine
         async let v1: () = fairAppInv.refreshAll(clearCatalog: clearCatalog)
         async let v2: () = homeBrewInv.refreshAll(clearCatalog: clearCatalog)
         let _ = try await (v1, v2) // perform the two refreshes in tandem
+    }
+
+    func inactivate() {
+        dbg("inactivating and clearing caches")
+        fairAppInv.imageCache.clear()
+        homeBrewInv.imageCache.clear()
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.
@@ -117,7 +122,7 @@ import Combine
             if info.isCask == true {
                 homeBrewInv.icon(for: info, useInstalledIcon: false)
             } else {
-                info.catalogMetadata.iconImage()
+                fairAppInv.iconImage(item: info.catalogMetadata)
             }
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon

@@ -13,6 +13,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairKit
+import FairExpo
 import Foundation
 import TabularData
 import var FairExpo.appfairCaskAppsURL
@@ -53,7 +54,6 @@ private struct HomebrewDefaults {
         URL(fileURLWithPath: "Homebrew/", isDirectory: true, relativeTo: HomebrewInventory.localAppSupportFolder)
     }()
 
-    static let caskAPIEndpoint = URL(string: "https://formulae.brew.sh/api/")!
     static let useSystemHomebrew = false
     static let quarantineCasks = true
     static let installDependencies = false
@@ -70,12 +70,10 @@ private struct HomebrewDefaults {
     static let enableCaskHomepagePreview = true
 }
 
-/// The cache policy to use when loading data
-private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
-
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
+    let imageCache = Cache<URL, Image>()
 
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = HomebrewDefaults.enableHomebrew {
@@ -88,7 +86,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     }
 
     /// The base endpoint for the cask API; this can be used to test different cask endpoints
-    @AppStorage("caskAPIEndpoint") var caskAPIEndpoint = HomebrewDefaults.caskAPIEndpoint
+    @AppStorage("caskAPIEndpoint") var caskAPIEndpoint = HomebrewAPI.defaultEndpoint
 
     /// Whether to allow Homebrew Cask installation; overriding this from the default path is un-tested and should only be changed for debugging Homebrew behavior
     @AppStorage("brewInstallRoot") var brewInstallRoot = HomebrewDefaults.brewInstallRoot
@@ -133,46 +131,31 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     @AppStorage("enableCaskHomepagePreview") var enableCaskHomepagePreview = HomebrewDefaults.enableCaskHomepagePreview
 
     /// The arranged list of app info items, synthesized from the `casks`, `stats`, and `appcasks` properties
-    @Published private var appInfos: [AppInfo] = [] { didSet { updateAppCategories() } }
+    @Published fileprivate var appInfos: [AppInfo] = [] { didSet { updateAppCategories() } }
 
     /// The apps indexed by category
     @Published private var appCategories: [AppCategory: [AppInfo]] = [:]
 
     /// The current catalog of casks
-    @Published var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+    @Published fileprivate var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
 
     /// The date the catalog was most recently updated
     @Published private(set) var catalogUpdated: Date? = nil
 
     /// The download stats for cask tokens
-    @Published private var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
+    @Published fileprivate var appstats: CaskStats? = nil { didSet { updateAppInfo() } }
 
     /// Map of installed apps from `[token: [versions]]`
-    @Published private var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
+    @Published fileprivate var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
 
     /// Enhanced metadata about individual apps
-    @Published private var appcasks: AppCatalog? { didSet { updateAppInfo() } }
-
-    @Published private var sortOrder: [KeyPathComparator<AppInfo>] = [
-        // don't have any initial sort so we can sort by the ranking
-        // KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)
-    ] { didSet { updateAppInfo() } }
+    @Published fileprivate var appcasks: AppCatalog? { didSet { updateAppInfo() } }
 
     /// The number of outstanding update requests
     @Published var updateInProgress: UInt = 0
 
     /// The list of casks
-    private var caskList: URL { URL(string: "cask.json", relativeTo: caskAPIEndpoint)! }
-    private var formulaList: URL { URL(string: "formula.json", relativeTo: caskAPIEndpoint)! }
-
-    private var caskSourceBase: URL { URL(string: "cask-source/", relativeTo: caskAPIEndpoint)! }
-    private var caskMetadataBase: URL { URL(string: "cask/", relativeTo: caskAPIEndpoint)! }
-
-    private var caskStatsBase: URL { URL(string: "analytics/cask-install/homebrew-cask/", relativeTo: caskAPIEndpoint)! }
-
-    private var caskStats30: URL { URL(string: "30d.json", relativeTo: caskStatsBase)! }
-    private var caskStats90: URL { URL(string: "90d.json", relativeTo: caskStatsBase)! }
-    private var caskStats365: URL { URL(string: "365d.json", relativeTo: caskStatsBase)! }
+    private var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
 
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
@@ -182,11 +165,11 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
 
     /// The source to the cask ruby definition file
     func caskSource(name: String) -> URL? {
-        URL(string: name, relativeTo: caskSourceBase)?.appendingPathExtension("rb")
+        URL(string: name, relativeTo: homebrewAPI.caskSourceBase)?.appendingPathExtension("rb")
     }
 
     func caskMetadata(name: String) -> URL? {
-        URL(string: name, relativeTo: caskMetadataBase)?.appendingPathExtension("json")
+        URL(string: name, relativeTo: homebrewAPI.caskMetadataBase)?.appendingPathExtension("json")
     }
 
     /// The previous location of homebrew installations: ~/Library/Caches/appfair-homebrew/
@@ -268,7 +251,7 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     }
 
     func resetAppStorage() {
-        self.caskAPIEndpoint = HomebrewDefaults.caskAPIEndpoint
+        self.caskAPIEndpoint = HomebrewAPI.defaultEndpoint
         self.brewInstallRoot = HomebrewDefaults.brewInstallRoot
         self.useSystemHomebrew = HomebrewDefaults.useSystemHomebrew
         self.quarantineCasks = HomebrewDefaults.quarantineCasks
@@ -310,9 +293,9 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
         async let installedCasks = scanInstalledCasks()
-        async let casks = fetchCasks()
         async let appcasks = fetchAppCasks()
-        async let appstats = fetchAppStats()
+        async let casks = homebrewAPI.fetchCasks()
+        async let appstats = homebrewAPI.fetchAppStats()
 
         //(self.stats, self.appcasks, self.installedCasks, self.casks) = try await (stats, appcasks, installedCasks, casks)
         self.installedCasks = try await installedCasks
@@ -325,34 +308,10 @@ private let cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
         self.objectWillChange.send()
     }
 
-    /// Fetches the cask list and populates it in the `casks` property
-    func fetchCasks() async throws -> (casks: Array<CaskItem>, response: URLResponse?) {
-        dbg("loading cask list")
-        let url = self.caskList
-        let request = URLRequest(url: url, cachePolicy: cachePolicy)
-        let (data, response) = try await URLSession.shared.fetch(request: request)
-        try response?.validateHTTPCode()
-
-        dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
-        let casks = try Array<CaskItem>(json: data)
-        dbg("loaded", casks.count, "casks")
-        return (casks, response)
-    }
-
-    /// Fetches the cask stats and populates it in the `stats` property
-    fileprivate func fetchAppStats(statsURL: URL? = nil) async throws -> CaskStats {
-        let url = statsURL ?? self.caskStats30
-        dbg("loading cask stats:", url.absoluteString)
-        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
-
-        dbg("loaded cask stats", data.count.localizedByteCount(), "from url:", url)
-        return try CaskStats(json: data)
-    }
-
     fileprivate func fetchAppCasks() async throws -> AppCatalog {
         dbg("loading appcasks")
         let url = appfairCaskAppsURL
-        let data = try await URLRequest(url: url, cachePolicy: cachePolicy).fetch()
+        let data = try await URLRequest(url: url).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
         let appcasks = try AppCatalog.parse(jsonData: data)
         dbg("loaded appcasks:", appcasks.apps.count)
@@ -571,7 +530,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             if let depURL = self.caskSource(name: depToken) {
                 dbg("downloading dependency token:", depToken, "from:", depURL.absoluteString)
                 let caskDepPath = URL(fileURLWithPath: depURL.lastPathComponent, relativeTo: downloadFolder)
-                try await URLSession.shared.fetch(request: URLRequest(url: depURL, cachePolicy: cachePolicy)).data.write(to: caskDepPath)
+                try await URLSession.shared.fetch(request: URLRequest(url: depURL)).data.write(to: caskDepPath)
             }
         }
 
@@ -644,7 +603,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let caskPath = URL(fileURLWithPath: sourceURL.lastPathComponent, relativeTo: downloadFolder)
 
         dbg("downloading cask info from:", sourceURL.absoluteString, "to:", caskPath.path)
-        try await URLSession.shared.fetch(request: URLRequest(url: sourceURL, cachePolicy: cachePolicy)).data.write(to: caskPath)
+        try await URLSession.shared.fetch(request: URLRequest(url: sourceURL)).data.write(to: caskPath)
 
         // don't delete the local cask, since we want to re-use it for install
         // defer { try? FileManager.default.removeItem(at: caskPath) }
@@ -698,7 +657,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             let icon = NSWorkspace.shared.icon(forFile: path.path)
             Image(uxImage: icon).resizable()
         } else if let _ = item.catalogMetadata.iconURL {
-            item.catalogMetadata.iconImage() // use the icon URL if it has been set (e.g., using appcasks metadata)
+            self.iconImage(item: item.catalogMetadata) // use the icon URL if it has been set (e.g., using appcasks metadata)
         } else if let baseURL = item.catalogMetadata.developerName.flatMap(URL.init(string:)) {
             // otherwise fallback to using the favicon for the home page
             FaviconImage(baseURL: baseURL, fallback: {
@@ -730,7 +689,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     func installedPath(for item: AppInfo) throws -> URL? {
-        let token = item.catalogMetadata.bundleIdentifier.caskToken ?? ""
+        let token = BundleIdentifier(item.catalogMetadata.bundleIdentifier).caskToken ?? ""
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.catalogMetadata.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) == true {
@@ -960,129 +919,6 @@ private extension AppCatalogItem {
 }
 
 extension HomebrewInventory {
-    /// Re-builds the AppInfo collection.
-    private func updateAppInfo() {
-        // an index of [token: extraInfo]
-        let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
-            .grouping(by: \.abbreviatedToken)
-
-        let ancillaryStats = appstats?.formulae ?? [:]
-
-        // the position of the cask in the ranks, which is used to control the initial sort order
-        let caskRanks: [String : Int] = (appcasks?.apps ?? [])
-            .enumerated()
-            .grouping(by: \.element.abbreviatedToken)
-            .compactMapValues(\.first?.offset)
-
-        // dbg("casks:", caskMap.keys.sorted())
-        var infos: [AppInfo] = []
-
-        //dbg("checking installed casks:", installedCasks.keys.sorted())
-        //dbg("checking all casks:", casks.map(\.id).sorted())
-
-        func downloadStatsCount(for token: String) -> Int? {
-            ancillaryStats[token]?.first?.count
-        }
-
-        for cask in self.casks {
-            // skips casks that don't have any download URL
-            guard let downloadURL = cask.url.flatMap(URL.init(string:)) else {
-                continue
-            }
-
-            // the short cask token (e.g. "firefox")
-            let caskTokenShort = cask.token
-
-            // the long cask token (e.g. "homebrew/cask/firefox")
-            let caskTokenFull = cask.id
-            let caskid = CaskIdentifier(caskTokenFull)
-
-            let caskInfo = appcaskInfo[caskTokenShort]
-
-            let downloadCount = caskInfo?.first?.downloadCount
-            let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
-            // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
-
-            let downloads = (downloadCount ?? 0) + (ancillaryDownloadCount ?? 0)
-
-            let readmeURL = caskInfo?.first?.readmeURL
-            let releaseNotesURL = caskInfo?.first?.releaseNotesURL
-
-            // TODO: extract installed Plist and check bundle identifier?
-            //let installed = installedCasks[caskTokenShort]?.first
-            //dbg("installed info for:", caskTokenShort, installed)
-
-            //dbg("download count for:", caskid, downloads)
-            guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
-                dbg("skipping cask with no home page:", cask.homepage)
-                continue
-            }
-
-            // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
-            let appcask = caskInfo?.first { item in
-                item.homepage?.host == "appfair.app"
-                || item.homepage?.host == "www.appfair.app"
-                || item.homepage?.host == caskHomepage.host
-            }
-
-            //dbg("appcaskInfo for:", caskid, appcask)
-
-            let name = cask.name.first ?? caskTokenShort
-
-            let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
-
-            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, sourceIdentifier: appcask?.sourceIdentifier, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, sourceSize: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: self.caskMetadata(name: cask.token), readmeURL: readmeURL, releaseNotesURL: releaseNotesURL, homepage: caskHomepage)
-
-            let info = AppInfo(catalogMetadata: item, cask: cask)
-            infos.append(info)
-        }
-
-        var sortedInfos = infos
-
-        //dbg("caskRanks", caskRanks)
-
-        // when unsorted, use the position in the appcask ranking for presentation raking
-        if self.sortOrder.isEmpty {
-            sortedInfos = sortedInfos.reversed().sorted(by: { info1, info2 in
-                guard let id1 = info1.cask?.token else { return false }
-                guard let id2 = info2.cask?.token else { return true }
-
-                let rank1 = caskRanks[id1]
-                let rank2 = caskRanks[id2]
-
-                // un-ranked casks fall back to being sorted by the download stats
-                if rank1 == nil && rank2 == nil {
-                    let dl1 = downloadStatsCount(for: id1)
-                    let dl2 = downloadStatsCount(for: id2)
-                    return (dl1 ?? 0) > (dl2 ?? 0)
-                }
-
-                guard let rank1 = rank1 else {
-                    return rank2 == nil
-                }
-                guard let rank2 = rank2 else {
-                    return true
-                }
-
-                return rank1 < rank2
-            })
-        } else {
-            sortedInfos = sortedInfos.sorted(using: self.sortOrder)
-        }
-
-        dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
-
-        // avoid triggering unnecessary changes
-        if self.appInfos != sortedInfos {
-             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
-                self.appInfos = sortedInfos
-                     .filter { info in
-                         allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
-                     }
-             }
-        }
-    }
-
     var visibleAppInfos: [AppInfo] {
         appInfos
         // this is too slow to do dynamically; in the future maybe cache it but for now we'll filter up-front, at the cost that we won't dybamically change the filtered values when the property is changed
@@ -1137,7 +973,7 @@ extension HomebrewInventory {
         if matches(item.catalogMetadata.name) { return true }
         if matches(item.catalogMetadata.subtitle) { return true }
         if matches(item.catalogMetadata.developerName) { return true }
-        if matches(item.catalogMetadata.localizedDescription) { return true }
+        //if matches(item.catalogMetadata.localizedDescription) { return true }
 
         return false
     }
@@ -1221,6 +1057,152 @@ extension HomebrewInventory {
             return fmt(apps(for: cat).count)
         }
     }
+}
+
+extension HomebrewInventory {
+    /// Re-builds the AppInfo collection.
+    func updateAppInfo() {
+        let sortedInfos = synthesizeCaskCatalog()
+
+        // avoid triggering unnecessary changes
+        if self.appInfos != sortedInfos {
+             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
+                self.appInfos = sortedInfos
+                     .filter { info in
+                         allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
+                     }
+             }
+        }
+    }
+}
+
+/// A type that can generate a source catalog from an appcasks catalog.
+fileprivate protocol AppcaskSynthesizer {
+    var appInfos: [AppInfo] { get }
+    var appcasks: AppCatalog? { get }
+    var appstats: CaskStats? { get }
+    var casks: [CaskItem] { get }
+
+    func caskMetadata(name: String) -> URL?
+
+    func synthesizeCaskCatalog() -> [AppInfo]
+}
+
+extension AppcaskSynthesizer {
+    //@available(*, deprecated, message: "TODO: move appcask synthesis into FairExpo and add `fairtool brew catalog` command")
+    fileprivate func synthesizeCaskCatalog() -> [AppInfo] {
+        // an index of [token: extraInfo]
+        let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
+            .grouping(by: \.abbreviatedToken)
+
+        let ancillaryStats = appstats?.formulae ?? [:]
+
+        // the position of the cask in the ranks, which is used to control the initial sort order
+        let caskRanks: [String : Int] = (appcasks?.apps ?? [])
+            .enumerated()
+            .grouping(by: \.element.abbreviatedToken)
+            .compactMapValues(\.first?.offset)
+
+        // dbg("casks:", caskMap.keys.sorted())
+        var infos: [AppInfo] = []
+
+        //dbg("checking installed casks:", installedCasks.keys.sorted())
+        //dbg("checking all casks:", casks.map(\.id).sorted())
+
+        func downloadStatsCount(for token: String) -> Int? {
+            ancillaryStats[token]?.first?.count
+        }
+
+        for cask in self.casks {
+            // skips casks that don't have any download URL
+            guard let downloadURL = cask.url.flatMap(URL.init(string:)) else {
+                continue
+            }
+
+            // the short cask token (e.g. "firefox")
+            let caskTokenShort = cask.token
+
+            // the long cask token (e.g. "homebrew/cask/firefox")
+            let caskTokenFull = cask.id
+            let caskid = caskTokenFull
+
+            let caskInfo = appcaskInfo[caskTokenShort]
+
+            let downloadCount = caskInfo?.first?.downloadCount
+            let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
+            // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
+
+            let downloads = (downloadCount ?? 0) + (ancillaryDownloadCount ?? 0)
+
+            let readmeURL = caskInfo?.first?.readmeURL
+            let releaseNotesURL = caskInfo?.first?.releaseNotesURL
+
+            // TODO: extract installed Plist and check bundle identifier?
+            //let installed = installedCasks[caskTokenShort]?.first
+            //dbg("installed info for:", caskTokenShort, installed)
+
+            //dbg("download count for:", caskid, downloads)
+            guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
+                dbg("skipping cask with no home page:", cask.homepage)
+                continue
+            }
+
+            // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
+            let appcask = caskInfo?.first { item in
+                item.homepage?.host == "appfair.app"
+                || item.homepage?.host == "www.appfair.app"
+                || item.homepage?.host == caskHomepage.host
+            }
+
+            //dbg("appcaskInfo for:", caskid, appcask)
+
+            let name = cask.name.first ?? caskTokenShort
+
+            let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
+
+            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: self.caskMetadata(name: cask.token), readmeURL: readmeURL, releaseNotesURL: releaseNotesURL, homepage: caskHomepage)
+
+            let info = AppInfo(catalogMetadata: item, cask: cask)
+            infos.append(info)
+        }
+
+        let sortedInfos = infos.sorted(by: { info1, info2 in
+            guard let id1 = info1.cask?.token else { return false }
+            guard let id2 = info2.cask?.token else { return true }
+
+            // downloads are prioritized over other rankings
+            if let dl1 = downloadStatsCount(for: id1), let dl2 = downloadStatsCount(for: id2) {
+                return dl1 > dl2
+            }
+
+            let rank1 = caskRanks[id1]
+            let rank2 = caskRanks[id2]
+
+            // un-ranked casks fall back to being sorted by the download stats
+//            if (rank1 == nil && rank2 == nil) {
+//                let dl1 = downloadStatsCount(for: id1)
+//                let dl2 = downloadStatsCount(for: id2)
+//                return (dl1 ?? 0) > (dl2 ?? 0)
+//            }
+
+            guard let rank1 = rank1 else {
+                return rank2 == nil
+            }
+            guard let rank2 = rank2 else {
+                return true
+            }
+
+            return rank1 < rank2
+        })
+
+        dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
+
+        return sortedInfos
+    }
+}
+
+extension HomebrewInventory : AppcaskSynthesizer {
+
 }
 
 extension HomebrewInventory {
@@ -1438,155 +1420,10 @@ extension ProcessInfo {
     }()
 }
 
-/// ```{"category":"cask_install","total_items":6190,"start_date":"2021-12-05","end_date":"2022-01-04","total_count":894812,"items":[{"number":1,"cask":"google-chrome","count":"34,530","percent":"3.86"},{"number":2,"cask":"iterm2","count":"31,096","percent":"3.48"},{"number":6190,"cask":"zulufx11","count":"1","percent":"0"}]}```
-/// https://formulae.brew.sh/docs/api/#list-analytics-events-for-all-cask-formulae
-private struct CaskStats : Equatable, Decodable {
-    /// E.g., `cask_install`
-    let category: String
-
-    /// E.g., `6190`
-    let total_items: Int
-
-    /// E.g., `2021-12-05`
-    let start_date: String
-
-    /// E.g., `2022-01-04`
-    let end_date: String
-
-    /// E.g., `894812`
-    let total_count: Int
-
-    /// Note that the docs call this `items`(see [API Docs](https://formulae.brew.sh/docs/api/#response-5)), but the API returns `formulae`.
-    let formulae: [String: [Stat]]
-
-    /// `{"number":1,"cask":"google-chrome","count":"34,530","percent":"3.86"}`
-    struct Stat : Equatable, Decodable {
-        let cask: String
-        let count: Int
-
-        init(from decoder: Decoder) throws {
-            let values = try decoder.container(keyedBy: CodingKeys.self)
-            self.cask = try values.decode(String.self, forKey: .cask)
-            /// The `count` field should be a number, but is appears to be a numeric string (US localized with commas), but since it ought to be a number and maybe someday will be, also permit a number
-            do {
-                self.count = try values.decode(Int.self, forKey: .count)
-            } catch {
-                let stringCount = try values.decode(String.self, forKey: .count)
-                self.count = Self.formatter.number(from: stringCount)?.intValue ?? 0
-            }
-        }
-
-        enum CodingKeys : String, CodingKey {
-            case cask
-            case count
-        }
-
-        private static let formatter: NumberFormatter = {
-            let fmt = NumberFormatter()
-            fmt.numberStyle = .decimal
-            fmt.isLenient = true
-            fmt.locale = Locale(identifier: "en_US")
-            return fmt
-        }()
-    }
-}
-
-/// A Homebrew Cask, as defined by the API specification at [https://formulae.brew.sh/docs/api/#get-formula-metadata-for-a-cask-formula](https://formulae.brew.sh/docs/api/#get-formula-metadata-for-a-cask-formula)
-struct CaskItem : Equatable, Decodable {
-    /// The token of the cask. E.g., `alfred`
-    let token: String
-
-    /// E.g., `4.6.1,1274`
-    let version: String
-
-    /// E.g., `["Alfred"]`
-    let name: [String]
-
-    /// E.g., `"Application launcher and productivity software"`
-    let desc: String?
-
-    /// E.g., `https://www.alfredapp.com/`
-    let homepage: String?
-
-    /// E.g., `https://cachefly.alfredapp.com/Alfred_4.6.1_1274.dmg`
-    let url: String?
-
-    /// E.g., `alfred` or `appfair/app/bon-mot`
-    let full_token: String
-
-    /// E.g., `homebrew/cask` or `appfair/app`
-    let tap: String?
-
-    /// E.g., `https://nucleobytes.com/4peaks/index.html`
-    let appcast: String?
-
-    /// E.g., `5.8.3.2240`
-    let installed: String? // always nil when taken from API
-
-    // TODO
-    // let versions": {},
-
-    // let outdated: false // not relevent for API
-
-    /// The SHA-256 hash of the artifact.
-    private let sha256: String
-
-    /// Returns the checksum unless it is the "no_check" constant or does not otherwise appear to be a checksum
-    var checksum: String? {
-        //let validCharacters = CharacterSet(charactersIn: "")
-        sha256 == "no_check" || sha256.count != 64 ? nil : sha256
-    }
-
-    /// E.g.: `app has been officially discontinued upstream`
-    let caveats: String?
-
-    let auto_updates: Bool?
-
-    // "artifacts":[["Signal.app"],{"trash":["~/Library/Application Support/Signal","~/Library/Preferences/org.whispersystems.signal-desktop.helper.plist","~/Library/Preferences/org.whispersystems.signal-desktop.plist","~/Library/Saved Application State/org.whispersystems.signal-desktop.savedState"],"signal":{}}]
-    typealias ArtifactItem = XOr<Array<ArtifactNameTarget>>.Or<JSum>
-
-    let artifacts: Array<ArtifactItem>?
-
-    /// Either the raw name of an app, or the target of the app
-    typealias ArtifactNameTarget = XOr<ArtifactTarget>.Or<String>
-
-    /// A target for the app, typically part of a hetergeneous array when the installed name of the app differs from the canonical name of the app
-    /// E.g.: `["Eclipse.app", { "target": "Nodeclipse.app" } ]`
-    struct ArtifactTarget : Equatable, Decodable {
-        var target: String
-    }
-
-    /// `depends_on` is used to declare dependencies and requirements for a Cask. `depends_on` is not consulted until install is attempted.
-    let depends_on: DependsOn?
-
-    struct DependsOn : Equatable, Decodable {
-        let cask: [String]?
-
-        /// E.g., `{"macos":{">=":["10.12"]}}`
-        // let macOS: XOr<Array<String>>.Or<String>?
-    }
-
-    /// E.g.: `"conflicts_with":{"cask":["homebrew/cask-versions/1password-beta"]}`
-    // let conflicts_with: null
-    
-    /// E.g.: `"container":"{:type=>:zip}"`
-    // let container": null,
-
-    /// Possible model for https://github.com/Homebrew/brew/issues/12786
-//    private let files: [FileItem]?
-//    private struct FileItem : Equatable, Decodable {
-//        /// E.g., "arm64" or "x86"
-//        let arch: String?
-//        let url: String?
-//        let sha256: String?
-//    }
-}
-
-
 extension CaskItem : Identifiable {
 
     /// The ID of a `CaskItem` is the `tapToken`
-    var id: String { tapToken }
+    public var id: String { tapToken }
 
     /// Returns the fully-qualified token. E.g., `homebrew/cask/iterm2`
     var tapToken: String {

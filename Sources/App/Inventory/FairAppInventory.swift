@@ -95,6 +95,8 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 /// The manager for installing App Fair apps
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class FairAppInventory: ObservableObject, AppInventory {
+    let imageCache = Cache<URL, Image>()
+
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
 
@@ -221,7 +223,7 @@ extension FairAppInventory {
     /// The app info for the current app (which is the catalog browser app)
     var catalogAppInfo: AppCatalogItem? {
         appInfoItems(includePrereleases: false).first(where: { info in
-            info.bundleIdentifier.rawValue == Bundle.main.bundleIdentifier
+            info.bundleIdentifier == Bundle.main.bundleIdentifier
         })
     }
 
@@ -259,7 +261,7 @@ extension FairAppInventory {
 
         // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
         // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [BundleIdentifier: [AppCatalogItem]] = catalog
+        let bundleAppInfoMap: [String: [AppCatalogItem]] = catalog
             .grouping(by: \.bundleIdentifier)
 
         // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
@@ -324,7 +326,7 @@ extension FairAppInventory {
             string?.localizedCaseInsensitiveContains(txt) == true
         }
 
-        if matches(item.bundleIdentifier.rawValue) { return true }
+        if matches(item.bundleIdentifier) { return true }
         
         if matches(item.name) { return true }
         if matches(item.subtitle) { return true }
@@ -584,12 +586,13 @@ extension FairAppInventory {
         }
 
         if self.relaunchUpdatedApps == true {
+            let bundleID = BundleIdentifier(item.bundleIdentifier)
             // the catalog app is special, since re-launching requires quitting the current app
-            let isCatalogApp = item.bundleIdentifier.rawValue == Bundle.main.bundleID
+            let isCatalogApp = bundleID.rawValue == Bundle.main.bundleID
 
             @MainActor func relaunch() {
-                dbg("re-launching app:", item.bundleIdentifier)
-                terminateAndRelaunch(bundleID: item.bundleIdentifier, force: false, overrideLaunchURL: isCatalogApp ? destinationURL : nil)
+                dbg("re-launching app:", bundleID)
+                terminateAndRelaunch(bundleID: bundleID, force: false, overrideLaunchURL: isCatalogApp ? destinationURL : nil)
             }
 
             if !isCatalogApp {
@@ -760,12 +763,12 @@ extension FairAppInventory {
     }
 
     func appInstalled(item: AppCatalogItem) -> String? {
-        installedInfo(for: item.bundleIdentifier)?.versionString
+        installedInfo(for: BundleIdentifier(item.bundleIdentifier))?.versionString
     }
 
     func appUpdated(item: AppCatalogItem) -> Bool {
         // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
-        (installedVersion(for: item.bundleIdentifier) ?? .max) < (item.releasedVersion ?? .min)
+        (installedVersion(for: BundleIdentifier(item.bundleIdentifier)) ?? .max) < (item.releasedVersion ?? .min)
     }
 
 }

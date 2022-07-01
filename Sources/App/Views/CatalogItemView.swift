@@ -13,6 +13,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairKit
+import FairExpo
 import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)
@@ -560,11 +561,11 @@ struct CatalogItemView: View {
                     case .details:
                         detailsListView()
                     case .permissions:
-                        if info.cask == nil {
+                        if !info.isCask {
                             permissionsSection()
                         }
                     case .security:
-                        if info.cask != nil {
+                        if !info.isCask {
                             //SecurityBox(info: info) // TODO: make this human-readable for presentation instead of showing the raw JSON
                         }
                     case .formula:
@@ -794,7 +795,7 @@ struct CatalogItemView: View {
     }
 
     func catalogActionButtons() -> some View {
-        let isCatalogApp = info.catalogMetadata.bundleIdentifier.rawValue == Bundle.main.bundleID
+        let isCatalogApp = info.catalogMetadata.bundleIdentifier == Bundle.main.bundleID
 
         return GeometryReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -840,11 +841,9 @@ struct CatalogItemView: View {
                 Text("Download & Install \(info.catalogMetadata.name)", bundle: .module, comment: "install button confirmation dialog confirm button text").button {
                     runTask(activity: .install, confirm: true)
                 }
-                if let cask = info.cask {
-                    if let page = cask.homepage, let homepage = URL(string: page) {
-                        Text("Visit Homepage: \(homepage.host ?? "")", bundle: .module, comment: "install button confirmation dialog visit homepage button text").button {
-                            openURLAction(homepage)
-                        }
+                if let homepage = info.catalogMetadata.homepage {
+                    Text("Visit Homepage: \(homepage.host ?? "")", bundle: .module, comment: "install button confirmation dialog visit homepage button text").button {
+                        openURLAction(homepage)
                     }
                 } else {
                     if let discussionsURL = info.catalogMetadata.discussionsURL {
@@ -1480,52 +1479,6 @@ extension CatalogActivity {
 }
 
 extension AppCatalogItem {
-    @ViewBuilder func iconImage() -> some View {
-        if let iconURL = self.iconURL {
-            AsyncImage(url: iconURL, scale: 1.0, transaction: Transaction(animation: .easeIn)) { phase in
-                switch phase {
-                case .success(let image):
-                    //let _ = iconCache.setObject(ImageInfo(image: image), forKey: iconURL as NSURL)
-                    //let _ = dbg("success image for:", self.name, image)
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                case .failure(let error):
-                    let _ = dbg("error image for:", self.name, error)
-                    if !error.isURLCancelledError { // happens when items are scrolled off the screen
-                        let _ = dbg("error fetching icon from:", iconURL.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
-                    }
-                    fallbackIcon()
-                        .grayscale(0.9)
-                        .help(error.localizedDescription)
-                case .empty:
-//                    let _ = dbg("empty image for:", self.name)
-//                    if let image = iconCache.object(forKey: iconURL as NSURL) {
-//                        image.image
-//                            .resizable(resizingMode: .stretch)
-//                            .aspectRatio(contentMode: .fit)
-//                    } else {
-                    fallbackIcon()
-                        .grayscale(0.5)
-//                    }
-                @unknown default:
-                    fallbackIcon()
-                        .grayscale(0.8)
-                }
-            }
-        } else {
-            fallbackIcon()
-                .grayscale(1.0)
-        }
-    }
-
-    @ViewBuilder func fallbackIcon() -> some View {
-        let baseColor = itemTintColor()
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(baseColor)
-            .opacity(0.5)
-    }
-
     /// The specified tint color, falling back on the default tint for the app name
     func itemTintColor() -> Color {
         self.tintColor() ?? FairIconView.iconColor(name: self.appNameHyphenated)

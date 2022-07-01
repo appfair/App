@@ -161,6 +161,35 @@ All apps published through the Fairground App catalog are native SwiftUI apps th
 
 Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to be either universal (they may only be compiled for Intel and emulated under Rosetta, or they may not be compiled at all) nor native (they may use Electron, Qt, or Java instead of the system-native frameworks).
 
+
+#### How quickly are Cask updates made available on the App Fair?
+
+Once a third-party Cask update passes through the 
+Homebrew Cask update process](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#submit-a-new-version-of-an-existing-cask),
+it should be automatically available in the App Fair
+once the catalog is next updated.
+The catalog is typically regenerated once an hour. 
+
+#### Is every Homebrew cask available on the App Fair?
+
+Only Homebrew casks that contain installable applications (as opposed
+to servers, daemons, or command-line tools) are displayed in the
+App Fair by default.
+This is controlled by the Homebrew preference pane's
+"Show casks without app artifacts" toggle.
+
+Note that if you install a cask without an associated
+launchable app, the App Fair's "Launch" button will
+not be usable for that cask.
+
+There may be other factors that prevent a cask from being
+displayed in the App Fair.
+A complete list of the App Fair's casks is available at
+[https://appfair.net/appcasks](https://appfair.net/appcasks).
+This can be compared to the list of all Homebrew Casks at
+[https://formulae.brew.sh/cask](https://formulae.brew.sh/cask).
+
+
 #### Can I purchase apps with App Fair.app?
 
 The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
@@ -364,7 +393,7 @@ Homebrew Casks only support macOS apps. There is experimental support for creati
 The App Fair bundles Homebrew itself and stores it in a unique location at `~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew`. It uses the `HOMEBREW_INSTALL_FROM_API` mechanism to avoid needing to clone the entire cask repository and speed up the process of managing cask apps.
 
 Before invoking the `brew install` command, App Fair.app will 
-download cask artifacts to the ` ~/Library/Caches/Homebrew/downloads/` 
+download cask artifacts to the `~/Library/Caches/Homebrew/downloads/` 
 folder (subject to the Homebrew “Use integrated download manager” preference),
 which allows the app to track the progress of downloads and
 handle user cancellation.
@@ -379,7 +408,6 @@ $ ~/Library/Application\ Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew
 ==> Removing App '/Applications/Rectangle.app'
 ==> Purging files for version 0.51,57 of Cask rectangle
 ```
-
 
 
 ### App Fair Development FAQs
@@ -404,7 +432,6 @@ Real time discussion about the project can take place on the
 [App Fair Discord](https://discord.gg/8F6eBUMMNk).
 
 
-<br />
 <br />
 <br />
 
