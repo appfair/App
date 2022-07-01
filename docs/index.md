@@ -317,10 +317,16 @@ to servers, daemons, or command-line tools) are displayed in the
 App Fair by default.
 This is controlled by the Homebrew preference pane's
 "Show casks without app artifacts" toggle.
-
 Note that if you install a cask without an associated
 launchable app, the App Fair's "Launch" button will
 not be usable for that cask.
+
+In addition, casks that have dependencies are also 
+not installed by default. App Fair.app does not support
+dependency installation by default, but some casks that
+have dependencies may work. You can enable this feature
+with the "Automatically install dependencies" toggle 
+in the Homebrew preferences tab.
 
 There may be other factors that prevent a cask from being
 displayed in the App Fair.

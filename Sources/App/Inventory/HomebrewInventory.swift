@@ -683,7 +683,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     func installedPath(for item: AppInfo) throws -> URL? {
-        let token = BundleIdentifier(item.catalogMetadata.bundleIdentifier).caskToken ?? ""
+        let token = item.catalogMetadata.bundleIdentifier
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.catalogMetadata.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) == true {
@@ -1486,23 +1486,5 @@ extension CaskItem : Identifiable {
             }
         }
         return appNames
-    }
-}
-
-/// A unique identifier for a bundle. Note that this overloads the "BundleIdentifier" concept, which may make more sense
-typealias CaskIdentifier = BundleIdentifier
-
-extension CaskIdentifier {
-    /// Returns true if this is a homebrew cask (vs. a fairapp)
-    var isCaskApp: Bool {
-        rawValue.hasPrefix("homebrew/cask/")
-    }
-
-    var caskToken: String? {
-        if rawValue.hasPrefix("homebrew/cask/") {
-            return String(rawValue.dropFirst(14))
-        } else {
-            return nil
-        }
     }
 }
