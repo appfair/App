@@ -1066,31 +1066,47 @@ extension HomebrewInventory {
 
         // avoid triggering unnecessary changes
         if self.appInfos != sortedInfos {
-             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
+             //withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
                 self.appInfos = sortedInfos
                      .filter { info in
                          allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
                      }
-             }
+             //}
         }
     }
 }
 
-/// A type that can generate a source catalog from an appcasks catalog.
-fileprivate protocol AppcaskSynthesizer {
-    var appInfos: [AppInfo] { get }
-    var appcasks: AppCatalog? { get }
-    var appstats: CaskStats? { get }
-    var casks: [CaskItem] { get }
-
-    func caskMetadata(name: String) -> URL?
-
-    func synthesizeCaskCatalog() -> [AppInfo]
-}
-
-extension AppcaskSynthesizer {
-    //@available(*, deprecated, message: "TODO: move appcask synthesis into FairExpo and add `fairtool brew catalog` command")
+extension HomebrewInventory {
     fileprivate func synthesizeCaskCatalog() -> [AppInfo] {
+        synthesizeCaskCatalogLegacy()
+        //synthesizeCaskCatalogFromAppcasks()
+    }
+
+    private func synthesizeCaskCatalogFromAppcasks() -> [AppInfo] {
+        guard let appcasks = self.appcasks, !appcasks.apps.isEmpty else { return [] }
+        guard !self.casks.isEmpty else { return [] }
+
+        let apps = appcasks.apps
+        let caskMap = casks.dictionary(keyedBy: \.token)
+
+        var infos = Array<AppInfo>()
+        infos.reserveCapacity(max(apps.count, caskMap.count))
+        for app in apps {
+            let cask = caskMap[app.bundleIdentifier]
+            if cask == nil {
+                dbg("missing cask:", app.bundleIdentifier)
+                continue
+            } else {
+                let info = AppInfo(catalogMetadata: app, cask: cask)
+                infos.append(info)
+            }
+        }
+
+        return infos
+    }
+
+    @available(*, deprecated, message: "use enhanced appcasks metadata and ordering")
+    private func synthesizeCaskCatalogLegacy() -> [AppInfo] {
         // an index of [token: extraInfo]
         let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
             .grouping(by: \.abbreviatedToken)
@@ -1199,10 +1215,6 @@ extension AppcaskSynthesizer {
 
         return sortedInfos
     }
-}
-
-extension HomebrewInventory : AppcaskSynthesizer {
-
 }
 
 extension HomebrewInventory {

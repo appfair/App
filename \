@@ -286,21 +286,8 @@ can be found [here](https://eclecticlight.co/tag/ocsp/).
 
 The Homebrew project, started in 2009, is a free and
 open-source package management system that makes 
-it simple to install third-party applications, whose
-installation specifications are called "casks".
+it simple to install third-party applications.
 
-App Fair.app integrates with Homebrew to provide
-convenient access to the thousands of apps that are
-available in the Homebrew Cask catalog.
-
-Read more about Homebrew at [https://brew.sh](https://brew.sh),
-and at the [Casks documentation](https://github.com/homebrew/homebrew-cask).
-
-### Where are Casks hosted?
-
-Individual casks are hosted on the developer's site,
-from where they will be downloaded by App Fair.app and
-verified using the published SHA-256 checksum.
 
 #### How quickly are Cask updates made available on the App Fair?
 
