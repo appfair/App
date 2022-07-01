@@ -59,7 +59,7 @@ Launch Link (required): https://appfair.app/fair?app=App-Fair
     <div style="padding-left: 16px; padding-right: 16px;">
         <span style="font-size: 30px; color: #FFFFFF; font-weight: bold; font-family: ui-rounded, Arial Rounded MT Bold, system-ui, HelveticaNeue, Helvetica Neue;">Download {{ apptitle }}.app</span>
         <br />
-        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">8.1MB – requires macOS 12+</span>
+        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">8.7MB – requires macOS 12+</span>
     </div>
 </button>
 </a>
