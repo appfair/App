@@ -295,7 +295,7 @@ extension FairAppInventory {
         case .none:
             return []
         case .top:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
+            return [] // use server-defined ordering [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
         case .recent:
             return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
         case .updated:
@@ -303,7 +303,7 @@ extension FairAppInventory {
         case .installed:
             return [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)]
         case .category:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.starCount, order: .reverse), KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
+            return []
         }
     }
 

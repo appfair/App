@@ -933,18 +933,29 @@ extension HomebrewInventory {
     }
 
     func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        let infos = visibleAppInfos
+        visibleAppInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-
-        if sidebarSelection?.item.isLocalFilter == true {
-            // installed and updated apps are sorted by name
-            return infos.sorted(using: [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)])
-        } else {
-            return infos
-        }
-        //.sorted(using: sortOrder + [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]) // sorting each time is very slow; we should instead update a cache of the sorted changes
+            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
+
+    func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
+        switch category {
+        case .none:
+            return []
+        case .top:
+            return [] // use server-defined ordering [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
+        case .recent:
+            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+        case .updated:
+            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+        case .installed:
+            return [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)]
+        case .category:
+            return []
+        }
+    }
+
 
     func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
