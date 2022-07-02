@@ -49,6 +49,10 @@ protocol AppInventory : AppInventoryCatalog {
 }
 
 extension AppInventory {
+    /// Returns true if the item was recently updated
+    func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = (60 * 60 * 24 * 30)) -> Bool {
+        (item.versionDate ?? .distantPast) > (Date() - interval)
+    }
 
     /// Cache the given image parameter for later re-use
     @MainActor private func caching(image: Image, for url: URL?) -> Image {

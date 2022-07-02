@@ -652,13 +652,14 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             Image(uxImage: icon).resizable()
         } else if let _ = item.catalogMetadata.iconURL {
             self.iconImage(item: item.catalogMetadata) // use the icon URL if it has been set (e.g., using appcasks metadata)
-        } else if let baseURL = item.catalogMetadata.developerName.flatMap(URL.init(string:)) {
+        } else if let baseURL = item.catalogMetadata.homepage {
             // otherwise fallback to using the favicon for the home page
             FaviconImage(baseURL: baseURL, fallback: {
                 EmptyView()
             })
         } else {
-            FairSymbol.questionmark_square_dashed
+            // FairSymbol.questionmark_square_dashed
+            FairIconView(item.catalogMetadata.name, subtitle: nil)
         }
     }
 
@@ -1055,7 +1056,6 @@ extension HomebrewInventory {
             return fmt(apps(for: cat).count)
         }
     }
-    
 }
 
 extension HomebrewInventory {
@@ -1068,7 +1068,7 @@ extension HomebrewInventory {
              //withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
                 self.appInfos = sortedInfos
                      .filter { info in
-                         allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
+                         (allowCasksWithoutApp == true) || (info.cask?.appArtifacts.isEmpty == false)
                      }
              //}
         }
@@ -1093,6 +1093,7 @@ extension HomebrewInventory {
         for app in apps {
             let cask = caskMap[app.bundleIdentifier]
             if cask == nil {
+                // this can happen if the cask was removed from the Homebrew Casks catalog, but the appcasks.json has not yet been update to reflect the removal
                 dbg("missing cask:", app.bundleIdentifier)
                 continue
             } else {

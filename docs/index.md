@@ -281,8 +281,10 @@ $ cat /etc/hosts
 More information on the topic of tracking app launches
 can be found [here](https://eclecticlight.co/tag/ocsp/).
 
+<a name="casks" />
+### Homebrew Cask FAQs
 
-### What are Homebrew casks?
+#### What are Homebrew Casks?
 
 The Homebrew project, started in 2009, is a free and
 open-source package management system that makes 
@@ -296,7 +298,7 @@ available in the Homebrew Cask catalog.
 Read more about Homebrew at [https://brew.sh](https://brew.sh),
 and at the [Casks documentation](https://github.com/homebrew/homebrew-cask).
 
-### Where are Casks hosted?
+#### Where are Casks hosted?
 
 Individual casks are hosted on the developer's site,
 from where they will be downloaded by App Fair.app and
