@@ -6,6 +6,30 @@
 	<string>$(ICON_SYMBOL)</string>
 	<key>AppFairIconTint</key>
 	<string>$(ICON_TINT)</string>
+	<key>AppSource</key>
+	<dict>
+		<key>subtitle</key>
+		<string>A whimsical game of excitement and delight</string>
+		<key>localizedDescription</key>
+		<string>Chase on the Cuckoo around the screen! This is a silly little game for the App Fair.</string>
+		<key>developerName</key>
+		<string>Fair Apps &lt;fairapps@appfair.org&gt;</string>
+		<key>versionDescription</key>
+		<string>Bug fixes and performance improvements.</string>
+		<key>fundingLinks</key>
+		<array>
+			<dict>
+				<key>platform</key>
+				<string>GITHUB</string>
+				<key>url</key>
+				<string>https://github.com/appfair</string>
+				<key>localizedTitle</key>
+				<string>Support the development of “Cloud Cuckoo”</string>
+				<key>localizedDescription</key>
+				<string>Help fund upcoming challenges and new additions to the whimsical and award-winning “Cloud Cuckoo” game. Fun for all ages!</string>
+			</dict>
+		</array>
+	</dict>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
