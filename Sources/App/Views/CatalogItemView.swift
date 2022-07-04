@@ -192,7 +192,7 @@ struct CatalogItemView: View {
         Group {
             if let date = metadata.versionDate ?? self.caskURLModifiedDate {
                 Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
-                    .transition(.opacity)
+                    //.refreshingEveryMinute()
             } else {
                 Text("Unknown", bundle: .module, comment: "app catalog entry header box content for an unknown update date")
                     .redacted(reason: .placeholder)

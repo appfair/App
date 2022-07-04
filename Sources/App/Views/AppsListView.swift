@@ -49,8 +49,9 @@ struct AppsListView : View {
     @ViewBuilder var bottomBar: some View {
         Group {
             if let updated = catalog.catalogUpdated {
-                // FIXME: this doen't change automatically unless some other state has changed; we'd need some kind of refresh timer to mark it as stale in order for the updated status to always be accurate
+                // to keep the updated date correct, update the label every minute
                 Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
+                    //.refreshingEveryMinute()
             } else {
                 Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
             }
@@ -195,6 +196,7 @@ struct AppsListView : View {
     }
 }
 
+
 struct AppSectionItems : View {
     let items: [AppInfo]
     @Binding var selection: AppInfo.ID?
@@ -331,6 +333,7 @@ struct AppItemLabel : View {
 
                     if let versionDate = item.catalogMetadata.versionDate {
                         Text(versionDate, format: .relative(presentation: .numeric, unitsStyle: .narrow))
+                            //.refreshingEveryMinute()
                             .font(.subheadline)
                     }
 
