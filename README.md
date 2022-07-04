@@ -6,33 +6,19 @@ supports the epub format.
 
 ### App Fair Installation
 
-This app can be installed with the [App Fair.app](https://www.appfair.net)
-by launching: [appfair://app/Stanza-Redux](appfair://app/Stanza-Redux)
-
-### Homebrew Installation
-
-[Homebrew](https://brew.sh/) users on macOS can alternatively
-install this app directly with the command:
-
-```shell
-$ brew install appfair/app/stanza-redux
-```
-
-The app will be installed in the `/Applications/App Fair/` folder.
-It can be un-installed by dragging it to the Trash.
+Stanza Redux can be downloaded and installed using
+[App Fair.app](https://www.appfair.app)
+by opening
+[appfair.app/fair?app=Stanza-Redux](https://appfair.app/fair?app=Stanza-Redux).
 
 ## Support
 
-Community Support for this app is available from its
+The landing page for this app is available at
+[https://Stanza-Redux.github.io/App/](https://Stanza-Redux.github.io/App/).
+
+Community Support for this app is available on the
 [Discussion](../../discussions) forums.
 
-Issue reports and suggestions for improvement are available from the
-[Issues](../../issues) page.
-
-## License
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation.
-
+Problem reports and suggestions for improvement can be found in the
+[Issues](../../issues) list.
 
