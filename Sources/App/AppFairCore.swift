@@ -18,7 +18,10 @@ import Combine
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
+    /// The Homebrew Casks catalog from [formulae.brew.sh](https://formulae.brew.sh)
     case homebrew
+
+    /// The Fairapps catalog from [appfair.net](https://appfair.net)
     case fairapps
 }
 
@@ -47,9 +50,10 @@ public extension AppSource {
     }
 }
 
-struct AppInfo : Identifiable, Equatable {
+/// A structure representing an ``FairApp.AppCatalogItem`` with optional ``CaskItem`` metadata.
+struct AppInfo : Identifiable {
     /// The catalog item metadata
-    var catalogMetadata: AppCatalogItem
+    var app: AppCatalogItem
 
     /// The associated homebrew cask
     var cask: CaskItem?
@@ -61,7 +65,7 @@ struct AppInfo : Identifiable, Equatable {
 
     /// The bundle ID of the selected app (e.g., "app.App-Name")
     var id: AppCatalogItem.ID {
-        catalogMetadata.id
+        app.id
     }
 
     /// Returns the homepage for the info URL
@@ -75,59 +79,13 @@ struct AppInfo : Identifiable, Equatable {
 
             return nil
         } else {
-            return catalogMetadata.homepage
+            return app.homepage
         }
     }
 
     /// The categories as should be displayed in the UI; this will collapes sub-groups (i.e., game categories) into their parent groups.
     var displayCategories: [AppCategory] {
-        catalogMetadata.appCategories
-            .map { cat in
-                switch cat {
-                case .business: return .business
-                case .developertools: return .developertools
-                case .education: return .education
-                case .entertainment: return .entertainment
-                case .finance: return .finance
-                case .graphicsdesign: return .graphicsdesign
-                case .healthcarefitness: return .healthcarefitness
-                case .lifestyle: return .lifestyle
-                case .medical: return .medical
-                case .music: return .music
-                case .news: return .news
-                case .photography: return .photography
-                case .productivity: return .productivity
-                case .reference: return .reference
-                case .socialnetworking: return .socialnetworking
-                case .sports: return .sports
-                case .travel: return .travel
-                case .utilities: return .utilities
-                case .video: return .video
-                case .weather: return .weather
-
-                case .games: return .games
-
-                case .actiongames: return .games
-                case .adventuregames: return .games
-                case .arcadegames: return .games
-                case .boardgames: return .games
-                case .cardgames: return .games
-                case .casinogames: return .games
-                case .dicegames: return .games
-                case .educationalgames: return .games
-                case .familygames: return .games
-                case .kidsgames: return .games
-                case .musicgames: return .games
-                case .puzzlegames: return .games
-                case .racinggames: return .games
-                case .roleplayinggames: return .games
-                case .simulationgames: return .games
-                case .sportsgames: return .games
-                case .strategygames: return .games
-                case .triviagames: return .games
-                case .wordgames: return .games
-                }
-            }
+        app.appCategories.filter({ $0.parentCategory == nil })
     }
 }
 

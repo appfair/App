@@ -583,6 +583,57 @@ public extension AppCategory {
         }
     }
 
+    /// Returns the parent category of this category, or nil
+    /// if it is a root category.
+    ///
+    /// E.g., the parent category of ``boardgames`` is ``games``.
+    var parentCategory: AppCategory? {
+        switch self {
+        case .business: return nil
+        case .developertools: return nil
+        case .education: return nil
+        case .entertainment: return nil
+        case .finance: return nil
+        case .graphicsdesign: return nil
+        case .healthcarefitness: return nil
+        case .lifestyle: return nil
+        case .medical: return nil
+        case .music: return nil
+        case .news: return nil
+        case .photography: return nil
+        case .productivity: return nil
+        case .reference: return nil
+        case .socialnetworking: return nil
+        case .sports: return nil
+        case .travel: return nil
+        case .utilities: return nil
+        case .video: return nil
+        case .weather: return nil
+
+        case .games: return nil
+
+        case .actiongames: return .games
+        case .adventuregames: return .games
+        case .arcadegames: return .games
+        case .boardgames: return .games
+        case .cardgames: return .games
+        case .casinogames: return .games
+        case .dicegames: return .games
+        case .educationalgames: return .games
+        case .familygames: return .games
+        case .kidsgames: return .games
+        case .musicgames: return .games
+        case .puzzlegames: return .games
+        case .racinggames: return .games
+        case .roleplayinggames: return .games
+        case .simulationgames: return .games
+        case .sportsgames: return .games
+        case .strategygames: return .games
+        case .triviagames: return .games
+        case .wordgames: return .games
+        }
+    }
+
     func tintedLabel(monochrome: Bool) -> TintedLabel {
         TintedLabel(title: text, symbol: symbol, tint: monochrome ? nil : tint, mode: monochrome ? .monochrome : nil)
     }

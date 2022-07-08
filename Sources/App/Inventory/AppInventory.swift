@@ -22,7 +22,7 @@ protocol AppInventoryCatalog {
 /// The `AppInventory` protocol handles installing and managing apps.
 protocol AppInventory : AppInventoryCatalog {
     /// The inventory item associated with this inventory list
-    associatedtype InventoryItem : Equatable
+    associatedtype InventoryItem
 
     /// Returns the version string if the given inventory item is currently installed
     @MainActor func appInstalled(item: InventoryItem) -> String?

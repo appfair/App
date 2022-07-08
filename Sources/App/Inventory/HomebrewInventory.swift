@@ -650,16 +650,16 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
             let icon = NSWorkspace.shared.icon(forFile: path.path)
             Image(uxImage: icon).resizable()
-        } else if let _ = item.catalogMetadata.iconURL {
-            self.iconImage(item: item.catalogMetadata) // use the icon URL if it has been set (e.g., using appcasks metadata)
-        } else if let baseURL = item.catalogMetadata.homepage {
+        } else if let _ = item.app.iconURL {
+            self.iconImage(item: item.app) // use the icon URL if it has been set (e.g., using appcasks metadata)
+        } else if let baseURL = item.app.homepage {
             // otherwise fallback to using the favicon for the home page
             FaviconImage(baseURL: baseURL, fallback: {
                 EmptyView()
             })
         } else {
             // FairSymbol.questionmark_square_dashed
-            FairIconView(item.catalogMetadata.name, subtitle: nil)
+            FairIconView(item.app.name, subtitle: nil)
         }
     }
 
@@ -684,9 +684,9 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     func installedPath(for item: AppInfo) throws -> URL? {
-        let token = item.catalogMetadata.bundleIdentifier
+        let token = item.app.bundleIdentifier
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
-        let versionDir = URL(fileURLWithPath: item.catalogMetadata.version ?? "", relativeTo: caskDir)
+        let versionDir = URL(fileURLWithPath: item.app.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) == true {
             let children = try versionDir.fileChildren(deep: false, skipHidden: true)
             if let link = findAppLink(in: children) {
@@ -727,7 +727,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             dbg("revealing:", installPath.path)
             NSWorkspace.shared.activateFileViewerSelecting([installPath])
         } else {
-            throw AppError("Could not find install path for “\(item.catalogMetadata.name)”")
+            throw AppError("Could not find install path for “\(item.app.name)”")
         }
     }
 
@@ -745,7 +745,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             //
             // how should we try to identify the app to launch? we don't want to have to try to parse the
 
-            throw AppError("Could not find install path for “\(item.catalogMetadata.name)”")
+            throw AppError("Could not find install path for “\(item.app.name)”")
         }
 
         // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
@@ -757,7 +757,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
                 if result.exitCode == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
                     dbg("gatekeeper check failed:", result)
                     if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"),
-                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.catalogMetadata.name, item.homepage?.absoluteString ?? ""),
+                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
                                      accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
                         dbg("cancelling launch due to unidentified developer")
                         return
@@ -944,13 +944,13 @@ extension HomebrewInventory {
         case .none:
             return []
         case .top:
-            return [] // use server-defined ordering [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
+            return [] // use server-defined ordering [KeyPathComparator(\AppInfo.app.downloadCount, order: .reverse)]
         case .recent:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .updated:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .installed:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)]
+            return [KeyPathComparator(\AppInfo.app.name, order: .forward)]
         case .category:
             return []
         }
@@ -976,10 +976,10 @@ extension HomebrewInventory {
         if matches(item.cask?.tapToken) { return true }
         if matches(item.cask?.homepage) { return true }
 
-        if matches(item.catalogMetadata.name) { return true }
-        if matches(item.catalogMetadata.subtitle) { return true }
-        if matches(item.catalogMetadata.developerName) { return true }
-        //if matches(item.catalogMetadata.localizedDescription) { return true }
+        if matches(item.app.name) { return true }
+        if matches(item.app.subtitle) { return true }
+        if matches(item.app.developerName) { return true }
+        //if matches(item.app.localizedDescription) { return true }
 
         return false
     }
@@ -989,15 +989,15 @@ extension HomebrewInventory {
         case .none:
             return true
         case .installed:
-            return installedCasks[item.catalogMetadata.id.rawValue] != nil
+            return installedCasks[item.app.id.rawValue] != nil
         case .updated:
             return appUpdated(item: item)
         case .category(let cat):
-            return item.catalogMetadata.categories?.contains(cat.metadataIdentifier) == true
+            return item.app.categories?.contains(cat.metadataIdentifier) == true
         case .top:
             return true
         case .recent:
-            return isRecentlyUpdated(item: item.catalogMetadata)
+            return isRecentlyUpdated(item: item.app)
         }
     }
 
@@ -1011,14 +1011,14 @@ extension HomebrewInventory {
 
     func appUpdated(item: AppInfo) -> Bool {
 //        let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
-//        return info.catalogMetadata.version.flatMap(versions.contains) != true
+//        return info.app.version.flatMap(versions.contains) != true
 
-        if let releaseVersion = item.catalogMetadata.version,
-           let installedVersions = installedCasks[item.catalogMetadata.id.rawValue] {
+        if let releaseVersion = item.app.version,
+           let installedVersions = installedCasks[item.app.id.rawValue] {
             if self.ignoreAutoUpdatingAppUpdates == true && item.cask?.auto_updates == true {
                 return false // show showing apps that mark themselves as auto-updating
             }
-            //dbg(item.catalogMetadata.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
+            //dbg(item.app.id, "releaseVersion:", releaseVersion, "installedCasks:", installedCasks)
             return installedVersions.contains(releaseVersion) == false
         } else {
             return false
@@ -1062,7 +1062,7 @@ extension HomebrewInventory {
         case .installed:
             return fmt(installedCasks.count)
         case .recent:
-            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0.catalogMetadata) }).count)
+            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0.app) }).count)
         case .category(let cat):
             return fmt(apps(for: cat).count)
         }
@@ -1075,14 +1075,14 @@ extension HomebrewInventory {
         let sortedInfos = synthesizeCaskCatalog()
 
         // avoid triggering unnecessary changes
-        if self.appInfos != sortedInfos {
+        //if self.appInfos != sortedInfos {
              //withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
                 self.appInfos = sortedInfos
                      .filter { info in
                          (allowCasksWithoutApp == true) || (info.cask?.appArtifacts.isEmpty == false)
                      }
              //}
-        }
+        //}
     }
 }
 
@@ -1108,7 +1108,7 @@ extension HomebrewInventory {
                 dbg("missing cask:", app.bundleIdentifier)
                 continue
             } else {
-                let info = AppInfo(catalogMetadata: app, cask: cask)
+                let info = AppInfo(app: app, cask: cask)
                 infos.append(info)
             }
         }
@@ -1190,7 +1190,7 @@ extension HomebrewInventory {
 
             let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: self.caskMetadata(name: cask.token), readmeURL: readmeURL, releaseNotesURL: releaseNotesURL, homepage: caskHomepage)
 
-            let info = AppInfo(catalogMetadata: item, cask: cask)
+            let info = AppInfo(app: item, cask: cask)
             infos.append(info)
         }
 

@@ -171,8 +171,14 @@
 /* format pattern for the label of the button at the bottom of the category info screen */
 "Browse %@" = "Browse %@";
 
+/* accessibility title for the label to browse the available issues */
+"Browse Issues" = "Browse Issues";
+
 /* homebrew preference button tooltip */
 "Browse the Homebrew installation folder using the Finder" = "Browse the Homebrew installation folder using the Finder";
+
+/* tooltip for button to browse the issues for the project on GitHub */
+"Browse the issues for this project on GitHub" = "Browse the issues for this project on GitHub";
 
 /* app category label for appfair.business */
 "Business" = "Business";
@@ -304,6 +310,9 @@
 /* app category label for appfair.educational-games */
 "Educational Games" = "Educational Games";
 
+/* preference checkbox */
+"Enable funding links" = "Enable funding links";
+
 /* homebrew preference checkbox */
 "Enable Homebrew self-update" = "Enable Homebrew self-update";
 
@@ -312,6 +321,9 @@
 
 /* app entitlement info for cs.allow-jit */
 "Enable performace booting." = "Enable performace booting.";
+
+/* preference checkbox tooltip */
+"Enable support for patronage and funding links." = "Enable support for patronage and funding links.";
 
 /* app entitlement info for temporary-exception.audio-unit-host */
 "Enables hosting of audio components that are not designated as sandbox-safe." = "Enables hosting of audio components that are not designated as sandbox-safe.";
@@ -422,16 +434,13 @@
 /* app catalog entry info link title */
 "Home" = "Home";
 
-/* app catalog cask entry preview tab title */
+/* app catalog app entry preview tab title */
 "Home Page" = "Home Page";
 
 /* app source title for homebrew apps
    homebrew preferences tab title
    source menu header text for section with homebrew catalog selection options */
 "Homebrew" = "Homebrew";
-
-/* homebrew top apps info: full title */
-"Homebrew Apps" = "Homebrew Apps";
 
 /* homebrew installed apps info: full title */
 "Homebrew Apps: Installed" = "Homebrew Apps: Installed";
@@ -442,7 +451,8 @@
 /* homebrew updated apps info: full title */
 "Homebrew Apps: Updated" = "Homebrew Apps: Updated";
 
-/* settings switch title for enabling homebrew cask support */
+/* homebrew top apps info: full title
+   settings switch title for enabling homebrew cask support */
 "Homebrew Casks" = "Homebrew Casks";
 
 /* homebrew preference description */
@@ -665,6 +675,9 @@
 /* app category label for appfair.productivity */
 "Productivity" = "Productivity";
 
+/* app catalog app entry preview tab title */
+"Project" = "Project";
+
 /* button help text for option to clear local cache data in the app settings */
 "Purges the local cache of icons and app descriptions" = "Purges the local cache of icons and app descriptions";
 
@@ -842,7 +855,7 @@
 /* app entitlement title for app-sandbox */
 "Sandbox" = "Sandbox";
 
-/* app catalog cask entry preview tab title */
+/* app catalog app entry preview tab title */
 "Screen Shots" = "Screen Shots";
 
 /* app entitlement title for scripting-targets */
@@ -890,11 +903,23 @@
 /* menu title for fairground sources actions */
 "Sources" = "Sources";
 
+/* accessibility title for the label to sponsor this project */
+"Sponsor" = "Sponsor";
+
+/* tooltip for button to open link to sponsor project on GitHub */
+"Sponsor this project on GitHub" = "Sponsor this project on GitHub";
+
 /* app category label for appfair.sports */
 "Sports" = "Sports";
 
 /* app category label for appfair.sports-games */
 "Sports Games" = "Sports Games";
+
+/* tooltip for button to open link to star project on GitHub */
+"Star this project on GitHub" = "Star this project on GitHub";
+
+/* accessibility title for the label to browse the stargazers for this project */
+"Stargazers" = "Stargazers";
 
 /* app catalog entry header box title */
 "Stars" = "Stars";
@@ -988,6 +1013,9 @@
    fallback text for unknown developer name */
 "Unknown" = "Unknown";
 
+/* app entitlement info an unrecognized entitlement */
+"Unknown entitlement: %@." = "Unknown entitlement: %@.";
+
 /* app entitlement title for cs.allow-unsigned-executable-memory */
 "Unsigned Executable Memory" = "Unsigned Executable Memory";
 
@@ -1013,6 +1041,9 @@
 
 /* homebrew preference checkbox for enabling the integrated download manager */
 "Use integrated download manager" = "Use integrated download manager";
+
+/* fairapps preference checkbox for whether the embedded browser should use private browsing mode */
+"Use private browsing for untrusted sites" = "Use private browsing for untrusted sites";
 
 /* homebrew preference checkbox */
 "Use system Homebrew installation" = "Use system Homebrew installation";
@@ -1061,6 +1092,9 @@
 
 /* homebrew preference checkbox tooltip */
 "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";
+
+/* fairapps preference checkbox tooltip */
+"When using the embedded browser and navigating to an untrusted site such as the landing page for an unknown catalog, use private browsing mode to prevent cookies and history from being persisted across sessions." = "When using the embedded browser and navigating to an untrusted site such as the landing page for an unknown catalog, use private browsing mode to prevent cookies and history from being persisted across sessions.";
 
 /* fairapps preference checkbox tooltip */
 "When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself." = "When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself.";

@@ -26,8 +26,9 @@ struct AppsTableView : View, ItemTableView {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
     let sidebarSelection: SidebarSelection?
-    @State var sortOrder: [KeyPathComparator<AppInfo>] = []
+    @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
     @Binding var searchText: String
+    @State private var searchTextBuffer: String = ""
 
     var items: [AppInfo] {
         switch source {
@@ -66,13 +67,23 @@ struct AppsTableView : View, ItemTableView {
             .id(sidebarSelection) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
             .font(Font.body.monospacedDigit())
             .focusedSceneValue(\.selection, .constant(itemSelection))
-            .searchable(text: $searchText)
+            .searchable(text: $searchTextBuffer)
+            .task(id: searchTextBuffer) {
+                do {
+                    // buffer search typing by a short interval so we can type
+                    // without the UI slowing down with live search results
+                    try await Task.sleep(interval: 0.2)
+                    self.searchText = searchTextBuffer
+                } catch {
+                    dbg("search text cancelled: \(error)")
+                }
+            }
     }
 
     var tableView: some View {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
-                let imageColumn = TableColumn("", value: \AppInfo.catalogMetadata.iconURL, comparator: URLComparator()) { item in
+                let imageColumn = TableColumn("", value: \AppInfo.app.iconURL, comparator: URLComparator()) { item in
                     fairManager.iconView(for: item)
                         .frame(width: 20, height: 20)
                 }
@@ -81,7 +92,7 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group {
-                let nameColumn = strColumn(named: "Name", path: \AppInfo.catalogMetadata.name)
+                let nameColumn = strColumn(named: "Name", path: \AppInfo.app.name)
                 nameColumn.width(ideal: 125)
 
 //                let subtitleColumn = ostrColumn(named: "Subtitle", path: \AppInfo.release.subtitle)
@@ -92,30 +103,30 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group {
-                let versionColumn = ostrColumn(named: "Version", path: \AppInfo.catalogMetadata.version)
+                let versionColumn = ostrColumn(named: "Version", path: \AppInfo.app.version)
                 versionColumn.width(ideal: 60)
 
 //                let installedColumn = ostrColumn(named: "Installed", path: \AppInfo.installedVersionString)
 //                installedColumn.width(ideal: 60)
 
-                let sizeColumn = TableColumn("Size", value: \AppInfo.catalogMetadata.size, comparator: optionalComparator(0)) { item in
-                    Text((item.catalogMetadata.size ?? 0).localizedByteCount())
+                let sizeColumn = TableColumn("Size", value: \AppInfo.app.size, comparator: optionalComparator(0)) { item in
+                    Text((item.app.size ?? 0).localizedByteCount())
                         .multilineTextAlignment(.trailing)
                 }
 
                 sizeColumn.width(ideal: 60)
 
-//                let coreSizeColumn = onumColumn(named: "Core Size", path: \AppInfo.catalogMetadata.coreSize)
+//                let coreSizeColumn = onumColumn(named: "Core Size", path: \AppInfo.app.coreSize)
 //                coreSizeColumn
 
-                let riskColumn = TableColumn("Risk", value: \AppInfo.catalogMetadata.riskLevel) { item in
-                    item.catalogMetadata.riskLevel.riskLabel()
-                        .help(item.catalogMetadata.riskLevel.riskSummaryText())
+                let riskColumn = TableColumn("Risk", value: \AppInfo.app.riskLevel) { item in
+                    item.app.riskLevel.riskLabel()
+                        .help(item.app.riskLevel.riskSummaryText())
                 }
                 riskColumn.width(ideal: 125)
 
-                let dateColumn = TableColumn("Date", value: \AppInfo.catalogMetadata.versionDate, comparator: optionalDateComparator) { item in
-                    Text(item.catalogMetadata.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
+                let dateColumn = TableColumn("Date", value: \AppInfo.app.versionDate, comparator: optionalDateComparator) { item in
+                    Text(item.app.versionDate?.localizedDate(dateStyle: .medium, timeStyle: .none) ?? "")
                         .multilineTextAlignment(.trailing)
                 }
                 dateColumn
@@ -123,22 +134,22 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group { // ideally, we'd guard for whether we are using Homebrew casks, but table builders don't support conditional statements: “Closure containing control flow statement cannot be used with result builder 'TableColumnBuilder'”
-                let starCount = onumColumn(named: "Stars", path: \AppInfo.catalogMetadata.starCount)
+                let starCount = onumColumn(named: "Stars", path: \AppInfo.app.starCount)
                 starCount.width(ideal: 40)
 
-                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.catalogMetadata.downloadCount)
+                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.app.downloadCount)
                 downloadCount.width(ideal: 40)
 
-                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.catalogMetadata.forkCount)
+                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.app.forkCount)
                 //forkCount.width(ideal: 40)
 
-                let issueCount = onumColumn(named: "Issues", path: \AppInfo.catalogMetadata.issueCount)
+                let issueCount = onumColumn(named: "Issues", path: \AppInfo.app.issueCount)
                 issueCount.width(ideal: 40)
 
-                let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.catalogMetadata.primaryCategoryIdentifier?.rawValue)
+                let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.app.primaryCategoryIdentifier?.rawValue)
                 catgoryColumn
 
-                let authorColumn = ostrColumn(named: "Author", path: \AppInfo.catalogMetadata.developerName)
+                let authorColumn = ostrColumn(named: "Author", path: \AppInfo.app.developerName)
                 authorColumn.width(ideal: 200)
             }
         }, rows: { self })

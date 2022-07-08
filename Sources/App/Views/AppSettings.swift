@@ -312,17 +312,22 @@ struct GeneralSettingsView: View {
         Form {
             ThemeStylePicker(style: $fairManager.themeStyle)
 
-            Divider()
-
             Toggle(isOn: $iconBadge) {
                 Text("Badge App Icon with update count", bundle: .module, comment: "fairapps preference checkbox")
             }
-                .help(Text("Show the number of updates that are available to install.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+            .help(Text("Show the number of updates that are available to install.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+
+            Divider()
 
             Toggle(isOn: $fairManager.openLinksInNewBrowser) {
                 Text("Open links in new browser window", bundle: .module, comment: "fairapps preference checkbox for whether links in the embedded browser should be opened in a new browser")
             }
                 .help(Text("When using the embedded browser, clicking on links should open in a new default browser window rather than in the embedded browser itself.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+
+            Toggle(isOn: $fairManager.usePrivateBrowsingMode) {
+                Text("Use private browsing for untrusted sites", bundle: .module, comment: "fairapps preference checkbox for whether the embedded browser should use private browsing mode")
+            }
+                .help(Text("When using the embedded browser and navigating to an untrusted site such as the landing page for an unknown catalog, use private browsing mode to prevent cookies and history from being persisted across sessions.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
         }
     }
 }
@@ -409,6 +414,11 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 Group {
+                    Toggle(isOn: $fairManager.enableFundingSupport) {
+                        Text("Enable funding links", bundle: .module, comment: "preference checkbox")
+                    }
+                        .help(Text("Enable support for patronage and funding links.", bundle: .module, comment: "preference checkbox tooltip"))
+
                     Toggle(isOn: $fairManager.fairAppInv.relaunchUpdatedApps) {
                         Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
                     }
@@ -438,6 +448,7 @@ struct AdvancedSettingsView: View {
                 Text("Clear caches", bundle: .module, comment: "button label for option to clear local cache data in the app settings")
                     .button {
                         URLCache.shared.removeAllCachedResponses()
+                        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
                     }
                     .help(Text("Purges the local cache of icons and app descriptions", bundle: .module, comment: "button help text for option to clear local cache data in the app settings"))
 

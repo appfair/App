@@ -286,7 +286,7 @@ extension FairAppInventory {
             .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
-            .map({ AppInfo(catalogMetadata: $0) })
+            .map({ AppInfo(app: $0) })
             .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
 
@@ -297,11 +297,11 @@ extension FairAppInventory {
         case .top:
             return [] // use server-defined ordering [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
         case .recent:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .updated:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.versionDate, order: .reverse)]
+            return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .installed:
-            return [KeyPathComparator(\AppInfo.catalogMetadata.name, order: .forward)]
+            return [KeyPathComparator(\AppInfo.app.name, order: .forward)]
         case .category:
             return []
         }

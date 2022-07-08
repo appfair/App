@@ -24,13 +24,14 @@ import Combine
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning = true
     @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
+    @AppStorage("enableFundingSupport") public var enableFundingSupport = wip(assertionsEnabled)
 
     /// The base domain of the provider for the hub
     @AppStorage("hubProvider") public var hubProvider = "github.com"
     /// The organization name of the hub
-    @AppStorage("hubOrg") public var hubOrg = appfairName
+    @AppStorage("hubOrg") public var hubOrg = "appfair"
     /// The name of the base repository for the provider
-    @AppStorage("hubRepo") public var hubRepo = Bundle.appfairDefaultAppName
+    @AppStorage("hubRepo") public var hubRepo = "App"
 
     /// An optional authorization token for direct API usagefor the organization
     @AppStorage("hubToken") public var hubToken = ""
@@ -43,6 +44,9 @@ import Combine
 
     /// Whether links clicked in the embedded browser should open in a new browser window
     @AppStorage("openLinksInNewBrowser") var openLinksInNewBrowser = true
+
+    /// Whether the embedded browser should use private browsing mode for untrusted sites
+    @AppStorage("usePrivateBrowsingMode") var usePrivateBrowsingMode = true
 
     /// The appManager, which should be extracted as a separate `EnvironmentObject`
     @Published var fairAppInv: FairAppInventory
@@ -122,7 +126,7 @@ import Combine
             if info.isCask == true {
                 homeBrewInv.icon(for: info, useInstalledIcon: false)
             } else {
-                fairAppInv.iconImage(item: info.catalogMetadata)
+                fairAppInv.iconImage(item: info.app)
             }
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
@@ -139,7 +143,7 @@ import Combine
             if info.isCask == true {
                 try await homeBrewInv.launch(item: info)
             } else {
-                await fairAppInv.launch(item: info.catalogMetadata)
+                await fairAppInv.launch(item: info.app)
             }
         }
     }
@@ -149,7 +153,7 @@ import Combine
             if info.isCask {
                 try await homeBrewInv.install(item: info, progress: parentProgress, update: update)
             } else {
-                try await fairAppInv.install(item: info.catalogMetadata, progress: parentProgress, update: update)
+                try await fairAppInv.install(item: info.app, progress: parentProgress, update: update)
             }
             sessionInstalls.insert(info.id)
         }
@@ -159,7 +163,7 @@ import Combine
         if item.isCask {
             return homeBrewInv.appInstalled(item: item)
         } else {
-            return fairAppInv.appInstalled(item: item.catalogMetadata)
+            return fairAppInv.appInstalled(item: item.app)
         }
     }
 
@@ -167,7 +171,7 @@ import Combine
         if item.isCask {
             return homeBrewInv.appUpdated(item: item)
         } else {
-            return fairAppInv.appUpdated(item: item.catalogMetadata)
+            return fairAppInv.appUpdated(item: item.app)
         }
     }
 }
