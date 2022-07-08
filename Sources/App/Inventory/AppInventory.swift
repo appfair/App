@@ -45,7 +45,7 @@ protocol AppInventory : AppInventoryCatalog {
     /// Deletes the given item from the system
     @MainActor func delete(item: InventoryItem, verbose: Bool) async throws
 
-    @MainActor var imageCache: Cache<URL, Image> { get }
+    //@MainActor var imageCache: Cache<URL, Image> { get }
 }
 
 extension AppInventory {
@@ -56,10 +56,10 @@ extension AppInventory {
 
     /// Cache the given image parameter for later re-use
     @MainActor private func caching(image: Image, for url: URL?) -> Image {
-        if let url = url {
-            imageCache[url] = image
-            dbg("cached image:", url.absoluteString)
-        }
+//        if let url = url {
+//            imageCache[url] = image
+//            dbg("cached image:", url.absoluteString)
+//        }
         return image
     }
 
@@ -99,13 +99,13 @@ extension AppInventory {
 
         return Group {
             if let url = item.iconURL {
-                if let cachedImage = self.imageCache[url] {
-                    cachedImage
-                } else {
+//                if let cachedImage = self.imageCache[url] {
+//                    cachedImage
+//                } else {
                     AsyncImage(url: url, scale: 1.0, transaction: Transaction(animation: .easeIn)) {
                         imageContent(phase: $0)
                     }
-                }
+//                }
             } else {
                 fallbackIcon(grayscale: 1.0)
             }

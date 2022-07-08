@@ -310,9 +310,6 @@
 /* app category label for appfair.educational-games */
 "Educational Games" = "Educational Games";
 
-/* preference checkbox */
-"Enable funding links" = "Enable funding links";
-
 /* homebrew preference checkbox */
 "Enable Homebrew self-update" = "Enable Homebrew self-update";
 
@@ -322,8 +319,11 @@
 /* app entitlement info for cs.allow-jit */
 "Enable performace booting." = "Enable performace booting.";
 
+/* preference checkbox */
+"Enable sponsorship links" = "Enable sponsorship links";
+
 /* preference checkbox tooltip */
-"Enable support for patronage and funding links." = "Enable support for patronage and funding links.";
+"Enable support for patronage and funding links for individual apps." = "Enable support for patronage and funding links for individual apps.";
 
 /* app entitlement info for temporary-exception.audio-unit-host */
 "Enables hosting of audio components that are not designated as sandbox-safe." = "Enables hosting of audio components that are not designated as sandbox-safe.";
@@ -379,6 +379,10 @@
 
 /* fairapps recent apps info: full title */
 "Fairground Apps: Recent" = "Fairground Apps: Recent";
+
+/* fairapps sponsorable apps info: full title
+   homebrew sponsorable apps info: full title */
+"Fairground Apps: Sponsorable" = "Fairground Apps: Sponsorable";
 
 /* fairapps updated apps info: full title */
 "Fairground Apps: Updated" = "Fairground Apps: Updated";
@@ -909,6 +913,10 @@
 /* tooltip for button to open link to sponsor project on GitHub */
 "Sponsor this project on GitHub" = "Sponsor this project on GitHub";
 
+/* fairapps sidebar category title
+   homebrew sidebar category title */
+"Sponsorable" = "Sponsorable";
+
 /* app category label for appfair.sports */
 "Sports" = "Sports";
 
@@ -1114,6 +1122,7 @@
 /* app category info: overview text
    fairapps installed apps info: overview text
    fairapps recent apps info: overview text
+   fairapps sponsorable apps info: overview text
    fairapps updated apps info: overview text
    homebrew installed apps info: overview text
    homebrew recent apps info: overview text

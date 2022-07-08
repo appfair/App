@@ -24,7 +24,7 @@ import Combine
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning = true
     @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
-    @AppStorage("enableFundingSupport") public var enableFundingSupport = wip(assertionsEnabled)
+    @AppStorage("enableSponsorship") public var enableSponsorship = true
 
     /// The base domain of the provider for the hub
     @AppStorage("hubProvider") public var hubProvider = "github.com"
@@ -62,6 +62,9 @@ import Combine
     /// The current activities that are taking place for each bundle identifier
     @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
 
+    /// A cache for images that are loaded by this manager
+    //let imageCache = Cache<URL, Image>()
+
     private var observers: [AnyCancellable] = []
 
     required internal init() {
@@ -98,8 +101,16 @@ import Combine
 
     func inactivate() {
         dbg("inactivating and clearing caches")
+        clearCaches()
+    }
+
+    func clearCaches() {
+        //imageCache.clear()
         fairAppInv.imageCache.clear()
         homeBrewInv.imageCache.clear()
+        //URLSession.shared.invalidateAndCancel()
+        URLSession.shared.configuration.urlCache?.removeAllCachedResponses()
+        URLCache.shared.removeAllCachedResponses()
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.

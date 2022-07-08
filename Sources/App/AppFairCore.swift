@@ -199,16 +199,18 @@ struct AppFairCommands: Commands {
                 navitem(items.1.sel).keyboardShortcut(items.1.key)
                 navitem(items.2.sel).keyboardShortcut(items.2.key)
                 navitem(items.3.sel).keyboardShortcut(items.3.key)
+                navitem(items.4.sel).keyboardShortcut(items.4.key)
             } header: {
                 Text("Homebrew", bundle: .module, comment: "source menu header text for section with homebrew catalog selection options")
             }
 
             Section {
                 let items = SidebarSelection.fairappsItems
-                navitem(items.0.sel).keyboardShortcut(items.0.key)
-                navitem(items.1.sel).keyboardShortcut(items.1.key)
-                navitem(items.2.sel).keyboardShortcut(items.2.key)
-                navitem(items.3.sel).keyboardShortcut(items.3.key)
+                navitem(items.0.sel).keyboardShortcut(items.0.key, modifiers: [.option, .command])
+                navitem(items.1.sel).keyboardShortcut(items.1.key, modifiers: [.option, .command])
+                navitem(items.2.sel).keyboardShortcut(items.2.key, modifiers: [.option, .command])
+                navitem(items.3.sel).keyboardShortcut(items.3.key, modifiers: [.option, .command])
+                navitem(items.4.sel).keyboardShortcut(items.4.key, modifiers: [.option, .command])
             } header: {
                 Text("Fairground", bundle: .module, comment: "source menu header text for section with fairground catalog selection options").font(Font.caption)
             }
@@ -230,6 +232,8 @@ struct AppFairCommands: Commands {
 
     func reloadAll() {
         Task {
+            // also flush caches
+            await fairManager.clearCaches()
             await fairManager.trying {
                 try await fairManager.refresh(clearCatalog: false)
             }
@@ -464,6 +468,7 @@ enum SidebarItem : Hashable {
     case top
     case updated
     case installed
+    case sponsorable
     case recent
     case category(_ category: AppCategory)
 
@@ -476,6 +481,8 @@ enum SidebarItem : Hashable {
             return "updated"
         case .installed:
             return "installed"
+        case .sponsorable:
+            return "sponsorable"
         case .recent:
             return "recent"
         case .category(let category):
@@ -491,6 +498,8 @@ enum SidebarItem : Hashable {
         case .installed:
             return true
         case .top:
+            return false
+        case .sponsorable:
             return false
         case .recent:
             return true
@@ -690,14 +699,14 @@ extension SidebarSelection {
         switch self.source {
         case .homebrew:
             switch self.item {
-            case .top, .updated, .installed, .recent:
+            case .top, .updated, .sponsorable, .installed, .recent:
                 return Font.system(size: size, weight: .regular, design: .monospaced)
             case .category(_):
                 return Font.system(size: size, weight: .regular, design: .default)
             }
         case .fairapps:
             switch self.item {
-            case .top, .updated, .installed, .recent:
+            case .top, .updated, .sponsorable, .installed, .recent:
                 return Font.system(size: size, weight: .regular, design: .rounded)
             case .category(_):
                 return Font.system(size: size, weight: .regular, design: .default)
@@ -990,6 +999,7 @@ struct SidebarView: View {
         .toolbar(id: "SidebarView") {
             tool(source: .fairapps, .top)
             tool(source: .fairapps, .recent)
+            tool(source: .fairapps, .sponsorable)
             tool(source: .fairapps, .updated)
             tool(source: .fairapps, .installed)
 
@@ -1009,6 +1019,7 @@ struct SidebarView: View {
             navitem(items.1.sel)
             navitem(items.2.sel)
             navitem(items.3.sel)
+            navitem(items.4.sel)
         }
     }
 
@@ -1019,6 +1030,7 @@ struct SidebarView: View {
             navitem(items.1.sel)
             navitem(items.2.sel)
             navitem(items.3.sel)
+            navitem(items.4.sel)
         }
     }
 
@@ -1082,15 +1094,17 @@ extension SidebarSelection {
     static let homebrewItems = (
         SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .top), key: "1"),
         SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .recent), key: "2"),
-        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .installed), key: "3"),
-        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .updated), key: "4")
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .sponsorable), key: "3"),
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .installed), key: "4"),
+        SidebarInfo(sel: SidebarSelection(source: .homebrew, item: .updated), key: "5")
     )
 
     static let fairappsItems = (
-        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .top), key: "5"),
-        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .recent), key: "6"),
-        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .installed), key: "7"),
-        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .updated), key: "8")
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .top), key: "1"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .recent), key: "2"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .sponsorable), key: "3"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .installed), key: "4"),
+        SidebarInfo(sel: SidebarSelection(source: .fairapps, item: .updated), key: "5")
     )
 }
 

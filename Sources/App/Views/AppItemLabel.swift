@@ -50,7 +50,7 @@ struct AppItemLabel : View {
                     Text(verbatim: item.app.name)
                         .font(.headline)
                         .lineLimit(1)
-                    if fairManager.enableFundingSupport,
+                    if fairManager.enableSponsorship,
                        let fundingLink = item.app.fundingLinks?.first {
 //                        ProgressView(value: wip(0.5), total: wip(1.0))
 //                            .progressViewStyle(.linear)

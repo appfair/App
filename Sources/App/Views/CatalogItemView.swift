@@ -135,16 +135,16 @@ struct CatalogItemView: View {
         }
     }
 
-    @ViewBuilder func catalogStack() -> some View {
-        func div(width: CGFloat? = nil, height: CGFloat? = nil) -> some View {
-            Divider()
-                //.background(Color.secondary)
-                .frame(width: width, height: height)
-                .padding(.top, 0.5)
-                .padding(.bottom, 0.5)
-        }
+    private func div(width: CGFloat? = nil, height: CGFloat? = nil) -> some View {
+        Divider()
+        //.background(Color.secondary)
+            .frame(width: width, height: height)
+            .padding(.top, 0.5)
+            .padding(.bottom, 0.5)
+    }
 
-        return VSplitView {
+    @ViewBuilder func catalogStack() -> some View {
+        VSplitView {
             VStack {
                 VStack(spacing: 0) {
                     catalogHeader()
@@ -575,7 +575,24 @@ struct CatalogItemView: View {
         }
     }
 
-    @State var previewTab = PreviewTab.screenshots
+    @State private var previewTab: PreviewTab?
+
+    /// The current preview tab, choosing a default based on the metadata
+    private var previewTabDefaulted: Binding<PreviewTab> {
+        Binding {
+            if let previewTab = previewTab {
+                return previewTab
+            } else if metadata.screenshotURLs?.isEmpty == false {
+                return .screenshots
+            } else if fairManager.homeBrewInv.enableCaskHomepagePreview == true {
+                return .homepage
+            } else {
+                return .project
+            }
+        } set: { newValue in
+            self.previewTab = newValue
+        }
+    }
 
     enum PreviewTab : CaseIterable, Hashable {
         case screenshots
@@ -594,7 +611,7 @@ struct CatalogItemView: View {
 
     /// The preview tabs, including screenshots and the homepage
     func previewTabView() -> some View {
-        TabView(selection: $previewTab) {
+        TabView(selection: previewTabDefaulted) {
             ForEach(PreviewTab.allCases, id: \.self) { tab in
                 Group {
                     switch tab {
@@ -612,13 +629,6 @@ struct CatalogItemView: View {
                 .tabItem {
                     tab.title
                 }
-            }
-        }
-        .onAppear { // change to homepage when there are no screenshots
-            if metadata.screenshotURLs?.isEmpty == false {
-                previewTab = .screenshots
-            } else if fairManager.homeBrewInv.enableCaskHomepagePreview == true {
-                previewTab = .homepage
             }
         }
     }
@@ -796,7 +806,7 @@ struct CatalogItemView: View {
 
     func previewImage(_ url: URL) -> some View {
         //CachedImageCache
-        URLImage(url: url, resizable: .fit)
+        URLImage(url: url, resizable: .fit) // fairManager.imageCache)
     }
 
     func screenshotsStackView() -> some View {
@@ -826,7 +836,7 @@ struct CatalogItemView: View {
                 let presenting = self.previewScreenshot == url
 
                 ZStack {
-                    URLImage(url: url, resizable: .fit)
+                    URLImage(url: url, resizable: .fit) // fairManager.imageCache)
                         .matchedGeometryEffect(id: url, in: namespace, isSource: presenting)
                         .shadow(color: Color.black.opacity(presenting ? 0.2 : 0), radius: 20, y: 10)
                         .padding(20)
@@ -1758,11 +1768,6 @@ struct CatalogItemBrowserView : View {
                     return (.allow, nil)
                 }
             })
-            .task {
-                if let url = webViewState.url {
-                    webViewState.load(url)
-                }
-            }
     }
 }
 

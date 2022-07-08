@@ -296,6 +296,8 @@ extension FairAppInventory {
             return []
         case .top:
             return [] // use server-defined ordering [KeyPathComparator(\AppInfo.catalogMetadata.downloadCount, order: .reverse)]
+        case .sponsorable:
+            return []
         case .recent:
             return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .updated:
@@ -756,10 +758,15 @@ extension FairAppInventory {
     typealias Item = URL
 
     func updateCount() -> Int {
+        appInfoItems(includePrereleases: showPreReleases)
+            .filter { item in appUpdated(item: item) }
+            .count
+    }
+
+    func sponsorableCount() -> Int {
         appInfoItems(includePrereleases: showPreReleases).filter { item in
-            appUpdated(item: item)
-        }
-        .count
+            appSponsorable(item)
+        }.count
     }
 
     func appInstalled(item: AppCatalogItem) -> String? {
@@ -786,6 +793,8 @@ extension FairAppInventory {
             return true
         case .updated:
             return appUpdated(item: item)
+        case .sponsorable:
+            return appSponsorable(item)
         case .installed:
             return appInstalled(item: item) != nil
         case .recent:
@@ -803,6 +812,8 @@ extension FairAppInventory {
             return Text(appInfoItems(includePrereleases: showPreReleases).filter({ isRecentlyUpdated(item: $0) }).count, format: .number)
         case .updated:
             return Text(updateCount(), format: .number)
+        case .sponsorable:
+            return Text(sponsorableCount(), format: .number)
         case .installed:
             return Text(installedBundleIDs.count, format: .number)
         case .category:

@@ -414,10 +414,10 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 Group {
-                    Toggle(isOn: $fairManager.enableFundingSupport) {
-                        Text("Enable funding links", bundle: .module, comment: "preference checkbox")
+                    Toggle(isOn: $fairManager.enableSponsorship) {
+                        Text("Enable sponsorship links", bundle: .module, comment: "preference checkbox")
                     }
-                        .help(Text("Enable support for patronage and funding links.", bundle: .module, comment: "preference checkbox tooltip"))
+                        .help(Text("Enable support for patronage and funding links for individual apps.", bundle: .module, comment: "preference checkbox tooltip"))
 
                     Toggle(isOn: $fairManager.fairAppInv.relaunchUpdatedApps) {
                         Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
@@ -447,8 +447,8 @@ struct AdvancedSettingsView: View {
 
                 Text("Clear caches", bundle: .module, comment: "button label for option to clear local cache data in the app settings")
                     .button {
-                        URLCache.shared.removeAllCachedResponses()
-                        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+                        fairManager.clearCaches()
+                        //HTTPCookieStorage.shared.removeCookies(since: .distantPast)
                     }
                     .help(Text("Purges the local cache of icons and app descriptions", bundle: .module, comment: "button help text for option to clear local cache data in the app settings"))
 

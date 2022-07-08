@@ -28,7 +28,7 @@ protocol AppSourceInfo {
     /// Footer text for this source
     var footerText: Text? { get }
 
-    /// A list of the features of this source, which will be laid in order
+    /// A list of the features of this source, which will be displayed as a bulleted list
     var featureInfo: [(FairSymbol, Text)] { get }
 }
 
@@ -44,6 +44,8 @@ extension SidebarSelection {
                 return FairappsSourceInfo.RecentAppInfo()
             case .installed:
                 return FairappsSourceInfo.InstalledAppInfo()
+            case .sponsorable:
+                return FairappsSourceInfo.SponsorableAppInfo()
             case .updated:
                 return FairappsSourceInfo.UpdatedAppInfo()
             case .category(let category):
@@ -55,6 +57,8 @@ extension SidebarSelection {
                 return HomebrewSourceInfo.TopAppInfo()
             case .recent:
                 return HomebrewSourceInfo.RecentAppInfo()
+            case .sponsorable:
+                return HomebrewSourceInfo.SponsorableAppInfo()
             case .installed:
                 return HomebrewSourceInfo.InstalledAppInfo()
             case .updated:
@@ -89,7 +93,7 @@ extension SidebarSelection {
                 Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", bundle: .module, comment: "homebrew top apps info: footer link text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -116,7 +120,7 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -143,7 +147,34 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct SponsorableAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.pink, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+            }
+
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -170,7 +201,7 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -201,7 +232,7 @@ extension SidebarSelection {
                 Text("Learn more about the fairground process at [https://appfair.net](https://appfair.net)", bundle: .module, comment: "fairground top apps info: footer link text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -228,7 +259,7 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -255,7 +286,34 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct SponsorableAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "fairapps sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Sponsorable", bundle: .module, comment: "fairapps sponsorable apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+            }
+
+            var footerText: Text? {
+                nil
+                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -282,7 +340,7 @@ extension SidebarSelection {
                 // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
             }
 
-            /// A list of the features of this source, which will be laid in order
+            /// A list of the features of this source, which will be displayed as a bulleted list
             var featureInfo: [(FairSymbol, Text)] {
                 []
             }
@@ -312,7 +370,7 @@ extension SidebarSelection {
             // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
         }
 
-        /// A list of the features of this source, which will be laid in order
+        /// A list of the features of this source, which will be displayed as a bulleted list
         var featureInfo: [(FairSymbol, Text)] {
             []
         }

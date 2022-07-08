@@ -913,6 +913,14 @@ private extension AppCatalogItem {
     }
 }
 
+
+extension AppInventory {
+    func appSponsorable(_ app: AppCatalogItem) -> Bool {
+        app.fundingLinks?.isEmpty == false
+    }
+}
+
+
 extension HomebrewInventory {
     var visibleAppInfos: [AppInfo] {
         appInfos
@@ -945,6 +953,8 @@ extension HomebrewInventory {
             return []
         case .top:
             return [] // use server-defined ordering [KeyPathComparator(\AppInfo.app.downloadCount, order: .reverse)]
+        case .sponsorable:
+            return []
         case .recent:
             return [KeyPathComparator(\AppInfo.app.versionDate, order: .reverse)]
         case .updated:
@@ -996,6 +1006,8 @@ extension HomebrewInventory {
             return item.app.categories?.contains(cat.metadataIdentifier) == true
         case .top:
             return true
+        case .sponsorable:
+            return item.app.fundingLinks?.isEmpty == false
         case .recent:
             return isRecentlyUpdated(item: item.app)
         }
@@ -1033,6 +1045,10 @@ extension HomebrewInventory {
         }
     }
 
+    func sponsorableCount() -> Int {
+        visibleAppInfos.filter({ appSponsorable($0.app) }).count
+    }
+
     func updateCount() -> Int {
         return visibleAppInfos
             .filter({ info in
@@ -1059,6 +1075,8 @@ extension HomebrewInventory {
             return fmt(visibleAppInfos.count)
         case .updated:
             return fmt(updateCount())
+        case .sponsorable:
+            return fmt(sponsorableCount())
         case .installed:
             return fmt(installedCasks.count)
         case .recent:

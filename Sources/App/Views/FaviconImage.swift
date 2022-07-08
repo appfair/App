@@ -36,10 +36,10 @@ public struct FaviconImage<V: View> : View {
 
         // without parsing the homepage for something like `<link href="/static/img/favicon.png" rel="shortcut icon" type="image/x-icon">`, we can't know that the real favicon is, so go old-school and get the "/favicon.ico" resource (which seems to be successful for about 2/3rds of the casks)
         if let favicon = faviconImages.first {
-            return URLImage(url: favicon, resizable: .fit, showProgress: false)
+            return URLImage(url: favicon, resizable: .fit)
         } else {
             let iconURL = URL(string: "/favicon.ico", relativeTo: baseURL)
-            return URLImage(url: iconURL ?? baseURL, resizable: .fit, showProgress: false)
+            return URLImage(url: iconURL ?? baseURL, resizable: .fit)
         }
     }
 
