@@ -69,7 +69,9 @@ struct ActionButtonStyle: ButtonStyle {
                     Capsule().fill(highlighted ? defaultColor : disabledColor)
                 }
             }
-            .brightness(isPressed ? -0.25 : hovering && isEnabled ? -0.10 : 0.0)
+            .brightness(isPressed ? -0.1 : hovering && isEnabled ? 0 : -0.1)
+            //.border(highlightColor, width: hovering ? 1.0 : 0.0)
+            //.shadow(radius: hovering ? 1.0 : 0.0)
         }
     }
 }

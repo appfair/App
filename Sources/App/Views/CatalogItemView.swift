@@ -149,17 +149,20 @@ struct CatalogItemView: View {
                 .frame(height: 60)
             Divider()
             VSplitView {
-                HStack {
-                    overviewTabView()
-                    metadataTabView()
+                if previewAreaPinned == false {
+                    HStack {
+                        overviewTabView()
+                        metadataTabView()
+                    }
+                    .padding()
+                    //.layoutPriority(1)
+
+                    // a prominent divider so the user can drag to resize the preview area more easily
+                    SplitDividerView()
                 }
-                .padding()
-
-                // a prominent divider so the user can drag to resize the preview area more easily
-                SplitDividerView()
-
-                previewTabView()
+                previewSplitItem()
                     .padding(.top, 6)
+                    //.layoutPriority(0)
             }
         }
 
@@ -604,6 +607,80 @@ struct CatalogItemView: View {
         }
     }
 
+    func previewSplitItem() -> some View {
+        ZStack(alignment: .top) {
+            previewTabView()
+            previewTabButtonsView()
+        }
+    }
+
+    /// The ``WebViewState`` for the currently selected tab.
+    var currentWebViewState: WebViewState? {
+        switch self.previewTabDefaulted.wrappedValue {
+        case .screenshots:
+            return nil
+        case .project:
+            return projectHomeWebViewState
+        case .homepage:
+            return appHomeWebViewState
+        }
+    }
+
+    @ViewBuilder func previewTabButtonsView() -> some View {
+        HStack {
+            //tabSizingButtonsView()
+            Spacer()
+            previewBrowserButtonsView()
+        }
+    }
+
+    @SceneStorage("previewAreaPinned") var previewAreaPinned = false
+
+    @ViewBuilder func XXXtabSizingButtonsView() -> some View {
+        GroupBox {
+            HStack {
+            }
+        }
+        .background(Material.thick)
+        .padding(.horizontal)
+    }
+
+    @State var previewBrowserLoadingAnimation = 0.0
+
+    @ViewBuilder func previewBrowserButtonsView() -> some View {
+        GroupBox {
+            HStack {
+                if let webViewState = self.currentWebViewState {
+                    Group {
+                        webViewState.reloadButton(rotationBinding: $previewBrowserLoadingAnimation)
+                            .hoverSymbol()
+                        webViewState.copyURLButton()
+                            .hoverSymbol()
+                        webViewState.openInBrowserButton(action: openURLAction)
+                            .hoverSymbol()
+                    }
+                    .buttonStyle(.plain)
+                    .labelStyle(.iconOnly)
+                }
+
+                Text("Pin", bundle: .module, comment: "button title for pinning embedded browser")
+                    .label(image: previewAreaPinned == true ? FairSymbol.pin_fill : FairSymbol.pin)
+                    .button {
+                        //dbg(wip("maximize"))
+                        withAnimation(.none) {
+                            previewAreaPinned.toggle()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .labelStyle(.iconOnly)
+                    .hoverSymbol()
+                    .help(Text("Maximizes the preview area so it takes all the available space", bundle: .module, comment: "button tooltip for embedded browser maximize"))
+
+            }
+        }
+        .background(Material.thick)
+        .padding(.horizontal)
+    }
 
     /// The preview tabs, including screenshots and the homepage
     func previewTabView() -> some View {
