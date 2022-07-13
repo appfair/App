@@ -87,7 +87,7 @@ struct CatalogItemView: View {
             return state
         }
 
-        self._projectHomeWebViewState = .init(wrappedValue: createWebViewState(info.app.projectURL))
+        self._projectHomeWebViewState = .init(wrappedValue: createWebViewState(info.projectURL))
         self._appHomeWebViewState = .init(wrappedValue: createWebViewState(info.homepage ?? info.app.landingPage))
     }
 
@@ -135,45 +135,32 @@ struct CatalogItemView: View {
         }
     }
 
-    private func div(width: CGFloat? = nil, height: CGFloat? = nil) -> some View {
-        Divider()
-        //.background(Color.secondary)
-            .frame(width: width, height: height)
-            .padding(.top, 0.5)
-            .padding(.bottom, 0.5)
-    }
-
     @ViewBuilder func catalogStack() -> some View {
-        VSplitView {
-            VStack {
-                VStack(spacing: 0) {
-                    catalogHeader()
-                        .padding(.vertical)
-                        .background(Material.ultraThinMaterial)
-                    Divider()
-                }
-                catalogActionButtons()
-                    .frame(height: buttonHeight + 12)
-                Divider()
-                catalogSummaryCards()
-                    .frame(height: 40)
-                Divider()
+        VStack(spacing: 0) {
+            catalogHeader()
+                .padding(.vertical)
+                .background(Material.ultraThinMaterial)
+            Divider()
+            catalogActionButtons()
+                .frame(height: buttonHeight + 12)
+                .padding(.vertical)
+            Divider()
+            catalogSummaryCards()
+                .frame(height: 60)
+            Divider()
+            VSplitView {
                 HStack {
                     overviewTabView()
                     metadataTabView()
                 }
-                //.frame(maxHeight: 200)
                 .padding()
-            }
 
-            // make a slightly more prominent drag divider so the user can resize the preview area
-            VStack(spacing: 0) {
-                div()
-                div()
-            }
+                // a prominent divider so the user can drag to resize the preview area more easily
+                SplitDividerView()
 
-            previewTabView()
-                .padding(.top, 6)
+                previewTabView()
+                    .padding(.top, 6)
+            }
         }
 
     }
@@ -223,14 +210,23 @@ struct CatalogItemView: View {
         .hcenter()
     }
 
+//    @State private var sponsorIconAnimating = false
+//    @State private var sponsorIconScale = 1.0
+
     @ViewBuilder func sponsorButton() -> some View {
         if let sponsorsURL = info.app.sponsorsURL {
             Text("Sponsor", bundle: .module, comment: "accessibility title for the label to sponsor this project")
                 .label(image: FairSymbol.heart)
+//                .scaleEffect(sponsorIconAnimating ? sponsorIconScale : 1.0)
+//                .animation(
+//                    .linear(duration: 0.1)
+//                        .delay(0.2)
+//                        .repeatForever(autoreverses: true),
+//                    value: sponsorIconScale)
                 .labelStyle(.iconOnly)
                 .font(.system(size: 18, weight: .regular, design: .default))
                 .hoverSymbol(activeVariant: .fill, animation: .default)
-                .foregroundStyle(.linearGradient(colors: [.pink, .pink], startPoint: .top, endPoint: .bottom))
+                .foregroundStyle(.linearGradient(colors: [.pink, .red], startPoint: .top, endPoint: .bottom))
                 .button {
                     navigate(to: sponsorsURL)
                 }
@@ -262,7 +258,7 @@ struct CatalogItemView: View {
                     // show the card view with an empty file size
                     Text("Unknown", bundle: .module, comment: "app catalog entry content box placeholder text for a download size that isn't known")
                         .redacted(reason: .placeholder)
-                        .task {
+                        .task(priority: .low) {
                             await fetchDownloadURLStats()
                         }
                 }
@@ -618,7 +614,7 @@ struct CatalogItemView: View {
                     case .screenshots:
                         screenshotsSection()
                     case .project:
-                        if !info.isCask {
+                        if info.projectURL != nil {
                             projectSection()
                         }
                     case .homepage:
@@ -1122,9 +1118,9 @@ struct CatalogItemView: View {
     }
 
     /// The height of the accessory for the buttons
-    let accessoryHeight = 18.0
+    private let accessoryHeight = 18.0
 
-    let buttonHeight = 22.0 // a friendly-feeling height
+    private let buttonHeight = 22.0 // a friendly-feeling height
 
     func button(activity: CatalogActivity, role: ButtonRole? = .none, needsConfirm: Bool = false) -> some View {
         Button(role: role, action: {
@@ -1181,8 +1177,29 @@ struct CatalogItemView: View {
             .focusable(true)
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
-            .animation(.easeIn(duration: 0.25), value: currentActivity) // make the enabled state of the button animate
+            .animation(.default, value: currentActivity) // make the enabled state of the button animate
+            .onHover(perform: { hovering in
+                hoverOver(activity: activity, hovering: hovering)
+            })
             .help(currentActivity == activity ? (Text("Cancel \(activity.info.title)", bundle: .module, comment: "cancel catalog activity tooltip text")) : activity.info.toolTip)
+    }
+
+    func hoverOver(activity: CatalogActivity, hovering: Bool) {
+//        switch activity {
+//        case .install:
+//            self.sponsorIconScale = hovering ? 1.2 : 1.0
+//            self.sponsorIconAnimating = hovering
+//        case .update:
+//            self.sponsorIconScale = hovering ? 2.0 : 1.0
+//            self.sponsorIconAnimating = hovering
+//        case .trash:
+//            self.sponsorIconScale = hovering ? 0.2 : 1.0
+//            self.sponsorIconAnimating = hovering
+//        case .reveal:
+//            break
+//        case .launch:
+//            break
+//        }
     }
 
     func performAction(activity: CatalogActivity) async {
@@ -1386,7 +1403,7 @@ struct ReadmeBox : View {
     func descriptionSection() -> some View {
         textBox(self.readmeText)
             .font(Font.body)
-            .task {
+            .task(priority: .low) {
                 if fetchingReadme == 0 {
                     fetchingReadme += 1
                     await fetchReadme()
@@ -1433,7 +1450,7 @@ struct SecurityBox : View {
     func artifactSecuritySection() -> some View {
         textBox(self.securitySummary)
             .font(Font.body.monospaced())
-            .task {
+            .task(priority: .low) {
                 if fetchingSecurity == 0 && securitySummary == nil {
                     fetchingSecurity += 1
                     self.securitySummary = await fetchArtifactSecurity(checkFileHash: true)
@@ -1509,7 +1526,7 @@ struct ReleaseNotesBox : View {
 //        let desc = info.isCask ? info.cask?.caveats : self.info.app.versionDescription
         textBox(self.releaseNotesText)
             .font(.body)
-            .task {
+            .task(priority: .low) {
                 if fetchingReleaseNotes == 0 {
                     fetchingReleaseNotes += 1
                     await fetchReleaseNotes()
@@ -1582,7 +1599,7 @@ struct CaskFormulaBox : View {
     func caskFormulaSection(cask: CaskItem) -> some View {
         textBox(self.caskSummary)
             .font(Font.body.monospaced())
-            .task {
+            .task(priority: .low) {
                 if fetchingFormula == 0 {
                     fetchingFormula += 1
                     await fetchCaskSummary(json: json)
@@ -1631,6 +1648,21 @@ extension CatalogActivity {
             return (Text("Reveal", bundle: .module, comment: "catalog entry button title for reveal action"), .doc_viewfinder_fill, Color.indigo, Text("Displays the app install location in the Finder.", bundle: .module, comment: "catalog entry button tooltip for reveal action"))
         case .launch:
             return (Text("Launch", bundle: .module, comment: "catalog entry button title for launch action"), .checkmark_seal, Color.green, Text("Launches the app.", bundle: .module, comment: "catalog entry button tooltip for launch action"))
+        }
+    }
+}
+
+extension AppInfo {
+    var projectURL: URL? {
+        if isCask {
+            if let homepage = self.cask?.homepage,
+               homepage.hasPrefix("https://github.com/") {
+                return URL(string: homepage)
+            } else {
+                return nil
+            }
+        } else {
+            return app.projectURL
         }
     }
 }

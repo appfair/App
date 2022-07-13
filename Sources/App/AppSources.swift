@@ -32,6 +32,14 @@ protocol AppSourceInfo {
     var featureInfo: [(FairSymbol, Text)] { get }
 }
 
+extension AppSourceInfo {
+    var label: TintedLabel {
+        var label = self.tintedLabel(monochrome: false)
+        label.title = self.fullTitle
+        return label
+    }
+}
+
 extension SidebarSelection {
 
     var sourceInfo: AppSourceInfo {
@@ -72,7 +80,7 @@ extension SidebarSelection {
     private enum HomebrewSourceInfo {
         struct TopAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Apps", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
@@ -101,12 +109,12 @@ extension SidebarSelection {
 
         struct RecentAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Apps: Recent", bundle: .module, comment: "homebrew recent apps info: full title")
+                Text("Homebrew Casks: Recent", bundle: .module, comment: "homebrew recent apps info: full title")
             }
 
             /// A textual description of this source
@@ -133,7 +141,7 @@ extension SidebarSelection {
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Apps: Installed", bundle: .module, comment: "homebrew installed apps info: full title")
+                Text("Homebrew Casks: Installed", bundle: .module, comment: "homebrew installed apps info: full title")
             }
 
             /// A textual description of this source
@@ -155,12 +163,12 @@ extension SidebarSelection {
 
         struct SponsorableAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.pink, mode: monochrome ? .monochrome : .multicolor)
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Fairground Apps: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
+                Text("Homebrew Casks: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
             }
 
             /// A textual description of this source
@@ -187,7 +195,7 @@ extension SidebarSelection {
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Apps: Updated", bundle: .module, comment: "homebrew updated apps info: full title")
+                Text("Homebrew Casks: Updated", bundle: .module, comment: "homebrew updated apps info: full title")
             }
 
             /// A textual description of this source
@@ -294,7 +302,7 @@ extension SidebarSelection {
 
         struct SponsorableAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "fairapps sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .multicolor)
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "fairapps sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
             }
 
             /// Subtitle text for this source

@@ -147,15 +147,23 @@ struct AppsListView : View {
 
     @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
         let items = appInfoItems(section: section)
-        if let section = section {
-            Section {
+        if fairManager.refreshing == true || items.isEmpty == false {
+            if let section = section {
+                Section {
+                    AppSectionItems(items: items, selection: $selection, searchTextSource: searchTextSource)
+                } header: {
+                    HStack {
+                        section.localizedTitle
+//                            .badge(Text("XXX"))
+//                        Text(items.count, format: .number)
+//                            .font(Font.body.monospacedDigit())
+//                            .frame(alignment: .trailing)
+                    }
+                }
+            } else {
+                // nil section means don't sub-divide
                 AppSectionItems(items: items, selection: $selection, searchTextSource: searchTextSource)
-            } header: {
-                section.localizedTitle
             }
-        } else {
-            // nil section means don't sub-divide
-            AppSectionItems(items: items, selection: $selection, searchTextSource: searchTextSource)
         }
     }
 
@@ -220,7 +228,7 @@ struct AppSectionItems : View {
         let itemCount = items.count
 
         Group {
-            if itemCount == 0 && refreshing == true {
+            if itemCount == 0 && fairManager.refreshing == true {
                 Text("Loading…", bundle: .module, comment: "apps list placeholder text while the catalog is loading")
             } else if itemCount == 0 && searchTextSource.isEmpty {
                 Text("No results", bundle: .module, comment: "apps list placeholder text where there are no results to display")
@@ -243,10 +251,4 @@ struct AppSectionItems : View {
         .font(.caption)
         .foregroundColor(.secondary)
     }
-
-    /// Returns true is there are any refreshes in progress
-    var refreshing: Bool {
-        fairManager.fairAppInv.updateInProgress > 0 || fairManager.homeBrewInv.updateInProgress > 0
-    }
 }
-

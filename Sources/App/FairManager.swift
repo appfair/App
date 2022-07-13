@@ -93,6 +93,11 @@ import Combine
         ]
     }
 
+    /// Returns true is there are any refreshes in progress
+    var refreshing: Bool {
+        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
+    }
+
     func refresh(clearCatalog: Bool) async throws {
         async let v1: () = fairAppInv.refreshAll(clearCatalog: clearCatalog)
         async let v2: () = homeBrewInv.refreshAll(clearCatalog: clearCatalog)
@@ -378,6 +383,7 @@ extension FairManager {
         }
     }
 }
+
 
 extension Error {
     /// Returns true if this error indicates that the user cancelled an operaiton

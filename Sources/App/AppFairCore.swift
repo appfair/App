@@ -36,7 +36,7 @@ public extension AppSource {
         case .fairapps:
             return Label { Text("Fairground", bundle: .module, comment: "app source title for fairground apps") } icon: { symbol.image }
         case .homebrew:
-            return Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew apps") } icon: { symbol.image }
+            return Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { symbol.image }
         }
     }
 
@@ -716,9 +716,8 @@ extension SidebarSelection {
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
     func sourceOverviewView(showText: Bool) -> some View {
-        var label = sourceInfo.tintedLabel(monochrome: false)
+        let label = sourceInfo.label
         let color = label.tint ?? .accentColor
-        label.title = sourceInfo.fullTitle
 
         return VStack(spacing: 0) {
             Divider()
@@ -1042,7 +1041,8 @@ struct SidebarView: View {
         }
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
-                .navigationTitle(navtitle)
+                //.navigationTitle(navtitle)
+                .navigationTitle(selection.sourceInfo.fullTitle)
         }, label: {
             label.badge(badgeCount(for: selection))
         })

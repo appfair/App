@@ -915,8 +915,9 @@ private extension AppCatalogItem {
 
 
 extension AppInventory {
+    /// Returns `true` when an ap is sponsorable by a supported platform
     func appSponsorable(_ app: AppCatalogItem) -> Bool {
-        app.fundingLinks?.isEmpty == false
+        app.fundingLinks?.contains { $0.isValidFundingURL() } == true
     }
 }
 
@@ -1094,12 +1095,12 @@ extension HomebrewInventory {
 
         // avoid triggering unnecessary changes
         //if self.appInfos != sortedInfos {
-             //withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails)
+             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails); but the fallback
                 self.appInfos = sortedInfos
                      .filter { info in
                          (allowCasksWithoutApp == true) || (info.cask?.appArtifacts.isEmpty == false)
                      }
-             //}
+             }
         //}
     }
 }

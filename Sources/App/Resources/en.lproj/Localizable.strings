@@ -122,8 +122,7 @@
 /* app entitlement title for application-groups */
 "Application Groups" = "Application Groups";
 
-/* fairapps sidebar category title
-   homebrew sidebar category title */
+/* fairapps sidebar category title */
 "Apps" = "Apps";
 
 /* app category label for appfair.arcade-games */
@@ -206,6 +205,9 @@
 
 /* app catalog entry info link title */
 "Cask Token" = "Cask Token";
+
+/* homebrew sidebar category title */
+"Casks" = "Casks";
 
 /* sidebar section header title for homebrew app categories */
 "Categories" = "Categories";
@@ -380,8 +382,7 @@
 /* fairapps recent apps info: full title */
 "Fairground Apps: Recent" = "Fairground Apps: Recent";
 
-/* fairapps sponsorable apps info: full title
-   homebrew sponsorable apps info: full title */
+/* fairapps sponsorable apps info: full title */
 "Fairground Apps: Sponsorable" = "Fairground Apps: Sponsorable";
 
 /* fairapps updated apps info: full title */
@@ -441,23 +442,26 @@
 /* app catalog app entry preview tab title */
 "Home Page" = "Home Page";
 
-/* app source title for homebrew apps
+/* app source title for homebrew casks
    homebrew preferences tab title
    source menu header text for section with homebrew catalog selection options */
 "Homebrew" = "Homebrew";
 
-/* homebrew installed apps info: full title */
-"Homebrew Apps: Installed" = "Homebrew Apps: Installed";
-
-/* homebrew recent apps info: full title */
-"Homebrew Apps: Recent" = "Homebrew Apps: Recent";
-
-/* homebrew updated apps info: full title */
-"Homebrew Apps: Updated" = "Homebrew Apps: Updated";
-
 /* homebrew top apps info: full title
    settings switch title for enabling homebrew cask support */
 "Homebrew Casks" = "Homebrew Casks";
+
+/* homebrew installed apps info: full title */
+"Homebrew Casks: Installed" = "Homebrew Casks: Installed";
+
+/* homebrew recent apps info: full title */
+"Homebrew Casks: Recent" = "Homebrew Casks: Recent";
+
+/* homebrew sponsorable apps info: full title */
+"Homebrew Casks: Sponsorable" = "Homebrew Casks: Sponsorable";
+
+/* homebrew updated apps info: full title */
+"Homebrew Casks: Updated" = "Homebrew Casks: Updated";
 
 /* homebrew preference description */
 "Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@" = "Homebrew is a repository of third-party applications and installers called “Casks”. These packages are installed and managed using the `brew` command and are typically placed in the `/Applications/` folder.\n\nHomebrew Casks are not subject to the same sandboxing, entitlement disclosure, and source transparency requirements as App Fair fair-ground apps, and so should only be installed from trusted sources.\n\nRead more at: [https://brew.sh](https://brew.sh)\nBrowse all Casks: [https://formulae.brew.sh/cask/](https://formulae.brew.sh/cask/)\nLocation: %@";
