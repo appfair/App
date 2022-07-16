@@ -135,7 +135,7 @@ Every line of code in the App Fair.app itself is open-source, released under the
 Download <a style="text-decoration: none;" href="{{ page.appurl }}/releases/latest/download/{{ page.appname }}-macOS.zip">App Fair.app</a> for macOS Monterey now. For existing homebrew users, it can alternatively be installed and launched by running the following command from Terminal.app:
 
 <pre>
-brew install appfair/app/app-fair && open "/Applications/App Fair.app"
+brew install app-fair && open "/Applications/App Fair.app"
 </pre>
 
 
@@ -365,33 +365,31 @@ If your app is present in the Homebrew Casks but is lacking an icon (or is using
 
 Creating a release in your forked `appcasks.git` repository with your app's Cask token as the `tag` will allow you to attach binaries like `AppIcon.png` and `screenshot_01-mac-dark-800x600.png` that will then be automatically included in the app's catalog representation when the catalog is next re-built (which happens at least once an hour).
 
-To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: 
-
-    - business
-    - developer-tools
-    - education
-    - entertainment
-    - finance
-    - games
-    - graphics-design
-    - healthcare-fitness
-    - lifestyle
-    - medical
-    - music
-    - news
-    - photography
-    - productivity
-    - reference
-    - social-networking
-    - sports
-    - travel
-    - utilities
-    - video
-    - weather
+To categorize the app, create a file named "category-NAME" in the releases file, where NAME is one of: `business`, `developer-tools`, `education`, `entertainment`, `finance`, `games`, `graphics-design`, `healthcare-fitness`, `lifestyle`, `medical`, `music`, `news`, `photography`, `productivity`, `reference`, `social-networking`, `sports`, `travel`, `utilities`, `video`, `weather`.
 
 The file must contain only a byte (one newline). That file will be used for placing your app in the correct category. Only a single category is permitted; if multiple "category-NAME" files exist, it is undefined which one will be used.
 
 `README.md` and `RELEASE_NOTES.md` files can also be included, which can contain simplified markdown (bold, italics, and links) describing the app and its latest release.
+
+
+<a name="sponsorable" />
+#### How can I list my app as available for sponsorship in App Fair.app?
+
+Apps that are represented on the App Fair, regardless of their source catalog,
+can list themselves as being available for sponsorship in the 
+form of financial patronage or other support.
+
+Patronage is handled using the GitHub repository's `FUNDING.yml` file, 
+either in the source repo for a Fairapp 
+or in the appcasks fork for the customization of an owned cask.
+Support for funding links is supported by redirecting the funding 
+buttons and heart icons through to the app owner's funding destination.
+
+Further information on setting up your repository as being eligible for funding
+can be found in the [GitHub documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository).
+
+Note that the only funding platform currently supported is GitHub.
+More funding platforms are expected be added in the future.
 
 #### How can I link to my app's catalog item?
 

@@ -15,6 +15,7 @@
 import FairKit
 import FairExpo
 import Combine
+import TabularData
 
 /// The source of the apps
 public enum AppSource: String, CaseIterable {
@@ -51,7 +52,7 @@ public extension AppSource {
 }
 
 /// A structure representing an ``FairApp.AppCatalogItem`` with optional ``CaskItem`` metadata.
-struct AppInfo : Identifiable {
+struct AppInfo : Identifiable, Equatable {
     /// The catalog item metadata
     var app: AppCatalogItem
 
@@ -85,7 +86,7 @@ struct AppInfo : Identifiable {
 
     /// The categories as should be displayed in the UI; this will collapes sub-groups (i.e., game categories) into their parent groups.
     var displayCategories: [AppCategory] {
-        app.appCategories.filter({ $0.parentCategory == nil })
+        app.categories?.filter({ $0.parentCategory == nil }) ?? []
     }
 }
 
@@ -282,6 +283,19 @@ public struct HelpButton : View {
     }
 }
 
+extension Collection where Element == Text {
+    /// Joins multiple ``Text`` elements together with the given separator ``Text``.
+    ///
+    /// - SeeAlso: ``Array<String>.joined``
+    public func joined(separator: Text) -> Text {
+        if let first = self.first {
+            return self.dropFirst().reduce(first, { $0 + separator + $1 })
+        } else {
+            return Text(verbatim: "")
+        }
+    }
+}
+
 extension View {
     /// Redacts the view when the given condition is true
     @ViewBuilder public func redacting(when condition: Bool) -> some View {
@@ -291,6 +305,24 @@ extension View {
             self
         }
     }
+
+
+    /// Performs the given asynchronous action after the specified delay with the option to cancel
+    public func performAfter(delay: TimeInterval, action: @escaping () async -> ()) -> (@Sendable () async -> ()) {
+        {
+            do {
+                // buffer search typing by a short interval so we can type
+                // without the UI slowing down with live search results
+                try await Task.sleep(interval: delay)
+                await action()
+            } catch _ as CancellationError {
+                // no need to log
+            } catch {
+                dbg("unexpected error waiting for delay \(delay): \(error)")
+            }
+        }
+    }
+
 }
 
 extension View {
@@ -525,7 +557,9 @@ struct NavigationRootView : View {
     @State var sidebarSelection: SidebarSelection? = SidebarSelection(source: AppSource.allCases.first!, item: .top)
     //@State var sidebarSelection: SidebarSelection? = nil
 
-    @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
+    //@SceneStorage("displayMode")
+    @State var displayMode: TriptychOrient = TriptychOrient.allCases.first!
+    
     @AppStorage("iconBadge") private var iconBadge = true
     //@SceneStorage("source") var source: AppSource = AppSource.allCases.first!
 
@@ -598,6 +632,19 @@ struct NavigationRootView : View {
             .onOpenURL(perform: handleURL)
     }
 
+    var sidebarSelectionBinding: Binding<SidebarSelection?> {
+        //return .constant(.init(source: .fairapps, item: .updated))
+        return $sidebarSelection
+//            .mapSetter { oldValue, newValue in
+//            // clear search whenever the sidebar selection changes
+//            if newValue?.item != .top && !searchText.isEmpty {
+////                self.searchText = ""
+//            }
+//            return newValue
+//        }
+
+    }
+
     /// Handles opening the URL schemes suppored by this app.
     ///
     /// Supported schemes:
@@ -647,8 +694,10 @@ struct NavigationRootView : View {
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
-            SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sidebarSelection: $sidebarSelection, displayMode: $displayMode, searchText: $searchText)
-                .focusedSceneValue(\.sidebarSelection, $sidebarSelection)
+            SidebarView(selection: $selection
+//                .mapSetter(action: { dump($1, name: wip("changing selection")) })
+                        , scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelectionBinding, displayMode: $displayMode, searchText: $searchText)
+                .focusedSceneValue(\.sidebarSelection, sidebarSelectionBinding)
         } list: {
             if let sidebarSource = sidebarSource {
                 AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
@@ -664,7 +713,7 @@ struct NavigationRootView : View {
             }
             #endif
         } content: {
-            AppDetailView(sidebarSelection: $sidebarSelection)
+            AppDetailView(sidebarSelection: sidebarSelectionBinding)
         }
         // warning: this spikes CPU usage when idle
 //        .focusedSceneValue(\.reloadCommand, .constant({
@@ -715,7 +764,7 @@ extension SidebarSelection {
     }
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
-    func sourceOverviewView(showText: Bool) -> some View {
+    func sourceOverviewView(showText: Bool, showFooter: Bool) -> some View {
         let label = sourceInfo.label
         let color = label.tint ?? .accentColor
 
@@ -737,12 +786,20 @@ extension SidebarSelection {
 
             if showText, let overview = sourceInfo.overviewText {
                 ScrollView {
-                    overview
-                        .font(Font.title2)
-                        .padding()
-                        .padding()
+                    overview.joined(separator: Text(verbatim: "\n\n"))
+                            .font(Font.title2)
+                            .padding()
+                            .padding()
                 }
-                    // .textSelection(.enabled) // unwraps and converts to a single line when selecting
+                     .textSelection(.enabled) // bug: sometimes selecting will unwraps and converts to a single line
+            }
+
+            if showFooter {
+                Spacer()
+                ForEach(enumerated: sourceInfo.footerText) { _, footerText in
+                    footerText
+                }
+                    .font(.footnote)
             }
         }
     }
@@ -779,7 +836,7 @@ public struct AppDetailView : View {
 
             if let sidebarSelection = sidebarSelection {
                 let showOverviewText = { true }()
-                sidebarSelection.sourceOverviewView(showText: showOverviewText)
+                sidebarSelection.sourceOverviewView(showText: showOverviewText, showFooter: true)
                     .font(.body)
                 Spacer()
 
@@ -793,8 +850,8 @@ public struct AppDetailView : View {
                 let sb1 = SidebarSelection(source: .homebrew, item: .top)
                 let sb2 = SidebarSelection(source: .fairapps, item: .top)
                 HStack(spacing: 0) {
-                    sb1.sourceOverviewView(showText: true)
-                    sb2.sourceOverviewView(showText: true)
+                    sb1.sourceOverviewView(showText: true, showFooter: false)
+                    sb2.sourceOverviewView(showText: true, showFooter: false)
                 }
                 HStack {
                     Spacer()
@@ -807,11 +864,15 @@ public struct AppDetailView : View {
                 .padding()
                 HStack {
                     Spacer()
-                    sb1.sourceInfo.footerText
+                    ForEach(enumerated: sb1.sourceInfo.footerText) { _, footerText in
+                        footerText
+                    }
                         .font(.footnote)
                     Spacer()
                     Spacer()
-                    sb2.sourceInfo.footerText
+                    ForEach(enumerated: sb2.sourceInfo.footerText) { _, footerText in
+                        footerText
+                    }
                         .font(.footnote)
                     Spacer()
                 }
@@ -950,6 +1011,7 @@ struct SidebarView: View {
     }
 
     var body: some View {
+        let _ = debuggingViewChanges()
         List {
             ForEach(AppSource.allCases, id: \.self) { source in
                 switch source {
@@ -1035,10 +1097,10 @@ struct SidebarView: View {
 
     func navitem(_ selection: SidebarSelection) -> some View {
         let label = selection.sourceInfo.tintedLabel(monochrome: false)
-        var navtitle = label.title
-        if !searchText.isEmpty {
-            navtitle = Text("\(navtitle): \(Text(searchText))", bundle: .module, comment: "formatting string separating navigation title from search text")
-        }
+//        var navtitle = label.title
+//        if !searchText.isEmpty {
+//            navtitle = Text("\(navtitle): \(Text(searchText))", bundle: .module, comment: "formatting string separating navigation title from search text")
+//        }
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
             navigationDestinationView(item: selection)
                 //.navigationTitle(navtitle)
@@ -1083,6 +1145,10 @@ struct SidebarView: View {
     func selectItem(_ item: SidebarItem) {
         dbg("selected:", item.id)
     }
+}
+
+extension AppCategory : Identifiable {
+    public var id: Self { self }
 }
 
 extension SidebarSelection {

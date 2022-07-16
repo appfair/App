@@ -72,6 +72,7 @@ struct AppsTableView : View, ItemTableView {
                 do {
                     // buffer search typing by a short interval so we can type
                     // without the UI slowing down with live search results
+                    // TODO: unify with ``AppsListView.updateSearchTextSource``
                     try await Task.sleep(interval: 0.2)
                     self.searchText = searchTextBuffer
                 } catch {

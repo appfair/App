@@ -900,6 +900,160 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             dbg("error scanning for installed casks:", error)
         }
     }
+
+
+    enum SourceInfo {
+        static var catalogDescriptionText: Text {
+            Text("The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.", bundle: .module, comment: "homebrew catalog description for header text of detail view")
+        }
+
+        struct TopAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Homebrew Casks", bundle: .module, comment: "homebrew top apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.", bundle: .module, comment: "homebrew top apps info: overview text"),
+                ]
+            }
+
+            var footerText: [Text] {
+                [
+                    Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", bundle: .module, comment: "homebrew top apps info: footer link text")
+                ]
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct RecentAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Homebrew Casks: Recent", bundle: .module, comment: "homebrew recent apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("Recent apps contain those casks that have been newly released or updated within the past month.", bundle: .module, comment: "homebrew recent apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct InstalledAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Homebrew Casks: Installed", bundle: .module, comment: "homebrew installed apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The installed apps section contains all the apps that are currently installed from this catalog.", bundle: .module, comment: "homebrew installed apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct SponsorableAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Homebrew Casks: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The sponsorable apps section contains apps that have listed themselves as being available for patronage.", bundle: .module, comment: "homebrew sponsorable apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                [
+                    Text("Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)", bundle: .module, comment: "homebrew sponsorable apps info: overview text")
+                ]
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct UpdatedAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Homebrew Casks: Updated", bundle: .module, comment: "homebrew updated apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available.", bundle: .module, comment: "homebrew installed apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+    }
 }
 
 private extension AppCatalogItem {
@@ -926,9 +1080,9 @@ extension HomebrewInventory {
     var visibleAppInfos: [AppInfo] {
         appInfos
         // this is too slow to do dynamically; in the future maybe cache it but for now we'll filter up-front, at the cost that we won't dybamically change the filtered values when the property is changed
-//            .filter { info in
-//                allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
-//            }
+        //            .filter { info in
+        //                allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
+        //            }
     }
 
     /// Updates the appCategories index whenever the appInfos property changes
@@ -1004,7 +1158,7 @@ extension HomebrewInventory {
         case .updated:
             return appUpdated(item: item)
         case .category(let cat):
-            return item.app.categories?.contains(cat.metadataIdentifier) == true
+            return item.app.categories?.contains(cat) == true
         case .top:
             return true
         case .sponsorable:
@@ -1023,8 +1177,8 @@ extension HomebrewInventory {
     }
 
     func appUpdated(item: AppInfo) -> Bool {
-//        let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
-//        return info.app.version.flatMap(versions.contains) != true
+        //        let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
+        //        return info.app.version.flatMap(versions.contains) != true
 
         if let releaseVersion = item.app.version,
            let installedVersions = installedCasks[item.app.id.rawValue] {
@@ -1095,12 +1249,12 @@ extension HomebrewInventory {
 
         // avoid triggering unnecessary changes
         //if self.appInfos != sortedInfos {
-             withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails); but the fallback
-                self.appInfos = sortedInfos
-                     .filter { info in
-                         (allowCasksWithoutApp == true) || (info.cask?.appArtifacts.isEmpty == false)
-                     }
-             }
+        withAnimation { // this animation seems to cancel loading of thumbnail images the first time the screen is displayed if the image takes a long time to load (e.g., for large thumbnails); but the fallback
+            self.appInfos = sortedInfos
+                .filter { info in
+                    (allowCasksWithoutApp == true) || (info.cask?.appArtifacts.isEmpty == false)
+                }
+        }
         //}
     }
 }
@@ -1226,11 +1380,11 @@ extension HomebrewInventory {
             let rank2 = caskRanks[id2]
 
             // un-ranked casks fall back to being sorted by the download stats
-//            if (rank1 == nil && rank2 == nil) {
-//                let dl1 = downloadStatsCount(for: id1)
-//                let dl2 = downloadStatsCount(for: id2)
-//                return (dl1 ?? 0) > (dl2 ?? 0)
-//            }
+            //            if (rank1 == nil && rank2 == nil) {
+            //                let dl1 = downloadStatsCount(for: id1)
+            //                let dl2 = downloadStatsCount(for: id2)
+            //                return (dl1 ?? 0) > (dl2 ?? 0)
+            //            }
 
             guard let rank1 = rank1 else {
                 return rank2 == nil
@@ -1363,7 +1517,7 @@ extension CaskItem : Identifiable {
     }
 
     /// The URL that points to the Hub's spec for the token.
-    /// 
+    ///
     /// e.g.: homebrew/cask/iterm2 or appfair/app/bon-mot
     var tapURL: URL? {
         let parts = tapToken.split(separator: "/")

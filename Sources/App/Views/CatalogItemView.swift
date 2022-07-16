@@ -17,12 +17,21 @@ import FairExpo
 import WebKit
 
 @available(macOS 12.0, iOS 15.0, *)
-struct CatalogItemView: View {
+struct CatalogItemView: View, Equatable {
     /// The regex for hosts that can be accessed directly from the embedded browser
-    private static let permittedHostsRegex = try! Result {
+    static let permittedHostsRegex = try! Result {
         try NSRegularExpression(pattern: #"^github.com|.*.github.com|.*.github.io$"#, options: [.anchorsMatchLines])
     }.get()
 
+    let info: AppInfo
+
+    var body: some View {
+        CatalogItemHostView(info: info)
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+private struct CatalogItemHostView: View {
     let info: AppInfo
 
     @EnvironmentObject var fairManager: FairManager
@@ -62,7 +71,7 @@ struct CatalogItemView: View {
     @StateObject var projectHomeWebViewState: WebViewState
     @StateObject var appHomeWebViewState: WebViewState
 
-    init(info: AppInfo, inlineHosts: [NSRegularExpression]? = [Self.permittedHostsRegex]) {
+    init(info: AppInfo, inlineHosts: [NSRegularExpression]? = [CatalogItemView.permittedHostsRegex]) {
         self.info = info
 
         let config = WKWebViewConfiguration()
@@ -122,11 +131,16 @@ struct CatalogItemView: View {
     @discardableResult func navigate(to url: URL) -> OpenURLAction.Result {
         if let host = url.host, CatalogItemView.permittedHostsRegex.hasMatches(in: host) {
             dbg("handling embedded url:", url.absoluteString)
-            do {
-                self.previewTab = .project
+            if self.previewTab == .project {
                 self.projectHomeWebViewState.load(url)
-                return .handled
+            } else {
+                self.previewTab = .project
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+                    // need a small delay since the appearance of the project tab will trigger the load of the initial state, not the navigated state
+                        self.projectHomeWebViewState.load(url)
+                }
             }
+            return .handled
             //return .systemAction(url)
         } else {
             // openURLAction(url)
@@ -652,8 +666,13 @@ struct CatalogItemView: View {
             HStack {
                 if let webViewState = self.currentWebViewState {
                     Group {
+                        webViewState.navigateAction(brief: true, amount: -1, symbol: FairSymbol.arrow_left_circle.image)
+                            .hoverSymbol()
+                        webViewState.navigateAction(brief: true, amount: +1, symbol: FairSymbol.arrow_right_circle.image)
+                            .hoverSymbol()
                         webViewState.reloadButton(rotationBinding: $previewBrowserLoadingAnimation)
                             .hoverSymbol()
+                        //Divider().frame(height: 15)
                         webViewState.copyURLButton()
                             .hoverSymbol()
                         webViewState.openInBrowserButton(action: openURLAction)
@@ -1023,6 +1042,11 @@ struct CatalogItemView: View {
         }
     }
 
+    /// The URLs for the app installation
+    private var trashAppAuxiliaryURLs: [URL] {
+        info.app.installationAuxiliaryURLs(checkExists: true)
+    }
+
     func catalogActionButtons() -> some View {
         let isCatalogApp = info.app.bundleIdentifier == Bundle.main.bundleID
 
@@ -1120,9 +1144,26 @@ struct CatalogItemView: View {
                 Text("Delete", bundle: .module, comment: "delete button confirmation dialog delete button text").button {
                     runTask(activity: .trash, confirm: true)
                 }
-            }, message: {
-                Text("This will remove the application “\(info.app.name)” from your applications folder and place it in the Trash.", bundle: .module, comment: "delete button confirmation dialog body text")
-            })
+            }, message: trashTextView)
+    }
+
+    /// The ``Text`` that will appear in the deletion message. This needs to perform formatting by simply appending text, since the message dialog doesn't handle any other types.
+    func trashTextView() -> Text {
+        var txt = Text("This will remove the application “\(info.app.name)” from your applications folder and place it in the Trash.", bundle: .module, comment: "delete button confirmation dialog body text")
+        if !info.isCask {
+            let urls = self.trashAppAuxiliaryURLs
+            if !urls.isEmpty {
+                txt = txt + Text(verbatim: "\n\n")
+                txt = txt + Text("This will also remove the following folders that may contain persistent data for the app:", bundle: .module, comment: "delete button confirmation dialog body text for folders to purge")
+                txt = txt + Text(verbatim: "\n\n")
+                txt = txt + urls
+                    .map({ url in
+                    Text((url.path as NSString).abbreviatingWithTildeInPath)
+                })
+                    .joined(separator: Text(verbatim: "\n"))
+            }
+        }
+        return txt
     }
 
     func installMessage() -> some View {
@@ -1393,6 +1434,10 @@ struct CatalogItemView: View {
         } else {
             return await fairManager.trying {
                 try await fairManager.fairAppInv.delete(item: info.app)
+                // also remove any URLs that are installed for this app
+                for url in self.trashAppAuxiliaryURLs {
+                    try FileManager.default.trash(url: url)
+                }
             }
         }
     }
@@ -1420,7 +1465,7 @@ fileprivate extension View {
         return ZStack {
             ScrollView {
                 Text(astr)
-                    //.textSelection(.enabled) // there's a weird bug here that causes multi-line text to stop wrapping lined when the text box is selected
+                    .textSelection(.enabled) // there's a weird bug here that causes multi-line text to stop wrapping lined when the text box is selected; this seems to be fixed in recent
                     //.fixedSize() // doesn't help
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .topLeading)

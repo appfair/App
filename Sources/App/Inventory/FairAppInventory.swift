@@ -170,6 +170,160 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         async let v1: () = fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
         let _ = await (v0, v1)
     }
+
+
+    enum SourceInfo {
+        static var catalogDescriptionText: Text {
+            Text("Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.", bundle: .module, comment: "fairapps catalog description for header text of detail view")
+        }
+
+        struct TopAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps", bundle: .module, comment: "fairapps top apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("Apps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests.", bundle: .module, comment: "fairapps top apps info: overview text"),
+                ]
+            }
+
+            var footerText: [Text] {
+                [
+                    Text("Learn more about the fairground process at [https://appfair.net](https://appfair.net)", bundle: .module, comment: "fairground top apps info: footer link text")
+                ]
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct RecentAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Recent", bundle: .module, comment: "fairapps recent apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("Recent apps contain those applications that have been newly released or updated within the past month.", bundle: .module, comment: "fairapps recent apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct InstalledAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Installed", bundle: .module, comment: "fairapps installed apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The installed apps section contains all the apps that are currently installed from this catalog.", bundle: .module, comment: "fairapps installed apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct SponsorableAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "fairapps sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Sponsorable", bundle: .module, comment: "fairapps sponsorable apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The sponsorable apps section contains apps that have listed themselves as being available for patronage.", bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                [
+                    Text("Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)", bundle: .module, comment: "fairapps sponsorable apps info: overview text")
+                ]
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+
+        struct UpdatedAppInfo : AppSourceInfo {
+            func tintedLabel(monochrome: Bool) -> TintedLabel {
+                TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .multicolor)
+            }
+
+            /// Subtitle text for this source
+            var fullTitle: Text {
+                Text("Fairground Apps: Updated", bundle: .module, comment: "fairapps updated apps info: full title")
+            }
+
+            /// A textual description of this source
+            var overviewText: [Text] {
+                [
+                    catalogDescriptionText,
+                    Text("The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available.", bundle: .module, comment: "fairapps installed apps info: overview text")
+                ]
+            }
+
+            var footerText: [Text] {
+                []
+                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            }
+
+            /// A list of the features of this source, which will be displayed as a bulleted list
+            var featureInfo: [(FairSymbol, Text)] {
+                []
+            }
+        }
+    }
 }
 
 /// An activity and progress
@@ -241,12 +395,12 @@ extension FairAppInventory {
         dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.releasedVersion?.versionString, "at:", catalogAppBundle.bundleURL.path)
 
         // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This prevents updating while running while developing.
-        #if DEBUG
+#if DEBUG
         if catalogAppBundle.executablePath?.hasPrefix(Self.applicationsFolderURL.path) != true {
             // only skip update while debugging
             return dbg("skipping DEBUG update to catalog app:", catalogAppBundle.executablePath, "since it is not installed in the applications folder:", Self.applicationsFolderURL.path)
         }
-        #endif
+#endif
 
         if (catalogApp.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
             try await install(item: catalogApp, progress: nil, update: true, removingURLAt: catalogAppBundle.bundleURL)
@@ -654,7 +808,7 @@ extension FairAppInventory {
             // attempt the operation without any privilege escalation first
             return try block(fileURL)
         } catch {
-            #if os(macOS)
+#if os(macOS)
             func reauthorize(_ error: Error) async throws -> T {
                 // we have a few options here:
                 // 1. [SMJobBless](https://developer.apple.com/documentation/servicemanagement/1431078-smjobbless) and an XPC helper; cumbersome, and has inherent security flaws as discussed at: [](https://blog.obdev.at/what-we-have-learned-from-a-vulnerability/)
@@ -680,7 +834,7 @@ extension FairAppInventory {
                     throw error
                 }
             }
-            #endif
+#endif
             throw error
         }
     }
@@ -800,7 +954,7 @@ extension FairAppInventory {
         case .recent:
             return isRecentlyUpdated(item: item)
         case .category(let category):
-            return item.categories?.contains(category.rawValue) == true
+            return item.categories?.contains(category) == true
         }
     }
 

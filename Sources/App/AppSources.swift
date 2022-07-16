@@ -23,10 +23,10 @@ protocol AppSourceInfo {
     var fullTitle: Text { get }
 
     /// A textual description of this source
-    var overviewText: Text? { get }
+    var overviewText: [Text] { get }
 
     /// Footer text for this source
-    var footerText: Text? { get }
+    var footerText: [Text] { get }
 
     /// A list of the features of this source, which will be displayed as a bulleted list
     var featureInfo: [(FairSymbol, Text)] { get }
@@ -47,310 +47,32 @@ extension SidebarSelection {
         case .fairapps:
             switch self.item {
             case .top:
-                return FairappsSourceInfo.TopAppInfo()
+                return FairAppInventory.SourceInfo.TopAppInfo()
             case .recent:
-                return FairappsSourceInfo.RecentAppInfo()
+                return FairAppInventory.SourceInfo.RecentAppInfo()
             case .installed:
-                return FairappsSourceInfo.InstalledAppInfo()
+                return FairAppInventory.SourceInfo.InstalledAppInfo()
             case .sponsorable:
-                return FairappsSourceInfo.SponsorableAppInfo()
+                return FairAppInventory.SourceInfo.SponsorableAppInfo()
             case .updated:
-                return FairappsSourceInfo.UpdatedAppInfo()
+                return FairAppInventory.SourceInfo.UpdatedAppInfo()
             case .category(let category):
                 return CategoryAppInfo(category: category)
             }
         case .homebrew:
             switch self.item {
             case .top:
-                return HomebrewSourceInfo.TopAppInfo()
+                return HomebrewInventory.SourceInfo.TopAppInfo()
             case .recent:
-                return HomebrewSourceInfo.RecentAppInfo()
+                return HomebrewInventory.SourceInfo.RecentAppInfo()
             case .sponsorable:
-                return HomebrewSourceInfo.SponsorableAppInfo()
+                return HomebrewInventory.SourceInfo.SponsorableAppInfo()
             case .installed:
-                return HomebrewSourceInfo.InstalledAppInfo()
+                return HomebrewInventory.SourceInfo.InstalledAppInfo()
             case .updated:
-                return HomebrewSourceInfo.UpdatedAppInfo()
+                return HomebrewInventory.SourceInfo.UpdatedAppInfo()
             case .category(let category):
                 return CategoryAppInfo(category: category)
-            }
-        }
-    }
-
-    private enum HomebrewSourceInfo {
-        struct TopAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Homebrew Casks", bundle: .module, comment: "homebrew top apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                Text("""
-                The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.
-
-                Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.
-                """, bundle: .module, comment: "homebrew top apps info: overview text")
-            }
-
-            var footerText: Text? {
-                Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", bundle: .module, comment: "homebrew top apps info: footer link text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct RecentAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Homebrew Casks: Recent", bundle: .module, comment: "homebrew recent apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct InstalledAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Homebrew Casks: Installed", bundle: .module, comment: "homebrew installed apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew installed apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct SponsorableAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Homebrew Casks: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct UpdatedAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Homebrew Casks: Updated", bundle: .module, comment: "homebrew updated apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew updated apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-    }
-
-    private enum FairappsSourceInfo {
-        struct TopAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Fairground Apps", bundle: .module, comment: "fairapps top apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                Text("""
-                Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.
-
-                Apps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests.
-                """, bundle: .module, comment: "fairapps top apps info: overview text")
-            }
-
-            var footerText: Text? {
-                Text("Learn more about the fairground process at [https://appfair.net](https://appfair.net)", bundle: .module, comment: "fairground top apps info: footer link text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct RecentAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Recent", bundle: .module, comment: "fairapps sidebar category title"), symbol: .clock_fill, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .multicolor)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Fairground Apps: Recent", bundle: .module, comment: "fairapps recent apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps recent apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct InstalledAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Installed", bundle: .module, comment: "fairapps sidebar category title"), symbol: .externaldrive_fill, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .multicolor)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Fairground Apps: Installed", bundle: .module, comment: "fairapps installed apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps installed apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct SponsorableAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "fairapps sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Fairground Apps: Sponsorable", bundle: .module, comment: "fairapps sponsorable apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps sponsorable apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
-            }
-        }
-
-        struct UpdatedAppInfo : AppSourceInfo {
-            func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Updated", bundle: .module, comment: "fairapps sidebar category title"), symbol: .arrow_down_app_fill, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .multicolor)
-            }
-
-            /// Subtitle text for this source
-            var fullTitle: Text {
-                Text("Fairground Apps: Updated", bundle: .module, comment: "fairapps updated apps info: full title")
-            }
-
-            /// A textual description of this source
-            var overviewText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "fairapps updated apps info: overview text")
-            }
-
-            var footerText: Text? {
-                nil
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
-            }
-
-            /// A list of the features of this source, which will be displayed as a bulleted list
-            var featureInfo: [(FairSymbol, Text)] {
-                []
             }
         }
     }
@@ -368,13 +90,13 @@ extension SidebarSelection {
         }
 
         /// A textual description of this source
-        var overviewText: Text? {
-            nil
+        var overviewText: [Text] {
+            []
             // Text(wip("XXX"), bundle: .module, comment: "app category info: overview text")
         }
 
-        var footerText: Text? {
-            nil
+        var footerText: [Text] {
+            []
             // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
         }
 
@@ -473,6 +195,9 @@ public extension AppCategory {
             return Text("Trivia Games", bundle: .module, comment: "app category label for appfair.trivia-games")
         case .wordgames:
             return Text("Word Games", bundle: .module, comment: "app category label for appfair.word-games")
+
+        default:
+            return Text("Unknown", bundle: .module, comment: "app category label for an unknown category")
         }
     }
 
@@ -561,6 +286,9 @@ public extension AppCategory {
             return .gamecontroller
         case .wordgames:
             return .gamecontroller
+
+        default:
+            return .questionmark_square
         }
     }
 
@@ -646,6 +374,9 @@ public extension AppCategory {
             return Color.red
         case .wordgames:
             return Color.red
+
+        default:
+            return Color.clear
         }
     }
 
@@ -697,6 +428,8 @@ public extension AppCategory {
         case .strategygames: return .games
         case .triviagames: return .games
         case .wordgames: return .games
+
+        default: return nil
         }
     }
 

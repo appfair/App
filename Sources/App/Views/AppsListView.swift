@@ -24,6 +24,7 @@ struct AppsListView : View {
 
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
+
     /// The underlying source of the search text
     @Binding var searchTextSource: String
 
@@ -80,18 +81,17 @@ struct AppsListView : View {
             }
             .searchable(text: $searchTextSource)
             .animation(.easeInOut, value: searchTextSource)
-            .task(id: searchTextSource) {
-                // a brief delay to allow for more responsive typing
-                do {
-                    // buffer search typing by a short interval so we can type
-                    // without the UI slowing down with live search results
-                    try await Task.sleep(interval: 0.2)
-                    withAnimation {
-                        self.searchText = searchTextSource
-                    }
-                } catch {
-                    dbg("search text cancelled: \(error)")
-                }
+            .task(id: searchTextSource, performAfter(delay: 0.20, action: updateSearchTextSource)) // a brief delay to allow for more responsive typing
+        }
+    }
+
+    @MainActor func updateSearchTextSource() async {
+        withAnimation {
+            self.searchText = searchTextSource
+            if searchText.trimmed().isEmpty == false,
+               let initialSearchResult = self.firstAppID {
+                dbg("setting initial selection:", initialSearchResult)
+                self.selection = initialSearchResult
             }
         }
     }
@@ -122,6 +122,17 @@ struct AppsListView : View {
             case .recent: return Text("Recently Updated", bundle: .module, comment: "apps list section header text")
             }
         }
+    }
+
+    /// Changes the selection to the first available app
+    var firstAppID: AppCatalogItem.ID? {
+        for section in AppListSection.allCases {
+            let items = appInfoItems(section: section)
+            if let firstItem = items.first {
+                return firstItem.id
+            }
+        }
+        return nil
     }
 
     func appInfoItems(section: AppListSection?) -> [AppInfo] {
@@ -219,7 +230,6 @@ struct AppSectionItems : View {
                 CatalogItemView(info: item)
             }, label: {
                 AppItemLabel(item: item)
-                    .frame(height: 50)
             })
         }
     }

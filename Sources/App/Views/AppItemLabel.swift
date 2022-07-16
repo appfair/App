@@ -40,7 +40,7 @@ struct AppItemLabel : View {
                     FairProgressView(progress)
                         .progressViewStyle(PieProgressViewStyle(lineWidth: 50))
                         .foregroundStyle(Color.secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)) // make sure the progress doesn't extend pask the icon bounds
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)) // make sure the progress doesn't extend past the icon bounds
                 }
             }
             .frame(width: 40, height: 40)
@@ -50,13 +50,13 @@ struct AppItemLabel : View {
                     Text(verbatim: item.app.name)
                         .font(.headline)
                         .lineLimit(1)
-                    if fairManager.enableSponsorship,
-                       let fundingLink = item.app.fundingLinks?.first {
+//                    if fairManager.enableSponsorship,
+//                       let fundingLink = item.app.fundingLinks?.first {
 //                        ProgressView(value: wip(0.5), total: wip(1.0))
 //                            .progressViewStyle(.linear)
 //                        FairSymbol.rosette.image
 //                            .help(fundingLink.localizedTitle ?? "")
-                    }
+//                    }
                 }
 
                 TintedLabel(title: Text(item.app.subtitle ?? item.app.name), symbol: (item.displayCategories.first ?? .utilities).symbol, tint: item.app.itemTintColor(), mode: .hierarchical)

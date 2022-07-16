@@ -24,6 +24,8 @@ protocol AppInventory : AppInventoryCatalog {
     /// The inventory item associated with this inventory list
     associatedtype InventoryItem
 
+    associatedtype SourceInfo
+
     /// Returns the version string if the given inventory item is currently installed
     @MainActor func appInstalled(item: InventoryItem) -> String?
 
@@ -49,8 +51,10 @@ protocol AppInventory : AppInventoryCatalog {
 }
 
 extension AppInventory {
+    static var defaultRecentInterval: TimeInterval { (60 * 60 * 24 * 30) }
+
     /// Returns true if the item was recently updated
-    func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = (60 * 60 * 24 * 30)) -> Bool {
+    func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = Self.defaultRecentInterval) -> Bool {
         (item.versionDate ?? .distantPast) > (Date() - interval)
     }
 
