@@ -16,8 +16,11 @@ import FairApp
 import FairExpo
 import Combine
 
+protocol FairManagerType {
+}
+
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class FairManager: SceneManager {
+@MainActor public final class FairManager: SceneManager, FairManagerType {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     @AppStorage("firstLaunchV1") public var firstLaunchV1 = true
@@ -48,10 +51,13 @@ import Combine
     /// Whether the embedded browser should use private browsing mode for untrusted sites
     @AppStorage("usePrivateBrowsingMode") var usePrivateBrowsingMode = true
 
-    /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    @Published var fairAppInv: FairAppInventory
-    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    @Published var homeBrewInv: HomebrewInventory
+    /// The inventories that are currently available
+    @Published var inventories: [AppSource: AppInventory] = [:]
+
+//    /// The appManager, which should be extracted as a separate `EnvironmentObject`
+//    @Published var fairAppInv: AppSourceInventory
+//    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
+//    @Published var homeBrewInv: HomebrewInventory
 
     /// The apps that have been installed or updated in this session
     @Published var sessionInstalls: Set<AppInfo.ID> = []
@@ -65,21 +71,25 @@ import Combine
     /// A cache for images that are loaded by this manager
     //let imageCache = Cache<URL, Image>()
 
+    @Published public var errors: [AppError] = []
+
     private var observers: [AnyCancellable] = []
 
     required internal init() {
-        self.fairAppInv = FairAppInventory.default
-        self.homeBrewInv = HomebrewInventory.default
-
         super.init()
 
-        // track any changes to fairAppInv and homeBrewInv and broadcast their changes
-        self.observers.append(self.fairAppInv.objectWillChange.sink { [weak self] in
-            self?.objectWillChange.send()
-        })
-        self.observers.append(self.homeBrewInv.objectWillChange.sink { [weak self] in
-            self?.objectWillChange.send()
-        })
+        for source in self.appSources {
+            switch source {
+            case .homebrew:
+                self.addInventory(source: source, HomebrewInventory.default)
+            case .appSourceFairgroundMacOS:
+                self.addInventory(source: source, AppSourceInventory.macOSInventory)
+            case .appSourceFairgroundiOS:
+                self.addInventory(source: source, AppSourceInventory.iOSInventory)
+            default:
+                continue
+            }
+        }
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
@@ -93,17 +103,77 @@ import Combine
         ]
     }
 
+    func addInventory(source: AppSource, _ inventory: AppInventory) {
+        self.inventories[source] = inventory
+        // track any changes to the inventory and broadcast their changes
+        self.observers.append(inventory.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        })
+    }
+
+    /// The list of sources as presented in the user interface
+    ///
+    /// - TODO: @available(*, deprecated, message: "use persistent list")
+    var appSources: [AppSource] {
+        // return inventories.keys.array() // randomly ordered
+
+        return [
+            .homebrew,
+            .appSourceFairgroundMacOS,
+            //wip(.appSourceFairgroundiOS),
+        ]
+    }
+
+    /// The appManager, which should be extracted as a separate `EnvironmentObject`
+    /// - TODO: @available(*, deprecated, message: "use inventories[.fairapps]")
+    var fairAppInv: AppSourceInventory? {
+        inventories[.appSourceFairgroundMacOS] as? AppSourceInventory
+    }
+
+    /// The appManager, which should be extracted as a separate `EnvironmentObject`
+    /// - TODO: @available(*, deprecated, message: "use inventories[.fairapps]")
+    var fairAppiOSInv: AppSourceInventory? {
+        inventories[.appSourceFairgroundiOS] as? AppSourceInventory
+    }
+
+    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
+    /// - TODO: @available(*, deprecated, message: "use inventories[.homebrew]")
+    var homeBrewInv: HomebrewInventory? {
+        inventories[.homebrew] as? HomebrewInventory
+    }
+
+    func inventory(for source: AppSource) -> AppInventory? {
+        switch source {
+        case .homebrew: return homeBrewInv
+        case .appSourceFairgroundMacOS: return fairAppInv
+        case .appSourceFairgroundiOS: return fairAppiOSInv
+        default: return nil
+        }
+    }
+
+    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        self.inventory(for: source)?.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText) ?? []
+    }
+
+    func badgeCount(for item: SidebarSelection) -> Text? {
+        inventory(for: item.source)?.badgeCount(for: item.item)
+    }
+
     /// Returns true is there are any refreshes in progress
     var refreshing: Bool {
-        self.fairAppInv.updateInProgress > 0 || self.homeBrewInv.updateInProgress > 0
+        self.inventories.values.contains { $0.updateInProgress > 0 }
     }
 
     func refresh(clearCatalog: Bool) async throws {
-        async let v1: () = fairAppInv.refreshAll(clearCatalog: clearCatalog)
-        async let v2: () = homeBrewInv.refreshAll(clearCatalog: clearCatalog)
-        let _ = try await (v1, v2) // perform the two refreshes in tandem
+        for catalog in self.inventories.values {
+            try await catalog.refreshAll(clearCatalog: clearCatalog)
+        }
     }
 
+    func reportError(_ error: Error) {
+        errors.append(error as? AppError ?? AppError(error))
+    }
+    
     func inactivate() {
         dbg("inactivating and clearing caches")
         clearCaches()
@@ -111,8 +181,8 @@ import Combine
 
     func clearCaches() {
         //imageCache.clear()
-        fairAppInv.imageCache.clear()
-        homeBrewInv.imageCache.clear()
+        //fairAppInv.imageCache.clear()
+        //homeBrewInv.imageCache.clear()
         //URLSession.shared.invalidateAndCancel()
         URLSession.shared.configuration.urlCache?.removeAllCachedResponses()
         URLCache.shared.removeAllCachedResponses()
@@ -123,26 +193,69 @@ import Combine
         do {
             try await block()
         } catch {
-            fairAppInv.errors.append(error as? AppError ?? AppError(error))
+            reportError(error)
         }
     }
 
     func updateCount() -> Int {
-        return fairAppInv.updateCount()
-            + (homeBrewInv.enableHomebrew ? homeBrewInv.updateCount() : 0)
+        inventories.values.map({ $0.updateCount() }).reduce(0, { $0 + $1 })
     }
+
+    /// The view that will summarize the app source in the detail panel when no app is selected.
+    func sourceOverviewView(selection: SidebarSelection, showText: Bool, showFooter: Bool) -> some View {
+        let info = sourceInfo(for: selection)
+        let label = info?.label
+        let color = label?.tint ?? .accentColor
+
+        return VStack(spacing: 0) {
+            Divider()
+                .background(color)
+                .padding(.top, 1)
+
+            label
+                .foregroundColor(Color.primary)
+                //.font(.largeTitle)
+                .symbolVariant(.fill)
+                .font(Font.largeTitle)
+                //.font(self.sourceFont(sized: 40))
+                .frame(height: 60)
+
+            Divider()
+                .background(color)
+
+            if showText, let info = info, let overview = info.overviewText {
+                ScrollView {
+                    overview.joined(separator: Text(verbatim: "\n\n"))
+                            .font(Font.title2)
+                            .padding()
+                            .padding()
+                }
+                     .textSelection(.enabled) // bug: sometimes selecting will unwraps and converts to a single line
+            }
+
+            if showFooter, let info = info {
+                Spacer()
+                ForEach(enumerated: info.footerText) { _, footerText in
+                    footerText
+                }
+                    .font(.footnote)
+            }
+        }
+    }
+
 
     /// The icon for the given item
     /// - Parameters:
     ///   - info: the info to check
     ///   - transition: whether to use a fancy transition
     /// - Returns: the icon
-    @ViewBuilder func iconView(for info: AppInfo, transition: Bool = false) -> some View {
+    @ViewBuilder func iconView(for info: AppInfo, source: AppSource, transition: Bool = false) -> some View {
         Group {
+            //inventory(for: source)?.iconImage(item: info)
             if info.isCask == true {
-                homeBrewInv.icon(for: info, useInstalledIcon: false)
+                homeBrewInv?.icon(for: info, useInstalledIcon: false)
             } else {
-                fairAppInv.iconImage(item: info.app)
+                fairAppInv?.iconImage(item: info)
             }
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
@@ -157,38 +270,88 @@ import Combine
             }
 
             if info.isCask == true {
-                try await homeBrewInv.launch(item: info)
+                try await homeBrewInv?.launch(item: info)
             } else {
-                await fairAppInv.launch(item: info.app)
+                try await fairAppInv?.launch(item: info)
             }
         }
     }
 
-    func install(_ info: AppInfo, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
+    func install(_ info: AppInfo, source: AppSource, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
         await self.trying {
             if info.isCask {
-                try await homeBrewInv.install(item: info, progress: parentProgress, update: update)
+                try await homeBrewInv?.install(item: info, progress: parentProgress, update: update, verbose: verbose)
             } else {
-                try await fairAppInv.install(item: info.app, progress: parentProgress, update: update)
+                try await fairAppInv?.install(item: info, progress: parentProgress, update: update, verbose: verbose)
             }
             sessionInstalls.insert(info.id)
         }
     }
 
+    func reveal(_ item: AppInfo) async {
+        await self.trying {
+            if item.isCask {
+                try await homeBrewInv?.reveal(item: item)
+            } else {
+                try await fairAppInv?.reveal(item: item)
+            }
+        }
+    }
+
     func installedVersion(for item: AppInfo) -> String? {
         if item.isCask {
-            return homeBrewInv.appInstalled(item: item)
+            return homeBrewInv?.appInstalled(item: item)
         } else {
-            return fairAppInv.appInstalled(item: item.app)
+            return fairAppInv?.appInstalled(item: item)
         }
     }
 
     func appUpdated(for item: AppInfo) -> Bool {
         if item.isCask {
-            return homeBrewInv.appUpdated(item: item)
+            return homeBrewInv?.appUpdated(item: item) == true
         } else {
-            return fairAppInv.appUpdated(item: item.app)
+            return fairAppInv?.appUpdated(item: item) == true
         }
+    }
+}
+
+extension FairManagerType {
+    func sourceInfo(for selection: SidebarSelection) -> AppSourceInfo? {
+        switch selection.source {
+        case .appSourceFairgroundMacOS:
+            switch selection.item {
+            case .top:
+                return AppSourceInventory.SourceInfo.TopAppInfo()
+            case .recent:
+                return AppSourceInventory.SourceInfo.RecentAppInfo()
+            case .installed:
+                return AppSourceInventory.SourceInfo.InstalledAppInfo()
+            case .sponsorable:
+                return AppSourceInventory.SourceInfo.SponsorableAppInfo()
+            case .updated:
+                return AppSourceInventory.SourceInfo.UpdatedAppInfo()
+            case .category(let category):
+                return CategoryAppInfo(category: category)
+            }
+        case .homebrew:
+            switch selection.item {
+            case .top:
+                return HomebrewInventory.SourceInfo.TopAppInfo()
+            case .recent:
+                return HomebrewInventory.SourceInfo.RecentAppInfo()
+            case .sponsorable:
+                return HomebrewInventory.SourceInfo.SponsorableAppInfo()
+            case .installed:
+                return HomebrewInventory.SourceInfo.InstalledAppInfo()
+            case .updated:
+                return HomebrewInventory.SourceInfo.UpdatedAppInfo()
+            case .category(let category):
+                return CategoryAppInfo(category: category)
+            }
+        default:
+            return nil
+        }
+
     }
 }
 

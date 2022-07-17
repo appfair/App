@@ -31,12 +31,7 @@ struct AppsTableView : View, ItemTableView {
     @State private var searchTextBuffer: String = ""
 
     var items: [AppInfo] {
-        switch source {
-        case .homebrew:
-            return fairManager.homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        case .fairapps:
-            return fairManager.fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        }
+        fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
     }
 
     var tableRowBody: some TableRowContent {
@@ -85,7 +80,7 @@ struct AppsTableView : View, ItemTableView {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
                 let imageColumn = TableColumn("", value: \AppInfo.app.iconURL, comparator: URLComparator()) { item in
-                    fairManager.iconView(for: item)
+                    fairManager.iconView(for: item, source: source)
                         .frame(width: 20, height: 20)
                 }
                 imageColumn
@@ -162,7 +157,7 @@ struct AppsTableView : View, ItemTableView {
             return nil
         }
 
-        return Selection.app(item)
+        return Selection(app: item)
     }
 }
 

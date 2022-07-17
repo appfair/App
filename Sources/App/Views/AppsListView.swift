@@ -32,12 +32,6 @@ struct AppsListView : View {
     @State private var searchText: String = ""
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
 
-    var catalog: AppInventoryCatalog {
-        switch source {
-        case .homebrew: return fairManager.homeBrewInv
-        case .fairapps: return fairManager.fairAppInv
-        }
-    }
 
     @ViewBuilder var body : some View {
         VStack(spacing: 0) {
@@ -48,8 +42,9 @@ struct AppsListView : View {
     }
 
     @ViewBuilder var bottomBar: some View {
+        let catalog = fairManager.inventory(for: source)
         Group {
-            if let updated = catalog.catalogUpdated {
+            if let updated = catalog?.catalogUpdated {
                 // to keep the updated date correct, update the label every minute
                 Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
                     //.refreshingEveryMinute()
@@ -58,7 +53,7 @@ struct AppsListView : View {
             }
         }
         .font(.caption)
-        .help(Text("The catalog was last updated on \(Text(catalog.catalogUpdated ?? .distantPast, format: Date.FormatStyle().year(.defaultDigits).month(.wide).day(.defaultDigits).weekday(.wide).hour(.conversationalDefaultDigits(amPM: .wide)).minute(.defaultDigits).second(.defaultDigits)))", bundle: .module, comment: "apps list bottom bar help text"))
+        .help(Text("The catalog was last updated on \(Text(catalog?.catalogUpdated ?? .distantPast, format: Date.FormatStyle().year(.defaultDigits).month(.wide).day(.defaultDigits).weekday(.wide).hour(.conversationalDefaultDigits(amPM: .wide)).minute(.defaultDigits).second(.defaultDigits)))", bundle: .module, comment: "apps list bottom bar help text"))
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
     }
@@ -68,7 +63,7 @@ struct AppsListView : View {
             List {
                 if sidebarSelection?.item == .top {
                     ForEach(AppListSection.allCases) { section in
-                        appListSection(section: section)
+                        appListSection(section: section, source: source)
                     }
                 } else if sidebarSelection?.item == .updated {
                     ForEach(AppUpdatesSection.allCases) { section in
@@ -76,12 +71,12 @@ struct AppsListView : View {
                     }
                 } else {
                     // installed list don't use sections
-                    appListSection(section: nil)
+                    appListSection(section: nil, source: source)
                 }
             }
             .searchable(text: $searchTextSource)
             .animation(.easeInOut, value: searchTextSource)
-            .task(id: searchTextSource, performAfter(delay: 0.20, action: updateSearchTextSource)) // a brief delay to allow for more responsive typing
+            .task(id: searchTextSource, debounce(interval: 0.20, action: updateSearchTextSource)) // a brief delay to allow for more responsive typing
         }
     }
 
@@ -148,20 +143,15 @@ struct AppsListView : View {
     }
 
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        switch source {
-        case .homebrew:
-            return fairManager.homeBrewInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        case .fairapps:
-            return fairManager.fairAppInv.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
-        }
+        fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
     }
 
-    @ViewBuilder func appListSection(section: AppsListView.AppListSection?) -> some View {
+    @ViewBuilder func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {
         let items = appInfoItems(section: section)
         if fairManager.refreshing == true || items.isEmpty == false {
             if let section = section {
                 Section {
-                    AppSectionItems(items: items, selection: $selection, searchTextSource: searchTextSource)
+                    AppSectionItems(items: items, source: source, selection: $selection, searchTextSource: searchTextSource)
                 } header: {
                     HStack {
                         section.localizedTitle
@@ -173,7 +163,7 @@ struct AppsListView : View {
                 }
             } else {
                 // nil section means don't sub-divide
-                AppSectionItems(items: items, selection: $selection, searchTextSource: searchTextSource)
+                AppSectionItems(items: items, source: source, selection: $selection, searchTextSource: searchTextSource)
             }
         }
     }
@@ -197,9 +187,8 @@ struct AppsListView : View {
     /// The section holding the updated app items
     @ViewBuilder func appUpdatesSection(section: AppsListView.AppUpdatesSection) -> some View {
         let updatedApps = appUpdateItems(section: section)
-
         Section {
-            AppSectionItems(items: updatedApps, selection: $selection, searchTextSource: searchTextSource)
+            AppSectionItems(items: updatedApps, source: source, selection: $selection, searchTextSource: searchTextSource)
         } header: {
             section.localizedTitle
         }
@@ -209,6 +198,7 @@ struct AppsListView : View {
 
 struct AppSectionItems : View {
     let items: [AppInfo]
+    let source: AppSource
     @Binding var selection: AppInfo.ID?
     /// The underlying source of the search text
     let searchTextSource: String
@@ -227,9 +217,9 @@ struct AppSectionItems : View {
     @ViewBuilder func sectionContents() -> some View {
         ForEach(items.prefix(displayCount)) { item in
             NavigationLink(tag: item.id, selection: $selection, destination: {
-                CatalogItemView(info: item)
+                CatalogItemView(info: item, source: source)
             }, label: {
-                AppItemLabel(item: item)
+                AppItemLabel(item: item, source: source)
             })
         }
     }

@@ -42,20 +42,20 @@ extension AppSourceInfo {
 
 extension SidebarSelection {
 
-    var sourceInfo: AppSourceInfo {
+    var sourceInfo: AppSourceInfo? {
         switch self.source {
-        case .fairapps:
+        case .appSourceFairgroundMacOS, .appSourceFairgroundiOS:
             switch self.item {
             case .top:
-                return FairAppInventory.SourceInfo.TopAppInfo()
+                return AppSourceInventory.SourceInfo.TopAppInfo()
             case .recent:
-                return FairAppInventory.SourceInfo.RecentAppInfo()
+                return AppSourceInventory.SourceInfo.RecentAppInfo()
             case .installed:
-                return FairAppInventory.SourceInfo.InstalledAppInfo()
+                return AppSourceInventory.SourceInfo.InstalledAppInfo()
             case .sponsorable:
-                return FairAppInventory.SourceInfo.SponsorableAppInfo()
+                return AppSourceInventory.SourceInfo.SponsorableAppInfo()
             case .updated:
-                return FairAppInventory.SourceInfo.UpdatedAppInfo()
+                return AppSourceInventory.SourceInfo.UpdatedAppInfo()
             case .category(let category):
                 return CategoryAppInfo(category: category)
             }
@@ -74,6 +74,8 @@ extension SidebarSelection {
             case .category(let category):
                 return CategoryAppInfo(category: category)
             }
+        default:
+            return nil
         }
     }
 

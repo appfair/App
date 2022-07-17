@@ -18,90 +18,22 @@ import Dispatch
 import Security
 import Foundation
 
-#if os(macOS)
-let displayExtensions: Set<String>? = ["zip"]
-let catalogURL: URL = appfairCatalogURLMacOS
-#endif
-
-#if os(iOS)
-let displayExtensions: Set<String>? = ["ipa"]
-let catalogURL: URL = appfairCatalogURLIOS
-#endif
-
-/// Whether to remember the response to a prompt or not;
-enum PromptSuppression : Int, CaseIterable {
-    /// The user has not specified whether to remember the response
-    case unset
-    /// The user specified that the the response should always the confirmation response
-    case confirmation
-    /// The user specified that the the response should always be the destructive response
-    case destructive
-}
-
-extension ObservableObject {
-    /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
-    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", bundle: .module, comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", bundle: .module, comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
-
-        let window = sheetWindow ?? NSApp.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
-
-        if let suppressionKey = suppressionKey {
-            switch suppressionKey.wrappedValue {
-            case .confirmation: return true
-            case .destructive: return false
-            case .unset: break // show prompt
-            }
-        }
-
-        let alert = NSAlert()
-        alert.alertStyle = style
-        alert.messageText = messageText
-        if let informativeText = informativeText {
-            alert.informativeText = informativeText
-        }
-        alert.addButton(withTitle: accept)
-        alert.addButton(withTitle: refuse)
-
-        if let suppressionTitle = suppressionTitle {
-            alert.suppressionButton?.title = suppressionTitle
-        }
-        alert.showsSuppressionButton = suppressionKey != nil
-
-        let response: NSApplication.ModalResponse
-        if let window = window {
-            response = await alert.beginSheetModal(for: window)
-        } else {
-            response = alert.runModal() // note that this tends to crash even when called from the main thread with: Assertion failure in -[NSApplication _commonBeginModalSessionForWindow:relativeToWindow:modalDelegate:didEndSelector:contextInfo:]
-        }
-
-        // remember the response if we have prompted to do so
-        if let suppressionKey = suppressionKey, alert.suppressionButton?.state == .on {
-            switch response {
-            case .alertFirstButtonReturn: suppressionKey.wrappedValue = .confirmation
-            case .alertSecondButtonReturn: suppressionKey.wrappedValue = .destructive
-            default: break
-            }
-        }
-
-        return response == .alertFirstButtonReturn
-    }
-}
-
 private let showPreReleasesDefault = false
 private let relaunchUpdatedAppsDefault = true
 private let riskFilterDefault = AppRisk.risky
 private let autoUpdateCatalogAppDefault = true
 private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
-/// The manager for installing App Fair apps
+/// The manager for installing from a general AppSource.
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class FairAppInventory: ObservableObject, AppInventory {
-    let imageCache = Cache<URL, Image>()
+@MainActor public final class AppSourceInventory: ObservableObject, AppInventory {
+    let catalogURL: URL
 
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
 
     /// The current catalog of apps
-    @Published var catalog: [AppCatalogItem] = []
+    @Published var catalog: [AppInfo] = []
 
     /// The date the catalog was most recently updated
     @Published private(set) var catalogUpdated: Date? = nil
@@ -132,15 +64,23 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     }
 
     /// Register that an error occurred with the app manager
+    @available(*, deprecated, message: "move to FairManager")
     func reportError(_ error: Error) {
         errors.append(error as? AppError ?? AppError(error))
     }
 
-    static let `default`: FairAppInventory = FairAppInventory()
+    static let `default`: AppSourceInventory = macOSInventory
+
+    static let macOSInventory = AppSourceInventory(catalogURL: appfairCatalogURLMacOS)
+    static let iOSInventory = AppSourceInventory(catalogURL: appfairCatalogURLIOS)
+
+    static let symbol = FairSymbol.ticket
 
     private var fsobserver: FileSystemObserver? = nil
 
-    private init() {
+    init(catalogURL: URL) {
+        self.catalogURL = catalogURL
+
         if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
             Task {
                 try? await Self.createInstallFolder()
@@ -168,9 +108,23 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
         async let v0: () = scanInstalledApps()
         async let v1: () = fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        let _ = await (v0, v1)
+        let _ = try await (v0, v1)
     }
 
+    func label(for source: AppSource) -> Label<Text, Image> {
+        Label { Text("Fairground", bundle: .module, comment: "app source title for fairground apps") } icon: { AppSourceInventory.symbol.image }
+    }
+
+    func navItems<V: View>(_ navitem: (SidebarSelection) -> V) -> Group<TupleView<(V, V, V, V, V)>> {
+        let items = SidebarSelection.fairappsItems
+        return Group {
+            navitem(items.0.sel)
+            navitem(items.1.sel)
+            navitem(items.2.sel)
+            navitem(items.3.sel)
+            navitem(items.4.sel)
+        }
+    }
 
     enum SourceInfo {
         static var catalogDescriptionText: Text {
@@ -179,7 +133,7 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
         struct TopAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSource.fairapps.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
+                TintedLabel(title: Text("Apps", bundle: .module, comment: "fairapps sidebar category title"), symbol: AppSourceInventory.symbol, tint: monochrome ? nil : Color.accentColor, mode: monochrome ? .monochrome : .multicolor)
             }
 
             /// Subtitle text for this source
@@ -347,37 +301,25 @@ enum CatalogActivity : CaseIterable, Equatable {
 
 
 @available(macOS 12.0, iOS 15.0, *)
-extension FairAppInventory {
-    func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
-        do {
-            dbg("loading catalog")
-            let start = CFAbsoluteTimeGetCurrent()
-            let (catalog, response) = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
-            self.catalog = catalog.apps
-            self.catalogUpdated = response.lastModifiedDate
+extension AppSourceInventory {
+    func fetchApps(cache: URLRequest.CachePolicy? = nil) async throws {
+        dbg("loading catalog")
+        let start = CFAbsoluteTimeGetCurrent()
+        let (catalog, response) = try await FairHub.fetchCatalog(catalogURL: catalogURL, cache: cache)
+        self.catalog = catalog.apps.map({ AppInfo(app: $0) })
+        self.catalogUpdated = response.lastModifiedDate
 
-            let end = CFAbsoluteTimeGetCurrent()
-            dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
-            if autoUpdateCatalogApp == true {
-                try await updateCatalogApp()
-            }
-        } catch {
-            Task { // otherwise warnings about accessing off of the main thread
-                // errors here are not unexpected, since we can get a `cancelled` error if the view that initiated the `fetchApps` request
-                dbg("received error:", error)
-                // we tolerate a "cancelled" error because it can happen when a view that is causing a catalog load is changed and its request gets automaticallu cancelled
-                if error.isURLCancelledError {
-                } else {
-                    self.reportError(error)
-                }
-            }
+        let end = CFAbsoluteTimeGetCurrent()
+        dbg("fetched catalog:", catalog.apps.count, "in:", (end - start))
+        if autoUpdateCatalogApp == true {
+            try await updateCatalogApp()
         }
     }
 
     /// The app info for the current app (which is the catalog browser app)
-    var catalogAppInfo: AppCatalogItem? {
+    var catalogAppInfo: AppInfo? {
         appInfoItems(includePrereleases: false).first(where: { info in
-            info.bundleIdentifier == Bundle.main.bundleIdentifier
+            info.app.bundleIdentifier == Bundle.main.bundleIdentifier
         })
     }
 
@@ -392,7 +334,7 @@ extension FairAppInventory {
         // let installedCatalogVersion = installedVersion(for: catalogApp.id) // we should use the currently-running version as the authoritative version for checking
         let installedCatalogVersion = catalogAppBundle.bundleVersionString.flatMap { AppVersion(string: $0, prerelease: false) }
 
-        dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.releasedVersion?.versionString, "at:", catalogAppBundle.bundleURL.path)
+        dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.app.releasedVersion?.versionString, "at:", catalogAppBundle.bundleURL.path)
 
         // only update the App Fair catalog manager app when it has been placed in the /Applications/ folder. This prevents updating while running while developing.
 #if DEBUG
@@ -402,8 +344,8 @@ extension FairAppInventory {
         }
 #endif
 
-        if (catalogApp.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
-            try await install(item: catalogApp, progress: nil, update: true, removingURLAt: catalogAppBundle.bundleURL)
+        if (catalogApp.app.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
+            try await installApp(item: catalogApp, progress: nil, update: true, removingURLAt: catalogAppBundle.bundleURL)
         }
     }
 
@@ -411,25 +353,25 @@ extension FairAppInventory {
     ///
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
     /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
-    func appInfoItems(includePrereleases: Bool) -> [AppCatalogItem] {
+    func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
 
         // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
         // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [String: [AppCatalogItem]] = catalog
-            .grouping(by: \.bundleIdentifier)
+        let bundleAppInfoMap: [String: [AppInfo]] = catalog
+            .grouping(by: \.app.bundleIdentifier)
 
         // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
         let infos = bundleAppInfoMap.values.compactMap({ appInfos in
             appInfos
                 .filter { item in
                     // "beta" apps are are included when the pre-release flag is set
-                    includePrereleases == true || item.beta == false // || item.installedPlist != nil
+                    includePrereleases == true || item.app.beta == false // || item.installedPlist != nil
                 }
-                .sorting(by: \.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
+                .sorting(by: \.app.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
                 .first // there can be only a single bundle identifier in the list for Identifiable
         })
 
-        return infos.sorting(by: \.bundleIdentifier) // needs to return in constant order
+        return infos.sorting(by: \.app.bundleIdentifier) // needs to return in constant order
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
@@ -440,7 +382,6 @@ extension FairAppInventory {
             .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
-            .map({ AppInfo(app: $0) })
             .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
     }
 
@@ -463,15 +404,16 @@ extension FairAppInventory {
         }
     }
 
-    func matchesExtension(item: AppCatalogItem) -> Bool {
-        displayExtensions?.contains(item.downloadURL.pathExtension) != false
+    func matchesExtension(item: AppInfo) -> Bool {
+        //displayExtensions?.contains(item.app.downloadURL.pathExtension) != false
+        true
     }
 
-    func matchesRiskFilter(item: AppCatalogItem) -> Bool {
-        item.riskLevel <= riskFilter
+    func matchesRiskFilter(item: AppInfo) -> Bool {
+        item.app.riskLevel <= riskFilter
     }
 
-    func matchesSearch(item: AppCatalogItem, searchText: String) -> Bool {
+    func matchesSearch(item: AppInfo, searchText: String) -> Bool {
         let txt = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if txt.count < minimumSearchLength {
@@ -482,12 +424,12 @@ extension FairAppInventory {
             string?.localizedCaseInsensitiveContains(txt) == true
         }
 
-        if matches(item.bundleIdentifier) { return true }
+        if matches(item.app.bundleIdentifier) { return true }
         
-        if matches(item.name) { return true }
-        if matches(item.subtitle) { return true }
-        if matches(item.developerName) { return true }
-        if matches(item.localizedDescription) { return true }
+        if matches(item.app.name) { return true }
+        if matches(item.app.subtitle) { return true }
+        if matches(item.app.developerName) { return true }
+        if matches(item.app.localizedDescription) { return true }
         
         return false
     }
@@ -506,27 +448,22 @@ extension FairAppInventory {
     }
 
     /// Launch the local installed copy of this app
-    func launch(item: AppCatalogItem) async {
-        do {
-            dbg("launching:", item.name)
-            guard let installPath = installedPath(for: item) else {
-                throw Errors.appNotInstalled(item)
-            }
+    func launch(item: AppInfo) async throws {
+        dbg("launching:", item.app.name)
+        guard let installPath = installedPath(for: item) else {
+            throw Errors.appNotInstalled(item.app)
+        }
 
-            dbg("launching:", installPath)
+        dbg("launching:", installPath)
 
 #if os(macOS)
-            let cfg = NSWorkspace.OpenConfiguration()
-            cfg.activates = true
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.activates = true
 
-            try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
+        try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
 #else
-            throw Errors.launchAppNotSupported
+        throw Errors.launchAppNotSupported
 #endif
-        } catch {
-            dbg("error performing launch for:", item, "error:", error)
-            self.reportError(error)
-        }
     }
 
     static let appSuffix = ".app"
@@ -569,15 +506,6 @@ extension FairAppInventory {
         }
     }
 
-    /// Attempts to perform the given action and adds any errors to the error list if they fail.
-    func trying(block: () async throws -> ()) async {
-        do {
-            try await block()
-        } catch {
-            reportError(error)
-        }
-    }
-
     func scanInstalledApps() async {
         dbg()
         do {
@@ -613,20 +541,20 @@ extension FairAppInventory {
             dbg("scanned", installedApps.count, "apps in:", end - start, installedBundleIDs.map(\.rawValue))
         } catch {
             dbg("error performing re-scan:", error)
-            self.reportError(error)
+            //self.reportError(error)
         }
     }
 
     /// The `appInstallPath`, or nil if it does not exist
-    func installedPath(for item: AppCatalogItem) -> URL? {
-        Self.appInstallPath(for: item).asDirectory
+    func installedPath(for item: AppInfo) -> URL? {
+        Self.appInstallPath(for: item.app).asDirectory
     }
 
     /// Trashes the local installed copy of this app
-    func delete(item: AppCatalogItem, verbose: Bool = true) async throws {
-        dbg("trashing:", item.name)
+    func delete(item: AppInfo, verbose: Bool = true) async throws {
+        dbg("trashing:", item.app.name)
         guard let installPath = installedPath(for: item) else {
-            throw Errors.appNotInstalled(item)
+            throw Errors.appNotInstalled(item.app)
         }
 
         try await trash(installPath)
@@ -635,10 +563,10 @@ extension FairAppInventory {
     }
 
     /// Reveals the local installed copy of this app using the finder
-    func reveal(item: AppCatalogItem) async throws {
-        dbg("revealing:", item.name)
+    func reveal(item: AppInfo) async throws {
+        dbg("revealing:", item.app.name)
         guard let installPath = installedPath(for: item) else {
-            throw Errors.appNotInstalled(item)
+            throw Errors.appNotInstalled(item.app)
         }
         dbg("revealing:", installPath.path)
 
@@ -648,11 +576,16 @@ extension FairAppInventory {
 #endif
     }
 
+    func install(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+        try await installApp(item: info, progress: parentProgress, update: update, verbose: verbose, removingURLAt: nil)
+    }
+
     /// Install or update the given catalog item.
-    func install(item: AppCatalogItem, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
+    private func installApp(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
+        let item = info.app
         let window = NSApp.currentEvent?.window
 
-        if update == false, let installPath = installedPath(for: item) {
+        if update == false, let installPath = installedPath(for: info) {
             throw Errors.appAlreadyInstalled(installPath)
         }
 
@@ -908,7 +841,7 @@ extension FairHub {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-extension FairAppInventory {
+extension AppSourceInventory {
     typealias Item = URL
 
     func updateCount() -> Int {
@@ -923,13 +856,13 @@ extension FairAppInventory {
         }.count
     }
 
-    func appInstalled(item: AppCatalogItem) -> String? {
-        installedInfo(for: BundleIdentifier(item.bundleIdentifier))?.versionString
+    func appInstalled(item: AppInfo) -> String? {
+        installedInfo(for: BundleIdentifier(item.app.bundleIdentifier))?.versionString
     }
 
-    func appUpdated(item: AppCatalogItem) -> Bool {
+    func appUpdated(item: AppInfo) -> Bool {
         // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
-        (installedVersion(for: BundleIdentifier(item.bundleIdentifier)) ?? .max) < (item.releasedVersion ?? .min)
+        (installedVersion(for: BundleIdentifier(item.app.bundleIdentifier)) ?? .max) < (item.app.releasedVersion ?? .min)
     }
 
 }
@@ -937,9 +870,9 @@ extension FairAppInventory {
 // MARK: Sidebar
 
 @available(macOS 12.0, iOS 15.0, *)
-extension FairAppInventory {
+extension AppSourceInventory {
 
-    func selectionFilter(_ selection: SidebarSelection?, item: AppCatalogItem) -> Bool {
+    func selectionFilter(_ selection: SidebarSelection?, item: AppInfo) -> Bool {
         switch selection?.item {
         case .none:
             return true
@@ -954,7 +887,7 @@ extension FairAppInventory {
         case .recent:
             return isRecentlyUpdated(item: item)
         case .category(let category):
-            return item.categories?.contains(category) == true
+            return item.app.categories?.contains(category) == true
         }
     }
 

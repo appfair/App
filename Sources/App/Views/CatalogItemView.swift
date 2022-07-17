@@ -24,15 +24,17 @@ struct CatalogItemView: View, Equatable {
     }.get()
 
     let info: AppInfo
+    let source: AppSource
 
     var body: some View {
-        CatalogItemHostView(info: info)
+        CatalogItemHostView(info: info, source: source)
     }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
 private struct CatalogItemHostView: View {
     let info: AppInfo
+    let source: AppSource
 
     @EnvironmentObject var fairManager: FairManager
     @Environment(\.openURL) var openURLAction
@@ -71,8 +73,9 @@ private struct CatalogItemHostView: View {
     @StateObject var projectHomeWebViewState: WebViewState
     @StateObject var appHomeWebViewState: WebViewState
 
-    init(info: AppInfo, inlineHosts: [NSRegularExpression]? = [CatalogItemView.permittedHostsRegex]) {
+    init(info: AppInfo, source: AppSource, inlineHosts: [NSRegularExpression]? = [CatalogItemView.permittedHostsRegex]) {
         self.info = info
+        self.source = source
 
         let config = WKWebViewConfiguration()
 
@@ -372,7 +375,7 @@ private struct CatalogItemHostView: View {
     }
 
     private func fetchDownloadURLStats() async {
-        if fairManager.homeBrewInv.manageCaskDownloads == true {
+        if fairManager.homeBrewInv?.manageCaskDownloads == true {
             do {
                 dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
 
@@ -597,7 +600,7 @@ private struct CatalogItemHostView: View {
                 return previewTab
             } else if metadata.screenshotURLs?.isEmpty == false {
                 return .screenshots
-            } else if fairManager.homeBrewInv.enableCaskHomepagePreview == true {
+            } else if fairManager.homeBrewInv?.enableCaskHomepagePreview == true {
                 return .homepage
             } else {
                 return .project
@@ -1015,7 +1018,7 @@ private struct CatalogItemHostView: View {
 
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
-            fairManager.iconView(for: info, transition: true)
+            fairManager.iconView(for: info, source: source, transition: true)
                 .frame(width: 60, height: 60)
                 .transition(AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // shrink and fade out the placeholder while fading in the actual icon
                 .padding(.leading)
@@ -1352,7 +1355,7 @@ private struct CatalogItemHostView: View {
         //let category = (item.appCategories.first?.groupings.first ?? .create)
 
         //let img = Image(systemName: category.symbolName.description)
-        let img = info.displayCategories.first?.symbol.image ?? (info.isCask ? AppSource.homebrew.symbol.image : AppSource.fairapps.symbol.image)
+        let img = info.displayCategories.first?.symbol.image ?? FairSymbol.questionmark_square.image
         let baseColor = metadata.itemTintColor()
         return ZStack {
             Circle()
@@ -1404,36 +1407,28 @@ private struct CatalogItemHostView: View {
 
     func installButtonTapped() async {
         dbg("installButtonTapped")
-        await fairManager.install(info, progress: startProgress(), update: false)
+        await fairManager.install(info, source: source, progress: startProgress(), update: false)
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
-        await fairManager.install(info, progress: startProgress(), update: true)
+        await fairManager.install(info, source: source, progress: startProgress(), update: true)
     }
 
     func revealButtonTapped() async {
         dbg("revealButtonTapped")
-        if info.isCask == true {
-            await fairManager.trying {
-                try await fairManager.homeBrewInv.reveal(item: info)
-            }
-        } else {
-            await fairManager.trying {
-                try await fairManager.fairAppInv.reveal(item: info.app)
-            }
-        }
+        await fairManager.reveal(info)
     }
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
         if info.isCask {
             return await fairManager.trying {
-                try await fairManager.homeBrewInv.delete(item: info)
+                try await fairManager.homeBrewInv?.delete(item: info, verbose: true)
             }
         } else {
             return await fairManager.trying {
-                try await fairManager.fairAppInv.delete(item: info.app)
+                try await fairManager.fairAppInv?.delete(item: info, verbose: true)
                 // also remove any URLs that are installed for this app
                 for url in self.trashAppAuxiliaryURLs {
                     try FileManager.default.trash(url: url)
@@ -1731,7 +1726,7 @@ struct CaskFormulaBox : View {
     }
 
     private func fetchCaskSummary(json jsonSource: Bool) async {
-        if self.caskSummary == nil, let url = jsonSource ? fairManager.homeBrewInv.caskMetadata(name: cask.token) : fairManager.homeBrewInv.caskSource(name: cask.token) {
+        if self.caskSummary == nil, let url = jsonSource ? fairManager.homeBrewInv?.caskMetadata(name: cask.token) : fairManager.homeBrewInv?.caskSource(name: cask.token) {
             // self.caskSummary = NSLocalizedString("Loading…", bundle: .module, comment: "") // makes unnecessary flashes
             do {
                 dbg("checking cask summary:", url.absoluteString)
@@ -1928,8 +1923,8 @@ struct CatalogItemBrowserView : View {
 @available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView_Previews: PreviewProvider {
     static var previews: some View {
-        CatalogItemView(info: AppInfo(app: AppCatalogItem.sample))
-            .environmentObject(FairAppInventory.default)
+        CatalogItemView(info: AppInfo(app: AppCatalogItem.sample), source: .appSourceFairgroundMacOS)
+            .environmentObject(AppSourceInventory.default)
             .frame(width: 700)
             .frame(height: 800)
         //.environment(\.locale, Locale(identifier: "fr"))

@@ -164,7 +164,10 @@ Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to
 
 #### Can I purchase apps with App Fair.app?
 
-The App Fair.app catalog browser itself does not have any integrated commerce facilities. Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
+Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
+
+In addition, app developers may declare themselves as accepting sponsorsip,
+which is described in the <a href="#sponsorable">Sponsorable</a> section.
 
 #### What permissions do I need to install apps?
 

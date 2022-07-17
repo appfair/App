@@ -17,6 +17,7 @@ import FairExpo
 
 struct AppItemLabel : View {
     let item: AppInfo
+    let source: AppSource
     @EnvironmentObject var fairManager: FairManager
 
     var body: some View {
@@ -25,16 +26,16 @@ struct AppItemLabel : View {
 
     var installedVersion: String? {
         if item.isCask {
-            return fairManager.homeBrewInv.appInstalled(item: item)
+            return fairManager.homeBrewInv?.appInstalled(item: item)
         } else {
-            return fairManager.fairAppInv.appInstalled(item: item.app)
+            return fairManager.fairAppInv?.appInstalled(item: item)
         }
     }
 
     private func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
             ZStack {
-                fairManager.iconView(for: item, transition: true)
+                fairManager.iconView(for: item, source: source, transition: true)
 
                 if let progress = fairManager.operations[item.id]?.progress {
                     FairProgressView(progress)
@@ -119,7 +120,7 @@ struct AppItemLabel_Previews: PreviewProvider {
 
         ForEach([ColorScheme.light, .dark], id: \.self) { colorScheme in
             Text(verbatim: "XXX")
-            //AppItemLabel(item: info)
+            //AppItemLabel(item: info, source: source)
         }
     }
 }

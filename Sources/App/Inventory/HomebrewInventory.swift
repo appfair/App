@@ -73,8 +73,6 @@ private struct HomebrewDefaults {
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
-    let imageCache = Cache<URL, Image>()
-
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = HomebrewDefaults.enableHomebrew {
         didSet {
@@ -150,6 +148,8 @@ private struct HomebrewDefaults {
 
     /// The number of outstanding update requests
     @Published var updateInProgress: UInt = 0
+
+    static let symbol = FairSymbol.shippingbox_fill
 
     /// The list of casks
     private var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
@@ -262,6 +262,20 @@ private struct HomebrewDefaults {
         self.manageCaskDownloads = HomebrewDefaults.manageCaskDownloads
         self.enableBrewAnalytics = HomebrewDefaults.enableBrewAnalytics
         self.enableBrewSelfUpdate = HomebrewDefaults.enableBrewSelfUpdate
+    }
+
+    func label(for source: AppSource) -> Label<Text, Image> {
+        Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
+    }
+    func navItems<V: View>(_ navitem: (SidebarSelection) -> V) -> Group<TupleView<(V, V, V, V, V)>> {
+        let items = SidebarSelection.homebrewItems
+        return Group {
+            navitem(items.0.sel)
+            navitem(items.1.sel)
+            navitem(items.2.sel)
+            navitem(items.3.sel)
+            navitem(items.4.sel)
+        }
     }
 
     /// The path to the `homebrew` command
@@ -492,7 +506,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
     ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
     ///   - verbose: whether to verbosely report progress
-    func install(item: AppInfo, progress parentProgress: Progress?, update: Bool = true, verbose: Bool = true) async throws {
+    func install(item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
         guard let cask = item.cask else {
             return dbg("not a cask:", item)
         }
@@ -651,7 +665,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             let icon = NSWorkspace.shared.icon(forFile: path.path)
             Image(uxImage: icon).resizable()
         } else if let _ = item.app.iconURL {
-            self.iconImage(item: item.app) // use the icon URL if it has been set (e.g., using appcasks metadata)
+            self.iconImage(item: item) // use the icon URL if it has been set (e.g., using appcasks metadata)
         } else if let baseURL = item.app.homepage {
             // otherwise fallback to using the favicon for the home page
             FaviconImage(baseURL: baseURL, fallback: {
@@ -710,7 +724,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         // fall back to scanning for the app artifact and looking in the /Applications folder
         if let cask = casks.first(where: { $0.token == token }) {
             for appName in cask.appArtifacts {
-                let appURL = URL(fileURLWithPath: appName, relativeTo: FairAppInventory.applicationsFolderURL)
+                let appURL = URL(fileURLWithPath: appName, relativeTo: AppSourceInventory.applicationsFolderURL)
                 dbg("checking app path:", appURL.path)
                 if FileManager.default.isExecutableFile(atPath: appURL.path) {
                     return appURL
@@ -909,7 +923,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         struct TopAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: AppSource.homebrew.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: HomebrewInventory.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
@@ -1070,8 +1084,8 @@ private extension AppCatalogItem {
 
 extension AppInventory {
     /// Returns `true` when an ap is sponsorable by a supported platform
-    func appSponsorable(_ app: AppCatalogItem) -> Bool {
-        app.fundingLinks?.contains { $0.isValidFundingURL() } == true
+    func appSponsorable(_ info: AppInfo) -> Bool {
+        info.app.fundingLinks?.contains { $0.isValidFundingURL() } == true
     }
 }
 
@@ -1164,7 +1178,7 @@ extension HomebrewInventory {
         case .sponsorable:
             return item.app.fundingLinks?.isEmpty == false
         case .recent:
-            return isRecentlyUpdated(item: item.app)
+            return isRecentlyUpdated(item: item)
         }
     }
 
@@ -1201,7 +1215,7 @@ extension HomebrewInventory {
     }
 
     func sponsorableCount() -> Int {
-        visibleAppInfos.filter({ appSponsorable($0.app) }).count
+        visibleAppInfos.filter({ appSponsorable($0) }).count
     }
 
     func updateCount() -> Int {
@@ -1235,7 +1249,7 @@ extension HomebrewInventory {
         case .installed:
             return fmt(installedCasks.count)
         case .recent:
-            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0.app) }).count)
+            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0) }).count)
         case .category(let cat):
             return fmt(apps(for: cat).count)
         }

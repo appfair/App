@@ -14,48 +14,58 @@
  */
 import FairKit
 
-/// The `AppCatalog` defined non-generic metadata for a catalog
-protocol AppInventoryCatalog {
-    @MainActor var catalogUpdated: Date? { get }
-}
+import Combine
 
 /// The `AppInventory` protocol handles installing and managing apps.
-protocol AppInventory : AppInventoryCatalog {
-    /// The inventory item associated with this inventory list
-    associatedtype InventoryItem
+protocol AppInventory : AnyObject {
+    @MainActor var catalogUpdated: Date? { get }
 
-    associatedtype SourceInfo
+    @MainActor func badgeCount(for item: SidebarItem) -> Text?
+
+    /// The app info items to be displayed for the given selection, filter, and sort order
+    @MainActor func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
-    @MainActor func appInstalled(item: InventoryItem) -> String?
+    @MainActor func appInstalled(item: AppInfo) -> String?
 
     /// Returns true if the given inventory item can be updated
-    @MainActor func appUpdated(item: InventoryItem) -> Bool
+    @MainActor func appUpdated(item: AppInfo) -> Bool
 
     /// Returns the installation path for the given item, possible querying the file system if needed
-    @MainActor func installedPath(for item: InventoryItem) throws -> URL?
+    @MainActor func installedPath(for item: AppInfo) throws -> URL?
 
     /// Returns the installation path for the given item, possible querying the file system if needed
-    @MainActor func launch(item: InventoryItem) async throws
+    @MainActor func launch(item: AppInfo) async throws
 
     /// Installs the given item
-    //@MainActor func install(item: InventoryItem, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
+    @MainActor func install(item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
 
     /// Instructs the system to reveal the path of the item using the Finder
-    @MainActor func reveal(item: InventoryItem) async throws
+    @MainActor func reveal(item: AppInfo) async throws
 
     /// Deletes the given item from the system
-    @MainActor func delete(item: InventoryItem, verbose: Bool) async throws
+    @MainActor func delete(item: AppInfo, verbose: Bool) async throws
 
-    //@MainActor var imageCache: Cache<URL, Image> { get }
+    @MainActor func navItems<V: View>(_ navitem: (SidebarSelection) -> V) -> Group<TupleView<(V, V, V, V, V)>>
+
+    @MainActor var updateInProgress: UInt { get }
+
+    @MainActor func label(for source: AppSource) -> Label<Text, Image>
+
+    func refreshAll(clearCatalog: Bool) async throws
+
+    @MainActor func updateCount() -> Int
+
+    /// A publisher that is invoked whenever the object will change
+    var objectWillChange: ObservableObjectPublisher { get }
 }
 
 extension AppInventory {
     static var defaultRecentInterval: TimeInterval { (60 * 60 * 24 * 30) }
 
     /// Returns true if the item was recently updated
-    func isRecentlyUpdated(item: AppCatalogItem, interval: TimeInterval = Self.defaultRecentInterval) -> Bool {
-        (item.versionDate ?? .distantPast) > (Date() - interval)
+    func isRecentlyUpdated(item: AppInfo, interval: TimeInterval = Self.defaultRecentInterval) -> Bool {
+        (item.app.versionDate ?? .distantPast) > (Date() - interval)
     }
 
     /// Cache the given image parameter for later re-use
@@ -67,7 +77,8 @@ extension AppInventory {
         return image
     }
 
-    @MainActor func iconImage(item: AppCatalogItem) -> some View {
+    @MainActor func iconImage(item info: AppInfo) -> some View {
+        let item = info.app
         @MainActor func imageContent(phase: AsyncImagePhase) -> some View {
             Group {
                 switch phase {
