@@ -1,5 +1,4 @@
-
-## Description
+## App-Name: an App Fair app
 
 A simple offline recipe browser that uses the recipe sources from
 [based.cooking](https://github.com/LukeSmithxyz/based.cooking).
@@ -25,15 +24,17 @@ It can be un-installed by dragging it to the Trash.
 
 ## Support
 
-Community Support for this app is available from its
+The landing page for this app is available at
+[https://App-Name.github.io/App/](https://App-Name.github.io/App/).
+
+Community Support for this app is available on the
 [Discussion](../../discussions) forums.
 
-Issue reports and suggestions for improvement are available from the
-[Issues](../../issues) page.
+Problem reports and suggestions for improvement can be found in the
+[Issues](../../issues) list.
 
-## License
+## Development
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation.
-
+Create and distribute your own app by
+[forking this repository](../../fork).
+Learn more at [appfair.net](https://appfair.net).
