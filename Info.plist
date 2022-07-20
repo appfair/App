@@ -8,12 +8,12 @@
 	<string>$(ICON_TINT)</string>
 	<key>AppSource</key>
 	<dict>
-		<key>subtitle</key>
-		<string>A whimsical game of excitement and delight</string>
-		<key>localizedDescription</key>
-		<string>Chase on the Cuckoo around the screen! This is a silly little game for the App Fair.</string>
 		<key>developerName</key>
 		<string>Fair Apps &lt;fairapps@appfair.net&gt;</string>
+		<key>localizedDescription</key>
+		<string>Chase on the Cuckoo around the screen! This is a silly little game for the App Fair.</string>
+		<key>subtitle</key>
+		<string>A whimsical game of excitement and delight</string>
 	</dict>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
