@@ -1,4 +1,4 @@
-import FairApp
+import FairKit
 import UniformTypeIdentifiers
 import Lottie
 import SwiftUI
