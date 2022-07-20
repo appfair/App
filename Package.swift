@@ -7,10 +7,10 @@ let package = Package(
     platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
-        // the Fair main branch must be the *first* dependency
+        // the Fair main branch must be the first dependency
         .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
         // additional GitHub-hosted dependencies can be added below
-        .package(url: "https://github.com/airbnb/lottie-ios.git", .upToNextMajor(from: "3.3.0")),
+        .package(url: "https://github.com/airbnb/lottie-ios.git", .upToNextMajor(from: "3.4.0")),
     ],
     targets: [
         .target(name: "App", dependencies: [
