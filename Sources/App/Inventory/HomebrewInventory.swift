@@ -71,7 +71,7 @@ private struct HomebrewDefaults {
 }
 
 extension AppInventory where Self : HomebrewInventory {
-    var title: String {
+    @MainActor var title: String {
         NSLocalizedString("Homebrew", bundle: .module, comment: "the default title of the Homebrew catalog")
     }
 }
