@@ -69,9 +69,9 @@ extension AppInventoryController {
 @MainActor public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
-    @AppStorage("enableInstallWarning") public var enableInstallWarning = true
-    @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
-    @AppStorage("enableSponsorship") public var enableSponsorship = true
+    @AppStorage("enableInstallWarning") public var enableInstallWarning: Bool = true
+    @AppStorage("enableDeleteWarning") public var enableDeleteWarning: Bool = true
+    @AppStorage("enableSponsorship") public var enableSponsorship: Bool = true
 
     /// The base domain of the provider for the hub
     @AppStorage("hubProvider") public var hubProvider = "github.com"
@@ -84,16 +84,19 @@ extension AppInventoryController {
     @AppStorage("hubToken") public var hubToken = ""
 
     /// Whether to try blocking launch telemetry reporting
-    @AppStorage("appLaunchPrivacy") public var appLaunchPrivacy = false
+    @AppStorage("appLaunchPrivacy") public var appLaunchPrivacy: Bool = false
 
     /// The duration to continue blocking launch telemtry after an app has been launched (since the OS retries for a certain amount of time if the initial connection fails)
     @AppStorage("appLaunchPrivacyDuration") public var appLaunchPrivacyDuration: TimeInterval = 60.0
 
     /// Whether links clicked in the embedded browser should open in a new browser window
-    @AppStorage("openLinksInNewBrowser") var openLinksInNewBrowser = true
+    @AppStorage("openLinksInNewBrowser") var openLinksInNewBrowser: Bool = true
 
     /// Whether the embedded browser should use private browsing mode for untrusted sites
-    @AppStorage("usePrivateBrowsingMode") var usePrivateBrowsingMode = true
+    @AppStorage("usePrivateBrowsingMode") var usePrivateBrowsingMode: Bool = true
+
+    /// Whether to enable user-specified sources
+    @AppStorage("enableUserSources") var enableUserSources: Bool = false
 
     /// The list of source URL strings to load as sources
     @AppStorage("userSources") var userSources: AppStorageArray<String> = []
@@ -138,16 +141,24 @@ extension AppInventoryController {
         ]
     }
 
+    /// Called when the user preference changes
+    func updateUserSources(enable: Bool) {
+        dbg(enable)
+        resetAppSources(load: true)
+    }
+
     /// Resets the in-memory list of app sources without touching the
-    func resetAppSources() {
+    func resetAppSources(load: Bool = false) {
         self.inventories.removeAll()
 
         addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL))
         addAppSource(url: appfairCatalogURLMacOS, persist: false)
 
-        for source in self.userSources.compactMap(URL.init(string:)) {
-            dbg("adding user source:", source.absoluteString)
-            addAppSource(url: source, persist: false)
+        if enableUserSources {
+            for source in self.userSources.compactMap(URL.init(string:)) {
+                dbg("adding user source:", source.absoluteString)
+                addAppSource(url: source, load: load, persist: false)
+            }
         }
     }
 
@@ -274,38 +285,47 @@ extension AppInventoryController {
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
     func sourceOverviewView(selection: SidebarSelection, showText: Bool, showFooter: Bool) -> some View {
-        let info = inventory(for: selection.source)?.sourceInfo(for: selection.item)
+        let inv: AppInventory? = inventory(for: selection.source)
+        let info = inv?.sourceInfo(for: selection.item)
         let label = info?.label
         let color = label?.tint ?? .accentColor
 
         return VStack(spacing: 0) {
-            Divider()
-                .background(color)
-                .padding(.top, 1)
+            Group {
+                Divider()
+                    .background(color)
+                    .padding(.top, 1)
 
-            label
-                .foregroundColor(Color.primary)
-                //.font(.largeTitle)
-                .symbolVariant(.fill)
-                .font(Font.largeTitle)
-                //.font(self.sourceFont(sized: 40))
-                .frame(height: 60)
+                label
+                    .foregroundColor(Color.primary)
+                    //.font(.largeTitle)
+                    .symbolVariant(.fill)
+                    .font(Font.largeTitle)
+                    //.font(self.sourceFont(sized: 40))
+                    .frame(height: 60)
 
-            Divider()
-                .background(color)
-
-            if showText, let info = info, let overview = info.overviewText {
-                ScrollView {
-                    overview.joined(separator: Text(verbatim: "\n\n"))
-                            .font(Font.title2)
-                            .padding()
-                            .padding()
-                }
-                     .textSelection(.enabled) // bug: sometimes selecting will unwraps and converts to a single line
+                Divider()
+                    .background(color)
             }
 
+            Spacer()
+            
+            ScrollView {
+                Group {
+                    if showText, let info = info, let overview = info.overviewText {
+                        overview.joined(separator: Text(verbatim: "\n\n"))
+                                .font(Font.title2)
+                    }
+                    if let description = (inv as? AppSourceInventory)?.catalog?.localizedDescription {
+                        Text(atx: description)
+                    }
+                }
+                .padding()
+            }
+            .textSelection(.enabled) // bug: sometimes selecting will unwraps and converts to a single line
+
+            Spacer()
             if showFooter, let info = info {
-                Spacer()
                 ForEach(enumerated: info.footerText) { _, footerText in
                     footerText
                         .textSelection(.enabled)

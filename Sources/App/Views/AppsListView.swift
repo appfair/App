@@ -43,19 +43,21 @@ struct AppsListView : View {
 
     @ViewBuilder var bottomBar: some View {
         let catalog = fairManager.inventory(for: source)
-        Group {
-            if let updated = catalog?.catalogUpdated {
-                // to keep the updated date correct, update the label every minute
-                Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
-                //.refreshingEveryMinute()
-            } else {
-                Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
+        HStack {
+            Group {
+                if let updated = catalog?.catalogUpdated {
+                    // to keep the updated date correct, update the label every minute
+                    Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
+                    //.refreshingEveryMinute()
+                } else {
+                    Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
+                }
             }
+            .font(.footnote)
+            .help(Text("The catalog was last updated on \(Text(catalog?.catalogUpdated ?? .distantPast, format: Date.FormatStyle().year(.defaultDigits).month(.wide).day(.defaultDigits).weekday(.wide).hour(.conversationalDefaultDigits(amPM: .wide)).minute(.defaultDigits).second(.defaultDigits)))", bundle: .module, comment: "apps list bottom bar help text"))
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .font(.caption)
-        .help(Text("The catalog was last updated on \(Text(catalog?.catalogUpdated ?? .distantPast, format: Date.FormatStyle().year(.defaultDigits).month(.wide).day(.defaultDigits).weekday(.wide).hour(.conversationalDefaultDigits(amPM: .wide)).minute(.defaultDigits).second(.defaultDigits)))", bundle: .module, comment: "apps list bottom bar help text"))
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(4)
+        .padding(5)
     }
 
     @ViewBuilder var appsList : some View {

@@ -583,6 +583,9 @@ struct NavigationRootView : View {
                     searchText = "" // clear search whenever the sidebar selection changes
                 }
             }
+            .onChange(of: fairManager.enableUserSources) { enable in
+                fairManager.updateUserSources(enable: enable)
+            }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open external URLs
             .onOpenURL(perform: handleURL)
     }
@@ -717,54 +720,51 @@ public struct AppDetailView : View {
 
     @ViewBuilder func emptySelectionView() -> some View {
         VStack {
-            if sidebarSelection == nil {
-                Text("Welcome to the App Fair", bundle: .module, comment: "header text for detail screen with no selection")
-                    .font(Font.system(size: 40, weight: .regular, design: .rounded))
-                    .padding()
-
-                Text("The App Fair enables browsing, installing, and updating apps from community sources.", bundle: .module, comment: "header sub-text for detail screen with no selection")
-                    .font(Font.title)
-                    .padding()
-            }
-
             if let sidebarSelection = sidebarSelection {
-                let showOverviewText = { true }()
-                fairManager.sourceOverviewView(selection: sidebarSelection, showText: showOverviewText, showFooter: true)
+                fairManager.sourceOverviewView(selection: sidebarSelection, showText: true, showFooter: true)
                     .font(.body)
                 Spacer()
 
-                if !showOverviewText {
-                    Text("No Selection", bundle: .module, comment: "placeholder text for detail panel indicating there is no app currently selected")
-                        .font(Font.title)
-                        .foregroundColor(Color.secondary)
-                    Spacer()
-                }
+//                if !showOverviewText {
+//                    Text("No Selection", bundle: .module, comment: "placeholder text for detail panel indicating there is no app currently selected")
+//                        .font(Font.title)
+//                        .foregroundColor(Color.secondary)
+//                    Spacer()
+//                }
             } else {
                 let selection = { SidebarSelection(source: $0, item: .top) }
-                let maxSourceSummary = 3 // only display the first three catalog summaries on the front page
-                let sources = fairManager.appSources.prefix(maxSourceSummary)
+                //let maxSourceSummary = 3 // only display the first three catalog summaries on the front page
+                let sources = fairManager.appSources // .prefix(maxSourceSummary)
 
-                HStack(spacing: 0) {
-                    ForEach(enumerated: sources) { _, source in
-                        fairManager.sourceOverviewView(selection: selection(source), showText: true, showFooter: false)
-                    }
-                }
-                HStack {
-                    ForEach(enumerated: sources) { _, source in
-                        Spacer()
-                        browseButton(selection(source))
-                        Spacer()
-                    }
-                }
-                .padding()
-                HStack {
-                    ForEach(enumerated: sources) { _, source in
-                        Spacer()
-                        ForEach(enumerated: fairManager.sourceInfo(for: selection(source))?.footerText ?? []) { _, footerText in
-                            footerText
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.flexible(minimum: 250), alignment: .top), GridItem(.flexible(minimum: 250), alignment: .top)], alignment: .center, pinnedViews: PinnedScrollableViews.sectionHeaders) {
+                        Section {
+                            ForEach(enumerated: sources) { _, source in
+                                VStack {
+                                    let sel = selection(source)
+                                    fairManager.sourceOverviewView(selection: sel, showText: true, showFooter: false)
+                                        //.frame(height: 450)
+                                    Spacer()
+                                    browseButton(sel)
+                                    ForEach(enumerated: fairManager.sourceInfo(for: sel)?.footerText ?? []) { _, footerText in
+                                        footerText
+                                    }
+                                    .font(.footnote)
+                                }
+                                .frame(alignment: .top)
+
+                            }
+                        } header: {
+                            VStack {
+                                Text("The App Fair", bundle: .module, comment: "header text for detail screen with no selection")
+                                    .font(Font.system(size: 40, weight: .regular, design: .rounded).lowercaseSmallCaps())
+                                Text("Community App Sources", bundle: .module, comment: "header sub-text for detail screen with no selection")
+                                    .font(Font.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Material.thin)
                         }
-                        .font(.footnote)
-                        Spacer()
                     }
                 }
             }
@@ -913,7 +913,7 @@ extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
     @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", bundle: .module, comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", bundle: .module, comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
 
-        let window = sheetWindow ?? NSApp.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
+        let window = sheetWindow ?? UXApplication.shared.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
 
         if let suppressionKey = suppressionKey {
             switch suppressionKey.wrappedValue {

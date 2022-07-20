@@ -411,39 +411,50 @@ struct AppRiskPicker: View {
     }
 }
 
+//@available(macOS 12.0, iOS 15.0, *)
+//struct ExperimentalSettingsView: View {
+//    @EnvironmentObject var fairManager: FairManager
+//    @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
+//
+//    var body: some View {
+//    }
+//}
+
 @available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
 
-    func checkButton(_ parts: String...) -> some View {
-        EmptyView()
-//        Group {
-//            Image(systemName: "checkmark.square.fill").aspectRatio(contentMode: .fit).foregroundColor(.green)
-//            Image(systemName: "xmark.square.fill").aspectRatio(contentMode: .fit).foregroundColor(.red)
-//        }
-    }
 
     var body: some View {
         VStack {
             Form {
                 Group {
-                    Toggle(isOn: $fairManager.enableSponsorship) {
-                        Text("Enable sponsorship links", bundle: .module, comment: "preference checkbox")
-                    }
-                        .help(Text("Enable support for patronage and funding links for individual apps.", bundle: .module, comment: "preference checkbox tooltip"))
-
-                    Toggle(isOn: $fairAppmacOSInv.relaunchUpdatedApps) {
-                        Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
-                    }
-                        .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
-
                     Toggle(isOn: $fairAppmacOSInv.autoUpdateCatalogApp) {
                         Text("Keep catalog app up to date", bundle: .module, comment: "preference checkbox")
                     }
                     .help(Text("Automatically download and apply updates to the App Fair catalog browser app.", bundle: .module, comment: "preference checkbox tooltip"))
                     .toggleStyle(.checkbox)
 
+                    Toggle(isOn: $fairAppmacOSInv.relaunchUpdatedApps) {
+                        Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
+                    }
+                        .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
+
+                    Toggle(isOn: $fairManager.enableUserSources) {
+                        Text("Enable additional sources", bundle: .module, comment: "fairapps preference checkbox for whether user sources should be enabled")
+                    }
+                        .help(Text("Enable additional custom app sources, which can be added and removed from the sidebar with the plus and minus buttons.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+
+                    Toggle(isOn: $fairManager.enableSponsorship) {
+                        Text("Enable sponsorship links", bundle: .module, comment: "preference checkbox")
+                    }
+                        .help(Text("Enable support for patronage and funding links for individual apps.", bundle: .module, comment: "preference checkbox tooltip"))
+                }
+
+                Divider()
+
+                Group {
                     Toggle(isOn: $fairManager.enableInstallWarning) {
                         Text("Require app install confirmation", bundle: .module, comment: "preference checkbox")
                     }
@@ -471,19 +482,16 @@ struct AdvancedSettingsView: View {
                         TextField(text: fairManager.$hubProvider) {
                             Text("Hub Host", bundle: .module, comment: "advanced preference text field label for the GitHub host")
                         }
-                        checkButton(fairManager.hubProvider)
                     }
                     HStack {
                         TextField(text: fairManager.$hubOrg) {
                             Text("Organization", bundle: .module, comment: "advanced preference text field label for the GitHub organization")
                         }
-                        checkButton(fairManager.hubProvider, fairManager.hubOrg)
                     }
                     HStack {
                         TextField(text: fairManager.$hubRepo) {
                             Text("Repository", bundle: .module, comment: "advanced preference text field label for the GitHub repository")
                         }
-                        checkButton(fairManager.hubProvider, fairManager.hubOrg, fairManager.hubRepo)
                     }
     //                HStack {
     //                    SecureField("Token", text: fairManager.$hubToken)

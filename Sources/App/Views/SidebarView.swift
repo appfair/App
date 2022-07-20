@@ -39,7 +39,8 @@ struct SidebarView: View {
                 .onAppear {
                     // when we first appear select the initial element
                     if let source = fairManager.appSources.first, source != self.sidebarSelection?.source {
-                        self.sidebarSelection = .init(source: source, item: .top)
+                        #warning("initial selection?")
+                        //self.sidebarSelection = .init(source: source, item: .top)
                     }
                 }
 
@@ -64,6 +65,7 @@ struct SidebarView: View {
         //        }
     }
 
+    @State private var removeSourceShowing: Bool = false
     @State private var removeSource: AppSource? = nil
 
     @State private var addSourcePrompt = false
@@ -72,28 +74,41 @@ struct SidebarView: View {
 
     @ViewBuilder var bottomBar: some View {
         HStack {
-            Spacer()
-            Text("Add Catalog", bundle: .module, comment: "button at the bottom of sidebar for adding a new catalog")
-                .label(image: FairSymbol.plus)
+            // placeholder no-op button to keep the toolbar height consistent
+            FairSymbol.link_circle
                 .labelStyle(.iconOnly)
                 .button {
-                    dbg("plus button")
-                    resetNewAppSource()
-                    addSourcePrompt = true
+                    dbg("help button")
                 }
                 .buttonStyle(.borderless)
-                .keyboardShortcut("N")
+                .hidden()
+
+            Spacer()
+            
+            if fairManager.enableUserSources {
+                Text("Add Catalog", bundle: .module, comment: "button at the bottom of sidebar for adding a new catalog")
+                    .label(image: FairSymbol.plus)
+                    .labelStyle(.iconOnly)
+                    .button {
+                        dbg("plus button")
+                        resetNewAppSource()
+                        addSourcePrompt = true
+                    }
+                    .buttonStyle(.borderless)
+                    .keyboardShortcut("N")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
         .sheet(isPresented: $addSourcePrompt, onDismiss: addSourcePrompDismissed, content: addSourcePrompView)
-        .confirmationDialog(Text("Remove Source", bundle: .module, comment: "confirmation dialog title when removing a source from the user sources"), isPresented: .constant(removeSource != nil), actions: {
+        .confirmationDialog(Text("Remove Source", bundle: .module, comment: "confirmation dialog title when removing a source from the user sources"), isPresented: $removeSourceShowing, actions: {
             Text("Remove", bundle: .module, comment: "delete button confirmation dialog delete button text").button {
                 // there's a SwiftUI bug here: if you cancel the dialog and then try to re-delete the same catalog, the dialog won't appear; but if you try it delete another catalog and then go back to deleting this catalog, it will work!
                 if let source = removeSource {
-                    self.removeSource = nil
                     removeAppSource(source)
                 }
+                self.removeSource = nil
+                self.removeSourceShowing = false
             }
         }, message: {
             Text("This will remove the source from your list of available app sources. Any apps that have been installed from this source will remain unaffected. This operation cannot be undone.", bundle: .module, comment: "confirmation dialog message text when removing an app source from the sidebar")
@@ -268,6 +283,7 @@ struct SidebarView: View {
             SectionHeader(label: inv.label(for: source), updating: .constant(inv.updateInProgress != 0), canRemove: fairManager.userSources.contains(inv.sourceURL.absoluteString), removeAction: {
                 dbg("setting removeSource:", source)
                 self.removeSource = source
+                self.removeSourceShowing = true
             })
         }
         .symbolVariant(.fill)

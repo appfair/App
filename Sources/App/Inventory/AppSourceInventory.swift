@@ -456,7 +456,7 @@ extension AppSourceInventory {
     /// Install or update the given catalog item.
     private func installApp(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
         let item = info.app
-        let window = NSApp.currentEvent?.window
+        let window = UXApplication.shared.currentEvent?.window
 
         if update == false, let installPath = installedPath(for: info) {
             throw Errors.appAlreadyInstalled(installPath)
@@ -888,6 +888,10 @@ extension AppSourceInventory {
 
 extension AppSourceInventory {
     @MainActor func sourceInfo(for item: SidebarItem) -> AppSourceInfo? {
+        sourceInformation(for: item)
+    }
+
+    @MainActor func sourceInformation(for item: SidebarItem) -> AppSourceInfo {
         switch item {
         case .top:
             struct TopAppInfo : AppSourceInfo {
