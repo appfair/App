@@ -715,7 +715,7 @@ extension FairHub {
         dbg("parsed catalog apps at:", sourceURL, catalog.apps.count)
 
         if injectSourceURL == true && catalog.sourceURL == nil {
-            catalog.sourceURL = sourceURL.absoluteString
+            catalog.sourceURL = sourceURL
         }
 
         return (catalog, response)
@@ -818,7 +818,7 @@ private extension AppCatalog {
     ///
     /// - TODO: identify fairground
     var isAppFairSource: Bool {
-        sourceURL.flatMap(URL.init(string:))?.isAppFairSource == true
+        sourceURL?.isAppFairSource == true
     }
 }
 
@@ -923,7 +923,8 @@ extension AppSourceInventory {
                             return [Text("Learn more about the fairground process at [https://appfair.net](https://appfair.net)", bundle: .module, comment: "fairground top apps info: footer link text")]
                         } else {
                             if let appLink = catalog.homepage ?? catalog.sourceURL {
-                                return [Text(AttributedString(localized: "Learn more about this app source at [\(appLink)](\(appLink))", bundle: .module, comment: "app source catalog info footer"))]
+                                let href = appLink.absoluteString
+                                return [Text(AttributedString(localized: "Learn more about this app source at [\(href)](\(href))", bundle: .module, comment: "app source catalog info footer"))]
                             } else {
                                 return []
                             }
