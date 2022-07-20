@@ -22,8 +22,7 @@
 /* formatting string separating the permission title from the permission description */
 "%@ – %@" = "%1$@ – %2$@";
 
-/* formatting string separating entitlement info from usage description in tooltip text
-   formatting string separating navigation title from search text */
+/* formatting string separating entitlement info from usage description in tooltip text */
 "%@: %@" = "%1$@: %2$@";
 
 /* footer markdown text of screenshots page indicating how to update catalog metadata */
@@ -74,6 +73,16 @@
 /* launch privacy button toolbar button title when in the activate state */
 "Active" = "Active";
 
+/* add catalog source button text */
+"Add" = "Add";
+
+/* add catalog source dialog title */
+"Add App Source" = "Add App Source";
+
+/* button at the bottom of sidebar for adding a new catalog
+   menu title for adding an app catalog */
+"Add Catalog" = "Add Catalog";
+
 /* app entitlement title for personal-information.addressbook */
 "Address Book" = "Address Book";
 
@@ -98,6 +107,9 @@
 /* tooltip help text for homebrew preference */
 "Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched." = "Allows the launching of quarantined apps that are not signed and notarized. This will prompt the user for confirmation each time an app identified as not being signed before it will be launched.";
 
+/* add catalog source footer */
+"An app source is a URL pointing to a JSON file with a list of apps." = "An app source is a URL pointing to a JSON file with a list of apps.";
+
 /* tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available */
 "An update to this app is available" = "An update to this app is available";
 
@@ -113,6 +125,10 @@
 /* launch privacy activate toolbar button tooltip when in the inactive state */
 "App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in %@" = "App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in %@";
 
+/* app source title for fairground apps
+   fairapps top apps info: full title */
+"App Source" = "App Source";
+
 /* app catalog entry info link title */
 "Appcast" = "Appcast";
 
@@ -124,6 +140,12 @@
 
 /* fairapps sidebar category title */
 "Apps" = "Apps";
+
+/* fairapps top apps info: overview text */
+"Apps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests." = "Apps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests.";
+
+/* homebrew top apps info: overview text */
+"Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine." = "Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.";
 
 /* app category label for appfair.arcade-games */
 "Arcade Games" = "Arcade Games";
@@ -191,7 +213,8 @@
 /* app entitlement title for device.camera */
 "Camera" = "Camera";
 
-/* cancel button title for prompt */
+/* add catalog source button text
+   cancel button title for prompt */
 "Cancel" = "Cancel";
 
 /* cancel catalog activity tooltip text */
@@ -208,6 +231,9 @@
 
 /* homebrew sidebar category title */
 "Casks" = "Casks";
+
+/* add catalog source dialog text */
+"Catalog URL:" = "Catalog URL:";
 
 /* sidebar section header title for homebrew app categories */
 "Categories" = "Categories";
@@ -235,6 +261,18 @@
 
 /* app catalog entry header box title for the core size of the app */
 "Core Size" = "Core Size";
+
+/* error message when failed to find app launch privacy tool */
+"Could not find %@" = "Could not find %@";
+
+/* error message */
+"Could not find install path for “%@”" = "Could not find install path for “%@”";
+
+/* error message */
+"Could not find install path for “\(item.app.name)”" = "Could not find install path for “\(item.app.name)”";
+
+/* error message */
+"Could not install from local artifact" = "Could not install from local artifact";
 
 /* risk assessment label for level 5 dangerous apps */
 "Dangerous" = "Dangerous";
@@ -266,6 +304,9 @@
 
 /* app category label for appfair.developer-tools */
 "Developer Tools" = "Developer Tools";
+
+/* error message */
+"Developer tools not found" = "Developer tools not found";
 
 /* app category label for appfair.dice-games */
 "Dice Games" = "Dice Games";
@@ -354,6 +395,12 @@
 /* app category label for appfair.entertainment */
 "Entertainment" = "Entertainment";
 
+/* error message */
+"Error compiling %@" = "Error compiling %@";
+
+/* error wrapper string when a catalog URL fails to load */
+"Error Loading Catalog" = "Error Loading Catalog";
+
 /* error message title when a tool fails to run */
 "Error running %@" = "Error running %@";
 
@@ -363,30 +410,23 @@
 /* app entitlement title for files.user-selected.executable */
 "Executables (User-Selected)" = "Executables (User-Selected)";
 
+/* catalog description for header text of app source */
+"External source" = "External source";
+
+/* error message */
+"Failed to block launch telemetry" = "Failed to block launch telemetry";
+
+/* the default title of a fair apps catalog */
+"Fair Ground" = "Fair Ground";
+
 /* fairapps preferences tab title */
 "Fairapps" = "Fairapps";
 
-/* app source title for fairground apps
-   source menu header text for section with fairground catalog selection options */
+/* app source title for fairground apps */
 "Fairground" = "Fairground";
 
-/* fairapps top apps info: full title */
-"Fairground Apps" = "Fairground Apps";
-
-/* fairapps top apps info: overview text */
-"Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.\n\nApps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests." = "Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.\n\nApps installed from the Fairground catalog are guaranteed to run in a sandbox, meaning that access to resources like the filesystem, network, and devices are mediated through a security layer that mandates that their permissions be documented, disclosed, and approved by the user. Fairground apps publish a “risk level” summarizing the number of permission categories the app requests.";
-
-/* fairapps installed apps info: full title */
-"Fairground Apps: Installed" = "Fairground Apps: Installed";
-
-/* fairapps recent apps info: full title */
-"Fairground Apps: Recent" = "Fairground Apps: Recent";
-
-/* fairapps sponsorable apps info: full title */
-"Fairground Apps: Sponsorable" = "Fairground Apps: Sponsorable";
-
-/* fairapps updated apps info: full title */
-"Fairground Apps: Updated" = "Fairground Apps: Updated";
+/* fairapps catalog description for header text of detail view */
+"Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry." = "Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.";
 
 /* app catalog entry info link title */
 "Fairseal" = "Fairseal";
@@ -406,8 +446,8 @@
 /* app entitlement title for device.firewire */
 "Firewire" = "Firewire";
 
-/* app catalog cask entry metadata tab title for app formula */
-"Formula" = "Formula";
+/* add catalog source footer */
+"For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource)." = "For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource).";
 
 /* app category label for appfair.games */
 "Games" = "Games";
@@ -444,7 +484,7 @@
 
 /* app source title for homebrew casks
    homebrew preferences tab title
-   source menu header text for section with homebrew catalog selection options */
+   the default title of the Homebrew catalog */
 "Homebrew" = "Homebrew";
 
 /* homebrew top apps info: full title
@@ -490,7 +530,8 @@
 /* warning text when installing an item without a checksum */
 "Installation artifact cannot be verified because it has no associated SHA-256 checksum." = "Installation artifact cannot be verified because it has no associated SHA-256 checksum.";
 
-/* fairapps sidebar category title
+/* fairapps installed apps info: full title
+   fairapps sidebar category title
    homebrew sidebar category title */
 "Installed" = "Installed";
 
@@ -499,6 +540,12 @@
 
 /* preference checkbox tooltip */
 "Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation." = "Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation.";
+
+/* error message when a fairseal check fails */
+"Invalid fairseal" = "Invalid fairseal";
+
+/* error message */
+"Invalid SHA-256 Hash" = "Invalid SHA-256 Hash";
 
 /* app entitlement title for temporary-exception.iokit-user-client-class */
 "IOKit User Client" = "IOKit User Client";
@@ -526,6 +573,10 @@
 /* catalog entry button tooltip for launch action */
 "Launches the app." = "Launches the app.";
 
+/* fairapps sponsorable apps info: overview text
+   homebrew sponsorable apps info: overview text */
+"Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)" = "Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)";
+
 /* fairground top apps info: footer link text */
 "Learn more about the fairground process at [https://appfair.net](https://appfair.net)" = "Learn more about the fairground process at [https://appfair.net](https://appfair.net)";
 
@@ -538,7 +589,8 @@
 /* general preference for theme style in popup menu */
 "Light" = "Light";
 
-/* apps list placeholder text while the catalog is loading */
+/* app source title for fairground apps
+   apps list placeholder text while the catalog is loading */
 "Loading…" = "Loading…";
 
 /* app entitlement title for personal-information.location */
@@ -559,11 +611,26 @@
 /* tooltip help text for homebrew preference checkbox */
 "Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run." = "Marks apps installed with homebrew cask as being quarantined, which will cause a system gatekeeper check and user confirmation the first time they are run.";
 
+/* button tooltip for embedded browser maximize */
+"Maximizes the preview area so it takes all the available space" = "Maximizes the preview area so it takes all the available space";
+
 /* app category label for appfair.medical */
 "Medical" = "Medical";
 
 /* app entitlement title for device.microphone */
 "Microphone" = "Microphone";
+
+/* error message */
+"Missing cryptographic checksum" = "Missing cryptographic checksum";
+
+/* error message when attempting to operate on unsupported app type */
+"Mobile app deletion unsupported" = "Mobile app deletion unsupported";
+
+/* error message when attempting to operate on unsupported app type */
+"Mobile app installation unsupported" = "Mobile app installation unsupported";
+
+/* error message when attempting to operate on unsupported app type */
+"Mobile app reveal unsupported" = "Mobile app reveal unsupported";
 
 /* error dialog disclosure button title for showing more information */
 "More Info" = "More Info";
@@ -589,8 +656,17 @@
 /* app category label for appfair.news */
 "News" = "News";
 
+/* apps list placeholder text where there are no results to display */
+"No apps" = "No apps";
+
 /* error message when no app description could be found */
 "No description found" = "No description found";
+
+/* error message */
+"no metadata for package" = "no metadata for package";
+
+/* error message */
+"No output from brew command" = "No output from brew command";
 
 /* apps list placeholder text where there are no results to display */
 "No results" = "No results";
@@ -667,6 +743,9 @@
 
 /* app category label for appfair.photography */
 "Photography" = "Photography";
+
+/* button title for pinning embedded browser */
+"Pin" = "Pin";
 
 /* fairapps preference description */
 "Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment." = "Pre-releases are experimental versions of software that are less tested than stable versions. They are generally released to garner user feedback and assistance, and so should only be installed by those willing experiment.";
@@ -791,9 +870,16 @@
 /* delete button confirmation dialog title */
 "Really delete this app?" = "Really delete this app?";
 
-/* fairapps sidebar category title
+/* fairapps recent apps info: full title
+   fairapps sidebar category title
    homebrew sidebar category title */
 "Recent" = "Recent";
+
+/* fairapps recent apps info: overview text */
+"Recent apps contain those applications that have been newly released or updated within the past month." = "Recent apps contain those applications that have been newly released or updated within the past month.";
+
+/* homebrew recent apps info: overview text */
+"Recent apps contain those casks that have been newly released or updated within the past month." = "Recent apps contain those casks that have been newly released or updated within the past month.";
 
 /* apps list section header text */
 "Recently Updated" = "Recently Updated";
@@ -816,6 +902,18 @@
 /* help text
    refresh catalog toolbar button title */
 "Reload" = "Reload";
+
+/* delete button confirmation dialog delete button text */
+"Remove" = "Remove";
+
+/* sidebar button to remove a catalog */
+"Remove Catalog" = "Remove Catalog";
+
+/* confirmation dialog title when removing a source from the user sources */
+"Remove Source" = "Remove Source";
+
+/* help text for sidebar button to remove catalog */
+"Removes this catalog from the list of available catalogs. This operaiton cannot be undone." = "Removes this catalog from the list of available catalogs. This operaiton cannot be undone.";
 
 /* advanced preference text field label for the GitHub repository */
 "Repository" = "Repository";
@@ -863,6 +961,9 @@
 /* app entitlement title for app-sandbox */
 "Sandbox" = "Sandbox";
 
+/* app catalog cask entry metadata tab title for app raw formula specification */
+"Scheme" = "Scheme";
+
 /* app catalog app entry preview tab title */
 "Screen Shots" = "Screen Shots";
 
@@ -908,7 +1009,7 @@
 /* app catalog entry info link title */
 "Source" = "Source";
 
-/* menu title for fairground sources actions */
+/* menu title for app source actions */
 "Sources" = "Sources";
 
 /* accessibility title for the label to sponsor this project */
@@ -918,6 +1019,7 @@
 "Sponsor this project on GitHub" = "Sponsor this project on GitHub";
 
 /* fairapps sidebar category title
+   fairapps sponsorable apps info: full title
    homebrew sidebar category title */
 "Sponsorable" = "Sponsorable";
 
@@ -954,11 +1056,27 @@
 /* warning dialog body */
 "The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it." = "The app “%1$@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %2$@, you may override the quarantine for this app in order to launch it.";
 
+/* error message when a fairseal check fails */
+"The app's fairseal was not valid." = "The app's fairseal was not valid.";
+
+/* error wrapper string when a catalog URL fails to load */
+"The catalog failed to load from the URL: %@" = "The catalog failed to load from the URL: %@";
+
 /* apps list bottom bar help text */
 "The catalog was last updated on %@" = "The catalog was last updated on %@";
 
-/* homebrew top apps info: overview text */
-"The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.\n\nApps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine." = "The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.\n\nApps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.";
+/* error failure reason */
+"The download has no SHA-256 checksum set and so its authenticity cannot be verified." = "The download has no SHA-256 checksum set and so its authenticity cannot be verified.";
+
+/* error message */
+"The downloaded SHA-256 (%@) hash did not match the expected hash (%@)." = "The downloaded SHA-256 (%1$@) hash did not match the expected hash (%2$@).";
+
+/* homebrew catalog description for header text of detail view */
+"The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool." = "The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.";
+
+/* fairapps installed apps info: overview text
+   homebrew installed apps info: overview text */
+"The installed apps section contains all the apps that are currently installed from this catalog." = "The installed apps section contains all the apps that are currently installed from this catalog.";
 
 /* tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version */
 "The latest version of this app is installed" = "The latest version of this app is installed";
@@ -967,7 +1085,7 @@
 "The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application. Enabling this feature will require authenticating as an administrator.\n\nApp Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.\n\nPrivacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place." = "The macOS operating system reports all application launches to third-party servers. Preventing this tracking is accomplished by temporarily blocking network traffic to these servers during the launch of an application. Enabling this feature will require authenticating as an administrator.\n\nApp Launch Privacy will block telemetry from being sent when an app is opened using the App Fair's “Launch” button, or when it is manually enabled using the shield button.\n\nPrivacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place.";
 
 /* app catalog entry header box title tooltip text */
-"The number of downloads of this cask in the past 90 days" = "The number of downloads of this cask in the past 90 days";
+"The number of downloads of this app in the past 90 days" = "The number of downloads of this app in the past 90 days";
 
 /* app catalog entry info link tooltip */
 "The page for the Homebrew Cask token" = "The page for the Homebrew Cask token";
@@ -981,8 +1099,16 @@
 /* app catalog entry info link tooltip */
 "The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded." = "The SHA-256 checksum for the app is missing, which means that the integrity cannot be varified when it is downloaded.";
 
+/* fairapps sponsorable apps info: overview text
+   homebrew sponsorable apps info: overview text */
+"The sponsorable apps section contains apps that have listed themselves as being available for patronage." = "The sponsorable apps section contains apps that have listed themselves as being available for patronage.";
+
 /* app catalog entry header box title tooltip text */
 "The total number of downloads for this release" = "The total number of downloads for this release";
+
+/* fairapps installed apps info: overview text
+   homebrew installed apps info: overview text */
+"The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available." = "The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available.";
 
 /* picker title for general preference for theme style */
 "Theme:" = "Theme:";
@@ -993,14 +1119,23 @@
 /* tooltip for empty screenshot preview section */
 "This app has not published any screenshots" = "This app has not published any screenshots";
 
+/* error failure reason message */
+"This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking." = "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.";
+
 /* homebrew preference checkbox tooltip */
 "This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services." = "This permits the installation of apps that don't list any launchable artifacts with an .app extension. Such apps will not be able to be launched directly from the App Fair app, but they may exist as system extensions or launch services.";
+
+/* delete button confirmation dialog body text for folders to purge */
+"This will also remove the following folders that may contain persistent data for the app:" = "This will also remove the following folders that may contain persistent data for the app:";
 
 /* installation warning for fairground apps */
 "This will download and install the application “%@” from the developer “%@” at:\n\n%@\n\nThis app has not undergone any formal review, so you will be installing and running it at your own risk.\n\nBefore installing, you should first review the Discussions, Issues, and Documentation pages to learn more about the app." = "This will download and install the application “%1$@” from the developer “%2$@” at:\n\n%3$@\n\nThis app has not undergone any formal review, so you will be installing and running it at your own risk.\n\nBefore installing, you should first review the Discussions, Issues, and Documentation pages to learn more about the app.";
 
 /* delete button confirmation dialog body text */
 "This will remove the application “%@” from your applications folder and place it in the Trash." = "This will remove the application “%@” from your applications folder and place it in the Trash.";
+
+/* confirmation dialog message text when removing an app source from the sidebar */
+"This will remove the source from your list of available app sources. Any apps that have been installed from this source will remain unaffected. This operation cannot be undone." = "This will remove the source from your list of available app sources. Any apps that have been installed from this source will remain unaffected. This operation cannot be undone.";
 
 /* tooltip text for button to uninstall homebrew on brew preferences panel */
 "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards." = "This will remove the version of Homebrew that is used locally by the App Fair. It will not affect any system-level Homebrew installation that may be present elsewhere. Homebrew can be re-installed again afterwards.";
@@ -1017,11 +1152,18 @@
 /* app category label for appfair.trivia-games */
 "Trivia Games" = "Trivia Games";
 
+/* error message */
+"Unable to decode %@" = "Unable to decode %@";
+
+/* error message */
+"unable to parse stanza for url property" = "unable to parse stanza for url property";
+
 /* warning dialog title */
 "Unidentified Developer" = "Unidentified Developer";
 
 /* app catalog entry content box placeholder text for a download size that isn't known
    app catalog entry header box content for an unknown update date
+   app category label for an unknown category
    fallback text for unknown developer name */
 "Unknown" = "Unknown";
 
@@ -1042,6 +1184,7 @@
 
 /* app catalog entry header box title for the date the app was last updated
    fairapps sidebar category title
+   fairapps updated apps info: full title
    homebrew sidebar category title */
 "Updated" = "Updated";
 
@@ -1124,12 +1267,6 @@
 "Word Games" = "Word Games";
 
 /* app category info: overview text
-   fairapps installed apps info: overview text
-   fairapps recent apps info: overview text
-   fairapps sponsorable apps info: overview text
-   fairapps updated apps info: overview text
-   homebrew installed apps info: overview text
-   homebrew recent apps info: overview text
-   homebrew updated apps info: overview text */
+   homebrew recent apps info: overview text */
 "XXX" = "XXX";
 

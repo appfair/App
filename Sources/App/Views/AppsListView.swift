@@ -47,7 +47,7 @@ struct AppsListView : View {
             if let updated = catalog?.catalogUpdated {
                 // to keep the updated date correct, update the label every minute
                 Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
-                    //.refreshingEveryMinute()
+                //.refreshingEveryMinute()
             } else {
                 Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
             }
@@ -62,6 +62,7 @@ struct AppsListView : View {
         ScrollViewReader { proxy in
             List {
                 if sidebarSelection?.item == .top {
+                    // appListSection(section: nil, source: source)
                     ForEach(AppListSection.allCases) { section in
                         appListSection(section: section, source: source)
                     }
@@ -76,11 +77,11 @@ struct AppsListView : View {
             }
             .searchable(text: $searchTextSource)
             .animation(.easeInOut, value: searchTextSource)
-            .task(id: searchTextSource, debounce(interval: 0.20, action: updateSearchTextSource)) // a brief delay to allow for more responsive typing
+            .onChange(of: searchTextSource, debounce: 0.18, priority: .userInitiated, perform: updateSearchTextSource) // a brief delay to allow for more responsive typing
         }
     }
 
-    @MainActor func updateSearchTextSource() async {
+    @MainActor func updateSearchTextSource(_ searchTextSource: String) async {
         withAnimation {
             self.searchText = searchTextSource
             if searchText.trimmed().isEmpty == false,
@@ -143,11 +144,14 @@ struct AppsListView : View {
     }
 
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        prf("arranging: \(source.rawValue)") {
+            fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        }
     }
 
     @ViewBuilder func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {
         let items = appInfoItems(section: section)
+        //let _ = dbg("items for:", section, wip(items.count))
         if fairManager.refreshing == true || items.isEmpty == false {
             if let section = section {
                 Section {
@@ -155,10 +159,6 @@ struct AppsListView : View {
                 } header: {
                     HStack {
                         section.localizedTitle
-//                            .badge(Text("XXX"))
-//                        Text(items.count, format: .number)
-//                            .font(Font.body.monospacedDigit())
-//                            .frame(alignment: .trailing)
                     }
                 }
             } else {
@@ -195,7 +195,6 @@ struct AppsListView : View {
     }
 }
 
-
 struct AppSectionItems : View {
     let items: [AppInfo]
     let source: AppSource
@@ -207,7 +206,7 @@ struct AppSectionItems : View {
 
     /// The number of items to initially display to keep the list rendering responsive;
     /// when the list is scrolled to the bottom, this count will increment to give the appearance of infinite scrolling
-    @State private var displayCount = 25
+    @State private var displayCount = 50
 
     var body: some View {
         sectionContents()
@@ -234,6 +233,7 @@ struct AppSectionItems : View {
                 Text("No results", bundle: .module, comment: "apps list placeholder text where there are no results to display")
             } else if itemCount == 0 {
                 // nothing; we don't know if it was empty or not
+                Text("No apps", bundle: .module, comment: "apps list placeholder text where there are no results to display")
             } else if itemCount > displayCount {
                 Text("More…", bundle: .module, comment: "apps list text at the bottom of the list when there are more results to show")
                     .id((items.last?.id.rawValue ?? "") + "_moreitems") // the id needs to change so onAppear is called when we see this item again
@@ -242,7 +242,7 @@ struct AppSectionItems : View {
                         DispatchQueue.main.async {
                             // displayCount += 50
                             withAnimation {
-                                self.displayCount += self.displayCount + 1 // increase the total display count
+                                self.displayCount += max(self.displayCount, 1) // increase the total display count
                             }
                         }
                     }

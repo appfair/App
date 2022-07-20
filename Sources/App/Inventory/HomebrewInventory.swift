@@ -70,15 +70,24 @@ private struct HomebrewDefaults {
     static let enableCaskHomepagePreview = true
 }
 
+extension AppInventory where Self : HomebrewInventory {
+    var title: String {
+        NSLocalizedString("Homebrew", bundle: .module, comment: "the default title of the Homebrew catalog")
+    }
+}
+
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
+    let source: AppSource
+    let sourceURL: URL
+
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = HomebrewDefaults.enableHomebrew {
         didSet {
             Task {
                 // whenever the enableHomebrew setting is changed, perform a scan of the casks
-                try await refreshAll(clearCatalog: true)
+                try await refreshAll(reloadFromSource: true)
             }
         }
     }
@@ -239,11 +248,11 @@ private struct HomebrewDefaults {
         }
     }
 
-    static let `default`: HomebrewInventory = HomebrewInventory()
-
     private var fsobserver: FileSystemObserver? = nil
 
-    private init() {
+    init(source: AppSource, sourceURL: URL) {
+        self.source = source
+        self.sourceURL = sourceURL
         watchCaskroomFolder()
     }
 
@@ -267,16 +276,6 @@ private struct HomebrewDefaults {
     func label(for source: AppSource) -> Label<Text, Image> {
         Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
     }
-    func navItems<V: View>(_ navitem: (SidebarSelection) -> V) -> Group<TupleView<(V, V, V, V, V)>> {
-        let items = SidebarSelection.homebrewItems
-        return Group {
-            navitem(items.0.sel)
-            navitem(items.1.sel)
-            navitem(items.2.sel)
-            navitem(items.3.sel)
-            navitem(items.4.sel)
-        }
-    }
 
     /// The path to the `homebrew` command
     var localBrewCommand: String {
@@ -289,13 +288,13 @@ private struct HomebrewDefaults {
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
-    func refreshAll(clearCatalog: Bool) async throws {
+    func refreshAll(reloadFromSource: Bool) async throws {
         if enableHomebrew == false {
             dbg("skipping cask refresh because not isEnabled")
             return
         }
 
-        if clearCatalog {
+        if reloadFromSource {
             self.casks = []
             self.appcasks = nil
         }
@@ -318,9 +317,8 @@ private struct HomebrewDefaults {
 
     fileprivate func fetchAppCasks() async throws -> AppCatalog {
         dbg("loading appcasks")
-        let url = appfairCaskAppsURL
-        let data = try await URLRequest(url: url).fetch()
-        dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", url)
+        let data = try await URLRequest(url: sourceURL).fetch()
+        dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", sourceURL)
         let appcasks = try AppCatalog.parse(jsonData: data)
         dbg("loaded appcasks:", appcasks.apps.count)
         return appcasks
@@ -457,7 +455,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("performing command:", cmd)
         do {
             guard let result = try await NSUserScriptTask.fork(command: cmd) else {
-                throw AppError("No output from brew command")
+                throw AppError(NSLocalizedString("No output from brew command", bundle: .module, comment: "error message"))
             }
             dbg("command output:", result)
             return result
@@ -485,7 +483,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
         if let expectedHash = expectedHash, expectedHash != actualHash {
-            throw AppError("Invalid SHA-256 Hash", failureReason: "The downloaded SHA-256 (\(expectedHash) hash did not match the expected hash (\(expectedHash)).")
+            throw AppError(String(format: NSLocalizedString("Invalid SHA-256 Hash", bundle: .module, comment: "error message")), failureReason: String(format: NSLocalizedString("The downloaded SHA-256 (%@) hash did not match the expected hash (%@).", bundle: .module, comment: "error message"), actualHash, expectedHash))
         }
 
         // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
@@ -506,7 +504,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
     ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
     ///   - verbose: whether to verbosely report progress
-    func install(item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+    func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
         guard let cask = item.cask else {
             return dbg("not a cask:", item)
         }
@@ -545,7 +543,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         let (downloadURL, expectedHash) = (candidateURL, sha256)
 
         if expectedHash == nil && self.requireCaskChecksum == true {
-            throw AppError("Missing cryptographic checksum", failureReason: "The download has no SHA-256 checksum set and so its authenticity cannot be verified.")
+            throw AppError(NSLocalizedString("Missing cryptographic checksum", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("The download has no SHA-256 checksum set and so its authenticity cannot be verified.", bundle: .module, comment: "error failure reason"))
         }
 
         // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
@@ -642,7 +640,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
 
-    func delete(item: AppInfo, verbose: Bool = true) async throws {
+    func delete(_ item: AppInfo, verbose: Bool = true) async throws {
         guard let cask = item.cask else {
             return dbg("not a cask:", item)
         }
@@ -659,23 +657,42 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("result:", result)
     }
 
-    @ViewBuilder func icon(for item: AppInfo, useInstalledIcon: Bool = false) -> some View {
-        if useInstalledIcon, let path = try? self.installedPath(for: item) {
-            // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
-            let icon = NSWorkspace.shared.icon(forFile: path.path)
-            Image(uxImage: icon).resizable()
-        } else if let _ = item.app.iconURL {
-            self.iconImage(item: item) // use the icon URL if it has been set (e.g., using appcasks metadata)
-        } else if let baseURL = item.app.homepage {
-            // otherwise fallback to using the favicon for the home page
-            FaviconImage(baseURL: baseURL, fallback: {
-                EmptyView()
-            })
-        } else {
-            // FairSymbol.questionmark_square_dashed
-            FairIconView(item.app.name, subtitle: nil)
+    var supportedSidebars: [SidebarItem] {
+        [SidebarItem.top, .recent, .sponsorable, .installed, .updated]
+    }
+
+    func icon(for item: AppInfo) -> AppIconView {
+        .init(IconView(item: item))
+    }
+
+    struct IconView : View, Equatable {
+        let item: AppInfo
+
+        var body: some View {
+            icon(for: item)
+        }
+
+        @ViewBuilder func icon(for item: AppInfo, useInstalledIcon: Bool = false) -> some View {
+//            if useInstalledIcon, let path = try? self.installedPath(for: item) {
+//                // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
+//                let icon = NSWorkspace.shared.icon(forFile: path.path)
+//                Image(uxImage: icon).resizable()
+//            } else
+            if let _ = item.app.iconURL {
+                AppSourceInventory.IconView(info: item)
+                //self.iconImage(item: item) // use the icon URL if it has been set (e.g., using appcasks metadata)
+            } else if let baseURL = item.app.homepage {
+                // otherwise fallback to using the favicon for the home page
+                FaviconImage(baseURL: baseURL, fallback: {
+                    EmptyView()
+                })
+            } else {
+                // FairSymbol.questionmark_square_dashed
+                FairIconView(item.app.name, subtitle: nil)
+            }
         }
     }
+
 
     fileprivate func findAppLink(in children: [URL]) -> URL? {
         for appURL in children {
@@ -734,18 +751,18 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         return nil
     }
 
-    func reveal(item: AppInfo) async throws {
+    func reveal(_ item: AppInfo) async throws {
         let installPath = try self.installedPath(for: item)
         dbg(item.id, installPath?.path)
         if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
             dbg("revealing:", installPath.path)
             NSWorkspace.shared.activateFileViewerSelecting([installPath])
         } else {
-            throw AppError("Could not find install path for “\(item.app.name)”")
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “%@”", bundle: .module, comment: "error message"), item.app.name))
         }
     }
 
-    func launch(item: AppInfo) async throws {
+    func launch(_ item: AppInfo) async throws {
         // if we allow bypassing the gatekeeper check for unquarantined apps, then we need to first check to see if the app is quarantined before we launch it
         let gatekeeperCheck = permitGatekeeperBypass == true
 
@@ -759,7 +776,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             //
             // how should we try to identify the app to launch? we don't want to have to try to parse the
 
-            throw AppError("Could not find install path for “\(item.app.name)”")
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “\(item.app.name)”", bundle: .module, comment: "error message"), item.app.name))
         }
 
         // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
@@ -845,7 +862,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             downloadedArtifact = localURL
             removeArtifact = false
         } else if fromLocalOnly {
-            throw AppError("Could not install from local artifact")
+            throw AppError(NSLocalizedString("Could not install from local artifact", bundle: .module, comment: "error message"))
         } else {
             fromURL = self.brewArchiveURLRemote
             let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
@@ -1170,7 +1187,7 @@ extension HomebrewInventory {
         case .installed:
             return installedCasks[item.app.id.rawValue] != nil
         case .updated:
-            return appUpdated(item: item)
+            return appUpdated(item)
         case .category(let cat):
             return item.app.categories?.contains(cat) == true
         case .top:
@@ -1178,7 +1195,7 @@ extension HomebrewInventory {
         case .sponsorable:
             return item.app.fundingLinks?.isEmpty == false
         case .recent:
-            return isRecentlyUpdated(item: item)
+            return isRecentlyUpdated(item)
         }
     }
 
@@ -1186,11 +1203,11 @@ extension HomebrewInventory {
         appCategories[category] ?? []
     }
 
-    func appInstalled(item: AppInfo) -> String? {
+    func appInstalled(_ item: AppInfo) -> String? {
         installedCasks[item.id.rawValue]?.max() // max isn't the right thing to do here (since 1.10 < 1.90), but we want a consistent result
     }
 
-    func appUpdated(item: AppInfo) -> Bool {
+    func appUpdated(_ item: AppInfo) -> Bool {
         //        let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
         //        return info.app.version.flatMap(versions.contains) != true
 
@@ -1228,7 +1245,7 @@ extension HomebrewInventory {
                 }
             })
             .filter({ info in
-                appUpdated(item: info)
+                appUpdated(info)
             })
             .count
     }
@@ -1249,7 +1266,7 @@ extension HomebrewInventory {
         case .installed:
             return fmt(installedCasks.count)
         case .recent:
-            return fmt(visibleAppInfos.filter({ isRecentlyUpdated(item: $0) }).count)
+            return fmt(visibleAppInfos.filter({ isRecentlyUpdated($0) }).count)
         case .category(let cat):
             return fmt(apps(for: cat).count)
         }
@@ -1275,7 +1292,6 @@ extension HomebrewInventory {
 
 extension HomebrewInventory {
     fileprivate func synthesizeCaskCatalog() -> [AppInfo] {
-        //synthesizeCaskCatalogLegacy()
         synthesizeCaskCatalogFromAppcasks()
     }
 
@@ -1295,124 +1311,12 @@ extension HomebrewInventory {
                 dbg("missing cask:", app.bundleIdentifier)
                 continue
             } else {
-                let info = AppInfo(app: app, cask: cask)
+                let info = AppInfo(source: source, app: app, cask: cask)
                 infos.append(info)
             }
         }
 
         return infos
-    }
-
-    @available(*, deprecated, message: "use enhanced appcasks metadata and ordering")
-    private func synthesizeCaskCatalogLegacy() -> [AppInfo] {
-        // an index of [token: extraInfo]
-        let appcaskInfo: [String: [AppCatalogItem]] = (appcasks?.apps ?? [])
-            .grouping(by: \.abbreviatedToken)
-
-        //let ancillaryStats = appstats?.formulae ?? [:]
-
-        // the position of the cask in the ranks, which is used to control the initial sort order
-        let caskRanks: [String : Int] = (appcasks?.apps ?? [])
-            .enumerated()
-            .grouping(by: \.element.abbreviatedToken)
-            .compactMapValues(\.first?.offset)
-
-        // dbg("casks:", caskMap.keys.sorted())
-        var infos: [AppInfo] = []
-
-        //dbg("checking installed casks:", installedCasks.keys.sorted())
-        //dbg("checking all casks:", casks.map(\.id).sorted())
-
-        func downloadStatsCount(for token: String) -> Int? {
-            //ancillaryStats[token]?.first?.count
-            nil
-        }
-
-        for cask in self.casks {
-            // skips casks that don't have any download URL
-            guard let downloadURL = cask.url.flatMap(URL.init(string:)) else {
-                continue
-            }
-
-            // the short cask token (e.g. "firefox")
-            let caskTokenShort = cask.token
-
-            // the long cask token (e.g. "homebrew/cask/firefox")
-            let caskTokenFull = cask.id
-            let caskid = caskTokenFull
-
-            let caskInfo = appcaskInfo[caskTokenShort]
-
-            let downloadCount = caskInfo?.first?.downloadCount
-            let ancillaryDownloadCount = downloadStatsCount(for: caskTokenShort)
-            // dbg("downloads for:", caskTokenShort, "downloads:", downloads, "ancillaryDownloadCount:", ancillaryDownloadCount)
-
-            let downloads = (downloadCount ?? 0) + (ancillaryDownloadCount ?? 0)
-
-            let readmeURL = caskInfo?.first?.readmeURL
-            let releaseNotesURL = caskInfo?.first?.releaseNotesURL
-
-            // TODO: extract installed Plist and check bundle identifier?
-            //let installed = installedCasks[caskTokenShort]?.first
-            //dbg("installed info for:", caskTokenShort, installed)
-
-            //dbg("download count for:", caskid, downloads)
-            guard let caskHomepage = cask.homepage.flatMap(URL.init(string:)) else {
-                dbg("skipping cask with no home page:", cask.homepage)
-                continue
-            }
-
-            // TODO: we should de-proritize the privileged domains so the publisher fork will always take precedence
-            let appcask = caskInfo?.first { item in
-                item.homepage?.host == "appfair.app"
-                || item.homepage?.host == "www.appfair.app"
-                || item.homepage?.host == caskHomepage.host
-            }
-
-            //dbg("appcaskInfo for:", caskid, appcask)
-
-            let name = cask.name.first ?? caskTokenShort
-
-            let versionDate: Date? = nil // how to obtain this? we could look at the mod date on, e.g., /opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/signal.rb, but they seem to only be synced with the last update
-
-            let item = AppCatalogItem(name: name, bundleIdentifier: caskid, subtitle: cask.desc ?? "", developerName: caskHomepage.absoluteString, localizedDescription: cask.desc ?? "", size: 0, version: cask.version, versionDate: versionDate, downloadURL: downloadURL, iconURL: appcask?.iconURL, screenshotURLs: appcask?.screenshotURLs, versionDescription: appcask?.versionDescription, tintColor: appcask?.tintColor, beta: false, categories: appcask?.categories, downloadCount: downloads, impressionCount: appcask?.impressionCount, viewCount: appcask?.viewCount, starCount: nil, watcherCount: nil, issueCount: nil, coreSize: nil, sha256: cask.checksum, permissions: nil, metadataURL: self.caskMetadata(name: cask.token), readmeURL: readmeURL, releaseNotesURL: releaseNotesURL, homepage: caskHomepage)
-
-            let info = AppInfo(app: item, cask: cask)
-            infos.append(info)
-        }
-
-        let sortedInfos = infos.sorted(by: { info1, info2 in
-            guard let id1 = info1.cask?.token else { return false }
-            guard let id2 = info2.cask?.token else { return true }
-
-            // downloads are prioritized over other rankings
-            if let dl1 = downloadStatsCount(for: id1), let dl2 = downloadStatsCount(for: id2) {
-                return dl1 > dl2
-            }
-
-            let rank1 = caskRanks[id1]
-            let rank2 = caskRanks[id2]
-
-            // un-ranked casks fall back to being sorted by the download stats
-            //            if (rank1 == nil && rank2 == nil) {
-            //                let dl1 = downloadStatsCount(for: id1)
-            //                let dl2 = downloadStatsCount(for: id2)
-            //                return (dl1 ?? 0) > (dl2 ?? 0)
-            //            }
-
-            guard let rank1 = rank1 else {
-                return rank2 == nil
-            }
-            guard let rank2 = rank2 else {
-                return true
-            }
-
-            return rank1 < rank2
-        })
-
-        dbg("sorted:", infos.count, "first:", sortedInfos.first?.id.rawValue, "last:", sortedInfos.last?.id.rawValue)
-
-        return sortedInfos
     }
 }
 
@@ -1420,7 +1324,7 @@ extension HomebrewInventory {
     /// Fetches livecheck for the given cask
     func fetchLivecheck(for cask: String) async throws -> (strategy: String, url: URL)? {
         guard let caskSource = self.caskSource(name: cask) else {
-            throw AppError("no metadata for package")
+            throw AppError(NSLocalizedString("no metadata for package", bundle: .module, comment: "error message"))
         }
         dbg("caskSource:", caskSource)
         let (data, _) = try await URLSession.shared.fetch(request: URLRequest(url: caskSource))
@@ -1439,7 +1343,7 @@ extension HomebrewInventory {
 
         // note that this will fail when the appcast URL is composed of tokens (e.g.: "https://kapeli.com/Dash#{version.major}.xml")
         guard let lcURL = livecheck["url"], let url = URL(string: lcURL.trimmedEvenly(["'", "\""])) else {
-            throw AppError("unable to parse stanza for url property")
+            throw AppError(NSLocalizedString("unable to parse stanza for url property", bundle: .module, comment: "error message"))
         }
 
         return (strategy, url)
@@ -1480,6 +1384,25 @@ extension HomebrewInventory {
             }
         }
         return props
+    }
+}
+
+extension HomebrewInventory {
+    func sourceInfo(for item: SidebarItem) -> AppSourceInfo? {
+        switch item {
+        case .top:
+            return HomebrewInventory.SourceInfo.TopAppInfo()
+        case .recent:
+            return HomebrewInventory.SourceInfo.RecentAppInfo()
+        case .sponsorable:
+            return HomebrewInventory.SourceInfo.SponsorableAppInfo()
+        case .installed:
+            return HomebrewInventory.SourceInfo.InstalledAppInfo()
+        case .updated:
+            return HomebrewInventory.SourceInfo.UpdatedAppInfo()
+        case .category(let category):
+            return CategoryAppInfo(category: category)
+        }
     }
 }
 

@@ -80,7 +80,7 @@ struct AppsTableView : View, ItemTableView {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             Group {
                 let imageColumn = TableColumn("", value: \AppInfo.app.iconURL, comparator: URLComparator()) { item in
-                    fairManager.iconView(for: item, source: source)
+                    fairManager.iconView(for: item)
                         .frame(width: 20, height: 20)
                 }
                 imageColumn
@@ -130,16 +130,16 @@ struct AppsTableView : View, ItemTableView {
             }
 
             Group { // ideally, we'd guard for whether we are using Homebrew casks, but table builders don't support conditional statements: “Closure containing control flow statement cannot be used with result builder 'TableColumnBuilder'”
-                let starCount = onumColumn(named: "Stars", path: \AppInfo.app.starCount)
+                let starCount = onumColumn(named: "Stars", path: \AppInfo.app.stats?.starCount)
                 starCount.width(ideal: 40)
 
-                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.app.downloadCount)
+                let downloadCount = onumColumn(named: "Downloads", path: \AppInfo.app.stats?.downloadCount)
                 downloadCount.width(ideal: 40)
 
-                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.app.forkCount)
+                //let forkCount = onumColumn(named: "Forks", path: \AppInfo.app.stats?.forkCount)
                 //forkCount.width(ideal: 40)
 
-                let issueCount = onumColumn(named: "Issues", path: \AppInfo.app.issueCount)
+                let issueCount = onumColumn(named: "Issues", path: \AppInfo.app.stats?.issueCount)
                 issueCount.width(ideal: 40)
 
                 let catgoryColumn = ostrColumn(named: "Category", path: \AppInfo.app.primaryCategoryIdentifier?.rawValue)
@@ -152,12 +152,12 @@ struct AppsTableView : View, ItemTableView {
     }
 
     /// The currently selected item
-    var itemSelection: Selection? {
+    var itemSelection: AppInfo? {
         guard let item = items.first(where: { $0.id == selection }) else {
             return nil
         }
 
-        return Selection(app: item)
+        return item
     }
 }
 

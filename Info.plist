@@ -51,12 +51,12 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>$(APP_CATEGORY)</string>
-	<key>LSFileQuarantineEnabled</key>
-	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>appfair</string>
 	</array>
+	<key>LSFileQuarantineEnabled</key>
+	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIPresentationMode</key>

@@ -131,8 +131,10 @@ private struct CatalogItemHostView: View {
     /// Navigates to the given URL;
     /// if it is within the allowed domain of the embedded browser, opens it embedded.
     /// Otherwise, launches the system's default browser.
-    @discardableResult func navigate(to url: URL) -> OpenURLAction.Result {
-        if let host = url.host, CatalogItemView.permittedHostsRegex.hasMatches(in: host) {
+    @discardableResult func navigate(to url: URL?) -> OpenURLAction.Result {
+        if let url = url,
+           let host = url.host,
+           CatalogItemView.permittedHostsRegex.hasMatches(in: host) {
             dbg("handling embedded url:", url.absoluteString)
             if self.previewTab == .project {
                 self.projectHomeWebViewState.load(url)
@@ -147,8 +149,12 @@ private struct CatalogItemHostView: View {
             //return .systemAction(url)
         } else {
             // openURLAction(url)
-            dbg("delegating to to system:", url.absoluteString)
-            return .systemAction(url)
+            dbg("delegating to to system:", url?.absoluteString)
+            if let url = url {
+                return .systemAction(url)
+            } else {
+                return .discarded
+            }
         }
     }
 
@@ -191,8 +197,8 @@ private struct CatalogItemHostView: View {
             summarySegment {
                 card(
                     Text("Stars", bundle: .module, comment: "app catalog entry header box title"),
-                    numberView(number: .decimal, \.starCount),
-                    histogramView(\.starCount)
+                    numberView(number: .decimal, \.stats?.starCount),
+                    histogramView(\.stats?.starCount)
                 )
             }
             starButton()
@@ -220,9 +226,9 @@ private struct CatalogItemHostView: View {
             summarySegment {
                 card(
                     Text("Downloads", bundle: .module, comment: "app catalog entry header box title"),
-                    numberView(number: .decimal, \.downloadCount)
-                        .help(info.isCask ? Text("The number of downloads of this cask in the past 90 days", bundle: .module, comment: "app catalog entry header box title tooltip text") : Text("The total number of downloads for this release", bundle: .module, comment: "app catalog entry header box title tooltip text")),
-                    histogramView(\.downloadCount)
+                    numberView(number: .decimal, \.stats?.downloadCount)
+                        .help(info.isGitHubHostedApp ? Text("The total number of downloads for this release", bundle: .module, comment: "app catalog entry header box title tooltip text") : Text("The number of downloads of this app in the past 90 days", bundle: .module, comment: "app catalog entry header box title tooltip text")),
+                    histogramView(\.stats?.downloadCount)
                 )
             }
             sponsorButton()
@@ -271,17 +277,16 @@ private struct CatalogItemHostView: View {
 
     @ViewBuilder func downloadSizeView() -> some View {
         Group {
-            if info.isCask {
-                if let manualURLFileSize = manualURLFileSize, manualURLFileSize > 0 { // sometimes -1 when it isn't found
-                    numberView(size: .file, value: Int(manualURLFileSize))
-                } else {
-                    // show the card view with an empty file size
-                    Text("Unknown", bundle: .module, comment: "app catalog entry content box placeholder text for a download size that isn't known")
-                        .redacted(reason: .placeholder)
-                        .task(priority: .low) {
-                            await fetchDownloadURLStats()
-                        }
-                }
+            if let manualURLFileSize = manualURLFileSize, manualURLFileSize > 0 { // sometimes -1 when it isn't found
+                numberView(size: .file, value: Int(manualURLFileSize))
+            } else if (self.info.app.fileSize ?? 0) <= 0 {
+                // show the card view with an empty file size
+                //Text("Unknown", bundle: .module, comment: "app catalog entry content box placeholder text for a download size that isn't known")
+                    //.redacted(reason: .placeholder)
+                numberView(size: .file, \.fileSize)
+                    .task(priority: .low) {
+                        await fetchDownloadURLStats()
+                    }
             } else {
                 numberView(size: .file, \.fileSize)
             }
@@ -295,8 +300,8 @@ private struct CatalogItemHostView: View {
             summarySegment {
                 card(
                     Text("Core Size", bundle: .module, comment: "app catalog entry header box title for the core size of the app"),
-                    numberView(size: .file, \.coreSize),
-                    histogramView(\.coreSize)
+                    numberView(size: .file, \.stats?.coreSize),
+                    histogramView(\.stats?.coreSize)
                 )
             }
         }
@@ -309,8 +314,8 @@ private struct CatalogItemHostView: View {
             summarySegment {
                 card(
                     Text("Watchers", bundle: .module, comment: "app catalog entry header box title for the number of watchers for the app"),
-                    numberView(number: .decimal, \.watcherCount),
-                    histogramView(\.watcherCount)
+                    numberView(number: .decimal, \.stats?.watcherCount),
+                    histogramView(\.stats?.watcherCount)
                 )
             }
         }
@@ -323,8 +328,8 @@ private struct CatalogItemHostView: View {
             summarySegment {
                 card(
                     Text("Issues", bundle: .module, comment: "app catalog entry header box title for the number of issues for the app"),
-                    numberView(number: .decimal, \.issueCount),
-                    histogramView(\.issueCount)
+                    numberView(number: .decimal, \.stats?.issueCount),
+                    histogramView(\.stats?.issueCount)
                 )
             }
             issuesButton()
@@ -354,7 +359,7 @@ private struct CatalogItemHostView: View {
                 card(
                     Text("Updated", bundle: .module, comment: "app catalog entry header box title for the date the app was last updated"),
                     releaseDateView(),
-                    histogramView(\.issueCount)
+                    histogramView(\.stats?.issueCount)
                 )
             }
         }
@@ -375,40 +380,39 @@ private struct CatalogItemHostView: View {
     }
 
     private func fetchDownloadURLStats() async {
-        if fairManager.homeBrewInv?.manageCaskDownloads == true {
-            do {
-                dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
+        do {
+            //dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
 
-                let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .returnCacheDataElseLoad)
-                
-                // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
-                withAnimation {
-                    self.manualURLFileSize = head?.expectedContentLength
-                    self.manualURLModifiedDate = head?.lastModifiedDate
-                }
-                dbg("URL HEAD:", metadata.downloadURL.absoluteString, self.manualURLFileSize?.localizedByteCount(), self.manualURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
+            let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .returnCacheDataElseLoad)
 
-            } catch {
-                // errors are not unexpected when the user leaves this view:
-                // NSURLErrorDomain Code=-999 "cancelled"
-                dbg("error checking URL size:", metadata.downloadURL.absoluteString, "error:", error)
+            // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
+            withAnimation {
+                self.manualURLFileSize = head?.expectedContentLength
+                self.manualURLModifiedDate = head?.lastModifiedDate
             }
+            //dbg("URL HEAD:", metadata.downloadURL.absoluteString, self.manualURLFileSize?.localizedByteCount(), self.manualURLFileSize, (head as? HTTPURLResponse)?.allHeaderFields as? [String: String])
+
+        } catch {
+            // errors are not unexpected when the user leaves this view:
+            // NSURLErrorDomain Code=-999 "cancelled"
+            dbg("error checking URL size:", metadata.downloadURL.absoluteString, "error:", error)
         }
     }
 
     @ViewBuilder func catalogSummaryCards() -> some View {
         HStack(alignment: .center) {
             starsCard()
-                .opacity(info.isCask ? 0.0 : 1.0)
+                .opacity(info.isGitHubHostedApp ? 1.0 : 0.0)
             Divider()
             releaseDateCard()
             Divider()
             downloadsCard()
+                .opacity(info.isCask || info.isGitHubHostedApp ? 1.0 : 0.0)
             Divider()
             sizeCard()
             Divider()
             issuesCard()
-                .opacity(info.isCask ? 0.0 : 1.0)
+                .opacity(info.isGitHubHostedApp ? 1.0 : 0.0)
         }
     }
 
@@ -507,8 +511,7 @@ private struct CatalogItemHostView: View {
 
 //                    linkTextField(Text("Auto-Updates", bundle: .module, comment: "app catalog entry info auto-update tooltip"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
 //                        .help(Text("Whether this app handles updating itself", bundle: .module, comment: "tooltip text describing when an app auto-updates"))
-
-                } else {
+                } else if info.isGitHubHostedApp {
                     if let landingPage = info.app.landingPage {
                         linkTextField(Text("Home", bundle: .module, comment: "app catalog entry info link title"), icon: .house, url: landingPage)
                             .help(Text("Opens link to the landing page for this app at: \(landingPage.absoluteString)", bundle: .module, comment: "app catalog entry info link tooltip"))
@@ -532,6 +535,11 @@ private struct CatalogItemHostView: View {
                     if let developerURL = info.app.developerURL {
                         linkTextField(Text("Developer", bundle: .module, comment: "app catalog entry info link title"), icon: .person, url: developerURL, linkText: metadata.developerName)
                             .help(Text("Searches for this developer at: \(info.app.developerURL?.absoluteString ?? "")", bundle: .module, comment: "app catalog entry info link tooltip"))
+                    }
+                } else {
+                    // TODO: implement more details for non-fairground apps
+                    if let homepage = info.app.homepage {
+                        linkTextField(Text("Homepage", bundle: .module, comment: "app catalog entry info link title"), icon: .link_circle, url: homepage, linkText: metadata.homepage?.absoluteString)
                     }
                 }
             }
@@ -585,7 +593,7 @@ private struct CatalogItemHostView: View {
             switch self {
             case .details: return Text("Details", bundle: .module, comment: "app catalog cask entry metadata tab title for app details")
             case .permissions: return Text("Permissions", bundle: .module, comment: "app catalog cask entry metadata tab title for app permissions")
-            case .formula: return Text("Formula", bundle: .module, comment: "app catalog cask entry metadata tab title for app formula")
+            case .formula: return Text("Scheme", bundle: .module, comment: "app catalog cask entry metadata tab title for app raw formula specification")
             case .security: return Text("Security", bundle: .module, comment: "app catalog cask entry metadata tab title for app secutiry")
             }
         }
@@ -713,11 +721,13 @@ private struct CatalogItemHostView: View {
                     case .screenshots:
                         screenshotsSection()
                     case .project:
-                        if info.projectURL != nil {
-                            projectSection()
+                        if info.isCask || info.isGitHubHostedApp {
+                            projectBrowserViewSection()
                         }
                     case .homepage:
-                        homepageSection()
+                        if info.isCask || info.isGitHubHostedApp {
+                            homepageBrowserViewSection()
+                        }
                     }
                 }
                 .tag(tab)
@@ -733,11 +743,11 @@ private struct CatalogItemHostView: View {
             .environmentObject(webViewState)
     }
 
-    @ViewBuilder func projectSection() -> some View {
+    @ViewBuilder func projectBrowserViewSection() -> some View {
         browserView(projectHomeWebViewState)
     }
 
-    @ViewBuilder func homepageSection() -> some View {
+    @ViewBuilder func homepageBrowserViewSection() -> some View {
         browserView(appHomeWebViewState)
     }
 
@@ -811,16 +821,18 @@ private struct CatalogItemHostView: View {
                     case .details:
                         detailsListView()
                     case .permissions:
-                        if !info.isCask {
+                        if info.isGitHubHostedApp {
                             permissionsSection()
                         }
                     case .security:
-                        if !info.isCask {
+                        if info.isGitHubHostedApp {
                             //SecurityBox(info: info) // TODO: make this human-readable for presentation instead of showing the raw JSON
                         }
                     case .formula:
                         if let cask = info.cask {
                             CaskFormulaBox(cask: cask, json: false)
+                        } else {
+                            AppInfoDetailBox(info: info)
                         }
                     }
                 }
@@ -905,10 +917,11 @@ private struct CatalogItemHostView: View {
     }
 
     func screenshotsStackView() -> some View {
-        LazyHStack {
+        LazyHStack(alignment: .center) {
+            Spacer()
             ForEach(metadata.screenshotURLs ?? [], id: \.self) { url in
                 previewImage(url)
-                    .matchedGeometryEffect(id: url, in: namespace, isSource: self.previewScreenshot != url)
+                    .matchedGeometryEffect(id: url, in: namespace, properties: self.previewScreenshot == url ? [.frame] : [], anchor: .center, isSource: self.previewScreenshot != url)
                     .contentShape(Rectangle())
                     .button {
                         dbg("open screenshot:", url.relativePath)
@@ -918,6 +931,7 @@ private struct CatalogItemHostView: View {
                     }
                     .buttonStyle(.zoomable)
             }
+            Spacer()
         }
     }
 
@@ -1018,7 +1032,7 @@ private struct CatalogItemHostView: View {
 
     func catalogHeader() -> some View {
         HStack(alignment: .center) {
-            fairManager.iconView(for: info, source: source, transition: true)
+            fairManager.iconView(for: info, transition: true)
                 .frame(width: 60, height: 60)
                 .transition(AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // shrink and fade out the placeholder while fading in the actual icon
                 .padding(.leading)
@@ -1092,6 +1106,7 @@ private struct CatalogItemHostView: View {
     func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: fairManager.enableInstallWarning)
             .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
+            .disabled(info.isMobileApp) // TODO: allow install of non-macOS apps
             .disabled(appInstalled)
             .confirmationDialog(Text("Install \(info.app.name)", bundle: .module, comment: "install button confirmation dialog title"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
                 Text("Download & Install \(info.app.name)", bundle: .module, comment: "install button confirmation dialog confirm button text").button {
@@ -1120,6 +1135,7 @@ private struct CatalogItemHostView: View {
     func updateButton() -> some View {
         button(activity: .update)
             .keyboardShortcut(currentActivity == .update ? .cancelAction : .defaultAction)
+            .disabled(info.isMobileApp) // TODO: allow update of non-macOS apps
             .disabled((!appInstalled || !appUpdated))
             .accentColor(.orange)
     }
@@ -1127,6 +1143,7 @@ private struct CatalogItemHostView: View {
     func launchButton() -> some View {
         button(activity: .launch)
             .keyboardShortcut(KeyboardShortcut(KeyEquivalent.return, modifiers: .command))
+            .disabled(info.isMobileApp) // TODO: allow launch of non-macOS apps
             .disabled(!appInstalled)
             .accentColor(.green)
     }
@@ -1134,6 +1151,7 @@ private struct CatalogItemHostView: View {
     func revealButton() -> some View {
         button(activity: .reveal)
             .keyboardShortcut(KeyboardShortcut(KeyEquivalent("i"), modifiers: .command)) // CMD-I
+            .disabled(info.isMobileApp) // TODO: allow reveal of non-macOS apps
             .disabled(!appInstalled)
             .accentColor(.teal)
     }
@@ -1141,6 +1159,7 @@ private struct CatalogItemHostView: View {
     func trashButton() -> some View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: fairManager.enableDeleteWarning)
             .keyboardShortcut(.delete, modifiers: [])
+            .disabled(info.isMobileApp) // TODO: allow uninstall of non-macOS apps
             .disabled(!appInstalled)
         //.accentColor(.red) // coflicts with the red background of the button
             .confirmationDialog(Text("Really delete this app?", bundle: .module, comment: "delete button confirmation dialog title"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
@@ -1202,12 +1221,12 @@ private struct CatalogItemHostView: View {
 
     /// Whether the app is successfully installed
     var appInstalled: Bool {
-        fairManager.installedVersion(for: info) != nil
+        fairManager.installedVersion(info) != nil
     }
 
     /// Whether the given app is up-to-date or not
     var appUpdated: Bool {
-        fairManager.appUpdated(for: info)
+        fairManager.appUpdated(info)
     }
 
     func confirmationBinding(_ activity: CatalogActivity) -> Binding<Bool> {
@@ -1422,17 +1441,11 @@ private struct CatalogItemHostView: View {
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
-        if info.isCask {
-            return await fairManager.trying {
-                try await fairManager.homeBrewInv?.delete(item: info, verbose: true)
-            }
-        } else {
-            return await fairManager.trying {
-                try await fairManager.fairAppInv?.delete(item: info, verbose: true)
-                // also remove any URLs that are installed for this app
-                for url in self.trashAppAuxiliaryURLs {
-                    try FileManager.default.trash(url: url)
-                }
+        return await fairManager.trying {
+            try await fairManager.delete(info)
+            // also trash any URLs that may be
+            for url in self.trashAppAuxiliaryURLs {
+                try FileManager.default.trash(url: url)
             }
         }
     }
@@ -1446,6 +1459,10 @@ private struct CatalogItemHostView: View {
 /// Regular expression to replace headers with bold text (since markdown doesn't yet support headers)
 private let headerRegex = Result {
     try NSRegularExpression(pattern: #"^#+ (?<text>.*)$"#, options: [.anchorsMatchLines])
+}
+
+private let githubDownloadRegex = Result {
+    try NSRegularExpression(pattern: "https://github.com/[-A-Za-z0-9]*/[-A-Za-z0-9]*/releases/download")
 }
 
 fileprivate extension View {
@@ -1533,7 +1550,7 @@ struct ReadmeBox : View {
     private func fetchReadme() async {
         let readmeURL = info.app.readmeURL
         do {
-            dbg("fetching README for:", info.app.id, readmeURL?.absoluteString)
+            //dbg("fetching README for:", info.app.id, readmeURL?.absoluteString)
             if let readmeURL = readmeURL {
                 let txt = try await fetchMarkdownResource(url: readmeURL, info: info)
                 //withAnimation { // the effect here is weird: it expands from zero width
@@ -1630,9 +1647,9 @@ struct SecurityBox : View {
 
 struct ReleaseNotesBox : View {
     let info: AppInfo
-
     @State var releaseNotesText: Result<AttributedString, Error>? = nil
     @State var fetchingReleaseNotes = 0
+    @EnvironmentObject var fairManager: FairManager
 
     var body: some View {
         versionSection()
@@ -1653,16 +1670,17 @@ struct ReleaseNotesBox : View {
     }
 
     func fetchReleaseNotes() async {
-        let releaseNotesURL = info.app.releaseNotesURL
         do {
-            dbg("fetching release notes for:", info.app.id, releaseNotesURL?.absoluteString)
-            if let releaseNotesURL = releaseNotesURL {
+            dbg("fetching release notes for app:", info.app.id, info.app.releaseNotesURL?.absoluteString)
+            if let versionDescription = info.app.versionDescription {
+                self.releaseNotesText = Result { try AttributedString(markdown: versionDescription) }
+            } else if let releaseNotesURL = info.app.releaseNotesURL {
                 let notes = try await fetchMarkdownResource(url: releaseNotesURL, info: info)
                 //withAnimation { // the effect here is weird: it expands from zero width
                     self.releaseNotesText = .success(notes)
                 //}
             } else if let cask = info.cask {
-                guard let (strategy, appcastURL) = try await HomebrewInventory.default.fetchLivecheck(for: cask.token) else {
+                guard let (strategy, appcastURL) = try await fairManager.homeBrewInv?.fetchLivecheck(for: cask.token) else {
                     self.releaseNotesText = .success(AttributedString("Missing release notes"))
                     return
                 }
@@ -1698,6 +1716,15 @@ struct ReleaseNotesBox : View {
 //            return nil
 //        }
 //    }
+}
+
+struct AppInfoDetailBox : View, Equatable {
+    let info: AppInfo
+
+    var body: some View {
+        textBox(.success(AttributedString(info.app.prettyJSON)))
+            .font(Font.body.monospaced())
+    }
 }
 
 struct CaskFormulaBox : View {
@@ -1779,8 +1806,24 @@ extension AppInfo {
                 return nil
             }
         } else {
-            return app.projectURL
+            return app.projectURL // TODO: check non-fairground apps
         }
+    }
+
+    /// We are idenfitied as a cask item if we have no version date (which casks don't include in their metadata)
+    /// - TODO: @available(*, deprecated, message: "check source catalog instead")
+    var isCask: Bool {
+        cask != nil
+    }
+
+    /// Returns `true` if this is an app whose path extension is `.ipa`
+    var isGitHubHostedApp: Bool {
+        (try! githubDownloadRegex.get()).hasMatches(in: app.downloadURL.absoluteString) == true
+    }
+
+    /// Returns `true` if this is an app whose path extension is `.ipa`
+    var isMobileApp: Bool {
+        wipipa(app.downloadURL.pathExtension == "ipa")
     }
 }
 
@@ -1858,7 +1901,7 @@ struct ZoomableButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? zoomLevel : 1)
+            .scaleEffect(configuration.isPressed ? zoomLevel : 1, anchor: .center)
     }
 }
 
@@ -1904,7 +1947,7 @@ struct CatalogItemBrowserView : View {
     var body: some View {
         WebView(state: webViewState)
             .webViewNavigationActionPolicy(decide: { action, state in
-                dbg("navigation:", action, "type:", action.navigationType)
+                //dbg("navigation:", action, "type:", action.navigationType)
                 // clicking on links will open in a new browser
                 if let url = action.request.url,
                    action.navigationType == .linkActivated,
@@ -1913,20 +1956,20 @@ struct CatalogItemBrowserView : View {
                     openURLAction(url)
                     return (.cancel, nil)
                 } else {
-                    dbg("traversing url in browser:", action.request.url?.absoluteString)
+                    //dbg("traversing url in browser:", action.request.url?.absoluteString)
                     return (.allow, nil)
                 }
             })
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
-struct CatalogItemView_Previews: PreviewProvider {
-    static var previews: some View {
-        CatalogItemView(info: AppInfo(app: AppCatalogItem.sample), source: .appSourceFairgroundMacOS)
-            .environmentObject(AppSourceInventory.default)
-            .frame(width: 700)
-            .frame(height: 800)
-        //.environment(\.locale, Locale(identifier: "fr"))
-    }
-}
+//@available(macOS 12.0, iOS 15.0, *)
+//struct CatalogItemView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        CatalogItemView(info: AppInfo(source: .appSourceFairgroundMacOS, app: AppCatalogItem.sample), source: .appSourceFairgroundMacOS)
+//            //.environmentObject(AppSourceInventory.default)
+//            .frame(width: 700)
+//            .frame(height: 800)
+//        //.environment(\.locale, Locale(identifier: "fr"))
+//    }
+//}

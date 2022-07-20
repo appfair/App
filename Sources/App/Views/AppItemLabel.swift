@@ -25,17 +25,13 @@ struct AppItemLabel : View {
     }
 
     var installedVersion: String? {
-        if item.isCask {
-            return fairManager.homeBrewInv?.appInstalled(item: item)
-        } else {
-            return fairManager.fairAppInv?.appInstalled(item: item)
-        }
+        fairManager.installedVersion(item)
     }
 
     private func label(for item: AppInfo) -> some View {
         return HStack(alignment: .center) {
             ZStack {
-                fairManager.iconView(for: item, source: source, transition: true)
+                fairManager.iconView(for: item, transition: true)
 
                 if let progress = fairManager.operations[item.id]?.progress {
                     FairProgressView(progress)

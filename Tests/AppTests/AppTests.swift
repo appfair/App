@@ -42,46 +42,46 @@ import FairExpo
 //        XCTAssertNotEqual(0, homeBrewInv.installed.count, "assuming homebrew is installed, there should have been more than one installation")
     }
 
-    func testAppcastParsing() async throws {
-        let inv = HomebrewInventory.default
-
-        @Sendable func checkAppcast(package: String) async throws -> AppcastFeed {
-            dbg("checking appcast package:", package)
-            guard let (strategy, url) = try await inv.fetchLivecheck(for: package) else {
-                // throw XCTestError("could not fetch livecheck on: \(package)")
-                throw URLError(.badURL)
-            }
-
-            dbg("testing package:", package, url.absoluteString)
-
-            XCTAssertTrue(strategy.hasPrefix(":sparkle")) // e.g., can also be: ":sparkle, &:short_version"
-            let (contents, _) = try await URLSession.shared.fetch(request: URLRequest(url: url))
-            let webFeed = try AppcastFeed(xmlData: contents)
-            return webFeed
-        }
-
-        async let feeds = try (
-            proxyman: checkAppcast(package: "proxyman"),
-            keka: checkAppcast(package: "keka")
-        )
-
-        let keka = try await feeds.keka.channels.first
-        XCTAssertEqual(keka?.title, "Keka")
-
-        let proxyman = try await feeds.proxyman.channels.first
-        XCTAssertEqual(proxyman?.title, "Proxyman")
-        if let proxyman = proxyman {
-            guard let enc = proxyman.items.first?.enclosures.first else {
-                return XCTFail("no enclosure")
-            }
-            XCTAssertEqual("application/octet-stream", enc.type)
-
-            // version-specific checks
-            //XCTAssertEqual("33436697", enc.length)
-            //XCTAssertEqual("MC0CFClWh6mZMHIyWtezyyNkAUMF27JTAhUAp0duxxXgtGm0XFGqSQnRipCCgB8=", enc.dsaSignature)
-            //XCTAssertEqual("30400", enc.version)
-            //XCTAssertEqual("3.4.0", enc.shortVersionString)
-        }
-    }
+//    func testAppcastParsing() async throws {
+//        let inv = HomebrewInventory.default
+//
+//        @Sendable func checkAppcast(package: String) async throws -> AppcastFeed {
+//            dbg("checking appcast package:", package)
+//            guard let (strategy, url) = try await inv.fetchLivecheck(for: package) else {
+//                // throw XCTestError("could not fetch livecheck on: \(package)")
+//                throw URLError(.badURL)
+//            }
+//
+//            dbg("testing package:", package, url.absoluteString)
+//
+//            XCTAssertTrue(strategy.hasPrefix(":sparkle")) // e.g., can also be: ":sparkle, &:short_version"
+//            let (contents, _) = try await URLSession.shared.fetch(request: URLRequest(url: url))
+//            let webFeed = try AppcastFeed(xmlData: contents)
+//            return webFeed
+//        }
+//
+//        async let feeds = try (
+//            proxyman: checkAppcast(package: "proxyman"),
+//            keka: checkAppcast(package: "keka")
+//        )
+//
+//        let keka = try await feeds.keka.channels.first
+//        XCTAssertEqual(keka?.title, "Keka")
+//
+//        let proxyman = try await feeds.proxyman.channels.first
+//        XCTAssertEqual(proxyman?.title, "Proxyman")
+//        if let proxyman = proxyman {
+//            guard let enc = proxyman.items.first?.enclosures.first else {
+//                return XCTFail("no enclosure")
+//            }
+//            XCTAssertEqual("application/octet-stream", enc.type)
+//
+//            // version-specific checks
+//            //XCTAssertEqual("33436697", enc.length)
+//            //XCTAssertEqual("MC0CFClWh6mZMHIyWtezyyNkAUMF27JTAhUAp0duxxXgtGm0XFGqSQnRipCCgB8=", enc.dsaSignature)
+//            //XCTAssertEqual("30400", enc.version)
+//            //XCTAssertEqual("3.4.0", enc.shortVersionString)
+//        }
+//    }
 }
 

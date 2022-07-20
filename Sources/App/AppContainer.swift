@@ -14,7 +14,6 @@
  */
 import FairApp
 
-
 public extension AppContainer {
     /// The default size of the window; this will only be set the first time the app is launched; subsequent launches should automatically use whatever size the user left the app at
     static let defaultWindowSize = CGSize(width: 1200, height: 700)
@@ -22,23 +21,9 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
             RootView()
+                .initialViewSize(defaultWindowSize)
                 .environmentObject(fairManager)
                 .preferredColorScheme(fairManager.themeStyle.colorScheme)
-                #if os(macOS)
-                // the initial window sizing is done here; to test default window sizing first run: defaults delete app.App-Fair
-                // note that idealWidth/Height does not work to set the default height; we need to use minWidth/Height to
-                // .frame(idealWidth: 1200, maxWidth: .infinity, idealHeight: 700, maxHeight: .infinity)
-
-                // on first launch, `firstLaunchV1` will be `true` and we will use the hardcoded default value.
-                // subsequently, we should just use whatever the user last left the app at
-                .frame(minWidth: fairManager.firstLaunchV1 ? defaultWindowSize.width : nil, minHeight: fairManager.firstLaunchV1 ? defaultWindowSize.height : nil)
-                .onAppear {
-                    // mark that we've successfully launched; this way, we can set the default
-                    if fairManager.firstLaunchV1 == true {
-                        fairManager.firstLaunchV1 = false
-                    }
-                }
-                #endif
         }
         .commands {
             AppFairCommands(fairManager: fairManager)
@@ -50,7 +35,7 @@ public extension AppContainer {
         }
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
-                // only permit a single window
+                // only permit a single window; this hides the "New" menu option
             }
         }
     }

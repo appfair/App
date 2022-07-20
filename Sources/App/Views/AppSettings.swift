@@ -36,13 +36,13 @@ public struct AppSettingsView: View {
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.general)
-            if let fairAppInv = fairManager.fairAppInv {
+            if let appSourceInv = fairManager.appSourceInventories.first {
                 FairAppsSettingsView()
-                    .environmentObject(fairAppInv)
+                    .environmentObject(appSourceInv)
                     .padding(20)
                     .tabItem {
                         Text("Fairapps", bundle: .module, comment: "fairapps preferences tab title")
-                            .label(image: AppSourceInventory.symbol)
+                            .label(image: appSourceInv.symbol)
                             .symbolVariant(.fill)
                     }
                     .tag(Tabs.fairapps)
@@ -66,9 +66,9 @@ public struct AppSettingsView: View {
                         .symbolVariant(.fill)
                 }
                 .tag(Tabs.privacy)
-            if let fairAppInv = fairManager.fairAppInv {
+            if let appSourceInv = fairManager.appSourceInventories.first {
                 AdvancedSettingsView()
-                    .environmentObject(fairAppInv)
+                    .environmentObject(appSourceInv)
                     .padding(20)
                     .tabItem {
                         Text("Advanced", bundle: .module, comment: "advanced preferences tab title")
@@ -285,22 +285,22 @@ struct HomebrewSettingsView: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct FairAppsSettingsView: View {
     //@EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: AppSourceInventory
+    @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
 
     @State var hoverRisk: AppRisk? = nil
 
     var body: some View {
         Form {
             HStack(alignment: .top) {
-                AppRiskPicker(risk: $fairAppInv.riskFilter, hoverRisk: $hoverRisk)
-                (hoverRisk ?? fairAppInv.riskFilter).riskSummaryText(bold: true)
+                AppRiskPicker(risk: $fairAppmacOSInv.riskFilter, hoverRisk: $hoverRisk)
+                (hoverRisk ?? fairAppmacOSInv.riskFilter).riskSummaryText(bold: true)
                     .textSelection(.enabled)
                     .font(.body)
                     .frame(height: 150, alignment: .top)
                     .frame(maxWidth: .infinity)
             }
 
-            Toggle(isOn: $fairAppInv.showPreReleases) {
+            Toggle(isOn: $fairAppmacOSInv.showPreReleases) {
                 Text("Show Pre-Releases", bundle: .module, comment: "fairapps preference checkbox")
             }
                 .help(Text("Display releases that are not yet production-ready according to the developer's standards.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
@@ -414,7 +414,7 @@ struct AppRiskPicker: View {
 @available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
-    @EnvironmentObject var fairAppInv: AppSourceInventory
+    @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
 
     func checkButton(_ parts: String...) -> some View {
         EmptyView()
@@ -433,12 +433,12 @@ struct AdvancedSettingsView: View {
                     }
                         .help(Text("Enable support for patronage and funding links for individual apps.", bundle: .module, comment: "preference checkbox tooltip"))
 
-                    Toggle(isOn: $fairAppInv.relaunchUpdatedApps) {
+                    Toggle(isOn: $fairAppmacOSInv.relaunchUpdatedApps) {
                         Text("Re-launch updated apps", bundle: .module, comment: "preference checkbox")
                     }
                         .help(Text("Automatically re-launch an app when it has been updated. Otherwise, the updated version will be used after quitting and re-starting the app.", bundle: .module, comment: "preference checkbox tooltip"))
 
-                    Toggle(isOn: $fairAppInv.autoUpdateCatalogApp) {
+                    Toggle(isOn: $fairAppmacOSInv.autoUpdateCatalogApp) {
                         Text("Keep catalog app up to date", bundle: .module, comment: "preference checkbox")
                     }
                     .help(Text("Automatically download and apply updates to the App Fair catalog browser app.", bundle: .module, comment: "preference checkbox tooltip"))
@@ -565,7 +565,7 @@ struct PrivacySettingsView : View {
                     Privacy mode will be automatically de-activated after the specified duration, as well as when quitting App Fair.app. Privacy mode should not be left permanently disabled, because it may prevent certificate revocation checks from taking place.
                     """, bundle: .module, comment: "app launch privacy description text")
                 .font(.body)
-                // .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected
+                .textSelection(.enabled) // bug that causes lines to stop wrapping when text is selected (seems to be fixed as of 12.4)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding()

@@ -14,6 +14,53 @@
  */
 import FairKit
 
+
+/// A label that tints its image
+@available(macOS 12.0, iOS 15.0, *)
+public struct TintedLabel : View, Equatable {
+    //@Environment(\.colorScheme) var colorScheme
+    public var title: Text
+    public let symbol: FairSymbol
+    public var tint: Color? = nil
+    public var mode: RenderingMode?
+
+    public var body: some View {
+        Label(title: { title }) {
+            if let tint = tint {
+                if let mode = mode {
+                    symbol.image
+                        .symbolRenderingMode(mode.symbolRenderingMode)
+                        .foregroundStyle(tint)
+                } else {
+                    symbol.image
+                        .fairTint(simple: true, color: tint)
+                }
+            } else {
+                symbol.image
+            }
+        }
+    }
+
+    /// An equatable form of the struct based SymbolRenderingMode instances
+    public enum RenderingMode : Equatable {
+        case monochrome
+        case hierarchical
+        case multicolor
+        case palette
+
+        /// The instance of `SymbolRenderingMode` that matches this renderig mode.
+        var symbolRenderingMode: SymbolRenderingMode {
+            switch self {
+            case .monochrome: return SymbolRenderingMode.monochrome
+            case .hierarchical: return SymbolRenderingMode.hierarchical
+            case .multicolor: return SymbolRenderingMode.multicolor
+            case .palette: return SymbolRenderingMode.palette
+            }
+        }
+    }
+}
+
+
 /// A label that describes an error condition
 @available(macOS 12.0, iOS 15.0, *)
 public struct ErrorLabel<E: Error> : View {

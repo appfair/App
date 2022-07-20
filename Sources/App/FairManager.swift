@@ -12,18 +12,62 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import FairApp
+import FairKit
 import FairExpo
 import Combine
 
-protocol FairManagerType {
+/// A controller that handles multiple app inventory instances
+protocol AppInventoryController {
+    @MainActor var inventories: [(AppInventory, AnyCancellable)] { get }
+
+    /// Finds the inventory for the given identifier in the managers list of sources
+    @MainActor func inventory(from source: AppSource) -> AppInventory?
+}
+
+
+extension AppInventoryController {
+    @MainActor var appInventories: [AppInventory] {
+        inventories.map(\.0)
+    }
+
+    @MainActor var appSources: [AppSource] {
+        appInventories.map(\.source)
+    }
+
+    @MainActor func inventory(from source: AppSource) -> AppInventory? {
+        appInventories.first(where: { $0.source == source })
+    }
+
+    @MainActor func inventory(for item: AppInfo) -> AppInventory? {
+        inventory(from: item.source)
+        //item.isCask ? homeBrewInv : fairAppInv
+    }
+
+    /// Returns the metadata for the given catalog
+    @MainActor func sourceInfo(for selection: SidebarSelection) -> AppSourceInfo? {
+        inventory(for: selection.source)?.sourceInfo(for: selection.item)
+    }
+
+    @MainActor func inventory(for source: AppSource) -> AppInventory? {
+        inventory(from: source)
+    }
+
+    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
+    ///
+    /// -TODO: @available(*, deprecated, renamed: "inventory(from:)")
+    @MainActor var homeBrewInv: HomebrewInventory? {
+        inventory(from: .homebrew) as? HomebrewInventory
+    }
+
+    /// Returns a list of all the inventories that extend from `AppSourceInventory`
+    @MainActor var appSourceInventories: [AppSourceInventory] {
+        appInventories.compactMap({ $0 as? AppSourceInventory })
+    }
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class FairManager: SceneManager, FairManagerType {
+@MainActor public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
-
-    @AppStorage("firstLaunchV1") public var firstLaunchV1 = true
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning = true
     @AppStorage("enableDeleteWarning") public var enableDeleteWarning = true
@@ -51,8 +95,11 @@ protocol FairManagerType {
     /// Whether the embedded browser should use private browsing mode for untrusted sites
     @AppStorage("usePrivateBrowsingMode") var usePrivateBrowsingMode = true
 
-    /// The inventories that are currently available
-    @Published var inventories: [AppSource: AppInventory] = [:]
+    /// The list of source URL strings to load as sources
+    @AppStorage("userSources") var userSources: AppStorageArray<String> = []
+
+    /// The inventories of app sources that are currently available
+    @Published var inventories: [(AppInventory, AnyCancellable)] = []
 
 //    /// The appManager, which should be extracted as a separate `EnvironmentObject`
 //    @Published var fairAppInv: AppSourceInventory
@@ -73,23 +120,11 @@ protocol FairManagerType {
 
     @Published public var errors: [AppError] = []
 
-    private var observers: [AnyCancellable] = []
+    //private var observers: [AnyCancellable] = []
 
     required internal init() {
         super.init()
-
-        for source in self.appSources {
-            switch source {
-            case .homebrew:
-                self.addInventory(source: source, HomebrewInventory.default)
-            case .appSourceFairgroundMacOS:
-                self.addInventory(source: source, AppSourceInventory.macOSInventory)
-            case .appSourceFairgroundiOS:
-                self.addInventory(source: source, AppSourceInventory.iOSInventory)
-            default:
-                continue
-            }
-        }
+        self.resetAppSources()
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
@@ -103,52 +138,76 @@ protocol FairManagerType {
         ]
     }
 
-    func addInventory(source: AppSource, _ inventory: AppInventory) {
-        self.inventories[source] = inventory
-        // track any changes to the inventory and broadcast their changes
-        self.observers.append(inventory.objectWillChange.sink { [weak self] in
-            self?.objectWillChange.send()
-        })
-    }
+    /// Resets the in-memory list of app sources without touching the
+    func resetAppSources() {
+        self.inventories.removeAll()
 
-    /// The list of sources as presented in the user interface
-    ///
-    /// - TODO: @available(*, deprecated, message: "use persistent list")
-    var appSources: [AppSource] {
-        // return inventories.keys.array() // randomly ordered
+        addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL))
+        addAppSource(url: appfairCatalogURLMacOS, persist: false)
 
-        return [
-            .homebrew,
-            .appSourceFairgroundMacOS,
-            //wip(.appSourceFairgroundiOS),
-        ]
-    }
-
-    /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    /// - TODO: @available(*, deprecated, message: "use inventories[.fairapps]")
-    var fairAppInv: AppSourceInventory? {
-        inventories[.appSourceFairgroundMacOS] as? AppSourceInventory
-    }
-
-    /// The appManager, which should be extracted as a separate `EnvironmentObject`
-    /// - TODO: @available(*, deprecated, message: "use inventories[.fairapps]")
-    var fairAppiOSInv: AppSourceInventory? {
-        inventories[.appSourceFairgroundiOS] as? AppSourceInventory
-    }
-
-    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    /// - TODO: @available(*, deprecated, message: "use inventories[.homebrew]")
-    var homeBrewInv: HomebrewInventory? {
-        inventories[.homebrew] as? HomebrewInventory
-    }
-
-    func inventory(for source: AppSource) -> AppInventory? {
-        switch source {
-        case .homebrew: return homeBrewInv
-        case .appSourceFairgroundMacOS: return fairAppInv
-        case .appSourceFairgroundiOS: return fairAppiOSInv
-        default: return nil
+        for source in self.userSources.compactMap(URL.init(string:)) {
+            dbg("adding user source:", source.absoluteString)
+            addAppSource(url: source, persist: false)
         }
+    }
+
+    /// Adds an app source to the list of inventories
+    ///
+    /// - Parameters:
+    ///   - url: the url of the source
+    ///   - load: whether to start a task to load the contents of the source
+    ///   - persist: whether to save the URL in the persistent list of sources
+    /// - Returns: whether the source was successfully added
+    @discardableResult func addAppSource(url: URL, load: Bool = false, persist: Bool) -> AppSourceInventory? {
+        let source = AppSource(rawValue: url.absoluteString)
+        let inv = AppSourceInventory(source: source, sourceURL: url)
+        let added = addInventory(inv)
+        if added == false {
+            return nil
+        } else {
+            if load {
+                Task {
+                    await self.refresh(inventory: inv, reloadFromSource: true)
+                }
+            }
+
+            if persist { // save the source in the user defaults
+                userSources.append(url.absoluteString)
+            }
+            return inv
+        }
+    }
+
+    /// Removed the inventory for the given source, both from the current inventories
+    /// as well as from the persistent list saved in ``AppStorage``.
+    @discardableResult func removeInventory(for removeSource: AppSource, persist: Bool) -> Bool {
+        var found = false
+        for (index, (inv, _)) in self.inventories.enumerated().reversed() {
+            if removeSource == inv.source {
+                self.inventories.remove(at: index)
+                if persist {
+                    self.userSources.removeAll { $0 == removeSource.rawValue }
+                }
+                found = true
+            }
+        }
+        return found
+    }
+
+    @discardableResult func addInventory(_ inventory: AppInventory) -> Bool {
+        if let _ = self.inventories.first(where: { inv, _ in
+            inv.source == inventory.source
+        }) {
+            // the source of the inventory is the unique identifier
+            return false
+        }
+
+        // track any changes to the inventory and broadcast their changes
+        let observer = inventory.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        }
+        self.inventories.append((inventory, observer))
+        return true
     }
 
     func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
@@ -161,12 +220,24 @@ protocol FairManagerType {
 
     /// Returns true is there are any refreshes in progress
     var refreshing: Bool {
-        self.inventories.values.contains { $0.updateInProgress > 0 }
+        self.appInventories.contains { $0.updateInProgress > 0 }
     }
 
-    func refresh(clearCatalog: Bool) async throws {
-        for catalog in self.inventories.values {
-            try await catalog.refreshAll(clearCatalog: clearCatalog)
+    func refresh(inventory: AppInventory, reloadFromSource: Bool) async {
+        do {
+            try await inventory.refreshAll(reloadFromSource: reloadFromSource)
+        } catch {
+            self.reportError(AppError(String(format: NSLocalizedString("Error Loading Catalog", bundle: .module, comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", bundle: .module, comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error))
+        }
+    }
+
+    func refresh(reloadFromSource: Bool) async {
+        await withTaskGroup(of: Void.self, returning: Void.self) { group in
+            for inv in self.appInventories.shuffled() {
+                let _ = group.addTaskUnlessCancelled {
+                    await self.refresh(inventory: inv, reloadFromSource: reloadFromSource)
+                }
+            }
         }
     }
 
@@ -198,12 +269,12 @@ protocol FairManagerType {
     }
 
     func updateCount() -> Int {
-        inventories.values.map({ $0.updateCount() }).reduce(0, { $0 + $1 })
+        appInventories.map({ $0.updateCount() }).reduce(0, { $0 + $1 })
     }
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
     func sourceOverviewView(selection: SidebarSelection, showText: Bool, showFooter: Bool) -> some View {
-        let info = sourceInfo(for: selection)
+        let info = inventory(for: selection.source)?.sourceInfo(for: selection.item)
         let label = info?.label
         let color = label?.tint ?? .accentColor
 
@@ -237,6 +308,7 @@ protocol FairManagerType {
                 Spacer()
                 ForEach(enumerated: info.footerText) { _, footerText in
                     footerText
+                        .textSelection(.enabled)
                 }
                     .font(.footnote)
             }
@@ -249,109 +321,116 @@ protocol FairManagerType {
     ///   - info: the info to check
     ///   - transition: whether to use a fancy transition
     /// - Returns: the icon
-    @ViewBuilder func iconView(for info: AppInfo, source: AppSource, transition: Bool = false) -> some View {
+    @ViewBuilder func iconView(for item: AppInfo, transition: Bool = false) -> some View {
         Group {
-            //inventory(for: source)?.iconImage(item: info)
-            if info.isCask == true {
-                homeBrewInv?.icon(for: info, useInstalledIcon: false)
-            } else {
-                fairAppInv?.iconImage(item: info)
-            }
+            inventory(for: item.source)?.icon(for: item)
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
         .transition(transition == false ? AnyTransition.opacity : AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // skrink and fade out the placeholder while fading in the actual icon
 
     }
 
-    func launch(_ info: AppInfo) async {
+    func launch(_ item: AppInfo) async {
         await self.trying {
             if self.appLaunchPrivacy {
                 try await self.enableAppLaunchPrivacy()
             }
-
-            if info.isCask == true {
-                try await homeBrewInv?.launch(item: info)
-            } else {
-                try await fairAppInv?.launch(item: info)
-            }
+            try await inventory(for: item)?.launch(item)
         }
     }
 
-    func install(_ info: AppInfo, source: AppSource, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
+    func install(_ item: AppInfo, source: AppSource, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
         await self.trying {
-            if info.isCask {
-                try await homeBrewInv?.install(item: info, progress: parentProgress, update: update, verbose: verbose)
-            } else {
-                try await fairAppInv?.install(item: info, progress: parentProgress, update: update, verbose: verbose)
-            }
-            sessionInstalls.insert(info.id)
+            try await inventory(for: item)?.install(item, progress: parentProgress, update: update, verbose: verbose)
+            sessionInstalls.insert(item.id)
         }
     }
 
     func reveal(_ item: AppInfo) async {
         await self.trying {
-            if item.isCask {
-                try await homeBrewInv?.reveal(item: item)
-            } else {
-                try await fairAppInv?.reveal(item: item)
-            }
+            try await inventory(for: item)?.reveal(item)
         }
     }
 
-    func installedVersion(for item: AppInfo) -> String? {
-        if item.isCask {
-            return homeBrewInv?.appInstalled(item: item)
-        } else {
-            return fairAppInv?.appInstalled(item: item)
-        }
+    func delete(_ item: AppInfo) async throws {
+        try await inventory(for: item)?.delete(item, verbose: true)
     }
 
-    func appUpdated(for item: AppInfo) -> Bool {
-        if item.isCask {
-            return homeBrewInv?.appUpdated(item: item) == true
-        } else {
-            return fairAppInv?.appUpdated(item: item) == true
-        }
+    func installedVersion(_ item: AppInfo) -> String? {
+        inventory(for: item)?.appInstalled(item)
+    }
+
+    func appUpdated(_ item: AppInfo) -> Bool {
+        inventory(for: item)?.appUpdated(item) == true
     }
 }
 
-extension FairManagerType {
-    func sourceInfo(for selection: SidebarSelection) -> AppSourceInfo? {
-        switch selection.source {
-        case .appSourceFairgroundMacOS:
-            switch selection.item {
-            case .top:
-                return AppSourceInventory.SourceInfo.TopAppInfo()
-            case .recent:
-                return AppSourceInventory.SourceInfo.RecentAppInfo()
-            case .installed:
-                return AppSourceInventory.SourceInfo.InstalledAppInfo()
-            case .sponsorable:
-                return AppSourceInventory.SourceInfo.SponsorableAppInfo()
-            case .updated:
-                return AppSourceInventory.SourceInfo.UpdatedAppInfo()
-            case .category(let category):
-                return CategoryAppInfo(category: category)
-            }
-        case .homebrew:
-            switch selection.item {
-            case .top:
-                return HomebrewInventory.SourceInfo.TopAppInfo()
-            case .recent:
-                return HomebrewInventory.SourceInfo.RecentAppInfo()
-            case .sponsorable:
-                return HomebrewInventory.SourceInfo.SponsorableAppInfo()
-            case .installed:
-                return HomebrewInventory.SourceInfo.InstalledAppInfo()
-            case .updated:
-                return HomebrewInventory.SourceInfo.UpdatedAppInfo()
-            case .category(let category):
-                return CategoryAppInfo(category: category)
-            }
-        default:
-            return nil
+extension SidebarSelection {
+
+//    var sourceInfo: AppSourceInfo? {
+//        switch self.source {
+//        case .appSourceFairgroundMacOS, .appSourceFairgroundiOS:
+//            switch self.item {
+//            case .top:
+//                return AppSourceInventory.SourceInfo.TopAppInfo()
+//            case .recent:
+//                return AppSourceInventory.SourceInfo.RecentAppInfo()
+//            case .installed:
+//                return AppSourceInventory.SourceInfo.InstalledAppInfo()
+//            case .sponsorable:
+//                return AppSourceInventory.SourceInfo.SponsorableAppInfo()
+//            case .updated:
+//                return AppSourceInventory.SourceInfo.UpdatedAppInfo()
+//            case .category(let category):
+//                return CategoryAppInfo(category: category)
+//            }
+//        case .homebrew:
+//            switch self.item {
+//            case .top:
+//                return HomebrewInventory.SourceInfo.TopAppInfo()
+//            case .recent:
+//                return HomebrewInventory.SourceInfo.RecentAppInfo()
+//            case .sponsorable:
+//                return HomebrewInventory.SourceInfo.SponsorableAppInfo()
+//            case .installed:
+//                return HomebrewInventory.SourceInfo.InstalledAppInfo()
+//            case .updated:
+//                return HomebrewInventory.SourceInfo.UpdatedAppInfo()
+//            case .category(let category):
+//                return CategoryAppInfo(category: category)
+//            }
+//        default:
+//            return nil
+//        }
+//    }
+
+    struct CategoryAppInfo : AppSourceInfo {
+        let category: AppCategory
+
+        func tintedLabel(monochrome: Bool) -> TintedLabel {
+            category.tintedLabel(monochrome: monochrome)
         }
 
+        /// Subtitle text for this source
+        var fullTitle: Text {
+            Text("Category: \(category.text)", bundle: .module, comment: "app category info: title pattern")
+        }
+
+        /// A textual description of this source
+        var overviewText: [Text] {
+            []
+            // Text(wip("XXX"), bundle: .module, comment: "app category info: overview text")
+        }
+
+        var footerText: [Text] {
+            []
+            // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+        }
+
+        /// A list of the features of this source, which will be displayed as a bulleted list
+        var featureInfo: [(FairSymbol, Text)] {
+            []
+        }
     }
 }
 
@@ -400,7 +479,7 @@ extension FairManager {
         let duration = timeInterval ?? self.appLaunchPrivacyDuration
 
         guard let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() else {
-            throw AppError("Could not find \(Self.appLaunchPrivacyToolName)")
+            throw AppError(String(format: NSLocalizedString("Could not find %@", bundle: .module, comment: "error message when failed to find app launch privacy tool"), Self.appLaunchPrivacyToolName))
         }
 
         /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
@@ -408,7 +487,7 @@ extension FairManager {
             dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
             let privacyEnabled = try Process.exec(cmd: appLaunchPrivacyTool.path, "enable")
             if privacyEnabled.exitCode != 0 {
-                throw AppError("Failed to block launch telemetry", failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
+                throw AppError(NSLocalizedString("Failed to block launch telemetry", bundle: .module, comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
             }
 
             // clear any previous observer
@@ -457,7 +536,7 @@ extension FairManager {
             dbg("writing binary to file:", executableFile.path)
             let encodedTool = try Self.appLaunchPrivacyToolBinary.get()
             guard let decodedTool = Data(base64Encoded: encodedTool, options: [.ignoreUnknownCharacters]) else {
-                throw AppError("Unable to decode \(Self.appLaunchPrivacyToolName)")
+                throw AppError(String(format: NSLocalizedString("Unable to decode %@", bundle: .module, comment: "error message"), Self.appLaunchPrivacyToolName))
             }
             try decodedTool.write(to: executableFile)
             return executableFile
@@ -476,14 +555,14 @@ extension FairManager {
             let swiftCompilerInstalled = FileManager.default.isExecutableFile(atPath: compiler)
 
             if swiftCompilerInstalled {
-                throw AppError("Developer tools not found", failureReason: "This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.")
+                throw AppError(NSLocalizedString("Developer tools not found", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.", bundle: .module, comment: "error failure reason message"))
             }
 
             dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
 
             let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
             if result.exitCode != 0 {
-                throw AppError("Error compiling \(Self.appLaunchPrivacyToolName)", failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+                throw AppError(String(format: NSLocalizedString("Error compiling %@", bundle: .module, comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
             }
         } else {
             compiledOutput = try saveAppLaunchPrivacyTool(source: false)
