@@ -239,6 +239,7 @@ struct SidebarView: View {
                         Text("Remove Catalog", bundle: .module, comment: "sidebar button to remove a catalog")
                             .label(image: FairSymbol.minus_circle)
                             .labelStyle(.iconOnly)
+                            .contentShape(Circle())
                             .button(action: removeAction)
                             .buttonStyle(.borderless)
                             .help(Text("Removes this catalog from the list of available catalogs. This operaiton cannot be undone.", bundle: .module, comment: "help text for sidebar button to remove catalog"))
