@@ -186,9 +186,8 @@ struct AppFairCommands: Commands {
                         }
                     }
 
-                    let shortcut = { index > 1 ? nil : key(itemIndex).flatMap { KeyboardShortcut($0, modifiers: index == 0 ? [.command] : [.option, .command]) } }
-                    if #available(macOS 12.3, *) {
-                        sidebarButton(SidebarSelection(source: inv.source, item: item)).keyboardShortcut(shortcut())
+                    if let shortcut = (index > 1 ? nil : key(itemIndex).flatMap { KeyboardShortcut($0, modifiers: index == 0 ? [.command] : [.option, .command]) }) {
+                        sidebarButton(SidebarSelection(source: inv.source, item: item)).keyboardShortcut(shortcut)
                     } else {
                         sidebarButton(SidebarSelection(source: inv.source, item: item))
                     }
