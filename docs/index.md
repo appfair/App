@@ -69,7 +69,7 @@ Launch Link (required): https://appfair.app/fair?app=App-Fair
 
 <a href="#screenshots"><img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_00-mac-dark-3078x2044.png" /></a>
 
-Browse, download and install native apps from a vast catalog of both free and commercial desktop and mobile applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created using the appfair.net distribution platform.
+Browse, download and install apps from a vast catalog of macOS desktop and mobile applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created using the appfair.net distribution platform.
 
 
 {% assign browsers = '
@@ -145,7 +145,16 @@ brew install app-fair && open "/Applications/App Fair.app"
 
 ## Frequently Asked Questions
 
-#### Where does App Fair.app install apps?
+<a name="sources"/>
+#### Where does the App Fair get its apps?
+
+App Fair.app integrates with the following sources of apps:
+
+  - AppCasks: This catalog integrates with the brew casks database, which is curated and maintained by the [Homebrew Project](https://brew.sh).
+  - AppSources: This open format is used by [appfair.net](https://appfair.net/#appsource) to describe a catalog for describing and downloading apps.
+
+
+#### Where does App Fair.app install apps locally?
 
 Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder, although this can vary depending on the Cask.
 
