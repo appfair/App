@@ -4,4 +4,23 @@ plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
 
+encoding: utf-8
+title: "The App Fair"
+#logo: "/assets/logo.png" # Site logo, also used in jekyll-seo-tag
+#description: "My Podcasts and Projects" # Site description and default description, also used in jekyll-seo-tag
+url: "https://appfair.app" # Site url, also used in jekyll-seo-tag
+repo: "https://github.com/App-Fair/App"
+email: "appfair@appfair.net"
+
+social: # jekyll-seo-tag > social overrides
+  name: The App Fair # jekyll-seo-tag > real name
+  links:  # jekyll-seo-tag > social aliases (sameAs)
+    - https://twitter.com/TheAppFair
+    - https://github.com/appfair
+    - https://discord.gg/R4bFP8qpw7
+
+social_links:
+  Twitter: https://twitter.com/TheAppFair
+  GitHub: https://github.com/appfair
+  Discord: https://discord.gg/R4bFP8qpw7
 
