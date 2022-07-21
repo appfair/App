@@ -20,7 +20,7 @@ struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
-    @Binding var sidebarSelection: SidebarSelection?
+    @Binding var sidebarSelection: SourceSelection?
     @Binding var displayMode: TriptychOrient
     @Binding var searchText: String
 
@@ -40,7 +40,7 @@ struct SidebarView: View {
                     // when we first appear select the initial element
                     if let source = fairManager.appSources.first, source != self.sidebarSelection?.source {
                         #warning("initial selection?")
-                        //self.sidebarSelection = .init(source: source, item: .top)
+                        //self.sidebarSelection = .init(source: source, section: .top)
                     }
                 }
 
@@ -277,7 +277,7 @@ struct SidebarView: View {
     func appSidebarSection(source: AppSource, inventory inv: AppInventory) -> some View {
         Section {
             ForEach(enumerated: inv.supportedSidebars) { itemIndex, item in
-                sidebarItem(SidebarSelection(source: inv.source, item: item))
+                sidebarItem(SourceSelection(source: inv.source, section: item))
             }
         } header: {
             SectionHeader(label: inv.label(for: source), updating: .constant(inv.updateInProgress != 0), canRemove: fairManager.userSources.contains(inv.sourceURL.absoluteString), removeAction: {
@@ -299,7 +299,7 @@ struct SidebarView: View {
         Section {
             ForEach(AppCategory.allCases) { cat in
                 if fairManager.homeBrewInv?.apps(for: cat).isEmpty == false {
-                    sidebarItem(SidebarSelection(source: .homebrew, item: .category(cat)))
+                    sidebarItem(SourceSelection(source: .homebrew, section: .category(cat)))
                 }
             }
             .symbolVariant(.fill)
@@ -309,7 +309,7 @@ struct SidebarView: View {
         }
     }
 
-    func sidebarItem(_ selection: SidebarSelection) -> some View {
+    func sidebarItem(_ selection: SourceSelection) -> some View {
         let info = fairManager.sourceInfo(for: selection)
         let label = info?.tintedLabel(monochrome: false)
         return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
@@ -320,7 +320,7 @@ struct SidebarView: View {
         })
     }
 
-    @ViewBuilder func navigationDestinationView(item: SidebarSelection) -> some View {
+    @ViewBuilder func navigationDestinationView(item: SourceSelection) -> some View {
         switch displayMode {
         case .list:
             AppsListView(source: item.source, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
@@ -331,10 +331,10 @@ struct SidebarView: View {
         }
     }
 
-    func tool(source: AppSource, _ item: SidebarItem) -> some CustomizableToolbarContent {
-        ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
+    func tool(source: AppSource, _ section: SidebarSection) -> some CustomizableToolbarContent {
+        ToolbarItem(id: section.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
-                selectItem(item)
+                selectSection(section)
             }, label: {
                 //                item.label(for: source, monochrome: false)
                 //.symbolVariant(.fill)
@@ -343,7 +343,7 @@ struct SidebarView: View {
         }
     }
 
-    func selectItem(_ item: SidebarItem) {
+    func selectSection(_ item: SidebarSection) {
         dbg("selected:", item.id)
     }
 }

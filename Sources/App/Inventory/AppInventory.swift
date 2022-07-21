@@ -31,10 +31,10 @@ protocol AppInventory : AnyObject {
     @MainActor var catalogUpdated: Date? { get }
 
     /// The badge indicating how many matches are available
-    @MainActor func badgeCount(for item: SidebarItem) -> Text?
+    @MainActor func badgeCount(for section: SidebarSection) -> Text?
 
     /// The app info items to be displayed for the given selection, filter, and sort order
-    @MainActor func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
+    @MainActor func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
     @MainActor func appInstalled(_ item: AppInfo) -> String?
@@ -70,10 +70,10 @@ protocol AppInventory : AnyObject {
     @MainActor func icon(for item: AppInfo) -> AppIconView
 
     /// Information on the metadata for the app source
-    @MainActor func sourceInfo(for item: SidebarItem) -> AppSourceInfo?
+    @MainActor func sourceInfo(for section: SidebarSection) -> AppSourceInfo?
 
     /// The sidebar items supported by this inventory
-    @MainActor var supportedSidebars: [SidebarItem] { get }
+    @MainActor var supportedSidebars: [SidebarSection] { get }
 
     /// A publisher that is invoked whenever the object will change
     var objectWillChange: ObservableObjectPublisher { get }

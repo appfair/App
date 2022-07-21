@@ -25,7 +25,7 @@ struct AppsTableView : View, ItemTableView {
     @EnvironmentObject var fairManager: FairManager
     let source: AppSource
     @Binding var selection: AppInfo.ID?
-    let sidebarSelection: SidebarSelection?
+    let sidebarSelection: SourceSelection?
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
     @Binding var searchText: String
     @State private var searchTextBuffer: String = ""

@@ -58,7 +58,7 @@ private struct HomebrewDefaults {
     static let quarantineCasks = true
     static let installDependencies = false
     static let zapDeletedCasks = false
-    static let allowCasksWithoutApp = false
+    static let allowCasksWithoutApp = true
     static let ignoreAutoUpdatingAppUpdates = false
     static let requireCaskChecksum = false
     static let forceInstallCasks = false
@@ -657,8 +657,8 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("result:", result)
     }
 
-    var supportedSidebars: [SidebarItem] {
-        [SidebarItem.top, .recent, .sponsorable, .installed, .updated]
+    var supportedSidebars: [SidebarSection] {
+        [SidebarSection.top, .recent, .sponsorable, .installed, .updated]
     }
 
     func icon(for item: AppInfo) -> AppIconView {
@@ -1126,14 +1126,14 @@ extension HomebrewInventory {
         }
     }
 
-    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         visibleAppInfos
             .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
+            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.section))
     }
 
-    func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
+    func categorySortOrder(category: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
         switch category {
         case .none:
             return []
@@ -1180,8 +1180,8 @@ extension HomebrewInventory {
         return false
     }
 
-    func matchesSelection(item: AppInfo, sidebarSelection: SidebarSelection?) -> Bool {
-        switch sidebarSelection?.item {
+    func matchesSelection(item: AppInfo, sidebarSelection: SourceSelection?) -> Bool {
+        switch sidebarSelection?.section {
         case .none:
             return true
         case .installed:
@@ -1250,13 +1250,13 @@ extension HomebrewInventory {
             .count
     }
 
-    func badgeCount(for item: SidebarItem) -> Text? {
+    func badgeCount(for section: SidebarSection) -> Text? {
         func fmt(_ number: Int) -> Text? {
             if number <= 0 { return nil }
             return Text(number, format: .number)
         }
 
-        switch item {
+        switch section {
         case .top:
             return fmt(visibleAppInfos.count)
         case .updated:
@@ -1388,8 +1388,8 @@ extension HomebrewInventory {
 }
 
 extension HomebrewInventory {
-    func sourceInfo(for item: SidebarItem) -> AppSourceInfo? {
-        switch item {
+    func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
+        switch section {
         case .top:
             return HomebrewInventory.SourceInfo.TopAppInfo()
         case .recent:

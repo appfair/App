@@ -34,6 +34,14 @@ public extension AppContainer {
             ToolbarCommands()
         }
         .commands {
+            CommandGroup(after: .pasteboard) {
+                Group {
+                    CopyAppURLCommand()
+                }
+                .environmentObject(fairManager)
+            }
+        }
+        .commands {
             CommandGroup(replacing: CommandGroupPlacement.newItem) {
                 // only permit a single window; this hides the "New" menu option
             }

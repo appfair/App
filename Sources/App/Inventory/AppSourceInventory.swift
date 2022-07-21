@@ -77,8 +77,8 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         sourceURL.isAppFairSource
     }
 
-    var supportedSidebars: [SidebarItem] {
-        [SidebarItem.top, .recent] + (self.catalog == nil || self.catalog?.isPlatform(wipipa(.iOS)) == true ? [] : [.sponsorable, .installed, .updated])
+    var supportedSidebars: [SidebarSection] {
+        [SidebarSection.top, .recent] + (self.catalog == nil || self.catalog?.isPlatform(wipipa(.iOS)) == true ? [] : [.sponsorable, .installed, .updated])
     }
 
     var symbol: FairSymbol {
@@ -237,18 +237,18 @@ extension AppSourceInventory {
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
-            .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.item == .installed)
+            .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.section == .installed)
             .filter({ matchesExtension(item: $0) })
-            .filter({ sidebarSelection?.item.isLocalFilter == true || matchesRiskFilter(item: $0) })
+            .filter({ sidebarSelection?.section.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
             .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
-            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.item))
+            .sorted(using: sortOrder + categorySortOrder(section: sidebarSelection?.section))
     }
 
-    func categorySortOrder(category: SidebarItem?) -> [KeyPathComparator<AppInfo>] {
-        switch category {
+    func categorySortOrder(section: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
+        switch section {
         case .none:
             return []
         case .top:
@@ -755,8 +755,8 @@ extension AppSourceInventory {
 @available(macOS 12.0, iOS 15.0, *)
 extension AppSourceInventory {
 
-    func selectionFilter(_ selection: SidebarSelection?, item: AppInfo) -> Bool {
-        switch selection?.item {
+    func selectionFilter(_ selection: SourceSelection?, item: AppInfo) -> Bool {
+        switch selection?.section {
         case .none:
             return true
         case .top:
@@ -774,8 +774,8 @@ extension AppSourceInventory {
         }
     }
 
-    func badgeCount(for item: SidebarItem) -> Text? {
-        switch item {
+    func badgeCount(for section: SidebarSection) -> Text? {
+        switch section {
         case .top:
             return Text(appInfoItems(includePrereleases: showPreReleases).count, format: .number)
         case .recent:
@@ -887,12 +887,12 @@ extension AppSourceInventory {
 }
 
 extension AppSourceInventory {
-    @MainActor func sourceInfo(for item: SidebarItem) -> AppSourceInfo? {
-        sourceInformation(for: item)
+    @MainActor func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
+        sourceInformation(for: section)
     }
 
-    @MainActor func sourceInformation(for item: SidebarItem) -> AppSourceInfo {
-        switch item {
+    @MainActor func sourceInformation(for section: SidebarSection) -> AppSourceInfo {
+        switch section {
         case .top:
             struct TopAppInfo : AppSourceInfo {
                 let catalog: AppCatalog?

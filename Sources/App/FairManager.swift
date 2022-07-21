@@ -44,8 +44,8 @@ extension AppInventoryController {
     }
 
     /// Returns the metadata for the given catalog
-    @MainActor func sourceInfo(for selection: SidebarSelection) -> AppSourceInfo? {
-        inventory(for: selection.source)?.sourceInfo(for: selection.item)
+    @MainActor func sourceInfo(for selection: SourceSelection) -> AppSourceInfo? {
+        inventory(for: selection.source)?.sourceInfo(for: selection.section)
     }
 
     @MainActor func inventory(for source: AppSource) -> AppInventory? {
@@ -221,12 +221,12 @@ extension AppInventoryController {
         return true
     }
 
-    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(source: AppSource, sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self.inventory(for: source)?.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText) ?? []
     }
 
-    func badgeCount(for item: SidebarSelection) -> Text? {
-        inventory(for: item.source)?.badgeCount(for: item.item)
+    func badgeCount(for item: SourceSelection) -> Text? {
+        inventory(for: item.source)?.badgeCount(for: item.section)
     }
 
     /// Returns true is there are any refreshes in progress
@@ -284,9 +284,9 @@ extension AppInventoryController {
     }
 
     /// The view that will summarize the app source in the detail panel when no app is selected.
-    func sourceOverviewView(selection: SidebarSelection, showText: Bool, showFooter: Bool) -> some View {
+    func sourceOverviewView(selection: SourceSelection, showText: Bool, showFooter: Bool) -> some View {
         let inv: AppInventory? = inventory(for: selection.source)
-        let info = inv?.sourceInfo(for: selection.item)
+        let info = inv?.sourceInfo(for: selection.section)
         let label = info?.label
         let color = label?.tint ?? .accentColor
 
@@ -385,7 +385,7 @@ extension AppInventoryController {
     }
 }
 
-extension SidebarSelection {
+extension SourceSelection {
 
 //    var sourceInfo: AppSourceInfo? {
 //        switch self.source {

@@ -18,7 +18,7 @@ import FairKit
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView : View {
     let source: AppSource
-    let sidebarSelection: SidebarSelection?
+    let sidebarSelection: SourceSelection?
 
     @EnvironmentObject var fairManager: FairManager
 
@@ -63,12 +63,12 @@ struct AppsListView : View {
     @ViewBuilder var appsList : some View {
         ScrollViewReader { proxy in
             List {
-                if sidebarSelection?.item == .top {
+                if sidebarSelection?.section == .top {
                     // appListSection(section: nil, source: source)
                     ForEach(AppListSection.allCases) { section in
                         appListSection(section: section, source: source)
                     }
-                } else if sidebarSelection?.item == .updated {
+                } else if sidebarSelection?.section == .updated {
                     ForEach(AppUpdatesSection.allCases) { section in
                         appUpdatesSection(section: section)
                     }
@@ -145,7 +145,7 @@ struct AppsListView : View {
             .uniquing(by: \.id) // ensure there are no duplicates with the same id
     }
 
-    func arrangedItems(source: AppSource, sidebarSelection: SidebarSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(source: AppSource, sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         prf("arranging: \(source.rawValue)") {
             fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
         }
@@ -179,7 +179,7 @@ struct AppsListView : View {
             return updatedItems
         case .recent:
             // get a list of all recently installed items that are not in the availabe updates set
-            let installedItems = arrangedItems(source: source, sidebarSelection: .some(SidebarSelection(source: source, item: .installed)), sortOrder: sortOrder, searchText: searchText)
+            let installedItems = arrangedItems(source: source, sidebarSelection: .some(SourceSelection(source: source, section: .installed)), sortOrder: sortOrder, searchText: searchText)
                 .filter({ fairManager.sessionInstalls.contains($0.id) })
                 .filter({ !updatedItemIDs.contains($0.id) })
             return installedItems

@@ -142,11 +142,11 @@ struct SimpleTableView : View {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: AppInfo??
-    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SidebarSelection??
+    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SourceSelection??
 
     //    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
-    @StateObject var fairManager: FairManager
+    @ObservedObject var fairManager: FairManager
 
     var body: some Commands {
         CommandMenu(Text("Sources", bundle: .module, comment: "menu title for app source actions")) {
@@ -169,7 +169,7 @@ struct AppFairCommands: Commands {
     func appInventorySelectionCommands() -> some View {
         ForEach(enumerated: fairManager.appInventories) { index, inv in
             Section {
-                ForEach(enumerated: inv.supportedSidebars) { itemIndex, item in
+                ForEach(enumerated: inv.supportedSidebars) { itemIndex, section in
                     let key: (Int) -> KeyEquivalent? = { itemIndex in
                         switch itemIndex {
                         case 0: return "1"
@@ -187,9 +187,9 @@ struct AppFairCommands: Commands {
                     }
 
                     if let shortcut = (index > 1 ? nil : key(itemIndex).flatMap { KeyboardShortcut($0, modifiers: index == 0 ? [.command] : [.option, .command]) }) {
-                        sidebarButton(SidebarSelection(source: inv.source, item: item)).keyboardShortcut(shortcut)
+                        sidebarButton(SourceSelection(source: inv.source, section: section)).keyboardShortcut(shortcut)
                     } else {
-                        sidebarButton(SidebarSelection(source: inv.source, item: item))
+                        sidebarButton(SourceSelection(source: inv.source, section: section))
                     }
                 }
             } header: {
@@ -198,7 +198,7 @@ struct AppFairCommands: Commands {
         }
     }
 
-    func sidebarButton(_ selection: SidebarSelection) -> some View {
+    func sidebarButton(_ selection: SourceSelection) -> some View {
         Button {
             sidebarSelection = selection
         } label: {
@@ -206,7 +206,7 @@ struct AppFairCommands: Commands {
         }
     }
 
-    func sourceInfo(for selection: SidebarSelection) -> AppSourceInfo? {
+    func sourceInfo(for selection: SourceSelection) -> AppSourceInfo? {
         fairManager.sourceInfo(for: selection)
     }
 
@@ -215,6 +215,23 @@ struct AppFairCommands: Commands {
             fairManager.clearCaches() // also flush caches
             await fairManager.refresh(reloadFromSource: false)
         }
+    }
+}
+
+struct CopyAppURLCommand : View {
+    @EnvironmentObject var fairManager: FairManager
+    @FocusedBinding(\.selection) private var selection: AppInfo??
+    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SourceSelection??
+
+    var body: some View {
+        Text("Copy App URL", bundle: .module, comment: "menu title for command")
+            .button(action: commandSelected)
+            .keyboardShortcut("C", modifiers: [.command, .shift])
+            //.disabled(sidebarSelection??.app == nil)
+    }
+
+    func commandSelected() {
+        dbg()
     }
 }
 
@@ -450,14 +467,14 @@ public struct RootView : View, Equatable {
     }
 }
 
-/// The selection in the sidebar, consisting of an ``AppSource`` and a ``SidebarItem``
-struct SidebarSelection : Hashable {
+/// The selection in the sidebar, consisting of an ``AppSource`` and a ``SidebarSection``
+struct SourceSelection : Hashable {
     let source: AppSource
-    let item: SidebarItem
+    let section: SidebarSection
 }
 
 /// A standard group for a sidebar representation
-enum SidebarItem : Hashable {
+enum SidebarSection : Hashable {
     case top
     case updated
     case installed
@@ -514,7 +531,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SidebarSelection? = nil
+    @State var sidebarSelection: SourceSelection? = nil
 
     //@SceneStorage("displayMode")
     @State var displayMode: TriptychOrient = TriptychOrient.allCases.first!
@@ -579,7 +596,7 @@ struct NavigationRootView : View {
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
             .onChange(of: sidebarSelection) { selection in
-                if !searchText.isEmpty && selection?.item != .top { // only clear when switching away from the "popular" tab
+                if !searchText.isEmpty && selection?.section != .top { // only clear when switching away from the "popular" tab
                     searchText = "" // clear search whenever the sidebar selection changes
                 }
             }
@@ -590,12 +607,12 @@ struct NavigationRootView : View {
             .onOpenURL(perform: handleURL)
     }
 
-    var sidebarSelectionBinding: Binding<SidebarSelection?> {
-        //return .constant(.init(source: .fairapps, item: .updated))
+    var sidebarSelectionBinding: Binding<SourceSelection?> {
+        //return .constant(.init(source: .fairapps, section: .updated))
         return $sidebarSelection
         //            .mapSetter { oldValue, newValue in
         //            // clear search whenever the sidebar selection changes
-        //            if newValue?.item != .top && !searchText.isEmpty {
+        //            if newValue?.section != .top && !searchText.isEmpty {
         ////                self.searchText = ""
         //            }
         //            return newValue
@@ -618,7 +635,7 @@ struct NavigationRootView : View {
             if let sidebarSource = sidebarSource {
                 AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
             } else {
-                EmptyView() // TODO: better placeholder view for un-selected sidebar item
+                EmptyView() // TODO: better placeholder view for un-selected sidebar section
             }
         } table: {
 #if os(macOS)
@@ -670,7 +687,7 @@ extension NavigationRootView {
                 if let catalogString = paramMap["catalog"],
                    let catalogString = catalogString,
                     let url = URL(string: "https://" + catalogString) {
-                    #warning("TODO: prompt to add catalog URL before proceeding")
+                    // TODO: prompt to add catalog URL if it is not present in the sources list
                     catalogURL = url
                     dbg("parsing cagalog URL:", catalogURL.absoluteString)
                 }
@@ -684,16 +701,16 @@ extension NavigationRootView {
             let bundleID = BundleIdentifier(searchID)
 
             // random crashes seem to happen without dispatching to main
-            self.searchText = bundleID.rawValue // needed to cause the item to appear
+            self.searchText = bundleID.rawValue // needed to cause the section to appear
 
             // switch to correct catalog by matching the source when opening from URL
             let source = AppSource(rawValue: catalogURL.absoluteString)
-            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : source, item: .top)
+            self.sidebarSelection = SourceSelection(source: isCask ? .homebrew : source, section: .top)
 
             self.selection = bundleID
             dbg("selected app ID", self.selection)
             // DispatchQueue.main.async {
-            //     self.scrollToSelection = true // if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+            //     self.scrollToSelection = true // if the catalog section is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
             // }
         }
     }
@@ -712,7 +729,7 @@ public struct AppTableDetailSplitView : View {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var searchText: String
-    @Binding var sidebarSelection: SidebarSelection?
+    @Binding var sidebarSelection: SourceSelection?
 
     @ViewBuilder public var body: some View {
         VSplitView {
@@ -727,7 +744,7 @@ public struct AppTableDetailSplitView : View {
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
-    @Binding var sidebarSelection: SidebarSelection?
+    @Binding var sidebarSelection: SourceSelection?
     @FocusedBinding(\.selection) private var selection: AppInfo??
     @EnvironmentObject var fairManager: FairManager
 
@@ -763,7 +780,7 @@ public struct AppDetailView : View {
     }
 
     @ViewBuilder func catalogsCardsView() -> some View {
-        let selection = { SidebarSelection(source: $0, item: .top) }
+        let selection = { SourceSelection(source: $0, section: .top) }
         //let maxSourceSummary = 3 // only display the first three catalog summaries on the front page
         let sources = fairManager.appSources // .prefix(maxSourceSummary)
 
@@ -798,7 +815,7 @@ public struct AppDetailView : View {
         }
     }
 
-    func browseButton(_ sidebarSelection: SidebarSelection) -> some View {
+    func browseButton(_ sidebarSelection: SourceSelection) -> some View {
         Button {
             withAnimation {
                 self.sidebarSelection = sidebarSelection
@@ -907,10 +924,10 @@ extension FocusedValues {
     }
 
     private struct FocusedSidebarSelection: FocusedValueKey {
-        typealias Value = Binding<SidebarSelection?>
+        typealias Value = Binding<SourceSelection?>
     }
 
-    var sidebarSelection: Binding<SidebarSelection?>? {
+    var sidebarSelection: Binding<SourceSelection?>? {
         get { self[FocusedSidebarSelection.self] }
         set { self[FocusedSidebarSelection.self] = newValue }
     }
