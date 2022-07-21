@@ -150,8 +150,8 @@ brew install app-fair && open "/Applications/App Fair.app"
 
 App Fair.app integrates with the following sources of apps:
 
-  - AppCasks: This catalog integrates with the brew casks database, which is curated and maintained by the [Homebrew Project](https://brew.sh).
-  - AppSources: This open format is used by [appfair.net](https://appfair.net/#appsource) to describe a catalog for describing and downloading apps.
+  - **AppCasks**: This catalog integrates with the brew casks database, which is curated and maintained by the [Homebrew Project](https://brew.sh).
+  - **AppSources**: This open format is used by [appfair.net](https://appfair.net/#appsource) to describe a catalog for previewing, downloading, and installing apps.
 
 
 #### Where does App Fair.app install apps locally?
