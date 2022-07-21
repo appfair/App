@@ -23,6 +23,24 @@
               background: transparent;
             }
 
+            #apptitle {
+                text-align: center; font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif;
+            }
+
+            #appdesc {
+                text-align: center; font-family: system-ui, Helvetica, Arial, sans-serif;
+            }
+
+            .footerlinks {
+                text-align: center;
+                font-size: small;
+                font-family: ui-rounded, system-ui, Helvetica, Arial, sans-serif;
+            }
+
+            .launchlink {
+                font-family: ui-rounded, system-ui, Helvetica, Arial, sans-serif;
+            }
+
             img.innerlync {
               /* max-width: 15vw; */
               /* max-height: 15vh; */
@@ -34,27 +52,28 @@
         <div class="outerlync" style="text-align: center;">
             <div style="backdrop-filter: blur(10px);">
                 <a id="applink" href="appfair://app/App-Fair"><picture><img class="innerlync" width="150" height="150" id="appicon" referrerpolicy="no-referrer" decoding="sync" onerror="iconError.call(this)" /></picture></a>
-            <h1 id="apptitle" style="text-align: center; font-family: ui-rounded, Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif;">Welcome to the App Fair</h1>
+            <h1 id="apptitle">Welcome to the App Fair</h1>
 
             <hr />
 
-            <span id="appdesc" style="text-align: center; font-family: system-ui, Helvetica, Arial, sans-serif;"><span id="appinstall">Install</span> this <span id="appclass">app</span> with App Fair.app for macOS</span>
+            <span id="appdesc"><span id="appinstall_DISABLED">Preview</span> this <span id="appclass">app</span> with App Fair.app for macOS</span>: <span id="appinstallfull">appfair://</span>
             <hr />
             </div>
 
-            <div style="text-align: center; font-size: small; font-family: system-ui, Helvetica, Arial, sans-serif;">
+            <div class="footerlinks">
             <br/>
-            <br/>
-    the App Fair:
+    The App Fair:
     <a href="https://appfair.app">https://appfair.app</a>
     |
-    <a href="https://github.com/App-Fair/App/discussions">discussions</a>
+    <a href="https://github.com/App-Fair/App/discussions">Discussions</a>
     |
-    <a href="https://github.com/App-Fair/App/issues">issues</a>
+    <a href="https://github.com/App-Fair/App/issues">Issues</a>
     |
     <a href="https://twitter.com/TheAppFair">Twitter</a>
     |
     <a href="https://discord.gg/R4bFP8qpw7">Discord</a>
+    |
+    <a href="mailto:hi@appfair.app" id="maillink">hi@appfair.app</a>
             </div>
         </div>
     </div>
@@ -100,14 +119,16 @@
                 var appName = caskID.replace('-', ' ');
                 var appPath = "cask/" + caskID;
                 updateIcon("https://github.com/App-Fair/appcasks/releases/download/cask-" + caskID + "/AppIcon.png");
-                document.getElementById("appclass").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/cask/' + caskID + '">Cask</a>';
+                //document.getElementById("appclass").innerHTML = 'Homebrew <a href="https://formulae.brew.sh/cask/' + caskID + '">Cask</a>';
+                document.getElementById("appclass").innerHTML = 'Homebrew Cask';
             }
 
             document.getElementById("apptitle").innerHTML = appName;
 
             let launchLink = "appfair://" + appPath;
             document.getElementById("applink").href = launchLink;
-            document.getElementById("appinstall").innerHTML = '<a href="' + launchLink + '">Install</a>';
+            document.getElementById("appinstallfull").innerHTML = '<a href="' + launchLink + '" class="launchlink">' + launchLink + '</a>';
+            //document.getElementById("appinstall").innerHTML = '<a href="' + launchLink + '" class="launchlink">Install</a>';
 
             // attempt to launch the app fair app
             // document.location = launchLink;
