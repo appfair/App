@@ -444,7 +444,7 @@ extension View {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-public struct RootView : View {
+public struct RootView : View, Equatable {
     public var body: some View {
         NavigationRootView()
     }
@@ -508,7 +508,7 @@ struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
     @Environment(\.scenePhase) var scenePhase
 
-    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+    //@FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
     @State var selection: AppInfo.ID? = nil
     /// Indication that the selection should be scrolled to
@@ -579,7 +579,7 @@ struct NavigationRootView : View {
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
             .onChange(of: sidebarSelection) { selection in
-                if selection?.item != .top { // only clear when switching away from the "popular" tab
+                if !searchText.isEmpty && selection?.item != .top { // only clear when switching away from the "popular" tab
                     searchText = "" // clear search whenever the sidebar selection changes
                 }
             }
@@ -601,51 +601,6 @@ struct NavigationRootView : View {
         //            return newValue
         //        }
 
-    }
-
-    /// Handles opening the URL schemes suppored by this app.
-    ///
-    /// Supported schemes:
-    ///
-    ///   1. `appfair://app/App-Name`: selects the "Apps" outline and searches for "app.App-Name"
-    ///   1. `appfair://cask/token`: selects the "Casks" outline and searches for "homebrew/cask/token"
-    func handleURL(_ url: URL) {
-        let components = url.pathComponents
-        dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
-        if let scheme = url.scheme, scheme == "appfair" {
-            var path = ([url.host ?? ""] + url.pathComponents)
-                .filter { !$0.isEmpty && $0 != "." && $0 != "/" }
-
-            if path.count < 1 {
-                dbg("invalid URL path", path)
-                return
-            }
-
-            if path.count == 2 && path.first == "cask" {
-                path.insert("homebrew", at: 0)
-            }
-
-            let isCask = path.first == "homebrew"
-            let searchID = path.joined(separator: isCask ? "/" : ".") // "homebrew/cask/iterm2" vs. "app.Tidal-Zone"
-
-            let bundleID = BundleIdentifier(searchID)
-
-            // random crashes seem to happen without dispatching to main
-            self.searchText = bundleID.rawValue // needed to cause the item to appear
-
-            // TODO: switch to correct catalog by matching the source when opening from URL
-            let source = AppSource(rawValue: appfairCatalogURLMacOS.absoluteString)
-            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : source, item: .top)
-
-            // without the async, we crash with: 2022-01-16 15:59:21.205139-0500 App Fair[44011:2933267] [General] *** __boundsFail: index 2 beyond bounds [0 .. 1] … [NSSplitViewController removeSplitViewItem:] … s7SwiftUI22AppKitNavigationBridgeC10showDetail33_7420C33EDE6D7EA74A00CE41E680CEAELLySbAA0E18DestinationContentVF
-            DispatchQueue.main.async {
-                self.selection = bundleID
-                dbg("selected app ID", self.selection)
-                // DispatchQueue.main.async {
-                //     self.scrollToSelection = true // if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
-                // }
-            }
-        }
     }
 
     /// The currently selected source for the sidebar
@@ -680,6 +635,74 @@ struct NavigationRootView : View {
         //        .focusedSceneValue(\.reloadCommand, .constant({
         //            await fairAppInv.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
         //        }))
+    }
+}
+
+extension NavigationRootView {
+
+    /// Handles opening the URL schemes suppored by this app.
+    ///
+    /// Supported schemes:
+    ///
+    ///   1. `appfair://app/App-Name`: selects the "Apps" outline and searches for "app.App-Name"
+    ///   1. `appfair://cask/token`: selects the "Casks" outline and searches for "homebrew/cask/token"
+    func handleURL(_ url: URL) {
+        let components = url.pathComponents
+        dbg("handling app URL", url.absoluteString, "scheme:", url.scheme, "action:", components)
+        if let scheme = url.scheme, scheme == "appfair" {
+            var path = ([url.host ?? ""] + url.pathComponents)
+                .filter { !$0.isEmpty && $0 != "." && $0 != "/" }
+
+            if path.count < 1 {
+                dbg("invalid URL path", path)
+                return
+            }
+
+            if path.count == 2 && path.first == "cask" {
+                path.insert("homebrew", at: 0)
+            }
+
+            // by default, an app source catalog will reference the primary fair catalog
+            var catalogURL = appfairCatalogURLMacOS
+
+            if let paramMap = url.queryParameters {
+                dbg("URL params:", paramMap)
+                if let catalogString = paramMap["catalog"],
+                   let catalogString = catalogString,
+                    let url = URL(string: "https://" + catalogString) {
+                    #warning("TODO: prompt to add catalog URL before proceeding")
+                    catalogURL = url
+                    dbg("parsing cagalog URL:", catalogURL.absoluteString)
+                }
+            }
+
+            let isCask = path.first == "homebrew"
+            let searchID = path.joined(separator: isCask ? "/" : ".") // "homebrew/cask/iterm2" vs. "app.Tidal-Zone"
+
+            // handle: https://appfair.app/fair?app=Tune-Out&catalog=appfair.net/fairapps-ios.json
+
+            let bundleID = BundleIdentifier(searchID)
+
+            // random crashes seem to happen without dispatching to main
+            self.searchText = bundleID.rawValue // needed to cause the item to appear
+
+            // switch to correct catalog by matching the source when opening from URL
+            let source = AppSource(rawValue: catalogURL.absoluteString)
+            self.sidebarSelection = SidebarSelection(source: isCask ? .homebrew : source, item: .top)
+
+            self.selection = bundleID
+            dbg("selected app ID", self.selection)
+            // DispatchQueue.main.async {
+            //     self.scrollToSelection = true // if the catalog item is offscreen, then the selection will fail, so we need to also refine the current search to the bundle id
+            // }
+        }
+    }
+}
+
+extension URL {
+    /// Parses the URL for query parameters
+    var queryParameters: [String: String?]? {
+        URLComponents(url: self, resolvingAgainstBaseURL: false)?.queryItems?.dictionary(keyedBy: \.name).mapValues(\.value)
     }
 }
 
@@ -732,41 +755,45 @@ public struct AppDetailView : View {
 //                    Spacer()
 //                }
             } else {
-                let selection = { SidebarSelection(source: $0, item: .top) }
-                //let maxSourceSummary = 3 // only display the first three catalog summaries on the front page
-                let sources = fairManager.appSources // .prefix(maxSourceSummary)
-
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible(minimum: 250), alignment: .top), GridItem(.flexible(minimum: 250), alignment: .top)], alignment: .center, pinnedViews: PinnedScrollableViews.sectionHeaders) {
-                        Section {
-                            ForEach(enumerated: sources) { _, source in
-                                VStack {
-                                    let sel = selection(source)
-                                    fairManager.sourceOverviewView(selection: sel, showText: true, showFooter: false)
-                                        //.frame(height: 450)
-                                    Spacer()
-                                    browseButton(sel)
-                                    ForEach(enumerated: fairManager.sourceInfo(for: sel)?.footerText ?? []) { _, footerText in
-                                        footerText
-                                    }
-                                    .font(.footnote)
-                                }
-                                .frame(alignment: .top)
-
-                            }
-                        } header: {
-                            VStack {
-                                Text("The App Fair", bundle: .module, comment: "header text for detail screen with no selection")
-                                    .font(Font.system(size: 40, weight: .regular, design: .rounded).lowercaseSmallCaps())
-                                Text("Community App Sources", bundle: .module, comment: "header sub-text for detail screen with no selection")
-                                    .font(Font.headline)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Material.thin)
-                        }
-                    }
+                    catalogsCardsView()
                 }
+            }
+        }
+    }
+
+    @ViewBuilder func catalogsCardsView() -> some View {
+        let selection = { SidebarSelection(source: $0, item: .top) }
+        //let maxSourceSummary = 3 // only display the first three catalog summaries on the front page
+        let sources = fairManager.appSources // .prefix(maxSourceSummary)
+
+        LazyVGrid(columns: [GridItem(.flexible(minimum: 250), alignment: .top), GridItem(.flexible(minimum: 250), alignment: .top)], alignment: .center, pinnedViews: [.sectionHeaders]) {
+            Section {
+                ForEach(enumerated: sources) { _, source in
+                    VStack {
+                        let sel = selection(source)
+                        fairManager.sourceOverviewView(selection: sel, showText: true, showFooter: false)
+                            //.frame(height: 450)
+                        Spacer()
+                        browseButton(sel)
+                        ForEach(enumerated: fairManager.sourceInfo(for: sel)?.footerText ?? []) { _, footerText in
+                            footerText
+                        }
+                        .font(.footnote)
+                    }
+                    .frame(alignment: .top)
+
+                }
+            } header: {
+                VStack {
+                    Text("The App Fair", bundle: .module, comment: "header text for detail screen with no selection")
+                        .font(Font.system(size: 40, weight: .regular, design: .rounded).lowercaseSmallCaps())
+                    Text("Community App Sources", bundle: .module, comment: "header sub-text for detail screen with no selection")
+                        .font(Font.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Material.thin)
             }
         }
     }
@@ -888,14 +915,14 @@ extension FocusedValues {
         set { self[FocusedSidebarSelection.self] = newValue }
     }
 
-    private struct FocusedReloadCommand: FocusedValueKey {
-        typealias Value = Binding<() async -> ()>
-    }
-
-    var reloadCommand: Binding<() async -> ()>? {
-        get { self[FocusedReloadCommand.self] }
-        set { self[FocusedReloadCommand.self] = newValue }
-    }
+//    private struct FocusedReloadCommand: FocusedValueKey {
+//        typealias Value = Binding<() async -> ()>
+//    }
+//
+//    var reloadCommand: Binding<() async -> ()>? {
+//        get { self[FocusedReloadCommand.self] }
+//        set { self[FocusedReloadCommand.self] = newValue }
+//    }
 }
 
 

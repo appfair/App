@@ -59,7 +59,7 @@ Launch Link (required): https://appfair.app/fair?app=App-Fair
     <div style="padding-left: 16px; padding-right: 16px;">
         <span style="font-size: 30px; color: #FFFFFF; font-weight: bold; font-family: ui-rounded, Arial Rounded MT Bold, system-ui, HelveticaNeue, Helvetica Neue;">Download {{ apptitle }}.app</span>
         <br />
-        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">9.8MB – requires macOS 12+</span>
+        <span style="text-align: right; font-size: 16px; color: #FAFAFA; font-family: system-ui, Arial MT, HelveticaNeue, Helvetica Neue;">10MB – requires macOS 12.5</span>
     </div>
 </button>
 </a>
@@ -166,7 +166,7 @@ Apps acquired through the Homebrew Casks catalog, however, are not guaranteed to
 
 Individual apps acquired through the Homebrew Casks catalog may have their own built-in trial and purchasing systems. The free open-source apps published through the Fairground Apps catalog may have options for patronage and sponsorship.
 
-In addition, app developers may declare themselves as accepting sponsorsip,
+In addition, app developers may declare themselves as accepting sponsorship,
 which is described in the <a href="#sponsorable">Sponsorable</a> section.
 
 #### What permissions do I need to install apps?
