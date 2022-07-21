@@ -924,3 +924,68 @@
 /* cancel catalog activity tooltip text */
 "Cancel %@" = "Annuler %@";
 "Click here for information on customizing screenshots and metadata for this app." = "Cliquez ici pour obtenir des informations sur la contribution aux captures d'écran et aux métadonnées de cette application.";
+/* formatting text for the app list version section displaying the installed version with the currently available version in parenthesis */
+"%@ (%@)" = "%1$@ (%2$@)";
+
+/* tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available */
+"An update to this app is available" = "Une mise à jour de cette application est disponible";
+
+/* format pattern for the label of the button at the bottom of the category info screen */
+"Browse %@" = "Parcourir %@";
+
+/* accessibility title for the label to browse the available issues */
+"Browse Issues" = "Parcourir les issues";
+
+/* tooltip for button to browse the issues for the project on GitHub */
+"Browse the issues for this project on GitHub" = "Parcourir les issues pour ce projet sur GitHub";
+
+/* tooltip text for footer of screenshots page indicating how to update catalog metadata */
+"Click here for information on customizing screenshots and other metadata for this app." = "Cliquez ici pour des informations sur la personnalisation des captures d'écran et autres métadonnées pour cette application.";
+
+/* advanced preference text field label for the GitHub organization */
+"Organization" = "Organisation";
+
+/* app catalog cask entry metadata tab title for app permissions */
+"Permissions" = "Permissions";
+
+/* advanced preference text field label for the GitHub repository */
+"Repository" = "Dépôt";
+
+/* menu title for fairground sources actions */
+"Sources" = "Sources";
+
+/* accessibility title for the label to sponsor this project */
+"Sponsor" = "Soutenir";
+
+/* tooltip for button to open link to sponsor project on GitHub */
+"Sponsor this project on GitHub" = "Soutenir ce projet sur GitHub";
+
+/* tooltip for button to open link to star project on GitHub */
+"Star this project on GitHub" = "Mettre une étoile à ce projet sur GitHub";
+
+/* fairapps preference checkbox for whether the embedded browser should use private browsing mode */
+"Use private browsing for untrusted sites" = "Utiliser la navigation privée pour les sites non certifiés";
+
+/* button help text for option to clear local cache data in the app settings */
+"Purges the local cache of icons and app descriptions" = "Efface le cache local des icônes et des descriptions d'application";
+
+/* app category info: title pattern */
+"Category: %@" = "Catégorie : %@";
+
+/* button label for option to clear local cache data in the app settings */
+"Clear caches" = "Effacer le cache";
+
+/* app catalog app entry preview tab title */
+"Project" = "Projet";
+
+/* preference checkbox */
+"Enable sponsorship links" = "Activer les liens de parrainage";
+
+/* fairapps preference checkbox for whether links in the embedded browser should be opened in a new browser */
+"Open links in new browser window" = "Ouvrir les liens dans une nouvelle fenêtre";
+
+/* button text on Homebrew preferences for resetting the Homebrew installation */
+"Reset Homebrew" = "Réinitialiser Homebrew";
+
+/* tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version */
+"The latest version of this app is installed" = "La dernière version de cette application est installée";
