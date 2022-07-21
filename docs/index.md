@@ -69,7 +69,6 @@ Launch Link (required): https://appfair.app/fair?app=App-Fair
 
 <a href="#screenshots"><img style="width: 50%;" align="right" alt="The App Fair.app showing the catalog entry for the Blender project" src="screenshots/screenshot_00-mac-dark-3078x2044.png" /></a>
 
-
 Browse, download and install macOS apps from a vast catalog of both free and commercial native desktop applications. The App Fair provides access to thousands of third-party apps through the community “Homebrew Casks” catalog, as well as all the free and open-source apps created with the App Fair's own fair-ground distribution network.
 
 
@@ -118,6 +117,11 @@ Browse, download and install macOS apps from a vast catalog of both free and com
 
 From world-class web browsers like {{ browsers[0] }}, {{ browsers[1] }}, and {{ browsers[2] }} to essential messaging apps like {{ messengers[0] }}, {{ messengers[1] }}, and {{ messengers[2] }}. From design stars like {{ design[0] }}, {{ design[1] }}, and {{ design[2] }} to crucial technologies like {{ tools[0] }}, {{ tools[1] }}, and {{ tools[2] }}. And from media streaming apps like {{ players[0] }}, {{ players[1] }}, and {{ players[2] }} to game platforms like {{ games[0] }}, {{ games[1] }}, and {{ games[2] }}. The App Fair is your missing source for all the Mac apps that you need to use, and love to use, every single day.
 
+For help and assistance with the App Fair,
+visit the [project discussions](https://github.com/App-Fair/App/discussions),
+join the [discord channel](https://discord.gg/R4bFP8qpw7),
+and browse the [issue reports](https://github.com/App-Fair/App/issues).
+
 ## Straight from the Makers
 
 The apps you get through the App Fair come straight from their creators, with no intermediaries. They may be free applications, or they may be commercial software with their own licensing and purchase mechanisms. They all benefit from the full protection of macOS's built-in security features like _Gatekeeper_ and _XProtect_, while at the same time remaining unconstrained by many of the limitations that can hobble apps installed through other channels. 
@@ -145,7 +149,7 @@ brew install app-fair && open "/Applications/App Fair.app"
 
 Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder, although this can vary depending on the Cask.
 
-Apps installed from the Fairground App catalog will always be placed in the `/Applications/App Fair/` folder.
+Apps installed from the Fairground App catalog will are placed in the `/Applications/App Fair/` folder. Apps installed from other app sources are places in a folder named with the identifier of the catalog: `/Applications/App Fair/app.source.identifier`.
 
 #### What does the "app already exists" error mean during installation?
 
