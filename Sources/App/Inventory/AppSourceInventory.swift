@@ -165,7 +165,7 @@ enum CatalogActivity : CaseIterable, Equatable {
 extension AppSourceInventory {
     @MainActor func fetchApps(cache: URLRequest.CachePolicy? = nil) async throws {
         dbg("loading catalog")
-        let (catalog, response) = try await FairHub.fetchCatalog(sourceURL: sourceURL, cache: cache)
+        let (catalog, response) = try await FairHub.fetchCatalog(sourceURL: sourceURL, locale: Locale.current, cache: cache)
         if self.catalog != catalog {
             self.catalog = catalog
         }
@@ -699,7 +699,7 @@ extension FairHub {
 #if swift(>=5.5)
     /// Fetches the `AppCatalog`
     @available(macOS 12.0, iOS 15.0, *)
-    public static func fetchCatalog(sourceURL: URL, injectSourceURL: Bool = true, cache: URLRequest.CachePolicy? = nil) async throws -> (catalog: AppCatalog, response: URLResponse) {
+    public static func fetchCatalog(sourceURL: URL, locale: Locale?, injectSourceURL: Bool = true, cache: URLRequest.CachePolicy? = nil) async throws -> (catalog: AppCatalog, response: URLResponse) {
         dbg("fetching catalog at:", sourceURL)
         let start = CFAbsoluteTimeGetCurrent()
 
@@ -713,6 +713,11 @@ extension FairHub {
 
         var catalog = try AppCatalog.parse(jsonData: data)
         dbg("parsed catalog apps at:", sourceURL, catalog.apps.count)
+
+        if let locale = locale {
+            // localize the catalog for the requested locale
+            catalog = try await catalog.localized(into: locale)
+        }
 
         if injectSourceURL == true && catalog.sourceURL == nil {
             catalog.sourceURL = sourceURL

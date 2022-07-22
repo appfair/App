@@ -174,7 +174,8 @@ and Norwegian.
 Translators are invited to help translate the App Fair strings into
 their local language.
 We use the "Weblate" translation interface to enable
-translation contirbutions without needing any code or source control.
+translation contirbutions without needing to use
+source control management directly.
 
 Start contributing by going to:
 [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).

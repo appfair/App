@@ -29,7 +29,7 @@
 
 /* Begin PBXFileReference section */
 		4917633F2773E08000FBB28B /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
-		49555415268931C1003F1B5B /* App Fair.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Fair.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* App Name.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Name.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498E852827597DA100EE6F8C /* AppFairApp.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppFairApp.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,7 +59,7 @@
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* App Fair.app */,
+				49555415268931C1003F1B5B /* App Name.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,7 +85,7 @@
 				498DD183268CDB4600B79D43 /* App */,
 			);
 			productName = App;
-			productReference = 49555415268931C1003F1B5B /* App Fair.app */;
+			productReference = 49555415268931C1003F1B5B /* App Name.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
