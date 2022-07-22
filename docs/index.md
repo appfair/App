@@ -153,12 +153,31 @@ App Fair.app integrates with the following sources of apps:
   - **AppCasks**: This catalog integrates with the brew casks database, which is curated and maintained by the [Homebrew Project](https://brew.sh).
   - **AppSources**: This open format is used by [appfair.net](https://appfair.net/#appsource) to describe a catalog for previewing, downloading, and installing apps.
 
+#### How do I add additional sources to the App Fair?
+
+The ability to add custom external sources is experimental
+and must first be activated from the "Advanced" preferences panel.
+Once enabled, new sources can be added with the
+plus ("+") button at the bottom of the navigation sidebar.
 
 #### Where does App Fair.app install apps locally?
 
 Apps installed from the Homebrew Casks catalog are typically placed in the system `/Applications/` folder, although this can vary depending on the Cask.
 
 Apps installed from the Fairground App catalog will are placed in the `/Applications/App Fair/` folder. Apps installed from other app sources are places in a folder named with the identifier of the catalog: `/Applications/App Fair/app.source.identifier`.
+
+#### What languages is the App Fair available in?
+
+App Fair.app is currently available in English, French,
+and Norwegian.
+
+Translators are invited to help translate the App Fair strings into
+their local language.
+We use the "Weblate" translation interface to enable
+translation contirbutions without needing any code or source control.
+
+Start contributing by going to:
+[hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
 
 #### What does the "app already exists" error mean during installation?
 
@@ -454,12 +473,6 @@ $ ~/Library/Application\ Support/app.App-Fair/appfair-homebrew/Homebrew/bin/brew
 
 
 ### App Fair Development FAQs
-
-#### How can I help translate the App Fair?
-
-Translators are invited to help translate the App Fair strings into
-their local language. The weblate service is used for translations,
-and can he accessed at [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
 
 #### Where can I discuss features and improvements to the App Fair?
 
