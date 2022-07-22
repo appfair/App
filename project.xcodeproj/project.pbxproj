@@ -108,8 +108,19 @@
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				de,
 				en,
+				es,
 				Base,
+				fr,
+				it,
+				ja,
+				ko,
+				nb,
+				pt,
+				ru,
+				zh-Han,
+				zh-Hant,
 			);
 			mainGroup = 4955540C268931C1003F1B5B;
 			productRefGroup = 49555416268931C1003F1B5B /* Products */;
