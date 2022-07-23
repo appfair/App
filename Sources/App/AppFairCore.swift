@@ -142,7 +142,7 @@ struct SimpleTableView : View {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: AppInfo??
-    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SourceSelection??
+    @FocusedBinding(\.sourceSelection) private var sourceSelection: SourceSelection??
 
     //    @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
 
@@ -200,7 +200,7 @@ struct AppFairCommands: Commands {
 
     func sidebarButton(_ selection: SourceSelection) -> some View {
         Button {
-            sidebarSelection = selection
+            sourceSelection = selection
         } label: {
             fairManager.sourceInfo(for: selection)?.tintedLabel(monochrome: true).title
         }
@@ -221,13 +221,13 @@ struct AppFairCommands: Commands {
 struct CopyAppURLCommand : View {
     @EnvironmentObject var fairManager: FairManager
     @FocusedBinding(\.selection) private var selection: AppInfo??
-    @FocusedBinding(\.sidebarSelection) private var sidebarSelection: SourceSelection??
+    @FocusedBinding(\.sourceSelection) private var sourceSelection: SourceSelection??
 
     var body: some View {
         Text("Copy App URL", bundle: .module, comment: "menu title for command")
             .button(action: commandSelected)
             .keyboardShortcut("C", modifiers: [.command, .shift])
-            //.disabled(sidebarSelection??.app == nil)
+            .disabled(selection??.app == nil)
     }
 
     func commandSelected() {
@@ -531,7 +531,7 @@ struct NavigationRootView : View {
     /// Indication that the selection should be scrolled to
     @State var scrollToSelection: Bool = false
 
-    @State var sidebarSelection: SourceSelection? = nil
+    @State var sourceSelection: SourceSelection? = nil
 
     //@SceneStorage("displayMode")
     @State var displayMode: TriptychOrient = TriptychOrient.allCases.first!
@@ -595,7 +595,7 @@ struct NavigationRootView : View {
                 // update the badge when the setting changes
                 UXApplication.shared.setBadge(iconBadge ? fairManager.updateCount() : 0)
             }
-            .onChange(of: sidebarSelection) { selection in
+            .onChange(of: sourceSelection) { selection in
                 if !searchText.isEmpty && selection?.section != .top { // only clear when switching away from the "popular" tab
                     searchText = "" // clear search whenever the sidebar selection changes
                 }
@@ -607,9 +607,9 @@ struct NavigationRootView : View {
             .onOpenURL(perform: handleURL)
     }
 
-    var sidebarSelectionBinding: Binding<SourceSelection?> {
+    var sourceSelectionBinding: Binding<SourceSelection?> {
         //return .constant(.init(source: .fairapps, section: .updated))
-        return $sidebarSelection
+        return $sourceSelection
         //            .mapSetter { oldValue, newValue in
         //            // clear search whenever the sidebar selection changes
         //            if newValue?.section != .top && !searchText.isEmpty {
@@ -622,31 +622,31 @@ struct NavigationRootView : View {
 
     /// The currently selected source for the sidebar
     var sidebarSource: AppSource? {
-        return sidebarSelection?.source
+        return sourceSelection?.source
     }
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
             SidebarView(selection: $selection
                         //                .mapSetter(action: { dump($1, name: wip("changing selection")) })
-                        , scrollToSelection: $scrollToSelection, sidebarSelection: sidebarSelectionBinding, displayMode: $displayMode, searchText: $searchText)
-            .focusedSceneValue(\.sidebarSelection, sidebarSelectionBinding)
+                        , scrollToSelection: $scrollToSelection, sourceSelection: sourceSelectionBinding, displayMode: $displayMode, searchText: $searchText)
+            .focusedSceneValue(\.sourceSelection, sourceSelectionBinding)
         } list: {
             if let sidebarSource = sidebarSource {
-                AppsListView(source: sidebarSource, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
+                AppsListView(source: sidebarSource, sourceSelection: sourceSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
             } else {
                 EmptyView() // TODO: better placeholder view for un-selected sidebar section
             }
         } table: {
 #if os(macOS)
             if let sidebarSource = sidebarSource {
-                AppsTableView(source: sidebarSource, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
+                AppsTableView(source: sidebarSource, selection: $selection, sourceSelection: sourceSelection, searchText: $searchText)
             } else {
                 EmptyView()
             }
 #endif
         } content: {
-            AppDetailView(sidebarSelection: sidebarSelectionBinding)
+            AppDetailView(sourceSelection: sourceSelectionBinding)
         }
         // warning: this spikes CPU usage when idle
         //        .focusedSceneValue(\.reloadCommand, .constant({
@@ -705,7 +705,7 @@ extension NavigationRootView {
 
             // switch to correct catalog by matching the source when opening from URL
             let source = AppSource(rawValue: catalogURL.absoluteString)
-            self.sidebarSelection = SourceSelection(source: isCask ? .homebrew : source, section: .top)
+            self.sourceSelection = SourceSelection(source: isCask ? .homebrew : source, section: .top)
 
             self.selection = bundleID
             dbg("selected app ID", self.selection)
@@ -729,13 +729,13 @@ public struct AppTableDetailSplitView : View {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
     @Binding var searchText: String
-    @Binding var sidebarSelection: SourceSelection?
+    @Binding var sourceSelection: SourceSelection?
 
     @ViewBuilder public var body: some View {
         VSplitView {
-            AppsTableView(source: source, selection: $selection, sidebarSelection: sidebarSelection, searchText: $searchText)
+            AppsTableView(source: source, selection: $selection, sourceSelection: sourceSelection, searchText: $searchText)
                 .frame(minHeight: 150)
-            AppDetailView(sidebarSelection: $sidebarSelection)
+            AppDetailView(sourceSelection: $sourceSelection)
                 .layoutPriority(1.0)
         }
     }
@@ -744,12 +744,12 @@ public struct AppTableDetailSplitView : View {
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
-    @Binding var sidebarSelection: SourceSelection?
+    @Binding var sourceSelection: SourceSelection?
     @FocusedBinding(\.selection) private var selection: AppInfo??
     @EnvironmentObject var fairManager: FairManager
 
     @ViewBuilder public var body: some View {
-        if let source = sidebarSelection?.source,
+        if let source = sourceSelection?.source,
            let selection = selection,
            let app = selection {
             CatalogItemView(info: app, source: source)
@@ -760,8 +760,8 @@ public struct AppDetailView : View {
 
     @ViewBuilder func emptySelectionView() -> some View {
         VStack {
-            if let sidebarSelection = sidebarSelection {
-                fairManager.sourceOverviewView(selection: sidebarSelection, showText: true, showFooter: true)
+            if let sourceSelection = sourceSelection {
+                fairManager.sourceOverviewView(selection: sourceSelection, showText: true, showFooter: true)
                     .font(.body)
                 Spacer()
 
@@ -815,14 +815,14 @@ public struct AppDetailView : View {
         }
     }
 
-    func browseButton(_ sidebarSelection: SourceSelection) -> some View {
+    func browseButton(_ sourceSelection: SourceSelection) -> some View {
         Button {
             withAnimation {
-                self.sidebarSelection = sidebarSelection
+                self.sourceSelection = sourceSelection
                 self.selection = .some(.none)
             }
         } label: {
-            let title = fairManager.sourceInfo(for: sidebarSelection)?.fullTitle ?? Text(verbatim: "")
+            let title = fairManager.sourceInfo(for: sourceSelection)?.fullTitle ?? Text(verbatim: "")
             Text("Browse \(title)", bundle: .module, comment: "format pattern for the label of the button at the bottom of the category info screen")
         }
     }
@@ -923,13 +923,13 @@ extension FocusedValues {
         set { self[FocusedSelection.self] = newValue }
     }
 
-    private struct FocusedSidebarSelection: FocusedValueKey {
+    private struct FocusedSourceSelection: FocusedValueKey {
         typealias Value = Binding<SourceSelection?>
     }
 
-    var sidebarSelection: Binding<SourceSelection?>? {
-        get { self[FocusedSidebarSelection.self] }
-        set { self[FocusedSidebarSelection.self] = newValue }
+    var sourceSelection: Binding<SourceSelection?>? {
+        get { self[FocusedSourceSelection.self] }
+        set { self[FocusedSourceSelection.self] = newValue }
     }
 
 //    private struct FocusedReloadCommand: FocusedValueKey {

@@ -1126,11 +1126,11 @@ extension HomebrewInventory {
         }
     }
 
-    func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         visibleAppInfos
-            .filter({ matchesSelection(item: $0, sidebarSelection: sidebarSelection) })
+            .filter({ matchesSelection(item: $0, sourceSelection: sourceSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .sorted(using: sortOrder + categorySortOrder(category: sidebarSelection?.section))
+            .sorted(using: sortOrder + categorySortOrder(category: sourceSelection?.section))
     }
 
     func categorySortOrder(category: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
@@ -1180,8 +1180,8 @@ extension HomebrewInventory {
         return false
     }
 
-    func matchesSelection(item: AppInfo, sidebarSelection: SourceSelection?) -> Bool {
-        switch sidebarSelection?.section {
+    func matchesSelection(item: AppInfo, sourceSelection: SourceSelection?) -> Bool {
+        switch sourceSelection?.section {
         case .none:
             return true
         case .installed:

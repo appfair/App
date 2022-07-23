@@ -221,8 +221,8 @@ extension AppInventoryController {
         return true
     }
 
-    func arrangedItems(source: AppSource, sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        self.inventory(for: source)?.arrangedItems(sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText) ?? []
+    func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        self.inventory(for: source)?.arrangedItems(sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText) ?? []
     }
 
     func badgeCount(for item: SourceSelection) -> Text? {

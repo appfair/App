@@ -18,7 +18,7 @@ import FairKit
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView : View {
     let source: AppSource
-    let sidebarSelection: SourceSelection?
+    let sourceSelection: SourceSelection?
 
     @EnvironmentObject var fairManager: FairManager
 
@@ -63,12 +63,12 @@ struct AppsListView : View {
     @ViewBuilder var appsList : some View {
         ScrollViewReader { proxy in
             List {
-                if sidebarSelection?.section == .top {
+                if sourceSelection?.section == .top {
                     // appListSection(section: nil, source: source)
                     ForEach(AppListSection.allCases) { section in
                         appListSection(section: section, source: source)
                     }
-                } else if sidebarSelection?.section == .updated {
+                } else if sourceSelection?.section == .updated {
                     ForEach(AppUpdatesSection.allCases) { section in
                         appUpdatesSection(section: section)
                     }
@@ -134,7 +134,7 @@ struct AppsListView : View {
     }
 
     func appInfoItems(section: AppListSection?) -> [AppInfo] {
-        arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
                 let hasScreenshots = $0.app.screenshotURLs?.isEmpty == false
@@ -145,9 +145,9 @@ struct AppsListView : View {
             .uniquing(by: \.id) // ensure there are no duplicates with the same id
     }
 
-    func arrangedItems(source: AppSource, sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         prf("arranging: \(source.rawValue)") {
-            fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+            fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
@@ -171,7 +171,7 @@ struct AppsListView : View {
     }
 
     func appUpdateItems(section: AppsListView.AppUpdatesSection) -> [AppInfo] {
-        let updatedItems: [AppInfo] = arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        let updatedItems: [AppInfo] = arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
         let updatedItemIDs = updatedItems.map(\.id).set()
 
         switch section {
@@ -179,7 +179,7 @@ struct AppsListView : View {
             return updatedItems
         case .recent:
             // get a list of all recently installed items that are not in the availabe updates set
-            let installedItems = arrangedItems(source: source, sidebarSelection: .some(SourceSelection(source: source, section: .installed)), sortOrder: sortOrder, searchText: searchText)
+            let installedItems = arrangedItems(source: source, sourceSelection: .some(SourceSelection(source: source, section: .installed)), sortOrder: sortOrder, searchText: searchText)
                 .filter({ fairManager.sessionInstalls.contains($0.id) })
                 .filter({ !updatedItemIDs.contains($0.id) })
             return installedItems

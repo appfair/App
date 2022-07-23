@@ -34,7 +34,7 @@ protocol AppInventory : AnyObject {
     @MainActor func badgeCount(for section: SidebarSection) -> Text?
 
     /// The app info items to be displayed for the given selection, filter, and sort order
-    @MainActor func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
+    @MainActor func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
     @MainActor func appInstalled(_ item: AppInfo) -> String?

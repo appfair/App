@@ -25,13 +25,13 @@ struct AppsTableView : View, ItemTableView {
     @EnvironmentObject var fairManager: FairManager
     let source: AppSource
     @Binding var selection: AppInfo.ID?
-    let sidebarSelection: SourceSelection?
+    let sourceSelection: SourceSelection?
     @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
     @Binding var searchText: String
     @State private var searchTextBuffer: String = ""
 
     var items: [AppInfo] {
-        fairManager.arrangedItems(source: source, sidebarSelection: sidebarSelection, sortOrder: sortOrder, searchText: searchText)
+        fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
     }
 
     var tableRowBody: some TableRowContent {
@@ -59,7 +59,7 @@ struct AppsTableView : View, ItemTableView {
     var body: some View {
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: true))
-            .id(sidebarSelection) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
+            .id(sourceSelection) // attempt to prevent: “*** Assertion failure in -[NSTableRowHeightData _variableRemoveRowSpansInRange:], NSTableRowHeightData.m:1283 … [General] row validation for deletion of 1 rows starting at index 5”
             .font(Font.body.monospacedDigit())
             .focusedSceneValue(\.selection, .constant(itemSelection))
             .searchable(text: $searchTextBuffer)

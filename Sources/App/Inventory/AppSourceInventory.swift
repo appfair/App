@@ -237,14 +237,14 @@ extension AppSourceInventory {
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(sidebarSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
-            .appInfoItems(includePrereleases: showPreReleases || sidebarSelection?.section == .installed)
+            .appInfoItems(includePrereleases: showPreReleases || sourceSelection?.section == .installed)
             .filter({ matchesExtension(item: $0) })
-            .filter({ sidebarSelection?.section.isLocalFilter == true || matchesRiskFilter(item: $0) })
+            .filter({ sourceSelection?.section.isLocalFilter == true || matchesRiskFilter(item: $0) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .filter({ selectionFilter(sidebarSelection, item: $0) }) // TODO: fix categories for app item
-            .sorted(using: sortOrder + categorySortOrder(section: sidebarSelection?.section))
+            .filter({ selectionFilter(sourceSelection, item: $0) }) // TODO: fix categories for app item
+            .sorted(using: sortOrder + categorySortOrder(section: sourceSelection?.section))
     }
 
     func categorySortOrder(section: SidebarSection?) -> [KeyPathComparator<AppInfo>] {

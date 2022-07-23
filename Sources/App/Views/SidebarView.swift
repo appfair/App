@@ -20,7 +20,7 @@ struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
     @Binding var selection: AppInfo.ID?
     @Binding var scrollToSelection: Bool
-    @Binding var sidebarSelection: SourceSelection?
+    @Binding var sourceSelection: SourceSelection?
     @Binding var displayMode: TriptychOrient
     @Binding var searchText: String
 
@@ -38,9 +38,9 @@ struct SidebarView: View {
             ForEach(fairManager.appSources, id: \.self, content: appSidebarSection(for:))
                 .onAppear {
                     // when we first appear select the initial element
-                    if let source = fairManager.appSources.first, source != self.sidebarSelection?.source {
+                    if let source = fairManager.appSources.first, source != self.sourceSelection?.source {
                         #warning("initial selection?")
-                        //self.sidebarSelection = .init(source: source, section: .top)
+                        //self.sourceSelection = .init(source: source, section: .top)
                     }
                 }
 
@@ -312,7 +312,7 @@ struct SidebarView: View {
     func sidebarItem(_ selection: SourceSelection) -> some View {
         let info = fairManager.sourceInfo(for: selection)
         let label = info?.tintedLabel(monochrome: false)
-        return NavigationLink(tag: selection, selection: $sidebarSelection, destination: {
+        return NavigationLink(tag: selection, selection: $sourceSelection, destination: {
             navigationDestinationView(item: selection)
                 .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
         }, label: {
@@ -323,10 +323,10 @@ struct SidebarView: View {
     @ViewBuilder func navigationDestinationView(item: SourceSelection) -> some View {
         switch displayMode {
         case .list:
-            AppsListView(source: item.source, sidebarSelection: sidebarSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
+            AppsListView(source: item.source, sourceSelection: sourceSelection, selection: $selection, scrollToSelection: $scrollToSelection, searchTextSource: $searchText)
 #if os(macOS)
         case .table:
-            AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sidebarSelection: $sidebarSelection)
+            AppTableDetailSplitView(source: item.source, selection: $selection, searchText: $searchText, sourceSelection: $sourceSelection)
 #endif
         }
     }
