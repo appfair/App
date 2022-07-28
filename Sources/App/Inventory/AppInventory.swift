@@ -72,7 +72,7 @@ public protocol AppInventory {
     var catalogUpdated: Date? { get }
 
     /// The badge indicating how many matches are available
-    func badgeCount(for section: SidebarSection) -> Text?
+    @MainActor func badgeCount(for section: SidebarSection) -> Text?
 
     /// Returns an unfiltered, unsorted list of all the apps in this catalog.
     func appList() async -> [AppInfo]?
@@ -82,7 +82,7 @@ public protocol AppInventory {
     func refreshAll(reloadFromSource: Bool) async throws
 
     /// The app info items to be displayed for the given selection, filter, and sort order
-    func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
+    @MainActor func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
     func appInstalled(_ item: AppInfo) -> String?
