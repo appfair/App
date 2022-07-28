@@ -16,57 +16,8 @@ import FairKit
 import FairExpo
 import Combine
 
-/// A controller that handles multiple app inventory instances
-protocol AppInventoryController {
-    @MainActor var inventories: [(AppInventory, AnyCancellable)] { get }
-
-    /// Finds the inventory for the given identifier in the managers list of sources
-    @MainActor func inventory(from source: AppSource) -> AppInventory?
-}
-
-
-extension AppInventoryController {
-    @MainActor var appInventories: [AppInventory] {
-        inventories.map(\.0)
-    }
-
-    @MainActor var appSources: [AppSource] {
-        appInventories.map(\.source)
-    }
-
-    @MainActor func inventory(from source: AppSource) -> AppInventory? {
-        appInventories.first(where: { $0.source == source })
-    }
-
-    @MainActor func inventory(for item: AppInfo) -> AppInventory? {
-        inventory(from: item.source)
-        //item.isCask ? homeBrewInv : fairAppInv
-    }
-
-    /// Returns the metadata for the given catalog
-    @MainActor func sourceInfo(for selection: SourceSelection) -> AppSourceInfo? {
-        inventory(for: selection.source)?.sourceInfo(for: selection.section)
-    }
-
-    @MainActor func inventory(for source: AppSource) -> AppInventory? {
-        inventory(from: source)
-    }
-
-    /// The caskManager, which should be extracted as a separate `EnvironmentObject`
-    ///
-    /// -TODO: @available(*, deprecated, renamed: "inventory(from:)")
-    @MainActor var homeBrewInv: HomebrewInventory? {
-        inventory(from: .homebrew) as? HomebrewInventory
-    }
-
-    /// Returns a list of all the inventories that extend from `AppSourceInventory`
-    @MainActor var appSourceInventories: [AppSourceInventory] {
-        appInventories.compactMap({ $0 as? AppSourceInventory })
-    }
-}
-
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class FairManager: SceneManager, AppInventoryController {
+public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning: Bool = true
@@ -102,7 +53,7 @@ extension AppInventoryController {
     @AppStorage("userSources") var userSources: AppStorageArray<String> = []
 
     /// The inventories of app sources that are currently available
-    @Published var inventories: [(AppInventory, AnyCancellable)] = []
+    @Published var inventories: [(AppInventoryManagement, AnyCancellable)] = []
 
 //    /// The appManager, which should be extracted as a separate `EnvironmentObject`
 //    @Published var fairAppInv: AppSourceInventory
@@ -140,6 +91,49 @@ extension AppInventoryController {
             }
         ]
     }
+}
+
+extension FairManager : AppManagement {
+
+    public func install(_ appInfo: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+        try await inventory(for: appInfo)?.install(appInfo, progress: parentProgress, update: update, verbose: verbose)
+        sessionInstalls.insert(appInfo.id)
+    }
+
+    public func reveal(_ appInfo: AppInfo) async throws {
+        try await inventory(for: appInfo)?.reveal(appInfo)
+    }
+
+    public func launch(_ appInfo: AppInfo) async throws {
+        if self.appLaunchPrivacy {
+            try await self.enableAppLaunchPrivacy()
+        }
+        try await inventory(for: appInfo)?.launch(appInfo)
+    }
+
+    public func delete(_ appInfo: AppInfo, verbose: Bool) async throws {
+        try await inventory(for: appInfo)?.delete(appInfo, verbose: verbose)
+    }
+
+    public func installedPath(for appInfo: AppInfo) async throws -> URL? {
+        try await inventory(for: appInfo)?.installedPath(for: appInfo)
+    }
+
+}
+
+extension FairManager { // }: AppInventory {
+    public func refresh(reloadFromSource: Bool) async {
+        await withTaskGroup(of: Void.self, returning: Void.self) { group in
+            for inv in self.appInventories.shuffled() {
+                let _ = group.addTaskUnlessCancelled {
+                    await self.load(inventory: inv, reloadFromSource: reloadFromSource)
+                }
+            }
+        }
+    }
+}
+
+extension FairManager {
 
     /// Called when the user preference changes
     func updateUserSources(enable: Bool) {
@@ -178,7 +172,7 @@ extension AppInventoryController {
         } else {
             if load {
                 Task {
-                    await self.refresh(inventory: inv, reloadFromSource: true)
+                    await self.load(inventory: inv, reloadFromSource: true)
                 }
             }
 
@@ -205,7 +199,7 @@ extension AppInventoryController {
         return found
     }
 
-    @discardableResult func addInventory(_ inventory: AppInventory) -> Bool {
+    @discardableResult @MainActor func addInventory(_ inventory: AppInventoryManagement) -> Bool {
         if let _ = self.inventories.first(where: { inv, _ in
             inv.source == inventory.source
         }) {
@@ -234,25 +228,18 @@ extension AppInventoryController {
         self.appInventories.contains { $0.updateInProgress > 0 }
     }
 
-    func refresh(inventory: AppInventory, reloadFromSource: Bool) async {
-        do {
-            try await inventory.refreshAll(reloadFromSource: reloadFromSource)
-        } catch {
-            self.reportError(AppError(String(format: NSLocalizedString("Error Loading Catalog", bundle: .module, comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", bundle: .module, comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error))
-        }
-    }
-
-    func refresh(reloadFromSource: Bool) async {
-        await withTaskGroup(of: Void.self, returning: Void.self) { group in
-            for inv in self.appInventories.shuffled() {
-                let _ = group.addTaskUnlessCancelled {
-                    await self.refresh(inventory: inv, reloadFromSource: reloadFromSource)
-                }
+    private func load(inventory: AppInventory, reloadFromSource: Bool) async {
+        await self.trying {
+            do {
+                try await inventory.refreshAll(reloadFromSource: reloadFromSource)
+            } catch {
+                throw AppError(String(format: NSLocalizedString("Error Loading Catalog", bundle: .module, comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", bundle: .module, comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error)
             }
         }
     }
 
-    func reportError(_ error: Error) {
+    private func reportError(_ error: Error, functionName: StaticString, fileName: StaticString, lineNumber: Int) {
+        dbg("error:", error, functionName: functionName, fileName: fileName, lineNumber: lineNumber)
         errors.append(error as? AppError ?? AppError(error))
     }
     
@@ -271,11 +258,11 @@ extension AppInventoryController {
     }
 
     /// Attempts to perform the given action and adds any errors to the error list if they fail.
-    func trying(block: () async throws -> ()) async {
+    func trying(functionName: StaticString = #function, fileName: StaticString = #file, lineNumber: Int = #line, block: () async throws -> ()) async {
         do {
             try await block()
         } catch {
-            reportError(error)
+            reportError(error, functionName: functionName, fileName: fileName, lineNumber: lineNumber)
         }
     }
 
@@ -341,47 +328,21 @@ extension AppInventoryController {
     ///   - info: the info to check
     ///   - transition: whether to use a fancy transition
     /// - Returns: the icon
-    @ViewBuilder func iconView(for item: AppInfo, transition: Bool = false) -> some View {
+    @ViewBuilder func iconView(for appInfo: AppInfo, transition: Bool = false) -> some View {
         Group {
-            inventory(for: item.source)?.icon(for: item)
+            inventory(for: appInfo.source)?.icon(for: appInfo)
         }
         //.transition(AnyTransition.scale(scale: 0.50).combined(with: .opacity)) // bounce & fade in the icon
         .transition(transition == false ? AnyTransition.opacity : AnyTransition.asymmetric(insertion: AnyTransition.opacity, removal: AnyTransition.scale(scale: 0.75).combined(with: AnyTransition.opacity))) // skrink and fade out the placeholder while fading in the actual icon
 
     }
 
-    func launch(_ item: AppInfo) async {
-        await self.trying {
-            if self.appLaunchPrivacy {
-                try await self.enableAppLaunchPrivacy()
-            }
-            try await inventory(for: item)?.launch(item)
-        }
+    func installedVersion(_ appInfo: AppInfo) -> String? {
+        inventory(for: appInfo)?.appInstalled(appInfo)
     }
 
-    func install(_ item: AppInfo, source: AppSource, progress parentProgress: Progress?, manageDownloads: Bool? = nil, update: Bool = true, verbose: Bool = true) async {
-        await self.trying {
-            try await inventory(for: item)?.install(item, progress: parentProgress, update: update, verbose: verbose)
-            sessionInstalls.insert(item.id)
-        }
-    }
-
-    func reveal(_ item: AppInfo) async {
-        await self.trying {
-            try await inventory(for: item)?.reveal(item)
-        }
-    }
-
-    func delete(_ item: AppInfo) async throws {
-        try await inventory(for: item)?.delete(item, verbose: true)
-    }
-
-    func installedVersion(_ item: AppInfo) -> String? {
-        inventory(for: item)?.appInstalled(item)
-    }
-
-    func appUpdated(_ item: AppInfo) -> Bool {
-        inventory(for: item)?.appUpdated(item) == true
+    func appUpdated(_ appInfo: AppInfo) -> Bool {
+        inventory(for: appInfo)?.appUpdated(appInfo) == true
     }
 }
 
@@ -483,12 +444,12 @@ extension FairManager {
     }
 
     /// Disables App Launch Privacy mode
-    func disableAppLaunchPrivacy() throws {
+    func disableAppLaunchPrivacy() async throws {
         if let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() {
             dbg("disabling app launch privacy")
-            let unblock = try Process.exec(cmd: appLaunchPrivacyTool.path, "disable")
-            dbg(unblock.exitCode == 0 ? "successfully" : "unsuccessfully", "disabled app launch privacy:", unblock.stdout, unblock.stderr)
-            if unblock.exitCode == 0 {
+            let unblock = try await Process.exec(cmd: appLaunchPrivacyTool.path, "disable").expect()
+            dbg(unblock.process.terminationStatus == 0 ? "successfully" : "unsuccessfully", "disabled app launch privacy:", unblock.stdout, unblock.stderr)
+            if unblock.process.terminationStatus == 0 {
                 clearAppLaunchPrivacyObserver()
             }
         }
@@ -505,8 +466,8 @@ extension FairManager {
         /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
         if FileManager.default.fileExists(atPath: appLaunchPrivacyTool.path) {
             dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
-            let privacyEnabled = try Process.exec(cmd: appLaunchPrivacyTool.path, "enable")
-            if privacyEnabled.exitCode != 0 {
+            let privacyEnabled = try await Process.exec(cmd: appLaunchPrivacyTool.path, "enable").expect()
+            if privacyEnabled.process.terminationStatus != 0 {
                 throw AppError(NSLocalizedString("Failed to block launch telemetry", bundle: .module, comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
             }
 
@@ -515,21 +476,29 @@ extension FairManager {
 
             let observer = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { note in
                 dbg("application exiting; disabling app launch privacy mode")
-                try? self.disableAppLaunchPrivacy()
+                Task {
+                    do {
+                        try await self.disableAppLaunchPrivacy()
+                    } catch {
+                        dbg("disableAppLaunchPrivacy error:", error)
+                    }
+                }
             }
 
             self.appLaunchPrivacyDeactivator = observer
 
             DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                do {
-                    if observer.isEqual(self.appLaunchPrivacyDeactivator) {
-                        dbg("disabling app launch privacy")
-                        try self.disableAppLaunchPrivacy()
-                    } else {
-                        dbg("app launch privacy timer marker became invalid; skipping disable")
+                Task {
+                    do {
+                        if observer.isEqual(self.appLaunchPrivacyDeactivator) {
+                            dbg("disabling app launch privacy")
+                            try await self.disableAppLaunchPrivacy()
+                        } else {
+                            dbg("app launch privacy timer marker became invalid; skipping disable")
+                        }
+                    } catch {
+                        dbg("error unblocking launch telemetry:", error)
                     }
-                } catch {
-                    dbg("error unblocking launch telemetry:", error)
                 }
             }
         }
@@ -580,8 +549,8 @@ extension FairManager {
 
             dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
 
-            let result = try Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, target: swiftFile)
-            if result.exitCode != 0 {
+            let result = try await Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, swiftFile.path).expect()
+            if result.process.terminationStatus != 0 {
                 throw AppError(String(format: NSLocalizedString("Error compiling %@", bundle: .module, comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
             }
         } else {
@@ -638,7 +607,7 @@ extension FairManager {
                 .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
                 .button {
                     await self.trying {
-                        try self.disableAppLaunchPrivacy()
+                        try await self.disableAppLaunchPrivacy()
                     }
                 }
                 .help(Text("App Launch Privacy is currently active for \(Text(duration: self.appLaunchPrivacyDuration)). Click this button to deactivate privacy mode.", bundle: .module, comment: "launch privacy button toolbar button title when in the inactivate state"))

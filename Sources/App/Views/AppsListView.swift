@@ -46,8 +46,9 @@ struct AppsListView : View {
         HStack {
             Group {
                 if let updated = catalog?.catalogUpdated {
+                    let updatedText = Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide))
                     // to keep the updated date correct, update the label every minute
-                    Text("Updated \(Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide)))", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
+                    Text("Updated \(updatedText)", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
                     //.refreshingEveryMinute()
                 } else {
                     Text("Not updated recently", bundle: .module, comment: "apps list bottom bar title")
@@ -133,7 +134,7 @@ struct AppsListView : View {
         return nil
     }
 
-    func appInfoItems(section: AppListSection?) -> [AppInfo] {
+    private func appInfoItems(section: AppListSection?) -> [AppInfo] {
         arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
@@ -145,13 +146,13 @@ struct AppsListView : View {
             .uniquing(by: \.id) // ensure there are no duplicates with the same id
     }
 
-    func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        prf("arranging: \(source.rawValue)") {
+    private func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+        prf(msg: { items in "arranging: “\(source.rawValue)” items: \(items.count)" }) {
             fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
         }
     }
 
-    @ViewBuilder func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {
+    @ViewBuilder private func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {
         let items = appInfoItems(section: section)
         //let _ = dbg("items for:", section, wip(items.count))
         if fairManager.refreshing == true || items.isEmpty == false {
@@ -170,7 +171,7 @@ struct AppsListView : View {
         }
     }
 
-    func appUpdateItems(section: AppsListView.AppUpdatesSection) -> [AppInfo] {
+    private func appUpdateItems(section: AppsListView.AppUpdatesSection) -> [AppInfo] {
         let updatedItems: [AppInfo] = arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
         let updatedItemIDs = updatedItems.map(\.id).set()
 
@@ -187,7 +188,7 @@ struct AppsListView : View {
     }
 
     /// The section holding the updated app items
-    @ViewBuilder func appUpdatesSection(section: AppsListView.AppUpdatesSection) -> some View {
+    @ViewBuilder private func appUpdatesSection(section: AppsListView.AppUpdatesSection) -> some View {
         let updatedApps = appUpdateItems(section: section)
         Section {
             AppSectionItems(items: updatedApps, source: source, selection: $selection, searchTextSource: searchTextSource)

@@ -15,7 +15,7 @@
 import FairApp
 
 /// User-facing information about a source of apps.
-protocol AppSourceInfo {
+public protocol AppSourceInfo {
     /// The label that summarizes this source, which will appear in the sidebar of the app
     func tintedLabel(monochrome: Bool) -> TintedLabel
 

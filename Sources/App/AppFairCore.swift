@@ -35,18 +35,9 @@ extension AppSource : Identifiable {
 }
 
 /// A structure representing an ``FairApp.AppCatalogItem`` with optional ``CaskItem`` metadata.
-struct AppInfo : Identifiable, Equatable {
-    /// The underlying source for this info
-    var source: AppSource
-    
-    /// The catalog item metadata
-    var app: AppCatalogItem
-
-    /// The associated homebrew cask
-    var cask: CaskItem?
-
+extension AppInfo : Identifiable {
     /// The bundle ID of the selected app (e.g., "app.App-Name")
-    var id: AppCatalogItem.ID {
+    public var id: AppCatalogItem.ID {
         app.id
     }
 
@@ -468,13 +459,13 @@ public struct RootView : View, Equatable {
 }
 
 /// The selection in the sidebar, consisting of an ``AppSource`` and a ``SidebarSection``
-struct SourceSelection : Hashable {
-    let source: AppSource
-    let section: SidebarSection
+public struct SourceSelection : Hashable {
+    public let source: AppSource
+    public let section: SidebarSection
 }
 
 /// A standard group for a sidebar representation
-enum SidebarSection : Hashable {
+public enum SidebarSection : Hashable {
     case top
     case updated
     case installed
@@ -570,6 +561,16 @@ struct NavigationRootView : View {
                     DisplayModePicker(mode: $displayMode)
                 }
             }
+//            .task(priority: .background) {
+//                dbg(wip("Testing Task"))
+//                do {
+//                    for try await data in try FileHandle(forReadingFrom: URL(fileURLWithPath: "/dev/random")).readDataAsync() {
+//                        dbg("read data:", data)
+//                    }
+//                } catch {
+//                    dbg("error:", error)
+//                }
+//            }
             .task(priority: .medium) {
                 dbg("refreshing catalogs")
                 await fairManager.refresh(reloadFromSource: false)
@@ -1016,10 +1017,12 @@ extension NSUserScriptTask {
 
         let cmd = "do shell script \"\(command)\"" + withAdmin
 
-        let scriptURL = URL.tmpdir
-            .appendingPathComponent("scriptcmd-" + UUID().uuidString)
-            .appendingPathComponent(name + ".scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
+        let scriptBase = URL.tmpdir.appendingPathComponent("cmd-" + UUID().uuidString)
+        let scriptURL = scriptBase.appendingPathComponent(name + ".scpt") // needed or else error that the script: “couldn’t be opened because it isn’t in the correct format”
         try FileManager.default.createDirectory(at: scriptURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        // clean up the script folders afer we execute
+        defer { try? FileManager.default.removeItem(at: scriptBase) }
 
         try cmd.write(to: scriptURL, atomically: true, encoding: .utf8)
         dbg("running NSUserAppleScriptTask in:", scriptURL.path, "command:", cmd)

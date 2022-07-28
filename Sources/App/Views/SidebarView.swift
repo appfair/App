@@ -31,18 +31,17 @@ struct SidebarView: View {
             Divider()
             bottomBar
         }
+//        .onAppear {
+//            // when we first appear select the initial element
+//            if let source = fairManager.appSources.first, source != self.sourceSelection?.source {
+//                self.sourceSelection = .init(source: source, section: .top)
+//            }
+//        }
     }
 
     var listBody: some View {
         List {
             ForEach(fairManager.appSources, id: \.self, content: appSidebarSection(for:))
-                .onAppear {
-                    // when we first appear select the initial element
-                    if let source = fairManager.appSources.first, source != self.sourceSelection?.source {
-                        #warning("initial selection?")
-                        //self.sourceSelection = .init(source: source, section: .top)
-                    }
-                }
 
             // categories section
             // TODO: merge homebrew and fairapps into single category

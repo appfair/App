@@ -231,12 +231,10 @@ struct HomebrewSettingsView: View {
                                 Text("Reset Homebrew", bundle: .module, comment: "button text on Homebrew preferences for resetting the Homebrew installation")
                                     .button {
                                         homebrewOperationInProgress = true
-                                        do {
+                                        await fairManager.trying {
                                             try await homeBrewInv.uninstallHomebrew()
                                             dbg("caskManager.uninstallHomebrew success")
                                             self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
-                                        } catch {
-                                            self.fairManager.reportError(error)
                                         }
                                         self.homebrewOperationInProgress = false
                                     }
@@ -247,12 +245,10 @@ struct HomebrewSettingsView: View {
                                 Text("Setup Homebrew", bundle: .module, comment: "button text on Homebrew preferences for installing Homebrew")
                                     .button {
                                         homebrewOperationInProgress = true
-                                        do {
+                                        await fairManager.trying {
                                             try await homeBrewInv.installHomebrew(retainCasks: false)
                                             dbg("caskManager.installHomebrew success")
                                             self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
-                                        } catch {
-                                            self.fairManager.reportError(error)
                                         }
                                         self.homebrewOperationInProgress = false
                                     }

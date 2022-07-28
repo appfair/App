@@ -1106,7 +1106,6 @@ private struct CatalogItemHostView: View {
     func installButton() -> some View {
         button(activity: .install, role: nil, needsConfirm: fairManager.enableInstallWarning)
             .keyboardShortcut(currentActivity == .install ? .cancelAction : .defaultAction)
-            .disabled(info.isMobileApp) // TODO: allow install of non-macOS apps
             .disabled(appInstalled)
             .confirmationDialog(Text("Install \(info.app.name)", bundle: .module, comment: "install button confirmation dialog title"), isPresented: confirmationBinding(.install), titleVisibility: .visible, actions: {
                 Text("Download & Install \(info.app.name)", bundle: .module, comment: "install button confirmation dialog confirm button text").button {
@@ -1135,7 +1134,6 @@ private struct CatalogItemHostView: View {
     func updateButton() -> some View {
         button(activity: .update)
             .keyboardShortcut(currentActivity == .update ? .cancelAction : .defaultAction)
-            .disabled(info.isMobileApp) // TODO: allow update of non-macOS apps
             .disabled((!appInstalled || !appUpdated))
             .accentColor(.orange)
     }
@@ -1143,7 +1141,6 @@ private struct CatalogItemHostView: View {
     func launchButton() -> some View {
         button(activity: .launch)
             .keyboardShortcut(KeyboardShortcut(KeyEquivalent.return, modifiers: .command))
-            .disabled(info.isMobileApp) // TODO: allow launch of non-macOS apps
             .disabled(!appInstalled)
             .accentColor(.green)
     }
@@ -1151,7 +1148,6 @@ private struct CatalogItemHostView: View {
     func revealButton() -> some View {
         button(activity: .reveal)
             .keyboardShortcut(KeyboardShortcut(KeyEquivalent("i"), modifiers: .command)) // CMD-I
-            .disabled(info.isMobileApp) // TODO: allow reveal of non-macOS apps
             .disabled(!appInstalled)
             .accentColor(.teal)
     }
@@ -1159,7 +1155,6 @@ private struct CatalogItemHostView: View {
     func trashButton() -> some View {
         button(activity: .trash, role: ButtonRole.destructive, needsConfirm: fairManager.enableDeleteWarning)
             .keyboardShortcut(.delete, modifiers: [])
-            .disabled(info.isMobileApp) // TODO: allow uninstall of non-macOS apps
             .disabled(!appInstalled)
         //.accentColor(.red) // coflicts with the red background of the button
             .confirmationDialog(Text("Really delete this app?", bundle: .module, comment: "delete button confirmation dialog title"), isPresented: confirmationBinding(.trash), titleVisibility: .visible, actions: {
@@ -1419,30 +1414,43 @@ private struct CatalogItemHostView: View {
         return progress.progress
     }
 
+    /// Downcast from ``FairManager`` to ``AppManagement`` protocol.
+    private var fairManagement : AppManagement {
+        fairManager
+    }
+
     func launchButtonTapped() async {
         dbg("launchButtonTapped")
-        await fairManager.launch(info)
+        await fairManager.trying {
+            try await fairManagement.launch(info)
+        }
     }
 
     func installButtonTapped() async {
         dbg("installButtonTapped")
-        await fairManager.install(info, source: source, progress: startProgress(), update: false)
+        await fairManager.trying {
+            try await fairManagement.install(info, progress: startProgress(), update: false, verbose: true)
+        }
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
-        await fairManager.install(info, source: source, progress: startProgress(), update: true)
+        await fairManager.trying {
+            try await fairManagement.install(info, progress: startProgress(), update: true, verbose: true)
+        }
     }
 
     func revealButtonTapped() async {
         dbg("revealButtonTapped")
-        await fairManager.reveal(info)
+        await fairManager.trying {
+            try await fairManagement.reveal(info)
+        }
     }
 
     func deleteButtonTapped() async {
         dbg("deleteButtonTapped")
         return await fairManager.trying {
-            try await fairManager.delete(info)
+            try await fairManagement.delete(info, verbose: true)
             // also trash any URLs that may be
             for url in self.trashAppAuxiliaryURLs {
                 try FileManager.default.trash(url: url)

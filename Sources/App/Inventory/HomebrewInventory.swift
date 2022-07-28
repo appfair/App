@@ -21,30 +21,6 @@ import var FairExpo.appfairCaskAppsURL
 /// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
 let minimumSearchLength = 1
 
-/// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
-private extension AppInventory where Self : HomebrewInventory {
-
-    /// Installation is check simply by seeing if the brew install root exists.
-    /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
-    static func homebrewCommandExists(at brewInstallRoot: URL) -> Bool {
-        let cmd = brewCommand(at: brewInstallRoot).path
-        let installed = FileManager.default.isExecutableFile(atPath: cmd)
-        //dbg("installed:", cmd, installed)
-        return installed
-    }
-
-    static func brewCommand(at brewInstallRoot: URL) -> URL {
-        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
-    }
-
-    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
-    ///
-    /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
-    static var globalBrewPath: URL {
-        URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
-    }
-}
-
 private let appfairBase = URL(string: "https://github.com/App-Fair/")
 
 /// The default values for brew default preferences
@@ -70,17 +46,41 @@ private struct HomebrewDefaults {
     static let enableCaskHomepagePreview = true
 }
 
-extension AppInventory where Self : HomebrewInventory {
-    @MainActor var title: String {
+extension HomebrewInventory {
+    public var title: String {
         NSLocalizedString("Homebrew", bundle: .module, comment: "the default title of the Homebrew catalog")
+    }
+}
+
+/// These functions are placed in an extension so they do not become subject to the `MainActor` restrictions.
+private extension HomebrewInventory {
+
+    /// Installation is check simply by seeing if the brew install root exists.
+    /// This will be used as the seed for the `enableHomebrew` app preference so we default to having it enabled if homebrew is seen as being installed
+    static func homebrewCommandExists(at brewInstallRoot: URL) -> Bool {
+        let cmd = brewCommand(at: brewInstallRoot).path
+        let installed = FileManager.default.isExecutableFile(atPath: cmd)
+        //dbg("installed:", cmd, installed)
+        return installed
+    }
+
+    static func brewCommand(at brewInstallRoot: URL) -> URL {
+        URL(fileURLWithPath: "bin/brew", relativeTo: brewInstallRoot)
+    }
+
+    /// The default install prefix for homebrew: “This script installs Homebrew to its preferred prefix (/usr/local for macOS Intel, /opt/homebrew for Apple Silicon and /home/linuxbrew/.linuxbrew for Linux) so that you don’t need sudo when you brew install. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.”
+    ///
+    /// Note that on Intel, `/usr/local/bin/brew -> /usr/local/Homebrew/bin/brew`, but we shouldn't use `/usr/local/Homebrew/` as the brew root since `/usr/local/Caskroom` exists but `/usr/local/Homebrew/Caskroom` does not.
+    static var globalBrewPath: URL {
+        URL(fileURLWithPath: ProcessInfo.isArmMac ? "/opt/homebrew" : "/usr/local")
     }
 }
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class HomebrewInventory: ObservableObject, AppInventory {
-    let source: AppSource
-    let sourceURL: URL
+public final class HomebrewInventory: ObservableObject, AppInventory {
+    public let source: AppSource
+    public let sourceURL: URL
 
     /// Whether to enable Homebrew Cask installation
     @AppStorage("enableHomebrew") var enableHomebrew = HomebrewDefaults.enableHomebrew {
@@ -138,25 +138,25 @@ extension AppInventory where Self : HomebrewInventory {
     @AppStorage("enableCaskHomepagePreview") var enableCaskHomepagePreview = HomebrewDefaults.enableCaskHomepagePreview
 
     /// The arranged list of app info items, synthesized from the `casks`, `stats`, and `appcasks` properties
-    @Published fileprivate var appInfos: [AppInfo] = [] { didSet { updateAppCategories() } }
+    @Published private(set) var appInfos: [AppInfo]? { didSet { updateAppCategories() } }
 
     /// The apps indexed by category
     @Published private var appCategories: [AppCategory: [AppInfo]] = [:]
 
     /// The current catalog of casks
-    @Published fileprivate var casks: [CaskItem] = [] { didSet { updateAppInfo() } }
+    @Published private var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
 
     /// The date the catalog was most recently updated
-    @Published private(set) var catalogUpdated: Date? = nil
+    @Published private(set) public var catalogUpdated: Date? = nil
 
     /// Map of installed apps from `[token: [versions]]`
-    @Published fileprivate var installedCasks: [CaskItem.ID: Set<String>] = [:] { didSet { updateAppInfo() } }
+    @Published private var installedCasks: [CaskItem.ID: Set<String>] = [:] //{ didSet { updateAppInfo() } }
 
     /// Enhanced metadata about individual apps
-    @Published fileprivate var appcasks: AppCatalog? { didSet { updateAppInfo() } }
+    @Published private var appcasks: AppCatalog? //{ didSet { updateAppInfo() } }
 
     /// The number of outstanding update requests
-    @Published var updateInProgress: UInt = 0
+    @Published public var updateInProgress: UInt = 0
 
     static let symbol = FairSymbol.shippingbox_fill
 
@@ -168,85 +168,6 @@ extension AppInventory where Self : HomebrewInventory {
 
     /// The source of the brew command for [manual installation](https://docs.brew.sh/Installation#untar-anywhere)
     private let brewArchiveURLRemote = URL(string: "brew/zipball/HEAD", relativeTo: appfairBase)! // fork of https://github.com/Homebrew/brew/zipball/HEAD, same as: https://github.com/Homebrew/brew/archive/refs/heads/master.zip
-
-    /// The source to the cask ruby definition file
-    func caskSource(name: String) -> URL? {
-        URL(string: name, relativeTo: homebrewAPI.caskSourceBase)?.appendingPathExtension("rb")
-    }
-
-    func caskMetadata(name: String) -> URL? {
-        URL(string: name, relativeTo: homebrewAPI.caskMetadataBase)?.appendingPathExtension("json")
-    }
-
-    /// The previous location of homebrew installations: ~/Library/Caches/appfair-homebrew/
-    private static let homebrewSupportFolderOLD = URL(fileURLWithPath: "appfair-homebrew/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
-
-
-    /// ~/Library/Application Support/app.App-Fair/
-    private static let appFairSupportFolder = URL(fileURLWithPath: "app.App-Fair", isDirectory: true, relativeTo: try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
-
-    /// The given App Fair support folder name
-    private static func appSupportFolder(named name: String) -> URL {
-        URL(fileURLWithPath: name, isDirectory: true, relativeTo: appFairSupportFolder)
-    }
-
-    /// ~/Library/Application Support/app.App-Fair/appfair-homebrew/
-    static let localAppSupportFolder: URL = appSupportFolder(named: "appfair-homebrew/")
-
-    /// Standard homebrew download cache folder: `~Library/Caches/Homebrew/downloads/`
-    static let caskDownloadCacheFolder: URL = URL(fileURLWithPath: "Homebrew/downloads/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
-
-    /// ~/Library/Application Support/app.App-Fair/Homebrew/Cask/
-    static let caskAppSupportFolder: URL = appSupportFolder(named: "Homebrew/Cask/")
-
-    /// The path where cask metadata and links are stored
-    var localCaskroom: URL {
-        URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
-    }
-
-    /// Whether there is a global installation of Homebrew available
-    @available(*, deprecated, message: "use local brew install instead")
-    static var globalBrewInstalled: Bool {
-        FileManager.default.isExecutableFile(atPath: brewCommand(at: globalBrewPath).path)
-    }
-
-    /// Whether the configured location is installed
-    func isInstalled() -> Bool {
-        FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
-    }
-
-    /// The home installation path for homebrew.
-    @available(*, deprecated, message: "only differs when brew is installed from the install script")
-    var brewInstallHome: URL {
-        ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
-    }
-
-
-    /// Either `/opt/homebrew/.git` (ARM) or `/usr/local/Homebrew/.git` (Intel)
-    @available(*, deprecated, message: "only works when brew is installed with .git folder")
-    var brewGitFolder: URL? {
-        URL(fileURLWithPath: ".git", relativeTo: brewInstallHome)
-    }
-
-    /// Returns the currently installed version of Homebrew, simply by scanning the git tags folder and using the most recent element.
-    ///
-    /// For example, `3.1.7` will be returned for the latest tag: `"/opt/homebrew/./.git/refs/tags/3.1.7"`
-    @available(*, deprecated, message: "only works when brew is installed with .git folder")
-    func installedBrewVersion() throws -> (version: String, updated: Date)? {
-        // from brew.sh:
-        // HOMEBREW_VERSION="$("${HOMEBREW_GIT}" -C "${HOMEBREW_REPOSITORY}" describe --tags --dirty --abbrev=7 2>/dev/null)"
-
-        // we just scan the git tags folder manually and use the latest one
-        // e.g.: "/opt/homebrew/./.git/refs/tags/3.1.7"
-        let tagsFolder = URL(fileURLWithPath: "refs/tags", relativeTo: brewGitFolder)
-        let children = try tagsFolder.fileChildren(deep: false, skipHidden: true, keys: [.contentModificationDateKey])
-        if let mostRecent = children.sorting(by: \.contentModificationDateKey).last {
-            return (mostRecent.lastPathComponent, mostRecent.modificationDate ?? .distantPast)
-        } else {
-            // no child folder elements
-            return nil
-        }
-    }
 
     private var fsobserver: FileSystemObserver? = nil
 
@@ -272,23 +193,149 @@ extension AppInventory where Self : HomebrewInventory {
         self.enableBrewAnalytics = HomebrewDefaults.enableBrewAnalytics
         self.enableBrewSelfUpdate = HomebrewDefaults.enableBrewSelfUpdate
     }
+}
 
-    func label(for source: AppSource) -> Label<Text, Image> {
-        Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
+protocol HomebrewManagement {
+    func isHomebrewInstalled() -> Bool
+}
+
+extension HomebrewInventory : HomebrewManagement {
+
+    /// Un-installs the local copy of Homebrew (by simply deleting the local install root)
+    func uninstallHomebrew() async throws {
+        try FileManager.default.trash(url: self.brewInstallRoot)
     }
 
-    /// The path to the `homebrew` command
-    var localBrewCommand: String {
-        let url = URL(fileURLWithPath: "bin/brew", relativeTo: useSystemHomebrew ? Self.globalBrewPath : brewInstallRoot)
-        var cmd = url.path
-        if cmd.contains(" ") {
-            cmd = "'" + cmd + "'" // commands with a space (e.g., ~/Library/Application Support/appfair-homebrew/Homebrew/bin/brew) need to be quotes to be able to be run
+    /// Downloads and installs Homebrew from the source zip
+    /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
+    @discardableResult func installHomebrew(force: Bool = false, fromLocalOnly: Bool = false, retainCasks: Bool) async throws -> Bool {
+        // migrate old location from: ~/Library/Caches/appfair-homebrew
+        // to new location: ~/Library/Application Support/app.App-Fair/appfair-homebrew
+        if FileManager.default.isDirectory(url: Self.homebrewSupportFolderOLD) == true {
+            dbg("migrating home brew support from:", HomebrewDefaults.brewInstallRoot.path)
+            do {
+                try FileManager.default.createDirectory(at: Self.appFairSupportFolder, withIntermediateDirectories: true)
+                try FileManager.default.moveItem(at: Self.homebrewSupportFolderOLD, to: Self.localAppSupportFolder)
+            } catch {
+                dbg("error migrating homebrew support folder:", error)
+            }
         }
-        return cmd
+
+        if force || (FileManager.default.isDirectory(url: HomebrewDefaults.brewInstallRoot) != true) {
+            let appSupportFolder = Self.localAppSupportFolder
+            try FileManager.default.createDirectory(at: appSupportFolder, withIntermediateDirectories: true, attributes: [:])
+            try await installBrew(to: HomebrewDefaults.brewInstallRoot, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
+            return true
+        } else {
+            return false
+        }
+    }
+
+    /// The docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”, but downloading to a local cache URL seems to work fine.
+    /// - Parameters:
+    ///   - brewHome: the home into which to install brew
+    ///   - fromLocalOnly: whether to only permit using the local cache of the brew archive zip
+    ///   - retainCasks: whether to retain existing casks when updating to a new brew version
+    private func installBrew(to brewHome: URL, fromLocalOnly: Bool, retainCasks: Bool) async throws {
+        let fm = FileManager.default
+
+        let fromURL, downloadedArtifact: URL
+        let removeArtifact: Bool
+        if let localURL = self.brewArchiveURLLocal, FileManager.default.fileExists(atPath: localURL.path) {
+            fromURL = localURL
+            downloadedArtifact = localURL
+            removeArtifact = false
+        } else if fromLocalOnly {
+            throw AppError(NSLocalizedString("Could not install from local artifact", bundle: .module, comment: "error message"))
+        } else {
+            fromURL = self.brewArchiveURLRemote
+            let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
+            dbg("received download response:", response)
+            downloadedArtifact = downloaded
+            removeArtifact = true
+        }
+
+        dbg("unpacked brew package from:", fromURL.absoluteString, downloadedArtifact.fileSize()?.localizedByteCount()) // "response:", response)
+
+        if retainCasks == false && FileManager.default.isDirectory(url: brewHome) == true {
+            try fm.removeItem(at: brewHome) // clear any previous installation
+        }
+
+        try fm.unzipItem(at: downloadedArtifact, to: brewHome, trimBasePath: true, overwrite: retainCasks == true)
+        dbg("extracted brew package to:", brewHome)
+
+        if removeArtifact {
+            try fm.removeItem(at: downloadedArtifact) // don't remove the local artifact, since we may need it later
+        }
+
+        // no re-start the FS watcher for the new folders
+        // we do this mutliple times because the install process creates the folder eagerly before the install starts, and so it will be subject to the amount of time the install takes
+        watchCaskroomFolder(delays: [0, 1, 2, 5, 10, 30])
+    }
+
+    /// Returns whether Homebrew is installed in the expected local path
+    func isHomebrewInstalled() -> Bool {
+        Self.homebrewCommandExists(at: self.brewInstallRoot)
+    }
+}
+
+extension HomebrewInventory {
+    public func label(for source: AppSource) -> Label<Text, Image> {
+        Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
+    }
+    public var supportedSidebars: [SidebarSection] {
+        [SidebarSection.top, .recent, .sponsorable, .installed, .updated]
+    }
+
+    public func icon(for item: AppInfo) -> AppIconView {
+        AppIconView(content: .init(IconView(item: item)))
+    }
+
+    struct IconView : View, Equatable {
+        let item: AppInfo
+
+        var body: some View {
+            icon(for: item)
+        }
+
+        @ViewBuilder func icon(for item: AppInfo, useInstalledIcon: Bool = false) -> some View {
+//            if useInstalledIcon, let path = try? self.installedPath(for: item) {
+//                // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
+//                let icon = NSWorkspace.shared.icon(forFile: path.path)
+//                Image(uxImage: icon).resizable()
+//            } else
+            if let _ = item.app.iconURL {
+                AppSourceInventory.IconView(info: item)
+                //self.iconImage(item: item) // use the icon URL if it has been set (e.g., using appcasks metadata)
+            } else if let baseURL = item.app.homepage {
+                // otherwise fallback to using the favicon for the home page
+                FaviconImage(baseURL: baseURL, fallback: {
+                    EmptyView()
+                })
+            } else {
+                // FairSymbol.questionmark_square_dashed
+                FairIconView(item.app.name, subtitle: nil)
+            }
+        }
+    }
+
+    /// The source to the cask ruby definition file
+    func caskSource(name: String) -> URL? {
+        URL(string: name, relativeTo: homebrewAPI.caskSourceBase)?.appendingPathExtension("rb")
+    }
+
+    func caskMetadata(name: String) -> URL? {
+        URL(string: name, relativeTo: homebrewAPI.caskMetadataBase)?.appendingPathExtension("json")
+    }
+}
+
+extension HomebrewInventory : AppManagement {
+    public func appList() async -> [AppInfo]? {
+        appInfos
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
-    func refreshAll(reloadFromSource: Bool) async throws {
+    @MainActor public func refreshAll(reloadFromSource: Bool) async throws {
         if enableHomebrew == false {
             dbg("skipping cask refresh because not isEnabled")
             return
@@ -305,17 +352,315 @@ extension AppInventory where Self : HomebrewInventory {
         async let appcasks = fetchAppCasks()
         async let casks = homebrewAPI.fetchCasks()
 
-        //(self.stats, self.appcasks, self.installedCasks, self.casks) = try await (stats, appcasks, installedCasks, casks)
-        self.installedCasks = try await installedCasks
-        self.appcasks = try await appcasks
-        let caskResponse = try await casks
-        self.casks = caskResponse.casks
-        self.catalogUpdated = caskResponse.response?.lastModifiedDate
-
-        self.objectWillChange.send()
+        let caskResponse: URLResponse?
+        try await (self.installedCasks, self.appcasks, self.casks, caskResponse) = (installedCasks, appcasks, casks.casks, casks.response)
+        self.catalogUpdated = caskResponse?.lastModifiedDate
+        self.updateAppInfo()
     }
 
-    fileprivate func fetchAppCasks() async throws -> AppCatalog {
+    /// Installs the given `AppCatalogItem` using the `brew` command. The release must be a valid Homebrew release.
+    ///
+    /// - Parameters:
+    ///   - item: the catalog item to install
+    ///   - parentProgress: optional progress for reporting download progress
+    ///   - update: whether the action should be an update or an initial install
+    ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
+    ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
+    ///   - verbose: whether to verbosely report progress
+    public func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+        guard let cask = item.cask else {
+            return dbg("not a cask:", item)
+        }
+        dbg(cask)
+
+        // fetch the cask info so we can determine the actual URL to download (the catalog URL will not always contain the correct URL and checksum due to https://github.com/Homebrew/brew/issues/12786)
+        guard var candidateURL = cask.url.flatMap(URL.init) else {
+            return dbg("no URL for cask")
+        }
+        var sha256 = cask.checksum
+        var caskArg = cask.token
+
+        // make sure Homebrew is installed; if not, install it locally from the embedded appfair-homebrew.zip
+        let _ = try await installHomebrew(retainCasks: true)
+
+        // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
+        if let sourceURL = self.caskSource(name: cask.token) {
+            do {
+                try await fetchCaskInfo(sourceURL, cask, &candidateURL, &sha256, &caskArg)
+            } catch {
+                // this is non-fatal: we will just use the default URL
+                dbg("error trying to fetch and parse cask info:", error)
+            }
+        }
+
+        // also download any dependencies; note that this only traverses a single level of cask dependencies, so casks with dependencies like sonarr-menu.rb -> sonarr.rb -> mono-mdk.rb will still fail
+        for depToken in (cask.depends_on?.cask ?? []) {
+            let downloadFolder = self.caskInfoFolder
+            if let depURL = self.caskSource(name: depToken) {
+                dbg("downloading dependency token:", depToken, "from:", depURL.absoluteString)
+                let caskDepPath = URL(fileURLWithPath: depURL.lastPathComponent, relativeTo: downloadFolder)
+                try await URLSession.shared.fetch(request: URLRequest(url: depURL)).data.write(to: caskDepPath)
+            }
+        }
+
+        let (downloadURL, expectedHash) = (candidateURL, sha256)
+
+        if expectedHash == nil && self.requireCaskChecksum == true {
+            throw AppError(NSLocalizedString("Missing cryptographic checksum", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("The download has no SHA-256 checksum set and so its authenticity cannot be verified.", bundle: .module, comment: "error failure reason"))
+        }
+
+        // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
+
+        if self.manageCaskDownloads == true {
+            try Task.checkCancellation()
+            try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
+        }
+
+        var cmd = (self.localBrewCommand as NSString).abbreviatingWithTildeInPath
+
+        let op = update ? "upgrade" : "install" // could use "reinstall", but it doesn't seem to work with `HOMEBREW_INSTALL_FROM_API` when there is no local .git checkout
+        cmd += " " + op
+        if verbose { cmd += " --verbose" }
+
+        if self.forceInstallCasks {
+            cmd += " --force"
+        }
+
+        if !self.installDependencies {
+            cmd += " --skip-cask-deps"
+        }
+
+        if self.quarantineCasks {
+            cmd += " --quarantine"
+        } else {
+            cmd += " --no-quarantine"
+        }
+
+        if self.requireCaskChecksum != false {
+            cmd += " --require-sha"
+        }
+
+        cmd += " --cask " + "'" + caskArg + "'" // handle spaces in cask arg
+
+        let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
+
+        // count the install
+        if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: appfairBase) {
+            dbg("counting install:", installCounter.absoluteString)
+            let _ = try? await URLSession.shared.fetch(request: URLRequest(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 600))
+        }
+
+        dbg("result of command:", cmd, ":", result)
+        // manually re-scan to update the installed status of the item
+        withAnimation {
+            rescanInstalledCasks()
+        }
+    }
+
+    public func installedPath(for item: AppInfo) async throws -> URL? {
+        let token = item.app.bundleIdentifier
+        let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
+        let versionDir = URL(fileURLWithPath: item.app.version ?? "", relativeTo: caskDir)
+        if FileManager.default.isDirectory(url: versionDir) == true {
+            let children = try versionDir.fileChildren(deep: false, skipHidden: true)
+            if let link = findAppLink(in: children) {
+                return link
+            }
+
+            // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
+            for child in children {
+                if FileManager.default.isDirectory(url: child) == true {
+                    dbg("checking sub-child:", child.path)
+                    let subChildren = try child.fileChildren(deep: false, skipHidden: true)
+                    if let link = findAppLink(in: subChildren) {
+                        return link
+                    }
+                }
+            }
+
+            dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
+        }
+
+        // fall back to scanning for the app artifact and looking in the /Applications folder
+        if let cask = casks.first(where: { $0.token == token }) {
+            for appName in cask.appArtifacts {
+                let appURL = URL(fileURLWithPath: appName, relativeTo: AppSourceInventory.applicationsFolderURL)
+                dbg("checking app path:", appURL.path)
+                if FileManager.default.isExecutableFile(atPath: appURL.path) {
+                    return appURL
+                }
+            }
+        }
+        return nil
+    }
+
+    public func reveal(_ item: AppInfo) async throws {
+        let installPath = try await self.installedPath(for: item)
+        dbg(item.id, installPath?.path)
+        if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
+            dbg("revealing:", installPath.path)
+            NSWorkspace.shared.activateFileViewerSelecting([installPath])
+        } else {
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “%@”", bundle: .module, comment: "error message"), item.app.name))
+        }
+    }
+
+    public func launch(_ item: AppInfo) async throws {
+        // if we allow bypassing the gatekeeper check for unquarantined apps, then we need to first check to see if the app is quarantined before we launch it
+        let gatekeeperCheck = permitGatekeeperBypass == true
+
+        let installPath = try await self.installedPath(for: item)
+        dbg(item.id, installPath?.path)
+        guard let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) else {
+            // only packages that contain dmg/zips of .app files are linked to the /Applications/Name.app; applications installed using package installers don't reference their target app installation, except possibly in the delete stanza of the my-app.rb file. E.g.:
+            // pkg "My App.pkg"
+            // uninstall pkgutil: "app.MyApp.plist",
+            //           delete:  "/Applications/My App.app"
+            //
+            // how should we try to identify the app to launch? we don't want to have to try to parse the
+
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “\(item.app.name)”", bundle: .module, comment: "error message"), item.app.name))
+        }
+
+        // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
+        if try gatekeeperCheck
+            && (FileManager.default.isQuarantined(at: installPath)) == true {
+            do {
+                dbg("performing gatekeeper check for quarantined path:", installPath.path)
+                let result = try await Process.spctlAssess(appURL: installPath).expect(exitCode: nil)
+                if result.process.terminationStatus == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
+                    dbg("gatekeeper check failed:", result)
+                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"),
+                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
+                                     accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
+                        dbg("cancelling launch due to unidentified developer")
+                        return
+                    }
+
+                    // ideally, we would white-list the app with spctl, but gatekeeper seems to randomly reject the request, and even when it succeeds, it seems to randomly reset the permission again in the futurel
+                    //try Process.spctlEnable(appURL: installPath)
+                    //try Process.removeQuarantine(appURL: installPath)
+
+                    // so instead, take the nuclear option and just clear the quarantine bits on the app
+                    dbg("clearing quarantine attribute from:", installPath.path)
+                    try FileManager.default.clearQuarantine(at: installPath)
+                }
+            } catch {
+                dbg("gatekeeper check failed:", error)
+                // try to proceed anyway
+            }
+
+        }
+
+        dbg("launching:", installPath.path)
+
+        let cfg = NSWorkspace.OpenConfiguration()
+        cfg.promptsUserIfNeeded = true
+        cfg.activates = true
+        try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
+    }
+
+    public func delete(_ item: AppInfo, verbose: Bool = true) async throws {
+        guard let cask = item.cask else {
+            return dbg("not a cask:", item)
+        }
+
+        dbg(cask.token)
+        var cmd = localBrewCommand
+        let op = "remove"
+        cmd += " " + op
+        if self.forceInstallCasks { cmd += " --force" }
+        if self.zapDeletedCasks { cmd += " --zap" }
+        if verbose { cmd += " --verbose" }
+        cmd += " --cask " + cask.token
+        let result = try await run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: cask)
+        dbg("result:", result)
+    }
+}
+
+private extension HomebrewInventory {
+    /// The previous location of homebrew installations: ~/Library/Caches/appfair-homebrew/
+    private static let homebrewSupportFolderOLD = URL(fileURLWithPath: "appfair-homebrew/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+
+
+    /// ~/Library/Application Support/app.App-Fair/
+    private static let appFairSupportFolder = URL(fileURLWithPath: "app.App-Fair", isDirectory: true, relativeTo: try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+
+    /// The given App Fair support folder name
+    private static func appSupportFolder(named name: String) -> URL {
+        URL(fileURLWithPath: name, isDirectory: true, relativeTo: appFairSupportFolder)
+    }
+
+    /// ~/Library/Application Support/app.App-Fair/appfair-homebrew/
+    static let localAppSupportFolder: URL = appSupportFolder(named: "appfair-homebrew/")
+
+    /// Standard homebrew download cache folder: `~Library/Caches/Homebrew/downloads/`
+    private static let caskDownloadCacheFolder: URL = URL(fileURLWithPath: "Homebrew/downloads/", isDirectory: true, relativeTo: try! FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+
+    /// ~/Library/Application Support/app.App-Fair/Homebrew/Cask/
+    private static let caskAppSupportFolder: URL = appSupportFolder(named: "Homebrew/Cask/")
+
+    /// The path where cask metadata and links are stored
+    private var localCaskroom: URL {
+        URL(fileURLWithPath: "Caskroom", relativeTo: brewInstallRoot)
+    }
+
+    /// Whether there is a global installation of Homebrew available
+    @available(*, deprecated, message: "use local brew install instead")
+    private static var globalBrewInstalled: Bool {
+        FileManager.default.isExecutableFile(atPath: brewCommand(at: globalBrewPath).path)
+    }
+
+    /// Whether the configured location is installed
+    private func isInstalled() -> Bool {
+        FileManager.default.isExecutableFile(atPath: Self.brewCommand(at: self.brewInstallRoot).path)
+    }
+
+    /// The home installation path for homebrew.
+    @available(*, deprecated, message: "only differs when brew is installed from the install script")
+    private var brewInstallHome: URL {
+        ProcessInfo.isArmMac ? brewInstallRoot : brewInstallRoot.appendingPathComponent("Homebrew")
+    }
+
+
+    /// Either `/opt/homebrew/.git` (ARM) or `/usr/local/Homebrew/.git` (Intel)
+    @available(*, deprecated, message: "only works when brew is installed with .git folder")
+    private var brewGitFolder: URL? {
+        URL(fileURLWithPath: ".git", relativeTo: brewInstallHome)
+    }
+
+    /// Returns the currently installed version of Homebrew, simply by scanning the git tags folder and using the most recent element.
+    ///
+    /// For example, `3.1.7` will be returned for the latest tag: `"/opt/homebrew/./.git/refs/tags/3.1.7"`
+    @available(*, deprecated, message: "only works when brew is installed with .git folder")
+    private func installedBrewVersion() throws -> (version: String, updated: Date)? {
+        // from brew.sh:
+        // HOMEBREW_VERSION="$("${HOMEBREW_GIT}" -C "${HOMEBREW_REPOSITORY}" describe --tags --dirty --abbrev=7 2>/dev/null)"
+
+        // we just scan the git tags folder manually and use the latest one
+        // e.g.: "/opt/homebrew/./.git/refs/tags/3.1.7"
+        let tagsFolder = URL(fileURLWithPath: "refs/tags", relativeTo: brewGitFolder)
+        let children = try tagsFolder.fileChildren(deep: false, skipHidden: true, keys: [.contentModificationDateKey])
+        if let mostRecent = children.sorting(by: \.contentModificationDateKey).last {
+            return (mostRecent.lastPathComponent, mostRecent.modificationDate ?? .distantPast)
+        } else {
+            // no child folder elements
+            return nil
+        }
+    }
+
+    /// The path to the `homebrew` command
+    private var localBrewCommand: String {
+        let url = URL(fileURLWithPath: "bin/brew", relativeTo: useSystemHomebrew ? Self.globalBrewPath : brewInstallRoot)
+        var cmd = url.path
+        if cmd.contains(" ") {
+            cmd = "'" + cmd + "'" // commands with a space (e.g., ~/Library/Application Support/appfair-homebrew/Homebrew/bin/brew) need to be quotes to be able to be run
+        }
+        return cmd
+    }
+
+
+    private func fetchAppCasks() async throws -> AppCatalog {
         dbg("loading appcasks")
         let data = try await URLRequest(url: sourceURL).fetch()
         dbg("loaded cask JSON", data.count.localizedByteCount(), "from url:", sourceURL)
@@ -342,6 +687,7 @@ extension AppInventory where Self : HomebrewInventory {
         let dir = self.localCaskroom
         if fm.isDirectory(url: dir) == true {
             for caskFolder in try dir.fileChildren(deep: false, skipHidden: true) {
+                try Task.checkCancellation()
                 let dirName = caskFolder.lastPathComponent // the name of the file is the token
 
                 // get the list of child versions. E.g.:
@@ -364,7 +710,7 @@ extension AppInventory where Self : HomebrewInventory {
         return tokenVersions
     }
 
-    func caskEnvironment() -> String {
+    private func caskEnvironment() -> String {
         var cmd = ""
 
         //#if DEBUG // always leave on debugging output to help with error reporting
@@ -464,7 +810,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
-    func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
+    private func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
         dbg("downloading:", downloadURL.absoluteString)
 
         let cacheDir = Self.caskDownloadCacheFolder
@@ -495,112 +841,13 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         try Task.checkCancellation()
     }
 
-    /// Installs the given `AppCatalogItem` using the `brew` command. The release must be a valid Homebrew release.
-    ///
-    /// - Parameters:
-    ///   - item: the catalog item to install
-    ///   - parentProgress: optional progress for reporting download progress
-    ///   - update: whether the action should be an update or an initial install
-    ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
-    ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
-    ///   - verbose: whether to verbosely report progress
-    func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
-        guard let cask = item.cask else {
-            return dbg("not a cask:", item)
-        }
-        dbg(cask)
-
-        // fetch the cask info so we can determine the actual URL to download (the catalog URL will not always contain the correct URL and checksum due to https://github.com/Homebrew/brew/issues/12786)
-        guard var candidateURL = cask.url.flatMap(URL.init) else {
-            return dbg("no URL for cask")
-        }
-        var sha256 = cask.checksum
-        var caskArg = cask.token
-
-        // make sure Homebrew is installed; if not, install it locally from the embedded appfair-homebrew.zip
-        let _ = try await installHomebrew(retainCasks: true)
-
-        // evaluate the cask to assess what the actual URL & checksum will be (working around https://github.com/Homebrew/brew/issues/12786)
-        if let sourceURL = self.caskSource(name: cask.token) {
-            do {
-                try await fetchCaskInfo(sourceURL, cask, &candidateURL, &sha256, &caskArg)
-            } catch {
-                // this is non-fatal: we will just use the default URL
-                dbg("error trying to fetch and parse cask info:", error)
-            }
-        }
-
-        // also download any dependencies; note that this only traverses a single level of cask dependencies, so casks with dependencies like sonarr-menu.rb -> sonarr.rb -> mono-mdk.rb will still fail
-        for depToken in (cask.depends_on?.cask ?? []) {
-            let downloadFolder = self.caskInfoFolder
-            if let depURL = self.caskSource(name: depToken) {
-                dbg("downloading dependency token:", depToken, "from:", depURL.absoluteString)
-                let caskDepPath = URL(fileURLWithPath: depURL.lastPathComponent, relativeTo: downloadFolder)
-                try await URLSession.shared.fetch(request: URLRequest(url: depURL)).data.write(to: caskDepPath)
-            }
-        }
-
-        let (downloadURL, expectedHash) = (candidateURL, sha256)
-
-        if expectedHash == nil && self.requireCaskChecksum == true {
-            throw AppError(NSLocalizedString("Missing cryptographic checksum", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("The download has no SHA-256 checksum set and so its authenticity cannot be verified.", bundle: .module, comment: "error failure reason"))
-        }
-
-        // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
-
-        if self.manageCaskDownloads == true {
-            try Task.checkCancellation()
-            try await downloadCaskInfo(downloadURL, cask, candidateURL, expectedHash, progress: parentProgress)
-        }
-
-        var cmd = (self.localBrewCommand as NSString).abbreviatingWithTildeInPath
-
-        let op = update ? "upgrade" : "install" // could use "reinstall", but it doesn't seem to work with `HOMEBREW_INSTALL_FROM_API` when there is no local .git checkout
-        cmd += " " + op
-        if verbose { cmd += " --verbose" }
-
-        if self.forceInstallCasks {
-            cmd += " --force"
-        }
-
-        if !self.installDependencies {
-            cmd += " --skip-cask-deps"
-        }
-
-        if self.quarantineCasks {
-            cmd += " --quarantine"
-        } else {
-            cmd += " --no-quarantine"
-        }
-
-        if self.requireCaskChecksum != false {
-            cmd += " --require-sha"
-        }
-
-        cmd += " --cask " + "'" + caskArg + "'" // handle spaces in cask arg
-
-        let result = try await run(command: cmd, toolName: update ? .init("updater") : .init("installer"), askPassAppInfo: cask)
-
-        // count the install
-        if let installCounter = URL(string: "appcasks/releases/download/cask-\(cask.token)/cask-install", relativeTo: appfairBase) {
-            dbg("counting install:", installCounter.absoluteString)
-            let _ = try? await URLSession.shared.fetch(request: URLRequest(url: installCounter, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 600))
-        }
-
-        dbg("result of command:", cmd, ":", result)
-        // manually re-scan to update the installed status of the item
-        withAnimation {
-            rescanInstalledCasks()
-        }
-    }
-
     /// The folder that will store cask information so that `brew info` will be able to find it
-    fileprivate var caskInfoFolder: URL {
+    private var caskInfoFolder: URL {
         URL(fileURLWithPath: "Library/Taps/homebrew/homebrew-cask/Casks/", isDirectory: true, relativeTo: brewInstallRoot)
     }
 
     /// Downloads the cash info for the given URL and parses it, extracting the `url` and `checksum` properties.
-    fileprivate func fetchCaskInfo(_ sourceURL: URL, _ cask: CaskItem?, _ candidateURL: inout URL, _ sha256: inout String?, _ caskArg: inout String) async throws {
+    private func fetchCaskInfo(_ sourceURL: URL, _ cask: CaskItem?, _ candidateURL: inout URL, _ sha256: inout String?, _ caskArg: inout String) async throws {
         // must be downloaded exactly here or `brew --info --cask <path>` will fail
         let downloadFolder = caskInfoFolder
         try FileManager.default.createDirectory(at: downloadFolder, withIntermediateDirectories: true, attributes: nil) // ensure it exists
@@ -639,62 +886,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
-
-    func delete(_ item: AppInfo, verbose: Bool = true) async throws {
-        guard let cask = item.cask else {
-            return dbg("not a cask:", item)
-        }
-
-        dbg(cask.token)
-        var cmd = localBrewCommand
-        let op = "remove"
-        cmd += " " + op
-        if self.forceInstallCasks { cmd += " --force" }
-        if self.zapDeletedCasks { cmd += " --zap" }
-        if verbose { cmd += " --verbose" }
-        cmd += " --cask " + cask.token
-        let result = try await run(command: cmd, toolName: .init("uninstaller"), askPassAppInfo: cask)
-        dbg("result:", result)
-    }
-
-    var supportedSidebars: [SidebarSection] {
-        [SidebarSection.top, .recent, .sponsorable, .installed, .updated]
-    }
-
-    func icon(for item: AppInfo) -> AppIconView {
-        .init(IconView(item: item))
-    }
-
-    struct IconView : View, Equatable {
-        let item: AppInfo
-
-        var body: some View {
-            icon(for: item)
-        }
-
-        @ViewBuilder func icon(for item: AppInfo, useInstalledIcon: Bool = false) -> some View {
-//            if useInstalledIcon, let path = try? self.installedPath(for: item) {
-//                // note: “The returned image has an initial size of 32 pixels by 32 pixels.”
-//                let icon = NSWorkspace.shared.icon(forFile: path.path)
-//                Image(uxImage: icon).resizable()
-//            } else
-            if let _ = item.app.iconURL {
-                AppSourceInventory.IconView(info: item)
-                //self.iconImage(item: item) // use the icon URL if it has been set (e.g., using appcasks metadata)
-            } else if let baseURL = item.app.homepage {
-                // otherwise fallback to using the favicon for the home page
-                FaviconImage(baseURL: baseURL, fallback: {
-                    EmptyView()
-                })
-            } else {
-                // FairSymbol.questionmark_square_dashed
-                FairIconView(item.app.name, subtitle: nil)
-            }
-        }
-    }
-
-
-    fileprivate func findAppLink(in children: [URL]) -> URL? {
+    private func findAppLink(in children: [URL]) -> URL? {
         for appURL in children {
             dbg("checking install child:", appURL.path)
             if appURL.pathExtension == "app"
@@ -712,186 +904,6 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
 
         return nil
-    }
-
-    func installedPath(for item: AppInfo) throws -> URL? {
-        let token = item.app.bundleIdentifier
-        let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
-        let versionDir = URL(fileURLWithPath: item.app.version ?? "", relativeTo: caskDir)
-        if FileManager.default.isDirectory(url: versionDir) == true {
-            let children = try versionDir.fileChildren(deep: false, skipHidden: true)
-            if let link = findAppLink(in: children) {
-                return link
-            }
-
-            // go down one more level, to handle zip/dmgs that contained a top-level set of directories, e.g., ~/Library/Application Support/app.App-Fair/appfair-homebrew/Homebrew/Caskroom/lockrattler/4.32,2022.01/lockrattler432/LockRattler.app
-            for child in children {
-                if FileManager.default.isDirectory(url: child) == true {
-                    dbg("checking sub-child:", child.path)
-                    let subChildren = try child.fileChildren(deep: false, skipHidden: true)
-                    if let link = findAppLink(in: subChildren) {
-                        return link
-                    }
-                }
-            }
-
-            dbg("no app found in:", versionDir.path, "children:", children.map(\.lastPathComponent))
-        }
-
-        // fall back to scanning for the app artifact and looking in the /Applications folder
-        if let cask = casks.first(where: { $0.token == token }) {
-            for appName in cask.appArtifacts {
-                let appURL = URL(fileURLWithPath: appName, relativeTo: AppSourceInventory.applicationsFolderURL)
-                dbg("checking app path:", appURL.path)
-                if FileManager.default.isExecutableFile(atPath: appURL.path) {
-                    return appURL
-                }
-            }
-        }
-        return nil
-    }
-
-    func reveal(_ item: AppInfo) async throws {
-        let installPath = try self.installedPath(for: item)
-        dbg(item.id, installPath?.path)
-        if let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) {
-            dbg("revealing:", installPath.path)
-            NSWorkspace.shared.activateFileViewerSelecting([installPath])
-        } else {
-            throw AppError(String(format: NSLocalizedString("Could not find install path for “%@”", bundle: .module, comment: "error message"), item.app.name))
-        }
-    }
-
-    func launch(_ item: AppInfo) async throws {
-        // if we allow bypassing the gatekeeper check for unquarantined apps, then we need to first check to see if the app is quarantined before we launch it
-        let gatekeeperCheck = permitGatekeeperBypass == true
-
-        let installPath = try self.installedPath(for: item)
-        dbg(item.id, installPath?.path)
-        guard let installPath = installPath, FileManager.default.isExecutableFile(atPath: installPath.path) else {
-            // only packages that contain dmg/zips of .app files are linked to the /Applications/Name.app; applications installed using package installers don't reference their target app installation, except possibly in the delete stanza of the my-app.rb file. E.g.:
-            // pkg "My App.pkg"
-            // uninstall pkgutil: "app.MyApp.plist",
-            //           delete:  "/Applications/My App.app"
-            //
-            // how should we try to identify the app to launch? we don't want to have to try to parse the
-
-            throw AppError(String(format: NSLocalizedString("Could not find install path for “\(item.app.name)”", bundle: .module, comment: "error message"), item.app.name))
-        }
-
-        // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
-        if try gatekeeperCheck
-            && (FileManager.default.isQuarantined(at: installPath)) == true {
-            do {
-                dbg("performing gatekeeper check for quarantined path:", installPath.path)
-                let result = try Process.spctlAssess(appURL: installPath)
-                if result.exitCode == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
-                    dbg("gatekeeper check failed:", result)
-                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"),
-                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
-                                     accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
-                        dbg("cancelling launch due to unidentified developer")
-                        return
-                    }
-
-                    // ideally, we would white-list the app with spctl, but gatekeeper seems to randomly reject the request, and even when it succeeds, it seems to randomly reset the permission again in the futurel
-                    //try Process.spctlEnable(appURL: installPath)
-                    //try Process.removeQuarantine(appURL: installPath)
-
-                    // so instead, take the nuclear option and just clear the quarantine bits on the app
-                    dbg("clearing quarantine attribute from:", installPath.path)
-                    try FileManager.default.clearQuarantine(at: installPath)
-                }
-            } catch {
-                dbg("gatekeeper check failed:", error)
-                // try to proceed anyway
-            }
-
-        }
-
-        dbg("launching:", installPath.path)
-
-        let cfg = NSWorkspace.OpenConfiguration()
-        cfg.promptsUserIfNeeded = true
-        cfg.activates = true
-        try await NSWorkspace.shared.openApplication(at: installPath, configuration: cfg)
-    }
-
-    /// Un-installs the local copy of Homebrew (by simply deleting the local install root)
-    func uninstallHomebrew() async throws {
-        try FileManager.default.trash(url: self.brewInstallRoot)
-    }
-
-    /// Downloads and installs Homebrew from the source zip
-    /// - Returns: `true` if we installed Homebrew, `false` if it was already installed
-    @discardableResult func installHomebrew(force: Bool = false, fromLocalOnly: Bool = false, retainCasks: Bool) async throws -> Bool {
-        // migrate old location from: ~/Library/Caches/appfair-homebrew
-        // to new location: ~/Library/Application Support/app.App-Fair/appfair-homebrew
-        if FileManager.default.isDirectory(url: Self.homebrewSupportFolderOLD) == true {
-            dbg("migrating home brew support from:", HomebrewDefaults.brewInstallRoot.path)
-            do {
-                try FileManager.default.createDirectory(at: Self.appFairSupportFolder, withIntermediateDirectories: true)
-                try FileManager.default.moveItem(at: Self.homebrewSupportFolderOLD, to: Self.localAppSupportFolder)
-            } catch {
-                dbg("error migrating homebrew support folder:", error)
-            }
-        }
-
-        if force || (FileManager.default.isDirectory(url: HomebrewDefaults.brewInstallRoot) != true) {
-            let appSupportFolder = Self.localAppSupportFolder
-            try FileManager.default.createDirectory(at: appSupportFolder, withIntermediateDirectories: true, attributes: [:])
-            try await installBrew(to: HomebrewDefaults.brewInstallRoot, fromLocalOnly: fromLocalOnly, retainCasks: retainCasks)
-            return true
-        } else {
-            return false
-        }
-    }
-
-    /// The docs recommend to use “the default prefix. Some things may not build when installed elsewhere” and “Pick another prefix at your peril!”, but downloading to a local cache URL seems to work fine.
-    /// - Parameters:
-    ///   - brewHome: the home into which to install brew
-    ///   - fromLocalOnly: whether to only permit using the local cache of the brew archive zip
-    ///   - retainCasks: whether to retain existing casks when updating to a new brew version
-    private func installBrew(to brewHome: URL, fromLocalOnly: Bool, retainCasks: Bool) async throws {
-        let fm = FileManager.default
-
-        let fromURL, downloadedArtifact: URL
-        let removeArtifact: Bool
-        if let localURL = self.brewArchiveURLLocal, FileManager.default.fileExists(atPath: localURL.path) {
-            fromURL = localURL
-            downloadedArtifact = localURL
-            removeArtifact = false
-        } else if fromLocalOnly {
-            throw AppError(NSLocalizedString("Could not install from local artifact", bundle: .module, comment: "error message"))
-        } else {
-            fromURL = self.brewArchiveURLRemote
-            let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
-            dbg("received download response:", response)
-            downloadedArtifact = downloaded
-            removeArtifact = true
-        }
-
-        dbg("unpacked brew package from:", fromURL.absoluteString, downloadedArtifact.fileSize()?.localizedByteCount()) // "response:", response)
-
-        if retainCasks == false && FileManager.default.isDirectory(url: brewHome) == true {
-            try fm.removeItem(at: brewHome) // clear any previous installation
-        }
-
-        try fm.unzipItem(at: downloadedArtifact, to: brewHome, trimBasePath: true, overwrite: retainCasks == true)
-        dbg("extracted brew package to:", brewHome)
-
-        if removeArtifact {
-            try fm.removeItem(at: downloadedArtifact) // don't remove the local artifact, since we may need it later
-        }
-
-        // no re-start the FS watcher for the new folders
-        // we do this mutliple times because the install process creates the folder eagerly before the install starts, and so it will be subject to the amount of time the install takes
-        watchCaskroomFolder(delays: [0, 1, 2, 5, 10, 30])
-    }
-
-    /// Returns whether Homebrew is installed in the expected local path
-    func isHomebrewInstalled() -> Bool {
-        Self.homebrewCommandExists(at: self.brewInstallRoot)
     }
 
     /// Setup a watch for the cache folder
@@ -924,15 +936,18 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
     }
 
     /// Performs a scan of the installed casks and updates the local cache
-    @MainActor func rescanInstalledCasks() {
+    private func rescanInstalledCasks() {
         do {
             self.installedCasks = try self.scanInstalledCasks()
         } catch {
             dbg("error scanning for installed casks:", error)
         }
     }
+}
 
+// MARK: SourceInfo
 
+extension HomebrewInventory {
     enum SourceInfo {
         static var catalogDescriptionText: Text {
             Text("The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.", bundle: .module, comment: "homebrew catalog description for header text of detail view")
@@ -1109,7 +1124,7 @@ extension AppInventory {
 
 extension HomebrewInventory {
     var visibleAppInfos: [AppInfo] {
-        appInfos
+        appInfos ?? []
         // this is too slow to do dynamically; in the future maybe cache it but for now we'll filter up-front, at the cost that we won't dybamically change the filtered values when the property is changed
         //            .filter { info in
         //                allowCasksWithoutApp == true || info.cask?.appArtifacts.isEmpty == false
@@ -1126,7 +1141,7 @@ extension HomebrewInventory {
         }
     }
 
-    func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         visibleAppInfos
             .filter({ matchesSelection(item: $0, sourceSelection: sourceSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
@@ -1203,11 +1218,11 @@ extension HomebrewInventory {
         appCategories[category] ?? []
     }
 
-    func appInstalled(_ item: AppInfo) -> String? {
+    public func appInstalled(_ item: AppInfo) -> String? {
         installedCasks[item.id.rawValue]?.max() // max isn't the right thing to do here (since 1.10 < 1.90), but we want a consistent result
     }
 
-    func appUpdated(_ item: AppInfo) -> Bool {
+    public func appUpdated(_ item: AppInfo) -> Bool {
         //        let versions = homeBrewInv.installedCasks[info.id.rawValue] ?? []
         //        return info.app.version.flatMap(versions.contains) != true
 
@@ -1235,7 +1250,7 @@ extension HomebrewInventory {
         visibleAppInfos.filter({ appSponsorable($0) }).count
     }
 
-    func updateCount() -> Int {
+    public func updateCount() -> Int {
         return visibleAppInfos
             .filter({ info in
                 if let cask = info.cask {
@@ -1250,7 +1265,7 @@ extension HomebrewInventory {
             .count
     }
 
-    func badgeCount(for section: SidebarSection) -> Text? {
+    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
         func fmt(_ number: Int) -> Text? {
             if number <= 0 { return nil }
             return Text(number, format: .number)
@@ -1388,7 +1403,7 @@ extension HomebrewInventory {
 }
 
 extension HomebrewInventory {
-    func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
+    public func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
         switch section {
         case .top:
             return HomebrewInventory.SourceInfo.TopAppInfo()

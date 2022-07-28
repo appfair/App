@@ -26,24 +26,24 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
 
 /// A manager for installing from an AppSource catalog.
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class AppSourceInventory: ObservableObject, AppInventory {
+public final class AppSourceInventory: ObservableObject, AppInventory, AppManagement {
     //let catalog: AppCatalog
-    let source: AppSource
+    public let source: AppSource
 
     /// The URL for this catalogs app source
-    let sourceURL: URL
+    public let sourceURL: URL
 
     /// The list of currently installed apps of the appID to the Info.plist (or error)
     @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
 
     /// The current catalog of apps
-    @Published var catalog: AppCatalog? = nil
+    @Published internal var catalog: AppCatalog? = nil
 
     /// The date the catalog was most recently updated
-    @Published private(set) var catalogUpdated: Date? = nil
+    @Published private(set) public var catalogUpdated: Date? = nil
 
     /// The number of outstanding update requests
-    @Published var updateInProgress: UInt = 0
+    @Published public var updateInProgress: UInt = 0
 
     @AppStorage("showPreReleases") var showPreReleases = showPreReleasesDefault
 
@@ -57,6 +57,10 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     @AppStorage("relaunchUpdatedCatalogApp") var relaunchUpdatedCatalogApp = relaunchUpdatedCatalogAppDefault
 
     @Published public var errors: [AppError] = []
+
+    public func appList() async -> [AppInfo]? {
+        catalogApps
+    }
 
     /// Resets all of the `@AppStorage` properties to their default values
     func resetAppStorage() {
@@ -77,8 +81,13 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         sourceURL.isAppFairSource
     }
 
-    var supportedSidebars: [SidebarSection] {
-        [SidebarSection.top, .recent] + (self.catalog == nil || self.catalog?.isPlatform(wipipa(.iOS)) == true ? [] : [.sponsorable, .installed, .updated])
+    /// Returns `true` if this is the central source for the catalog.
+    var isRootCatalogSource: Bool {
+        sourceURL == appfairCatalogURLMacOS
+    }
+
+    public var supportedSidebars: [SidebarSection] {
+        [SidebarSection.top, .recent] + [.sponsorable, .installed, .updated]
     }
 
     var symbol: FairSymbol {
@@ -94,17 +103,18 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
     init(source: AppSource, sourceURL: URL) {
         self.source = source
         self.sourceURL = sourceURL
+    }
 
-        if FileManager.default.isDirectory(url: Self.installFolderURL) == false {
-            Task {
-                try? await Self.createInstallFolder()
-            }
+    func checkInstallFolder() async throws {
+        let folder = try installFolderURL()
+        if FileManager.default.isDirectory(url: folder) == false {
+            try await self.createInstallFolder()
         }
 
         // set up a file-system observer for the install folder, which will refresh the installed apps whenever any changes are made; this allows external processes like homebrew to update the installed app
-        if FileManager.default.isDirectory(url: Self.installFolderURL) == true {
-            self.fsobserver = FileSystemObserver(URL: Self.installFolderURL, queue: .main) {
-                dbg("changes detected in app folder:", Self.installFolderURL.path)
+        if FileManager.default.isDirectory(url: folder) == true {
+            self.fsobserver = FileSystemObserver(URL: folder, queue: .main) {
+                dbg("changes detected in app folder:", folder.path)
                 Task {
                     await self.scanInstalledApps()
                 }
@@ -112,15 +122,17 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         }
     }
 
-    @MainActor var title: String {
+    public var title: String {
         catalog?.name ?? NSLocalizedString("Fair Ground", bundle: .module, comment: "the default title of a fair apps catalog")
     }
 
-    @MainActor var catalogApps: [AppInfo] {
-        catalog?.apps.map({ AppInfo(source: source, app: $0) }) ?? []
+    private var catalogApps: [AppInfo]? {
+        catalog?.apps.map({ AppInfo(source: source, app: $0) })
     }
 
-    func refreshAll(reloadFromSource: Bool) async throws {
+    @MainActor public func refreshAll(reloadFromSource: Bool) async throws {
+        let oldid = self.catalog?.identifier
+
         if reloadFromSource {
             self.catalog = nil
         }
@@ -129,12 +141,18 @@ private let relaunchUpdatedCatalogAppDefault = PromptSuppression.unset
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
 
-        async let v0: () = scanInstalledApps()
-        async let v1: () = fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        let _ = try await (v0, v1)
+        try await fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+
+        if let catalog = self.catalog,
+           let newid = catalog.identifier,
+           newid != oldid {
+            try await self.checkInstallFolder()
+        }
+
+        await scanInstalledApps()
     }
 
-    func label(for source: AppSource) -> Label<Text, Image> {
+    public func label(for source: AppSource) -> Label<Text, Image> {
         Label { self.updateInProgress > 0 ? self.catalog?.name?.text() ?? Text("Loading…", bundle: .module, comment: "app source title for fairground apps") : self.catalog?.name?.text() ?? Text("App Source", bundle: .module, comment: "app source title for fairground apps") } icon: { self.symbol.image }
 
         //Label { Text("Fairground", bundle: .module, comment: "app source title for fairground apps") } icon: { AppSourceInventory.symbol.image }
@@ -170,11 +188,11 @@ extension AppSourceInventory {
             self.catalog = catalog
         }
 
-        if self.catalogUpdated != response.lastModifiedDate {
-            self.catalogUpdated = response.lastModifiedDate
+        if self.catalogUpdated != response?.lastModifiedDate {
+            self.catalogUpdated = response?.lastModifiedDate
         }
 
-        if autoUpdateCatalogApp == true {
+        if isRootCatalogSource == true && autoUpdateCatalogApp == true {
             try await updateCatalogApp()
         }
     }
@@ -220,7 +238,7 @@ extension AppSourceInventory {
 
         // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
         // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [String: [AppInfo]] = catalogApps.grouping(by: \.app.bundleIdentifier)
+        let bundleAppInfoMap: [String: [AppInfo]] = (catalogApps ?? []).grouping(by: \.app.bundleIdentifier)
 
         // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
         let infos = bundleAppInfoMap.values.compactMap({ appInfos in
@@ -237,7 +255,7 @@ extension AppSourceInventory {
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         self
             .appInfoItems(includePrereleases: showPreReleases || sourceSelection?.section == .installed)
             .filter({ matchesExtension(item: $0) })
@@ -301,18 +319,36 @@ extension AppSourceInventory {
         (try? FileManager.default.url(for: .applicationDirectory, in: .localDomainMask, appropriateFor: nil, create: true)) ?? URL(fileURLWithPath: "/Applications")
     }
 
+    /// The root install folder for ths fairground.
+    ///
+    /// E.g., `/Applications/App Fair`
+    var baseInstallFolderURL: URL {
+        URL(fileURLWithPath: Bundle.mainBundleName, relativeTo: Self.applicationsFolderURL)
+    }
+
     /// The folder where App Fair apps will be installed
-    static var installFolderURL: URL {
+    func installFolderURL() throws -> URL {
         // we would like the install folder to be the same-named peer of the app's location, allowing it to run in `~/Downloads/` (which would place installed apps in `~/Downloads/App Fair`)
         // however, app translocation prevents it from knowing its location on first launch, and so we can't rely on being able to install as a peer without nagging the user to first move the app somewhere (thereby exhausting translocation)
         // Bundle.main.bundleURL.deletingPathExtension()
-        URL(fileURLWithPath: Bundle.mainBundleName, relativeTo: applicationsFolderURL)
+        guard let catalog = self.catalog else {
+            throw AppError(NSLocalizedString("Catalog not yet loaded.", bundle: .module, comment: "error message"))
+        }
+        let url = baseInstallFolderURL
+        if self.isRootCatalogSource == false {
+            if let id = catalog.identifier {
+                return url.appendingPathComponent(id)
+            } else {
+                throw AppError(NSLocalizedString("No identifier in catalog.", bundle: .module, comment: "error message"))
+            }
+        }
+        return url
     }
 
     /// Launch the local installed copy of this app
-    func launch(_ item: AppInfo) async throws {
+    public func launch(_ item: AppInfo) async throws {
         dbg("launching:", item.app.name)
-        guard let installPath = installedPath(for: item) else {
+        guard let installPath = try await installedPath(for: item) else {
             throw Errors.appNotInstalled(item.app)
         }
 
@@ -334,14 +370,20 @@ extension AppSourceInventory {
     /// `/Applications/Fair Ground/App Name.app`, except for the
     /// `Fair Ground.app` catalog app itself, which will be at:
     /// `/Applications/Fair Ground.app`.scanInstalledApps
-    static func appInstallPath(for item: AppCatalogItem) -> URL {
+    func appInstallPath(for item: AppCatalogItem) async throws -> URL {
+        let folder = try installFolderURL()
+        let dir = try installFolderURL().lastPathComponent == item.name ? folder.deletingLastPathComponent() : folder
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
         // e.g., "App Fair.app" matches "/Applications/App Fair"
-        URL(fileURLWithPath: item.name + appSuffix, isDirectory: true, relativeTo: installFolderURL.lastPathComponent == item.name ? installFolderURL.deletingLastPathComponent() : installFolderURL)
+        return URL(fileURLWithPath: item.name + Self.appSuffix, isDirectory: true, relativeTo: dir)
     }
 
-    /// The catalog app itself is the same as the name of the install path with the ".app" suffix
-    static var catalogAppURL: URL {
-        URL(fileURLWithPath: installFolderURL.lastPathComponent + appSuffix, relativeTo: installFolderURL.deletingLastPathComponent())
+    /// The catalog app itself is the same as the name of the install path with the ".app" suffix.
+    ///
+    /// E.g., this converts `/Applications/App Fair/` to `/Applications/App Fair.app`.
+    var catalogAppURL: URL {
+        URL(fileURLWithPath: baseInstallFolderURL.lastPathComponent + Self.appSuffix, relativeTo: baseInstallFolderURL.deletingLastPathComponent())
     }
 
     /// The bundle IDs for all the installed apps
@@ -360,21 +402,20 @@ extension AppSourceInventory {
         }?.successValue
     }
 
-    static func createInstallFolder() async throws {
+    func createInstallFolder() async throws {
         // always try to ensure the install folder is created (in case the user clobbers the app install folder while we are running)
         // FIXME: this will always fail, since the ownership & permissions of /Applications/ cannot be changed
-        try await withPermission(installFolderURL.deletingLastPathComponent()) { _ in
-            try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
+        try await Self.withPermission(installFolderURL().deletingLastPathComponent()) { _ in
+            try FileManager.default.createDirectory(at: installFolderURL(), withIntermediateDirectories: true, attributes: nil)
         }
     }
 
     func scanInstalledApps() async {
-        dbg()
         do {
             let start = CFAbsoluteTimeGetCurrent()
-            try? await Self.createInstallFolder()
-            var installPathContents = try FileManager.default.contentsOfDirectory(at: Self.installFolderURL, includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
-            installPathContents.append(Self.catalogAppURL)
+            try? await self.createInstallFolder()
+            var installPathContents = try FileManager.default.contentsOfDirectory(at: try installFolderURL(), includingPropertiesForKeys: [], options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles, .producesRelativePathURLs]) // producesRelativePathURLs are critical so these will match the url returned from appInstallPath
+            installPathContents.append(self.catalogAppURL)
 
             var installedApps = self.installedApps
             installedApps.removeAll() // clear the list
@@ -385,9 +426,9 @@ extension AppSourceInventory {
                 if FileManager.default.isDirectory(url: installPath) != true {
                     continue
                 }
-                let infoPlist = installPath.appendingPathComponent("Contents/Info.plist")
                 do {
-                    let plist = try Plist(data: Data(contentsOf: infoPlist))
+                    let bundle = try AppBundle(folderAt: installPath)
+                    let plist = bundle.infoDictionary
                     if let bundleID = plist.bundleID {
                         // here was can validate some of the app's metadata, version number, etc
                         installedApps[.init(bundleID)] = .success(plist)
@@ -400,7 +441,7 @@ extension AppSourceInventory {
 
             self.installedApps = installedApps
             let end = CFAbsoluteTimeGetCurrent()
-            dbg("scanned", installedApps.count, "apps in:", end - start, installedBundleIDs.map(\.rawValue))
+            dbg("scanned", installedApps.count, "apps from:", try? installFolderURL().path, "in:", end - start, installedBundleIDs.map(\.rawValue))
         } catch {
             dbg("error performing re-scan:", error)
             //self.reportError(error)
@@ -408,18 +449,14 @@ extension AppSourceInventory {
     }
 
     /// The `appInstallPath`, or nil if it does not exist
-    func installedPath(for item: AppInfo) -> URL? {
-        Self.appInstallPath(for: item.app).asDirectory
+    public func installedPath(for item: AppInfo) async throws -> URL? {
+        try await appInstallPath(for: item.app).asDirectory
     }
 
     /// Trashes the local installed copy of this app
-    func delete(_ item: AppInfo, verbose: Bool = true) async throws {
+    public func delete(_ item: AppInfo, verbose: Bool = true) async throws {
         dbg("trashing:", item.app.name)
-        if item.isMobileApp {
-            throw AppError(NSLocalizedString("Mobile app deletion unsupported", bundle: .module, comment: "error message when attempting to operate on unsupported app type"))
-        }
-
-        guard let installPath = installedPath(for: item) else {
+        guard let installPath = try await installedPath(for: item) else {
             throw Errors.appNotInstalled(item.app)
         }
 
@@ -429,36 +466,29 @@ extension AppSourceInventory {
     }
 
     /// Reveals the local installed copy of this app using the finder
-    func reveal(_ item: AppInfo) async throws {
+    public func reveal(_ item: AppInfo) async throws {
         dbg("revealing:", item.app.name)
-        if item.isMobileApp {
-            throw AppError(NSLocalizedString("Mobile app reveal unsupported", bundle: .module, comment: "error message when attempting to operate on unsupported app type"))
-        }
-
-        guard let installPath = installedPath(for: item) else {
+        guard let installPath = try await installedPath(for: item) else {
             throw Errors.appNotInstalled(item.app)
         }
         dbg("revealing:", installPath.path)
 
 #if os(macOS)
         // NSWorkspace.shared.activateFileViewerSelecting([installPath]) // unreliable
-        NSWorkspace.shared.selectFile(installPath.path, inFileViewerRootedAtPath: Self.installFolderURL.path)
+        NSWorkspace.shared.selectFile(installPath.path, inFileViewerRootedAtPath: try installFolderURL().path)
 #endif
     }
 
-    func install(_ info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
-        if info.isMobileApp {
-            throw AppError(NSLocalizedString("Mobile app installation unsupported", bundle: .module, comment: "error message when attempting to operate on unsupported app type"))
-        }
+    public func install(_ info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
         try await installApp(item: info, progress: parentProgress, update: update, verbose: verbose, removingURLAt: nil)
     }
 
     /// Install or update the given catalog item.
-    private func installApp(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
+    @MainActor private func installApp(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
         let item = info.app
         let window = UXApplication.shared.currentEvent?.window
 
-        if update == false, let installPath = installedPath(for: info) {
+        if update == false, let installPath = try await installedPath(for: info) {
             throw Errors.appAlreadyInstalled(installPath)
         }
 
@@ -468,14 +498,15 @@ extension AppSourceInventory {
 
         // grab the hash of the download to compare against the fairseal
         dbg("comparing fairseal expected:", item.sha256, "with actual:", downloadSha256)
-        if item.sha256 != downloadSha256.hex() {
-            throw AppError(NSLocalizedString("Invalid fairseal", bundle: .module, comment: "error message when a fairseal check fails"), failureReason: NSLocalizedString("The app's fairseal was not valid.", bundle: .module, comment: "error message when a fairseal check fails"))
+        if let sha256 = item.sha256, sha256 != downloadSha256.hex() {
+            throw AppError(NSLocalizedString("Invalid checksum", bundle: .module, comment: "error message when a checksum fails"), failureReason: NSLocalizedString("The app's checksum was not valid.", bundle: .module, comment: "error message failure reason when a checksum fails"))
         }
 
         try Task.checkCancellation()
 
         let t1 = CFAbsoluteTimeGetCurrent()
-        let expandURL = downloadedArtifact.appendingPathExtension("expanded")
+        //let expandURL = wip(downloadedArtifact.appendingPathExtension("expanded"))
+        let expandURL = URL(fileURLWithPath: downloadedArtifact.appendingPathExtension("expanded").lastPathComponent, isDirectory: true, relativeTo: downloadedArtifact)
 
         let progress2 = Progress(totalUnitCount: 1)
         parentProgress?.addChild(progress2, withPendingUnitCount: 0)
@@ -493,23 +524,34 @@ extension AppSourceInventory {
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
         dbg("unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t2 - t1)
 
-        if shallowFiles.count != 1 {
-            throw Errors.tooManyInstallFiles(item.downloadURL)
-        }
-        guard let expandedAppPath = shallowFiles.first(where: { $0.pathExtension == "app" }) else {
-            throw Errors.noAppContents(item.downloadURL)
-        }
+//        if shallowFiles.count != 1 {
+//            throw Errors.tooManyInstallFiles(item.downloadURL)
+//        }
+
+        let bundle = try AppBundle(folderAt: expandURL)
+        let (expandedAppPath, infoURL) = try bundle.appInfoURLs()
+        dbg("expandedAppPath:", expandedAppPath.path, "infoURL:", infoURL.path, "expandURL:", expandURL)
+        try bundle.validatePaths()
 
         try Task.checkCancellation()
 
         // perform as much validation as possible before we attempt the install
-        try self.validate(appPath: expandedAppPath, forItem: item)
+        if !info.isMobileApp {
+            try self.validate(appPath: expandedAppPath, forItem: item)
+        }
 
-        let installPath = Self.appInstallPath(for: item)
+        let installPath = try await self.appInstallPath(for: item)
+
+        if info.isMobileApp {
+            // update the app to be able to run on mac
+            let _ = try await bundle.setCatalystPlatform()
+        }
+
         let installFolderURL = installPath.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
 
         let destinationURL = installFolderURL.appendingPathComponent(expandedAppPath.lastPathComponent)
+        dbg("destinationURL:", destinationURL.path)
 
         // if we permit updates and it is already installed, trash the previous version
         if update && FileManager.default.isDirectory(url: destinationURL) == true {
@@ -552,7 +594,7 @@ extension AppSourceInventory {
             // the catalog app is special, since re-launching requires quitting the current app
             let isCatalogApp = bundleID.rawValue == Bundle.main.bundleID
 
-            @MainActor func relaunch() {
+            func relaunch() {
                 dbg("re-launching app:", bundleID)
                 terminateAndRelaunch(bundleID: bundleID, force: false, overrideLaunchURL: isCatalogApp ? destinationURL : nil)
             }
@@ -699,13 +741,13 @@ extension FairHub {
 #if swift(>=5.5)
     /// Fetches the `AppCatalog`
     @available(macOS 12.0, iOS 15.0, *)
-    public static func fetchCatalog(sourceURL: URL, locale: Locale?, injectSourceURL: Bool = true, cache: URLRequest.CachePolicy? = nil) async throws -> (catalog: AppCatalog, response: URLResponse) {
+    public static func fetchCatalog(sourceURL: URL, locale: Locale?, injectSourceURL: Bool = true, cache: URLRequest.CachePolicy? = nil) async throws -> (catalog: AppCatalog, response: URLResponse?) {
         dbg("fetching catalog at:", sourceURL)
         let start = CFAbsoluteTimeGetCurrent()
 
         var req = URLRequest(url: sourceURL)
         if let cache = cache { req.cachePolicy = cache }
-        let (data, response) = try await URLSession.shared.data(for: req, delegate: nil)
+        let (data, response) = try await URLSession.shared.fetch(request: req)
         //dbg(wip("catalog data:"), data.utf8String)
 
         let end = CFAbsoluteTimeGetCurrent()
@@ -732,7 +774,7 @@ extension FairHub {
 extension AppSourceInventory {
     typealias Item = URL
 
-    func updateCount() -> Int {
+    public func updateCount() -> Int {
         appInfoItems(includePrereleases: showPreReleases)
             .filter { item in appUpdated(item) }
             .count
@@ -744,11 +786,11 @@ extension AppSourceInventory {
         }.count
     }
 
-    func appInstalled(_ item: AppInfo) -> String? {
+    public func appInstalled(_ item: AppInfo) -> String? {
         installedInfo(for: BundleIdentifier(item.app.bundleIdentifier))?.versionString
     }
 
-    func appUpdated(_ item: AppInfo) -> Bool {
+    public func appUpdated(_ item: AppInfo) -> Bool {
         // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
         (installedVersion(for: BundleIdentifier(item.app.bundleIdentifier)) ?? .max) < (item.app.releasedVersion ?? .min)
     }
@@ -760,7 +802,7 @@ extension AppSourceInventory {
 @available(macOS 12.0, iOS 15.0, *)
 extension AppSourceInventory {
 
-    func selectionFilter(_ selection: SourceSelection?, item: AppInfo) -> Bool {
+    @MainActor func selectionFilter(_ selection: SourceSelection?, item: AppInfo) -> Bool {
         switch selection?.section {
         case .none:
             return true
@@ -779,7 +821,7 @@ extension AppSourceInventory {
         }
     }
 
-    func badgeCount(for section: SidebarSection) -> Text? {
+    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
         switch section {
         case .top:
             return Text(appInfoItems(includePrereleases: showPreReleases).count, format: .number)
@@ -828,10 +870,8 @@ private extension AppCatalog {
 }
 
 extension AppSourceInventory {
-
-    func icon(for info: AppInfo) -> AppIconView {
-        //wip(AnyView(iconImage(item: info)))
-        .init(IconView(info: info))
+    public func icon(for info: AppInfo) -> AppIconView {
+        AppIconView(content: .init(IconView(info: info)))
     }
 
     struct IconView : View, Equatable {
@@ -856,7 +896,7 @@ extension AppSourceInventory {
 
         }
 
-        @MainActor func imageContent(phase: AsyncImagePhase) -> some View {
+        func imageContent(phase: AsyncImagePhase) -> some View {
             Group {
                 switch phase {
                 case .success(let image):
@@ -892,11 +932,11 @@ extension AppSourceInventory {
 }
 
 extension AppSourceInventory {
-    @MainActor func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
+    public func sourceInfo(for section: SidebarSection) -> AppSourceInfo? {
         sourceInformation(for: section)
     }
 
-    @MainActor func sourceInformation(for section: SidebarSection) -> AppSourceInfo {
+    func sourceInformation(for section: SidebarSection) -> AppSourceInfo {
         switch section {
         case .top:
             struct TopAppInfo : AppSourceInfo {
