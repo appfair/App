@@ -1141,7 +1141,7 @@ extension HomebrewInventory {
         }
     }
 
-    public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
         visibleAppInfos
             .filter({ matchesSelection(item: $0, sourceSelection: sourceSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
