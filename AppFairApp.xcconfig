@@ -1,6 +1,5 @@
 // The configuration file for your App Fair App. See: https://www.appfair.net
 
-
 // PRODUCT_NAME is the app name, consisting of two words separated by a space
 PRODUCT_NAME = Stanza Redux
 
@@ -8,10 +7,10 @@ PRODUCT_NAME = Stanza Redux
 PRODUCT_BUNDLE_IDENTIFIER = app.Stanza-Redux
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.3.38
+MARKETING_VERSION = 0.3.40
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 161
+CURRENT_PROJECT_VERSION = 167
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.reference

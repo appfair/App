@@ -578,11 +578,11 @@ struct EBookCommands : Commands {
         ToolbarCommands()
 
         CommandGroup(after: .sidebar) {
-            state?.observing { state in
-                state.textScaleAction(amount: nil).keyboardShortcut("0")
-                state.textScaleAction(amount: 1.2).keyboardShortcut("+")
-                state.textScaleAction(amount: 0.8).keyboardShortcut("-")
-            }
+//            state?.observing { state in
+//                state.textScaleAction(amount: nil).keyboardShortcut("0")
+//                state.textScaleAction(amount: 1.2).keyboardShortcut("+")
+//                state.textScaleAction(amount: 0.8).keyboardShortcut("-")
+//            }
 
             Divider()
         }
