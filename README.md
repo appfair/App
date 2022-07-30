@@ -15,11 +15,15 @@
 # The App Fair
 
 
-**App Fair.app** provides the ability to browse, search for, download,
-install, and update apps from a selection of appsource catalogs.
+**App Fair.app** is a tool for macOS 12 that
+provides the ability to browse, search for, download,
+install, and update apps from a selection of appsource catalogs
+and Homebrew cask repositories.
 
 For more information, and to download the app,
 visit the home page at [appfair.app](https://www.appfair.app).
+To learn more about the appfair.net process for building and
+publishing apps, visit [appfair.net](https://www.appfair.net).
 
 ## Description
 
@@ -57,8 +61,19 @@ source control management directly.
 Start contributing by going to:
 [hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
 
-### Notes
+### Internal Notes
 
-App Fair.app is unique among its peer [appfair.net](https://appfair.net) apps
+App Fair.app is built and distributed as a (mostly) standard
+appfair.net app. One difference is that updates to the App Fair.app
+itself are automatically downloaded and installed when
+a new release is created when older clients next launch or refresh their
+catalogs.
+
+Another difference from its peer appfair.net apps
 in that it is **not** sandboxed.
-This is necessary in order to enable it to install other apps.
+This is unfortunately necessary in order 
+to allow the process to install other apps.
+
+The final major difference is that App Fair.app
+is signed and notarized, which is not otherwise a
+requirement for appfair.net apps.
