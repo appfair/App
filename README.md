@@ -6,7 +6,9 @@
     <img alt="Discord Server" src="https://img.shields.io/discord/959553736450142268?color=7489d5&logo=discord&logoColor=ffffff" />
   </a>
   <img alt="Status: Development" src="https://img.shields.io/static/v1?label=Status&message=Development+(beta)&color=violet">
-  <img alt="Weblate project translated" src="https://img.shields.io/weblate/progress/appfair?color=cyan">
+  <a href="https://hosted.weblate.org/projects/appfair/app-fair/">
+   <img alt="Weblate project translated" src="https://img.shields.io/weblate/progress/appfair?color=cyan">
+  </a>
   <img alt="Licensed under the AGPL 3.0" src="https://img.shields.io/static/v1?label=License&message=AGPL+3.0&color=forestgreen">
 </p>
 
