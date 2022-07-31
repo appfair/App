@@ -16,7 +16,6 @@ import FairKit
 import FairExpo
 import Combine
 
-@available(macOS 12.0, iOS 15.0, *)
 public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 

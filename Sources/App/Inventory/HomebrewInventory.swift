@@ -77,7 +77,6 @@ private extension HomebrewInventory {
 }
 
 /// A manager for [Homebrew casks](https://formulae.brew.sh/docs/api/)
-@available(macOS 12.0, iOS 15.0, *)
 public final class HomebrewInventory: ObservableObject, AppInventory {
     public let source: AppSource
     public let sourceURL: URL

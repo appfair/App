@@ -18,7 +18,6 @@ import XCTest
 import FairCore
 import FairExpo
 
-@available(macOS 12.0, iOS 15.0, *)
 @MainActor final class AppTests: XCTestCase {
     func testAppScene() throws {
         // let store = AppContainer.AppStore()
@@ -85,3 +84,30 @@ import FairExpo
 //    }
 }
 
+
+/// An ``AppManagement`` example that does nothing.
+private actor StubAppManagement : AppManagement {
+    func installedPath(for item: AppInfo) async throws -> URL? {
+        nil
+    }
+
+    /// Installs the given item
+    func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+        throw CocoaError(.featureUnsupported)
+    }
+
+    /// Instructs the system to reveal the path of the item using the Finder
+    func reveal(_ item: AppInfo) async throws {
+        throw CocoaError(.featureUnsupported)
+    }
+
+    /// Instructs the system to launch the item
+    func launch(_ item: AppInfo) async throws {
+        throw CocoaError(.featureUnsupported)
+    }
+
+    /// Deletes the given item from the system
+    func delete(_ item: AppInfo, verbose: Bool) async throws {
+        throw CocoaError(.featureUnsupported)
+    }
+}

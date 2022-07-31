@@ -15,7 +15,14 @@
 import FairKit
 import Foundation
 
-@available(macOS 12.0, iOS 15.0, *)
+struct AddSourceItem : Identifiable {
+    var id: String { addSource }
+
+    var addSource: String
+
+    var addSourceItemValidationError: Error?
+}
+
 struct SidebarView: View {
     @EnvironmentObject var fairManager: FairManager
     @Binding var selection: AppInfo.ID?
@@ -23,6 +30,7 @@ struct SidebarView: View {
     @Binding var sourceSelection: SourceSelection?
     @Binding var displayMode: TriptychOrient
     @Binding var searchText: String
+    @Binding var addSourceItem: AddSourceItem?
 
     var body: some View {
         let _ = debuggingViewChanges()
@@ -67,10 +75,6 @@ struct SidebarView: View {
     @State private var removeSourceShowing: Bool = false
     @State private var removeSource: AppSource? = nil
 
-    @State private var addSourcePrompt = false
-    @State private var addSourceURL: String = ""
-    @State private var addSourceURLValidationError: Error? = nil
-
     @ViewBuilder var bottomBar: some View {
         HStack {
             // placeholder no-op button to keep the toolbar height consistent
@@ -90,8 +94,8 @@ struct SidebarView: View {
                     .labelStyle(.iconOnly)
                     .button {
                         dbg("plus button")
-                        resetNewAppSource()
-                        addSourcePrompt = true
+                        //resetNewAppSource()
+                        self.addSourceItem = AddSourceItem(addSource: "https://") // setting addSourceItem triggers the source URL sheet to display
                     }
                     .buttonStyle(.borderless)
                     .keyboardShortcut("N")
@@ -99,7 +103,6 @@ struct SidebarView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
-        .sheet(isPresented: $addSourcePrompt, onDismiss: addSourcePrompDismissed, content: addSourcePrompView)
         .confirmationDialog(Text("Remove Source", bundle: .module, comment: "confirmation dialog title when removing a source from the user sources"), isPresented: $removeSourceShowing, actions: {
             Text("Remove", bundle: .module, comment: "delete button confirmation dialog delete button text").button {
                 // there's a SwiftUI bug here: if you cancel the dialog and then try to re-delete the same catalog, the dialog won't appear; but if you try it delete another catalog and then go back to deleting this catalog, it will work!
@@ -114,127 +117,24 @@ struct SidebarView: View {
         })
     }
 
+//    func resetNewAppSource() {
+//        if UXPasteboard.general.hasURLs, let url = UXPasteboard.general.urls?.first {
+//            if let validURL = isValidSourceURL(url.absoluteString) {
+//                // FIXME: prefill only seems to work *after* the first time the prompt is shown
+//                self.addSourceItem = AddSourceItem(addSource: validURL.absoluteString)
+//                return
+//            }
+//        }
+//
+//        // otherwise, reset without triggering changes
+//        if let src = self.addSourceItem, !src.addSource.isEmpty {
+//            self.addSourceItem?.addSource = ""
+//        }
+//    }
+
     func removeAppSource(_ source: AppSource) {
         dbg("removing source:", source)
         fairManager.removeInventory(for: source, persist: true)
-    }
-
-    func addSourcePrompDismissed() {
-        dbg()
-    }
-
-    func isValidSourceURL(_ urlString: String) -> URL? {
-        guard let url = URL(string: urlString) else {
-            return nil
-        }
-        if ["http", "https", "file"].contains(url.scheme) {
-            return url
-        }
-        return nil
-    }
-
-    var catalogURLValid: Bool {
-        isValidSourceURL(addSourceURL) != nil
-    }
-
-    func resetNewAppSource() {
-        if UXPasteboard.general.hasURLs, let url = UXPasteboard.general.urls?.first {
-            if let validURL = isValidSourceURL(url.absoluteString) {
-                // FIXME: prefill only seems to work *after* the first time the prompt is shown
-                self.addSourceURL = validURL.absoluteString
-                return
-            }
-        }
-
-        // otherwise, reset without triggering changes
-        if !self.addSourceURL.isEmpty {
-            self.addSourceURL = ""
-        }
-    }
-
-    func closeNewAppSourceDialog() {
-        addSourcePrompt = false
-    }
-
-    func validateNewAppSource() async throws {
-        guard let url = isValidSourceURL(addSourceURL) else {
-            throw AppError(NSLocalizedString("URL is invalid", bundle: .module, comment: "error message when app source URL is not valid"))
-        }
-
-        let data = try await URLSession.shared.fetch(request: URLRequest(url: url)).data
-
-        // ensure we can parse the catalog
-        let _ = try AppCatalog.parse(jsonData: data)
-
-        guard let inventory = self.fairManager.addAppSource(url: url, load: true, persist: true) else {
-            throw AppError(NSLocalizedString("Unable to add App Source", bundle: .module, comment: "error message when app source URL is not valid"))
-        }
-
-        let _ = inventory
-
-        closeNewAppSourceDialog()
-    }
-
-    func addSourcePrompView() -> some View {
-        GroupBox {
-            VStack {
-                Form {
-                    TextField(text: $addSourceURL) {
-                        Text("Catalog URL:", bundle: .module, comment: "add catalog source dialog text")
-                    }
-                    .onSubmit(of: .text) {
-                        // clear error whenever we change the url
-                        self.addSourceURLValidationError = nil
-                    }
-                    .onChange(of: addSourceURL) { url in
-                        // clear error whenever we change the url
-                        self.addSourceURLValidationError = nil
-                    }
-                    .disableAutocorrection(true)
-                    //.keyboardType(.default)
-                    Text("An app source is a URL pointing to a JSON file with a list of apps.", bundle: .module, comment: "add catalog source footer")
-                        .font(.footnote)
-                    Text("For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource).", bundle: .module, comment: "add catalog source footer")
-                        .font(.footnote)
-                    Spacer()
-
-                    ScrollView {
-                        addSourceURLValidationError?.localizedDescription.text()
-                            .font(.callout)
-                            .lineLimit(nil)
-                            .multilineTextAlignment(.leading)
-                            .foregroundColor(.red)
-                            .textSelection(.enabled)
-                    }
-                    .frame(height: 75)
-                }
-
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(role: .cancel, action: closeNewAppSourceDialog) {
-                        Text("Cancel", bundle: .module, comment: "add catalog source button text")
-                    }
-                    .keyboardShortcut(.escape)
-                    Text("Add", bundle: .module, comment: "add catalog source button text")
-                        .button(priority: .userInitiated) {
-                            do {
-                                try await validateNewAppSource()
-                            } catch {
-                                self.addSourceURLValidationError = error
-                            }
-                        }
-                    .keyboardShortcut(.return)
-                    .disabled(!catalogURLValid)
-                }
-            }
-            .frame(width: 400)
-            .padding()
-        } label: {
-            Text("Add App Source", bundle: .module, comment: "add catalog source dialog title")
-                .font(.largeTitle)
-                .padding()
-        }
     }
 
     struct SectionHeader : View {
@@ -315,7 +215,8 @@ struct SidebarView: View {
             navigationDestinationView(item: selection)
                 .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
         }, label: {
-            label.badge(fairManager.badgeCount(for: selection))
+            label
+                .badge(fairManager.badgeCount(for: selection))
         })
     }
 

@@ -14,7 +14,6 @@
  */
 import FairKit
 
-@available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
 
@@ -83,7 +82,6 @@ public struct AppSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct HomebrewSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var homeBrewInv: HomebrewInventory
@@ -278,7 +276,6 @@ struct HomebrewSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct FairAppsSettingsView: View {
     //@EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
@@ -312,7 +309,6 @@ struct FairAppsSettingsView: View {
 
 
 
-@available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @AppStorage("iconBadge") private var iconBadge = true
@@ -370,7 +366,6 @@ extension ThemeStyle : Identifiable {
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
 struct ThemeStylePicker: View {
     @Binding var style: ThemeStyle
 
@@ -386,7 +381,6 @@ struct ThemeStylePicker: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct AppRiskPicker: View {
     @Binding var risk: AppRisk
     @Binding var hoverRisk: AppRisk?
@@ -407,8 +401,7 @@ struct AppRiskPicker: View {
     }
 }
 
-//@available(macOS 12.0, iOS 15.0, *)
-//struct ExperimentalSettingsView: View {
+////struct ExperimentalSettingsView: View {
 //    @EnvironmentObject var fairManager: FairManager
 //    @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
 //
@@ -416,7 +409,6 @@ struct AppRiskPicker: View {
 //    }
 //}
 
-@available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fairManager: FairManager
     @EnvironmentObject var fairAppmacOSInv: AppSourceInventory
@@ -439,6 +431,11 @@ struct AdvancedSettingsView: View {
 
                     Toggle(isOn: $fairManager.enableUserSources) {
                         Text("Enable additional sources", bundle: .module, comment: "fairapps preference checkbox for whether user sources should be enabled")
+                    }
+                        .help(Text("Enable additional custom app sources, which can be added and removed from the sidebar with the plus and minus buttons.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
+
+                    Toggle(isOn: $fairAppmacOSInv.enablePlatformConversion) {
+                        Text("Enable platform conversion for download apps", bundle: .module, comment: "fairapps preference checkbox for whether platform conversion should be enabled")
                     }
                         .help(Text("Enable additional custom app sources, which can be added and removed from the sidebar with the plus and minus buttons.", bundle: .module, comment: "fairapps preference checkbox tooltip"))
 

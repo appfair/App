@@ -16,7 +16,6 @@ import FairKit
 
 
 /// A label that tints its image
-@available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View, Equatable {
     //@Environment(\.colorScheme) var colorScheme
     public var title: Text
@@ -62,7 +61,6 @@ public struct TintedLabel : View, Equatable {
 
 
 /// A label that describes an error condition
-@available(macOS 12.0, iOS 15.0, *)
 public struct ErrorLabel<E: Error> : View {
     public let error: E
 

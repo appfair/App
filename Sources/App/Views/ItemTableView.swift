@@ -96,7 +96,6 @@ struct VersionLabel : Equatable, View {
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
 extension SortComparator {
     func reorder(_ result: ComparisonResult) -> ComparisonResult {
         switch (order, result) {
@@ -109,7 +108,6 @@ extension SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct BoolComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -123,7 +121,6 @@ struct BoolComparator : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct OptionalCompatator<T: Comparable & Hashable> : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -137,19 +134,15 @@ struct OptionalCompatator<T: Comparable & Hashable> : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 let optionalDateComparator = OptionalCompatator(lhsDefault: Date.distantPast, rhsDefault: Date.distantFuture)
 
-@available(macOS 12.0, iOS 15.0, *)
 let optionalStringComparator = OptionalCompatator(lhsDefault: "", rhsDefault: "")
 
-@available(macOS 12.0, iOS 15.0, *)
 func optionalComparator<T: Hashable & Comparable>(_ value: T) -> OptionalCompatator<T> {
     OptionalCompatator(lhsDefault: value, rhsDefault: value)
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
 struct URLComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -158,7 +151,6 @@ struct URLComparator : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct NumericComparator<N: Numeric & Comparable> : SortComparator {
     var order: SortOrder = SortOrder.forward
 

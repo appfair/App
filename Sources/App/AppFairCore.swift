@@ -130,7 +130,6 @@ struct SimpleTableView : View {
 }
 #endif
 
-@available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: AppInfo??
     @FocusedBinding(\.sourceSelection) private var sourceSelection: SourceSelection??
@@ -249,7 +248,6 @@ extension Picker {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 public struct HelpButton : View {
     let url: String
     @Environment(\.openURL) var openURL
@@ -357,8 +355,7 @@ public extension View {
         })
     }
 
-    @available(macOS 12.0, iOS 15.0, *)
-    func displayingFirstAlert<E: LocalizedError>(_ errorBinding: Binding<[E]>) -> some View {
+        func displayingFirstAlert<E: LocalizedError>(_ errorBinding: Binding<[E]>) -> some View {
         let presented: Binding<Bool> = Binding(get: {
             !errorBinding.wrappedValue.isEmpty
         }, set: { newValue in
@@ -426,7 +423,6 @@ public extension View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension View {
     /// Creates a button with the given optional async action.
     ///
@@ -451,7 +447,6 @@ extension View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 public struct RootView : View, Equatable {
     public var body: some View {
         NavigationRootView()
@@ -511,7 +506,6 @@ public enum SidebarSection : Hashable {
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
 struct NavigationRootView : View {
     @EnvironmentObject var fairManager: FairManager
     @Environment(\.scenePhase) var scenePhase
@@ -527,12 +521,16 @@ struct NavigationRootView : View {
     //@SceneStorage("displayMode")
     @State var displayMode: TriptychOrient = TriptychOrient.allCases.first!
     
-    @AppStorage("iconBadge") private var iconBadge = true
+    @AppStorage("iconBadge") var iconBadge = true
     //@SceneStorage("source") var source: AppSource = AppSource.allCases.first!
 
+    /// The window-wide search text
     @State var searchText: String = ""
 
-    public var body: some View {
+    /// The information for a dialog requesting that a new source be added
+    @State var addSourceItem: AddSourceItem? = nil
+
+    var body: some View {
         triptychView
             .displayingFirstAlert($fairManager.errors)
             .toolbar(id: "NavToolbar") {
@@ -606,6 +604,7 @@ struct NavigationRootView : View {
             }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open external URLs
             .onOpenURL(perform: handleURL)
+            .sheet(item: $addSourceItem, content: addSourcePrompView)
     }
 
     var sourceSelectionBinding: Binding<SourceSelection?> {
@@ -628,9 +627,7 @@ struct NavigationRootView : View {
 
     public var triptychView : some View {
         TriptychView(orient: $displayMode) {
-            SidebarView(selection: $selection
-                        //                .mapSetter(action: { dump($1, name: wip("changing selection")) })
-                        , scrollToSelection: $scrollToSelection, sourceSelection: sourceSelectionBinding, displayMode: $displayMode, searchText: $searchText)
+            SidebarView(selection: $selection, scrollToSelection: $scrollToSelection, sourceSelection: sourceSelectionBinding, displayMode: $displayMode, searchText: $searchText, addSourceItem: $addSourceItem)
             .focusedSceneValue(\.sourceSelection, sourceSelectionBinding)
         } list: {
             if let sidebarSource = sidebarSource {
@@ -694,6 +691,14 @@ extension NavigationRootView {
                 }
             }
 
+            if path == ["source"], let sourceURLString = url.queryParameters?["url"] as? String {
+                if let sourceURL = URL(partialString: sourceURLString, defaultScheme: "https") {
+                    dbg("displaying add source dialog:", sourceURL)
+                    self.addSourceItem = AddSourceItem(addSource: sourceURL.absoluteString)
+                }
+                return
+            }
+
             let isCask = path.first == "homebrew"
             let searchID = path.joined(separator: isCask ? "/" : ".") // "homebrew/cask/iterm2" vs. "app.Tidal-Zone"
 
@@ -715,9 +720,141 @@ extension NavigationRootView {
             // }
         }
     }
+
+    func isValidSourceURL(_ urlString: String) -> URL? {
+        guard let url = URL(string: urlString) else {
+            return nil
+        }
+        if ["http", "https", "file"].contains(url.scheme) {
+            return url
+        }
+        return nil
+    }
+
+    func addSourcePrompView(item: AddSourceItem) -> some View {
+        GroupBox {
+            VStack {
+                Form {
+                    TextField(text: Binding(get: { addSourceItem?.addSource ?? item.addSource }, set: { addSourceItem?.addSource = $0 })) {
+                        Text("Catalog URL:", bundle: .module, comment: "add catalog source dialog text")
+                    }
+                    .onSubmit(of: .text) {
+                        // clear error whenever we change the url
+                        addSourceItem?.addSourceItemValidationError = nil
+                    }
+                    .onChange(of: addSourceItem?.addSource) { url in
+                        // clear error whenever we change the url
+                        addSourceItem?.addSourceItemValidationError = nil
+                    }
+                    .disableAutocorrection(true)
+                    //.keyboardType(.default)
+                    Text("An app source is a URL pointing to a JSON file with a list of apps.", bundle: .module, comment: "add catalog source footer")
+                        .font(.footnote)
+                    Text("For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource).", bundle: .module, comment: "add catalog source footer")
+                        .font(.footnote)
+                    Spacer()
+
+                    ScrollView {
+                        addSourceItem?.addSourceItemValidationError?.localizedDescription.text()
+                            .font(.callout)
+                            .lineLimit(nil)
+                            .multilineTextAlignment(.leading)
+                            .foregroundColor(.red)
+                            .textSelection(.enabled)
+                    }
+                    .frame(height: 75)
+                }
+
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(role: .cancel, action: closeNewAppSourceDialog) {
+                        Text("Cancel", bundle: .module, comment: "add catalog source button text")
+                    }
+                    .keyboardShortcut(.escape)
+                    Text("Add", bundle: .module, comment: "add catalog source button text")
+                        .button(priority: .userInitiated) {
+                            do {
+                                try await validateNewAppSource(default: item)
+                            } catch {
+                                dbg("error adding catalog:", error)
+                                self.addSourceItem?.addSourceItemValidationError = error
+                            }
+                        }
+                    .keyboardShortcut(.return)
+                    .disabled(isValidSourceURL(addSourceItem?.addSource ?? item.addSource) == nil)
+                }
+            }
+            .frame(width: 400)
+            .padding()
+        } label: {
+            Text("Add App Source", bundle: .module, comment: "add catalog source dialog title")
+                .font(.largeTitle)
+                .padding()
+        }
+    }
+
+
+    func closeNewAppSourceDialog() {
+        self.addSourceItem = nil
+    }
+
+    func validateNewAppSource(default item: AddSourceItem) async throws {
+        guard let url = isValidSourceURL(addSourceItem?.addSource ?? item.addSource) else {
+            throw AppError(NSLocalizedString("URL is invalid", bundle: .module, comment: "error message when app source URL is not valid"))
+        }
+
+        let source = AppSource(rawValue: url.absoluteString)
+
+        if let _ = self.fairManager.appInventories.first(where: { inv in
+            inv.source == source
+        }) {
+            throw AppError(NSLocalizedString("A catalog with the same source URL is already added.", bundle: .module, comment: "error message when app source URL is already added"))
+        }
+
+        let data = try await URLSession.shared.fetch(request: URLRequest(url: url)).data
+
+        // ensure we can parse the catalog
+        let catalog = try AppCatalog.parse(jsonData: data)
+
+        // since a catalog saves apps to '/Applications/Fair Ground/net.catalog.id/App Name.app',
+        // we need to ensure that only a single catalog is managing a specific folder
+        if let _ = self.fairManager.appInventories.first(where: { inv in
+            (inv as? AppSourceInventory)?.catalog?.identifier == catalog.identifier
+        }) {
+            throw AppError(NSLocalizedString("A catalog with the same identifier is already added.", bundle: .module, comment: "error message when app source identifier is already added"), recoverySuggestion: NSLocalizedString("The other catalog must be removed before this one can be added.", bundle: .module, comment: "error message recover suggestion when app source URL identifier is already added"))
+        }
+
+        guard let inventory = self.fairManager.addAppSource(url: url, load: true, persist: true) else {
+            throw AppError(NSLocalizedString("Unable to add App Source", bundle: .module, comment: "error message when app source URL is not valid"))
+        }
+
+        let _ = inventory
+
+        closeNewAppSourceDialog()
+    }
+
 }
 
 extension URL {
+    /// Creates a URL that may not contain a scheme.
+    ///
+    /// - Parameters:
+    ///   - partialString: a URL that may not contain the leading "scheme://" string
+    ///   - defaultScheme: the scheme to fill in if the expected scheme is missing
+    ///
+    /// For example, `URL(partialString: "example.org", defaultScheme: "ftp")`
+    /// will create a URL: "ftp://example.org"
+    public init?(partialString: String, defaultScheme: String) {
+        if let url = URL(string: partialString), url.scheme != nil {
+            self = url
+        } else if let url = URL(string: defaultScheme + "://" + partialString) {
+            self = url
+        } else {
+            return nil
+        }
+    }
+
     /// Parses the URL for query parameters
     var queryParameters: [String: String?]? {
         URLComponents(url: self, resolvingAgainstBaseURL: false)?.queryItems?.dictionary(keyedBy: \.name).mapValues(\.value)
@@ -725,7 +862,6 @@ extension URL {
 }
 
 #if os(macOS)
-@available(macOS 12.0, iOS 15.0, *)
 public struct AppTableDetailSplitView : View {
     let source: AppSource
     @Binding var selection: AppInfo.ID?
@@ -743,7 +879,6 @@ public struct AppTableDetailSplitView : View {
 }
 #endif
 
-@available(macOS 12.0, iOS 15.0, *)
 public struct AppDetailView : View {
     @Binding var sourceSelection: SourceSelection?
     @FocusedBinding(\.selection) private var selection: AppInfo??
@@ -832,8 +967,7 @@ public struct AppDetailView : View {
 
 extension View {
     /// The custom tinting style for the App Fair
-    @available(macOS 12.0, iOS 15.0, *)
-    @ViewBuilder func fairTint(simple: Bool, color: Color) -> some View {
+        @ViewBuilder func fairTint(simple: Bool, color: Color) -> some View {
         if simple {
             foregroundStyle(.linearGradient(colors: [color, color], startPoint: .top, endPoint: .bottom))
                 .opacity(0.8)
@@ -913,7 +1047,6 @@ extension AppCategory : Identifiable {
     public var id: Self { self }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension FocusedValues {
     private struct FocusedSelection: FocusedValueKey {
         typealias Value = Binding<AppInfo?>

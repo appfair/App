@@ -16,7 +16,6 @@ import FairKit
 import FairExpo
 import WebKit
 
-@available(macOS 12.0, iOS 15.0, *)
 struct CatalogItemView: View, Equatable {
     /// The regex for hosts that can be accessed directly from the embedded browser
     static let permittedHostsRegex = try! Result {
@@ -31,7 +30,6 @@ struct CatalogItemView: View, Equatable {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 private struct CatalogItemHostView: View {
     let info: AppInfo
     let source: AppSource
@@ -877,8 +875,8 @@ private struct CatalogItemHostView: View {
         }
     }
 
-    func permissionListItem(permission: AppLegacyPermission) -> some View {
-        let entitlement = permission.type
+    func permissionListItem(permission: AppEntitlementPermission) -> some View {
+        let entitlement = permission.identifier
 
         var title = entitlement.localizedInfo.title
         if !permission.usageDescription.isEmpty {
@@ -891,18 +889,51 @@ private struct CatalogItemHostView: View {
             .lineLimit(1)
             .truncationMode(.tail)
         //.textSelection(.enabled)
-            .help(Text("\(entitlement.localizedInfo.info): \( Text(permission.usageDescription))", bundle: .module, comment: "formatting string separating entitlement info from usage description in tooltip text"))
+            .help(Text("\(entitlement.localizedInfo.info): \(Text(permission.usageDescription))", bundle: .module, comment: "formatting string separating entitlement info from usage description in tooltip text"))
     }
 
-    /// The entitlements that will appear in the list.
-    /// These filter out entitlements that are pre-requisites (e.g., sandboxing) as well as harmless entitlements (e.g., JIT).
-    var listedPermissions: [AppLegacyPermission] {
-        metadata.orderedPermissions(filterCategories: [.harmless, .prerequisite])
+    func permissionListItem(permission: AppBackgroundModePermission) -> some View {
+        Text(permission.identifier.rawValue)
+    }
+
+    func permissionListItem(permission: AppUsagePermission) -> some View {
+        Text(permission.identifier.rawValue)
+    }
+
+    func permissionListItem(permission: AppUnrecognizedPermission) -> some View {
+        Text(permission.identifier ?? permission.type)
     }
 
     func permissionsList() -> some View {
         List {
-            ForEach(listedPermissions, id: \.type, content: permissionListItem)
+            if metadata.permissionsEntitlements?.isEmpty == false {
+                Section {
+                    ForEach((metadata.permissionsEntitlements ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                } header: {
+                    Text("Entitlements", bundle: .module, comment: "section header title in permissions section of catalog item")
+                }
+            }
+            if metadata.permissionsUsage?.isEmpty == false {
+                Section {
+                    ForEach((metadata.permissionsUsage ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                } header: {
+                    Text("Usage", bundle: .module, comment: "section header title in permissions section of catalog item")
+                }
+            }
+            if metadata.permissionsBackgroundMode?.isEmpty == false {
+                Section {
+                    ForEach((metadata.permissionsBackgroundMode ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                } header: {
+                    Text("Background Modes", bundle: .module, comment: "section header title in permissions section of catalog item")
+                }
+            }
+            if metadata.permissionsUnrecognized?.isEmpty == false {
+                Section {
+                    ForEach((metadata.permissionsUnrecognized ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                } header: {
+                    Text("Other", bundle: .module, comment: "section header title in permissions section of catalog item")
+                }
+            }
         }
         .conditionally {
 #if os(macOS)
@@ -1079,8 +1110,8 @@ private struct CatalogItemHostView: View {
                     }
                     updateButton()
                         .hcenter()
-                    if isCatalogApp {
-                        Spacer() // no button to launch ourselves
+                    if isCatalogApp || (info.isMobileApp && (fairManager.appSourceInventories.first?.enablePlatformConversion == false || ProcessInfo.isArmMac == false)) {
+                        Spacer() // no button to launch ourselves, nor to run an unconverted app
                             .hcenter()
                     } else {
                         launchButton()
@@ -1831,11 +1862,18 @@ extension AppInfo {
 
     /// Returns `true` if this is an app whose path extension is `.ipa`
     var isMobileApp: Bool {
-        wipipa(app.downloadURL.pathExtension == "ipa")
+        app.isMobileApp
     }
 }
 
+
 extension AppCatalogItem {
+    /// Returns `true` if this is an app whose path extension is `.ipa`
+    var isMobileApp: Bool {
+        // TODO: self.platforms.contains(.ios)
+        wipipa(self.downloadURL.pathExtension == "ipa")
+    }
+
     /// The specified tint color, falling back on the default tint for the app name
     func itemTintColor() -> Color {
         self.tintColor() ?? FairIconView.iconColor(name: self.appNameHyphenated)
@@ -1971,8 +2009,7 @@ struct CatalogItemBrowserView : View {
     }
 }
 
-//@available(macOS 12.0, iOS 15.0, *)
-//struct CatalogItemView_Previews: PreviewProvider {
+////struct CatalogItemView_Previews: PreviewProvider {
 //    static var previews: some View {
 //        CatalogItemView(info: AppInfo(source: .appSourceFairgroundMacOS, app: AppCatalogItem.sample), source: .appSourceFairgroundMacOS)
 //            //.environmentObject(AppSourceInventory.default)

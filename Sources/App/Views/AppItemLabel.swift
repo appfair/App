@@ -108,7 +108,6 @@ struct AppItemLabel : View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct AppItemLabel_Previews: PreviewProvider {
     static var previews: some View {
         //let info = AppInfo(catalogMetadata: AppCatalogItem(name: "My App", bundleIdentifier: "app.My-App", downloadURL: appfairRoot))

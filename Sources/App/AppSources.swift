@@ -43,8 +43,7 @@ extension AppSourceInfo {
 public extension AppCategory {
     /// The description of an app category.
     /// TODO: add in an extended description tuple
-    @available(macOS 12.0, iOS 15.0, *)
-    var text: Text {
+        var text: Text {
         switch self {
         case .business:
             return Text("Business", bundle: .module, comment: "app category label for appfair.business")
@@ -133,8 +132,7 @@ public extension AppCategory {
         }
     }
 
-    @available(macOS 12.0, iOS 15.0, *)
-    var symbol: FairSymbol {
+        var symbol: FairSymbol {
         switch self {
         case .business:
             return .building_2
