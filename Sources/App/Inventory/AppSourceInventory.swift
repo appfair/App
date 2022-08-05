@@ -84,7 +84,7 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
     public var supportedSidebars: [SidebarSection] {
         let allSidebars = [SidebarSection.top, .recent] + [.sponsorable, .installed, .updated]
         return allSidebars.filter { selction in
-            badgeCount(for: selction) != nil
+            itemCount(for: selction) != nil
         }
     }
 
@@ -900,28 +900,27 @@ extension AppSourceInventory {
         }
     }
 
-    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
-        func txt(_ num: Int) -> Text? {
-            if num <= 0 {
-                return nil
-            } else {
-                return Text(num, format: .number)
-            }
-        }
-
+    /// The number of items for the given section
+    func itemCount(for section: SidebarSection) -> Int? {
         switch section {
         case .top:
-            return txt(appInfoItems(includePrereleases: showPreReleases).count)
+            return (appInfoItems(includePrereleases: showPreReleases).count)
         case .recent:
-            return txt(appInfoItems(includePrereleases: showPreReleases).filter({ self.isRecentlyUpdated($0) }).count)
+            return (appInfoItems(includePrereleases: showPreReleases).filter({ self.isRecentlyUpdated($0) }).count)
         case .updated:
-            return txt(updateCount())
+            return (updateCount())
         case .sponsorable:
-            return txt(sponsorableCount())
+            return (sponsorableCount())
         case .installed:
-            return catalog == nil ? nil : txt(installedBundleIDs.count)
+            return catalog == nil ? nil : (installedBundleIDs.count)
         case .category:
             return nil
+        }
+    }
+
+    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
+        itemCount(for: section).flatMap { count in
+            Text(count, format: .number)
         }
     }    
 }
