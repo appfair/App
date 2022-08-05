@@ -72,7 +72,7 @@ public protocol AppInventory {
     var catalogUpdated: Date? { get }
 
     /// The badge indicating how many matches are available; a nill Text indicates the category is empty
-    @MainActor func badgeCount(for section: SidebarSection) -> Text?
+    func badgeCount(for section: SidebarSection) -> Text?
 
     /// Returns an unfiltered, unsorted list of all the apps in this catalog.
     func appList() async -> [AppInfo]?
@@ -82,7 +82,7 @@ public protocol AppInventory {
     func reload(fromSource: Bool) async throws
 
     /// The app info items to be displayed for the given selection, filter, and sort order
-    @MainActor func arrangedItems(sourceSelection: SourceSelection?, searchText: String) -> [AppInfo]
+    func arrangedItems(sourceSelection: SourceSelection?, searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
     func appInstalled(_ item: AppInfo) -> String?
@@ -144,10 +144,10 @@ typealias AppInventoryList = Array<(inventory: AppInventoryManagement, observer:
 /// A controller that handles multiple app inventory instances
 protocol AppInventoryController : AppManagement {
     /// The list of available inventories
-    @MainActor var inventories: AppInventoryList { get }
+    var inventories: AppInventoryList { get }
 
     /// Finds the inventory for the given identifier in this controller's list of sources
-    @MainActor func inventory(from source: AppSource) -> AppInventoryManagement?
+    func inventory(from source: AppSource) -> AppInventoryManagement?
 }
 
 extension AppInventoryController {

@@ -91,6 +91,10 @@ private actor StubAppManagement : AppManagement {
         nil
     }
 
+    func install(_ item: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool) async throws {
+        
+    }
+    
     /// Installs the given item
     func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
         throw CocoaError(.featureUnsupported)

@@ -1269,7 +1269,7 @@ extension HomebrewInventory {
             .count
     }
 
-    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
+    public func badgeCount(for section: SidebarSection) -> Text? {
         func fmt(_ number: Int) -> Text? {
             if number <= 0 { return nil }
             return Text(number, format: .number)
