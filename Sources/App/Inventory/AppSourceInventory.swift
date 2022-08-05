@@ -33,10 +33,10 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
     public let sourceURL: URL
 
     /// The list of currently installed apps of the appID to the Info.plist (or error)
-    @Published private var installedApps: [BundleIdentifier : Result<Plist, Error>] = [:]
+    @Published private var installedApps: [AppIdentifier : Result<Plist, Error>] = [:]
 
     /// The current catalog of apps
-    @Published internal var catalog: AppCatalog? = nil
+    @Published internal var catalog: Result<AppCatalog, Error>? = nil
 
     /// The date the catalog was most recently updated
     @Published private(set) public var catalogUpdated: Date? = nil
@@ -58,8 +58,6 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
     /// Whether to enable platform conversion for installed binaries
     @AppStorage("enablePlatformConversion") var enablePlatformConversion: Bool = false
 
-    @Published public var errors: [AppError] = []
-
     public func appList() async -> [AppInfo]? {
         catalogApps
     }
@@ -73,12 +71,6 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
         self.relaunchUpdatedCatalogApp = relaunchUpdatedCatalogAppDefault
     }
 
-    /// Register that an error occurred with the app manager
-    @available(*, deprecated, message: "move to FairManager")
-    func reportError(_ error: Error) {
-        errors.append(error as? AppError ?? AppError(error))
-    }
-
     var isAppFairSource: Bool {
         sourceURL.isAppFairSource
     }
@@ -88,8 +80,12 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
         sourceURL == appfairCatalogURLMacOS
     }
 
+    /// Returns the
     public var supportedSidebars: [SidebarSection] {
-        [SidebarSection.top, .recent] + [.sponsorable, .installed, .updated]
+        let allSidebars = [SidebarSection.top, .recent] + [.sponsorable, .installed, .updated]
+        return allSidebars.filter { selction in
+            badgeCount(for: selction) != nil
+        }
     }
 
     var symbol: FairSymbol {
@@ -124,40 +120,86 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
         }
     }
 
+    /// The catalog's success value
+    ///
+    /// - TODO: @available(*, deprecated, renamed: "catalog")
+    var catalogSuccess: AppCatalog? {
+        catalog?.successValue
+    }
+
+    /// A failed catalog load
+    var catalogError: Error? {
+        catalog?.failureValue
+    }
+
     public var title: String {
-        catalog?.name ?? NSLocalizedString("Fair Ground", bundle: .module, comment: "the default title of a fair apps catalog")
+        catalogSuccess?.name ?? NSLocalizedString("App Source", bundle: .module, comment: "the default title of a fair apps catalog")
     }
 
     private var catalogApps: [AppInfo]? {
-        catalog?.apps.map({ AppInfo(source: source, app: $0) })
+        catalogSuccess?.apps.map({ AppInfo(source: source, app: $0) })
     }
 
-    @MainActor public func refreshAll(reloadFromSource: Bool) async throws {
-        let oldid = self.catalog?.identifier
+    @MainActor public func reload(fromSource reloadFromSource: Bool) async throws {
+        let oldid = self.catalogSuccess?.identifier
 
-        if reloadFromSource {
-            self.catalog = nil
-        }
-        //self.catalog = wip(nil)
+        // resetting the catalog has some undesirable effects, like clearing the user's current selection
+
+//        withAnimation {
+//            // clear catalog first
+//            self.catalog = nil
+//        }
 
         self.updateInProgress += 1
         defer { self.updateInProgress -= 1 }
 
-        try await fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+        do {
+            let (catalog, response) = try await FairHub.fetchCatalog(sourceURL: sourceURL, locale: Locale.current, cache: reloadFromSource ? .reloadIgnoringLocalAndRemoteCacheData : .useProtocolCachePolicy)
+            withAnimation {
+                if self.catalogSuccess != catalog {
+                    self.catalog = .success(catalog)
+                }
 
-        if let catalog = self.catalog,
-           let newid = catalog.identifier,
-           newid != oldid {
-            try await self.checkInstallFolder()
+                if self.catalogUpdated != response?.lastModifiedDate {
+                    self.catalogUpdated = response?.lastModifiedDate
+                }
+            }
+
+            if isRootCatalogSource == true && autoUpdateCatalogApp == true {
+                do {
+                    try await updateCatalogApp()
+                } catch {
+                    dbg("error updating catalog app:", error)
+                }
+            }
+
+            if let newid = catalog.identifier, newid != oldid {
+                try await checkInstallFolder()
+            }
+
+            await scanInstalledApps()
+        } catch {
+            // report the failure to load
+            withAnimation {
+                self.catalog = .failure(error)
+            }
         }
-
-        await scanInstalledApps()
     }
 
     public func label(for source: AppSource) -> Label<Text, Image> {
-        Label { self.updateInProgress > 0 ? self.catalog?.name?.text() ?? Text("Loading…", bundle: .module, comment: "app source title for sidebad section while loading") : self.catalog?.name?.text() ?? Text("App Source", bundle: .module, comment: "app source sidebar section title") } icon: { self.symbol.image }
+        func labelText() -> Text {
+            if self.updateInProgress > 0 {
+                return self.catalogSuccess?.name?.text() ?? Text("Loading…", bundle: .module, comment: "app source title for sidebad section while loading") }
+            else {
+                return self.catalogSuccess?.name?.text() ?? Text("App Source", bundle: .module, comment: "app source sidebar section title")
+            }
+        }
 
-        //Label { Text("Fairground", bundle: .module, comment: "app source title for fairground apps") } icon: { AppSourceInventory.symbol.image }
+        return Label {
+            labelText()
+        } icon: {
+            self.symbol.image
+        }
     }
 }
 
@@ -172,8 +214,10 @@ class CatalogOperation {
     }
 }
 
+/// A type of activity for a given app
 enum CatalogActivity : CaseIterable, Equatable {
     case install
+    case download
     case update
     case trash
     case reveal
@@ -182,22 +226,6 @@ enum CatalogActivity : CaseIterable, Equatable {
 
 
 extension AppSourceInventory {
-    @MainActor func fetchApps(cache: URLRequest.CachePolicy? = nil) async throws {
-        dbg("loading catalog")
-        let (catalog, response) = try await FairHub.fetchCatalog(sourceURL: sourceURL, locale: Locale.current, cache: cache)
-        if self.catalog != catalog {
-            self.catalog = catalog
-        }
-
-        if self.catalogUpdated != response?.lastModifiedDate {
-            self.catalogUpdated = response?.lastModifiedDate
-        }
-
-        if isRootCatalogSource == true && autoUpdateCatalogApp == true {
-            try await updateCatalogApp()
-        }
-    }
-
     /// The app info for the current app (which is the catalog browser app)
     var catalogAppInfo: AppInfo? {
         appInfoItems(includePrereleases: false).first(where: { info in
@@ -227,46 +255,35 @@ extension AppSourceInventory {
 #endif
 
         if (catalogApp.app.releasedVersion ?? .min) > (installedCatalogVersion ?? .min) {
-            try await installApp(item: catalogApp, progress: nil, update: true, removingURLAt: catalogAppBundle.bundleURL)
+            try await installApp(item: catalogApp, progress: nil, downloadOnly: false, update: true, removingURLAt: catalogAppBundle.bundleURL)
         }
     }
 
     /// All the app-info items, sorted and filtered based on whether to include pre-releases.
     ///
     /// - Parameter includePrereleases: when `true`, versions marked `beta` will superceed any non-`beta` versions.
-    /// - Returns: the list of apps, including all the installed apps, as well as matching pre-leases
-    func appInfoItems(includePrereleases: Bool) -> [AppInfo] {
-
-        // multiple instances of the same bundleID can exist for "beta" set to `false` and `true`;
-        // the visibility of these will be controlled by whether we want to display pre-releases
-        let bundleAppInfoMap: [String: [AppInfo]] = (catalogApps ?? []).grouping(by: \.app.bundleIdentifier)
-
-        // need to cull duplicates based on the `beta` flag so we only have a single item with the same CFBundleID
-        let infos = bundleAppInfoMap.values.compactMap({ appInfos in
-            appInfos
-                .filter { item in
-                    // "beta" apps are are included when the pre-release flag is set
-                    includePrereleases == true || item.app.beta == false // || item.installedPlist != nil
-                }
-                .sorting(by: \.app.releasedVersion, ascending: false, noneFirst: true) // the latest release comes first
-                .first // there can be only a single bundle identifier in the list for Identifiable
-        })
-
-        return infos.sorting(by: \.app.bundleIdentifier) // needs to return in constant order
+    /// - Returns: the list of apps, including all the installed apps, as well as matching pre-releases
+    func appInfoItems(includePrereleases: Bool) -> LazyFilterSequence<[AppInfo]> {
+        (catalogApps ?? [])
+            .filter { item in
+                // "beta" apps are are included when the pre-release flag is set
+                includePrereleases == true || item.app.beta != true
+            }
+            .uniquing(by: \.app.bundleIdentifier)
     }
 
     /// The items arranged for the given category with the specifed sort order and search text
-    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
         self
             .appInfoItems(includePrereleases: showPreReleases || sourceSelection?.section == .installed)
-            .filter({ matchesExtension(item: $0) })
-            .filter({ sourceSelection?.section.isLocalFilter == true || matchesRiskFilter(item: $0) })
-            .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .filter({ selectionFilter(sourceSelection, item: $0) }) // TODO: fix categories for app item
-            .sorted(using: sortOrder + categorySortOrder(section: sourceSelection?.section))
+            .filter({ self.matchesExtension(item: $0) })
+            .filter({ sourceSelection?.section.isLocalFilter == true || self.matchesRiskFilter(item: $0) })
+            .filter({ self.matchesSearch(item: $0, searchText: searchText) })
+            .filter({ self.selectionFilter(sourceSelection, item: $0) }) // TODO: fix categories for app item
+            .sorted(using: sortOrder(section: sourceSelection?.section))
     }
 
-    func categorySortOrder(section: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
+    func sortOrder(section: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
         switch section {
         case .none:
             return []
@@ -332,8 +349,8 @@ extension AppSourceInventory {
         // we would like the install folder to be the same-named peer of the app's location, allowing it to run in `~/Downloads/` (which would place installed apps in `~/Downloads/App Fair`)
         // however, app translocation prevents it from knowing its location on first launch, and so we can't rely on being able to install as a peer without nagging the user to first move the app somewhere (thereby exhausting translocation)
         // Bundle.main.bundleURL.deletingPathExtension()
-        guard let catalog = self.catalog else {
-            throw AppError(NSLocalizedString("Catalog not yet loaded.", bundle: .module, comment: "error message"))
+        guard let catalog = self.catalog?.successValue else {
+            throw catalog?.failureValue ?? AppError(NSLocalizedString("Catalog not yet loaded.", bundle: .module, comment: "error message"))
         }
         let url = baseInstallFolderURL
         if self.isRootCatalogSource == false {
@@ -377,11 +394,11 @@ extension AppSourceInventory {
     /// - Parameters:
     ///   - item: the item
     ///   - ext: the extension for the path
-    func appInstallPath(for item: AppCatalogItem, appSuffix ext: String? = "app") async throws -> URL {
+    func appInstallPath(for item: AppCatalogItem, appSuffix ext: String? = "app", mkdir: (URL) throws -> () = { try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: true) }) async throws -> URL {
         let appSuffix = ext ?? (item.isMobileApp != true || self.enablePlatformConversion == false ? "app" : "ipa")
         let folder = try installFolderURL()
         let dir = try installFolderURL().lastPathComponent == item.name ? folder.deletingLastPathComponent() : folder
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try mkdir(dir)
 
         // e.g., "App Fair.app" matches "/Applications/App Fair"
         return URL(fileURLWithPath: item.name, isDirectory: appSuffix == "app" ? true : false, relativeTo: dir).appendingPathExtension(appSuffix)
@@ -395,16 +412,16 @@ extension AppSourceInventory {
     }
 
     /// The bundle IDs for all the installed apps
-    var installedBundleIDs: Dictionary<BundleIdentifier, Result<Plist, Error>>.Keys {
+    var installedBundleIDs: Dictionary<AppIdentifier, Result<Plist, Error>>.Keys {
         installedApps.keys
     }
 
-    func installedVersion(for id: BundleIdentifier) -> AppVersion? {
+    func installedVersion(for id: AppIdentifier) -> AppVersion? {
         installedInfo(for: id)?.appVersion
     }
 
     /// Returns the installed Plist for the given bundle identifier
-    func installedInfo(for id: BundleIdentifier) -> Plist? {
+    func installedInfo(for id: AppIdentifier) -> Plist? {
         installedApps.values.first { result in
             result.successValue?.CFBundleIdentifier == id.rawValue
         }?.successValue
@@ -430,11 +447,10 @@ extension AppSourceInventory {
 
             func addApp<T>(bundle: AppBundle<T>) {
                 let plist = bundle.infoDictionary
-                if let bundleID = plist.bundleID {
+                if let appID = plist.appIdentifier {
                     // here was can validate some of the app's metadata, version number, etc
-                    installedApps[.init(bundleID)] = .success(plist)
+                    installedApps[appID] = .success(plist)
                 }
-
             }
 
             for installPath in installPathContents.shuffled() {
@@ -453,6 +469,7 @@ extension AppSourceInventory {
                 } catch {
                     // we ignore errors so a corrup Info.plist doesn't prevent the rest of the apps from being scanned
                     dbg("error scanning:", installPath, "error:", error)
+                    //installedApps[appID] = .failure(error)
                 }
             }
 
@@ -532,12 +549,12 @@ extension AppSourceInventory {
         }
     }
 
-    public func install(_ info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
-        try await installApp(item: info, progress: parentProgress, update: update, verbose: verbose, removingURLAt: nil)
+    public func install(_ info: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool) async throws {
+        try await installApp(item: info, progress: parentProgress, downloadOnly: downloadOnly, update: update, verbose: verbose, removingURLAt: nil)
     }
 
     /// Install or update the given catalog item.
-    @MainActor private func installApp(item info: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
+    @MainActor private func installApp(item info: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
         let item = info.app
         let window = UXApplication.shared.currentEvent?.window
 
@@ -588,10 +605,8 @@ extension AppSourceInventory {
         try bundle.validatePaths()
 
         try Task.checkCancellation()
-        // for mobile apps, always
-        let retainArtifact = wip(info.isMobileApp)
 
-        if retainArtifact {
+        if downloadOnly {
             try FileManager.default.moveItem(at: downloadedArtifact, to: await appArtifactPath(for: item))
         } else {
             try FileManager.default.removeItem(at: downloadedArtifact)
@@ -657,7 +672,7 @@ extension AppSourceInventory {
         }
 
         if self.relaunchUpdatedApps == true {
-            let bundleID = BundleIdentifier(item.bundleIdentifier)
+            let bundleID = AppIdentifier(item.bundleIdentifier)
             // the catalog app is special, since re-launching requires quitting the current app
             let isCatalogApp = bundleID.rawValue == Bundle.main.bundleID
 
@@ -694,7 +709,7 @@ extension AppSourceInventory {
     }
 
     /// Kills the process with the given `bundleID` and re-launches it.
-    private func terminateAndRelaunch(bundleID: BundleIdentifier, force: Bool, overrideLaunchURL: URL? = nil) {
+    private func terminateAndRelaunch(bundleID: AppIdentifier, force: Bool, overrideLaunchURL: URL? = nil) {
 #if os(macOS)
         // re-launch the current app once it has been killed
         // note that NSRunningApplication cannot be used from a sandboxed app
@@ -841,23 +856,23 @@ extension AppSourceInventory {
 
     public func updateCount() -> Int {
         appInfoItems(includePrereleases: showPreReleases)
-            .filter { item in appUpdated(item) }
+            .filter { item in self.appUpdated(item) }
             .count
     }
 
     func sponsorableCount() -> Int {
         appInfoItems(includePrereleases: showPreReleases).filter { item in
-            appSponsorable(item)
+            self.appSponsorable(item)
         }.count
     }
 
     public func appInstalled(_ item: AppInfo) -> String? {
-        installedInfo(for: BundleIdentifier(item.app.bundleIdentifier))?.versionString
+        installedInfo(for: AppIdentifier(item.app.bundleIdentifier))?.versionString
     }
 
     public func appUpdated(_ item: AppInfo) -> Bool {
         // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
-        (installedVersion(for: BundleIdentifier(item.app.bundleIdentifier)) ?? .max) < (item.app.releasedVersion ?? .min)
+        (installedVersion(for: AppIdentifier(item.app.bundleIdentifier)) ?? .max) < (item.app.releasedVersion ?? .min)
     }
 
 }
@@ -885,18 +900,26 @@ extension AppSourceInventory {
         }
     }
 
-    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
+    public func badgeCount(for section: SidebarSection) -> Text? {
+        func txt(_ num: Int) -> Text? {
+            if num <= 0 {
+                return nil
+            } else {
+                return Text(num, format: .number)
+            }
+        }
+
         switch section {
         case .top:
-            return Text(appInfoItems(includePrereleases: showPreReleases).count, format: .number)
+            return txt(appInfoItems(includePrereleases: showPreReleases).count)
         case .recent:
-            return Text(appInfoItems(includePrereleases: showPreReleases).filter({ isRecentlyUpdated($0) }).count, format: .number)
+            return txt(appInfoItems(includePrereleases: showPreReleases).filter({ self.isRecentlyUpdated($0) }).count)
         case .updated:
-            return Text(updateCount(), format: .number)
+            return txt(updateCount())
         case .sponsorable:
-            return Text(sponsorableCount(), format: .number)
+            return txt(sponsorableCount())
         case .installed:
-            return Text(installedBundleIDs.count, format: .number)
+            return catalog == nil ? nil : txt(installedBundleIDs.count)
         case .category:
             return nil
         }
@@ -970,7 +993,7 @@ extension AppSourceInventory {
                         .resizable()
                     img
                 case .failure(let error):
-                    let _ = dbg("error image for:", info.app.name, error)
+                    //let _ = dbg("error image for:", info.app.name, error)
                     if !error.isURLCancelledError { // happens when items are scrolled off the screen
                         let _ = dbg("error fetching icon from:", info.app.iconURL?.absoluteString, "error:", error.isURLCancelledError ? "Cancelled" : error.localizedDescription)
                     }
@@ -1049,7 +1072,7 @@ extension AppSourceInventory {
                 }
             }
 
-            return TopAppInfo(catalog: catalog, symbol: self.symbol, tint: isAppFairSource ? .accentColor : FairIconView.iconColor(name: sourceURL.absoluteString))
+            return TopAppInfo(catalog: catalogSuccess, symbol: self.symbol, tint: isAppFairSource ? .accentColor : FairIconView.iconColor(name: sourceURL.absoluteString))
         case .recent:
 
             struct RecentAppInfo : AppSourceInfo {
@@ -1089,7 +1112,7 @@ extension AppSourceInventory {
                 }
             }
 
-            return RecentAppInfo(catalog: catalog)
+            return RecentAppInfo(catalog: catalogSuccess)
         case .installed:
 
             struct InstalledAppInfo : AppSourceInfo {
@@ -1129,7 +1152,7 @@ extension AppSourceInventory {
                 }
             }
 
-            return InstalledAppInfo(catalog: catalog)
+            return InstalledAppInfo(catalog: catalogSuccess)
         case .sponsorable:
 
             struct SponsorableAppInfo : AppSourceInfo {
@@ -1170,7 +1193,7 @@ extension AppSourceInventory {
                 }
             }
 
-            return SponsorableAppInfo(catalog: catalog)
+            return SponsorableAppInfo(catalog: catalogSuccess)
         case .updated:
             struct UpdatedAppInfo : AppSourceInfo {
                 let catalog: AppCatalog?
@@ -1208,7 +1231,7 @@ extension AppSourceInventory {
                     []
                 }
             }
-            return UpdatedAppInfo(catalog: catalog)
+            return UpdatedAppInfo(catalog: catalogSuccess)
         case .category(let category):
             return CategoryAppInfo(category: category)
         }

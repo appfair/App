@@ -96,8 +96,10 @@ struct VersionLabel : Equatable, View {
 }
 
 
+#if !os(Linux) // unavailable on Linux
+
 extension SortComparator {
-    func reorder(_ result: ComparisonResult) -> ComparisonResult {
+    fileprivate func reorder(_ result: ComparisonResult) -> ComparisonResult {
         switch (order, result) {
         case (_, .orderedSame): return .orderedSame
         case (.forward, .orderedAscending): return .orderedAscending
@@ -108,10 +110,15 @@ extension SortComparator {
     }
 }
 
-struct BoolComparator : SortComparator {
-    var order: SortOrder = SortOrder.forward
+/// A ``SortComparator`` with booleans values.
+public struct BoolComparator : SortComparator {
+    public var order: SortOrder = SortOrder.forward
 
-    func compare(_ lhs: Bool, _ rhs: Bool) -> ComparisonResult {
+    public init(order: SortOrder = SortOrder.forward) {
+        self.order = order
+    }
+
+    public func compare(_ lhs: Bool, _ rhs: Bool) -> ComparisonResult {
         switch (lhs, rhs) {
         case (true, true): return reorder(.orderedSame)
         case (false, false): return reorder(.orderedSame)
@@ -121,27 +128,36 @@ struct BoolComparator : SortComparator {
     }
 }
 
-struct OptionalCompatator<T: Comparable & Hashable> : SortComparator {
-    var order: SortOrder = SortOrder.forward
 
-    let lhsDefault: T
-    let rhsDefault: T
+/// A ``SortComparator`` with optional values.
+public struct OptionalSortCompatator<T: Comparable & Hashable> : SortComparator {
+    public var order: SortOrder = SortOrder.forward
 
-    func compare(_ lhs: T?, _ rhs: T?) -> ComparisonResult {
+    public let lhsDefault: T
+    public let rhsDefault: T
+
+    public init(order: SortOrder = SortOrder.forward, lhsDefault: T, rhsDefault: T) {
+        self.order = order
+        self.lhsDefault = lhsDefault
+        self.rhsDefault = rhsDefault
+    }
+
+    public func compare(_ lhs: T?, _ rhs: T?) -> ComparisonResult {
         lhs ?? lhsDefault < rhs ?? rhsDefault ? reorder(.orderedAscending)
         : lhs ?? lhsDefault > rhs ?? rhsDefault ? reorder(.orderedDescending)
         : .orderedSame
     }
 }
 
-let optionalDateComparator = OptionalCompatator(lhsDefault: Date.distantPast, rhsDefault: Date.distantFuture)
+let optionalDateComparator = OptionalSortCompatator(lhsDefault: Date.distantPast, rhsDefault: Date.distantFuture)
 
-let optionalStringComparator = OptionalCompatator(lhsDefault: "", rhsDefault: "")
+let optionalStringComparator = OptionalSortCompatator(lhsDefault: "", rhsDefault: "")
 
-func optionalComparator<T: Hashable & Comparable>(_ value: T) -> OptionalCompatator<T> {
-    OptionalCompatator(lhsDefault: value, rhsDefault: value)
+func optionalComparator<T: Hashable & Comparable>(_ value: T) -> OptionalSortCompatator<T> {
+    OptionalSortCompatator(lhsDefault: value, rhsDefault: value)
 }
 
+#endif // !os(Linux)
 
 struct URLComparator : SortComparator {
     var order: SortOrder = SortOrder.forward

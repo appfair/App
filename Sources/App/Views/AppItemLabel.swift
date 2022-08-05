@@ -15,6 +15,7 @@
 import FairKit
 import FairExpo
 
+/// A single row in the ``AppsListView``.
 struct AppItemLabel : View {
     let item: AppInfo
     let source: AppSource
@@ -92,6 +93,7 @@ struct AppItemLabel : View {
                                 }
                             }
                         }
+                        .frame(height: 12) // needed or else the icon height changes slightly (making the whole list stutter) whenever the symbol changes
                     }
 
                     if let versionDate = item.app.versionDate {

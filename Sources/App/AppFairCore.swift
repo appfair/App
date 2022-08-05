@@ -68,6 +68,11 @@ extension Plist {
         self.CFBundleIdentifier
     }
 
+    /// A `AppIdentifier` wrapper for the value of the `CFBundleIdentifier` key
+    var appIdentifier: AppIdentifier? {
+        bundleID.flatMap(AppIdentifier.init(rawValue:))
+    }
+
     /// The value of the `CFBundleShortVersionString` key
     var versionString: String? {
         self.CFBundleShortVersionString
@@ -84,11 +89,8 @@ extension Plist {
     }
 }
 
-
-public typealias AppIdentifier = BundleIdentifier
-
 /// A type wrapper for a bundle identifier string
-public struct BundleIdentifier: Pure, RawRepresentable, Comparable {
+public struct AppIdentifier: Hashable, RawRepresentable, Comparable {
     public let rawValue: String
     public init(_ rawValue: String) { self.rawValue = rawValue }
     public init(rawValue: String) { self.rawValue = rawValue }
@@ -102,7 +104,7 @@ public struct BundleIdentifier: Pure, RawRepresentable, Comparable {
 // typealias AppIdentifier = XOr<BundleIdentifier>.Or<CaskIdentifier>
 
 extension AppCatalogItem : Identifiable {
-    public var id: AppIdentifier { BundleIdentifier(bundleIdentifier) }
+    public var id: AppIdentifier { AppIdentifier(bundleIdentifier) }
 }
 
 
@@ -141,8 +143,14 @@ struct AppFairCommands: Commands {
     var body: some Commands {
         CommandMenu(Text("Sources", bundle: .module, comment: "menu title for app source actions")) {
             Text("Refresh Catalogs", bundle: .module, comment: "menu title for refreshing the app catalog")
-                .button(action: { reloadAll() })
-                .keyboardShortcut("R")
+                .button(action: { reloadAll(fromSouce: false) })
+                .disabled(fairManager.refreshing)
+                .keyboardShortcut("R", modifiers: [.command])
+
+            Text("Reload Catalogs from Source", bundle: .module, comment: "menu title for reloading the app catalog")
+                .button(action: { reloadAll(fromSouce: true) })
+                .disabled(fairManager.refreshing)
+                .keyboardShortcut("R", modifiers: [.command, .shift])
 
 //            Text("Add Catalog", bundle: .module, comment: "menu title for adding an app catalog")
 //                .button(action: { addCatalog() })
@@ -200,10 +208,12 @@ struct AppFairCommands: Commands {
         fairManager.sourceInfo(for: selection)
     }
 
-    func reloadAll() {
-        Task {
-            fairManager.clearCaches() // also flush caches
-            await fairManager.refresh(reloadFromSource: false)
+    func reloadAll(fromSouce: Bool) {
+        Task(priority: .userInitiated) {
+            if fromSouce {
+                fairManager.clearCaches() // also flush caches
+            }
+            await fairManager.refresh(reloadFromSource: fromSouce)
         }
     }
 }
@@ -575,6 +585,7 @@ struct NavigationRootView : View {
             }
             .task(priority: .low) {
                 do {
+                    // TODO: check for system homebrew here and prompt user for which one to use
                     try await fairManager.homeBrewInv?.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
                 } catch {
                     dbg("error unpacking homebrew in local cache:", error)
@@ -600,7 +611,7 @@ struct NavigationRootView : View {
                 }
             }
             .onChange(of: fairManager.enableUserSources) { enable in
-                fairManager.updateUserSources(enable: enable)
+                fairManager.loadUserSources(enable: enable)
             }
             .handlesExternalEvents(preferring: [], allowing: ["*"]) // re-use this window to open external URLs
             .onOpenURL(perform: handleURL)
@@ -653,6 +664,15 @@ struct NavigationRootView : View {
     }
 }
 
+/// A type that can handle adding a source dialog
+protocol AddSourceDialogHandler {
+    @MainActor var fairManager: FairManager { get }
+    var addSourceItem: AddSourceItem? { get nonmutating set }
+}
+
+extension NavigationRootView : AddSourceDialogHandler {
+}
+
 extension NavigationRootView {
 
     /// Handles opening the URL schemes suppored by this app.
@@ -684,7 +704,7 @@ extension NavigationRootView {
                 dbg("URL params:", paramMap)
                 if let catalogString = paramMap["catalog"],
                    let catalogString = catalogString,
-                    let url = URL(string: "https://" + catalogString) {
+                   let url = URL(string: "https://" + catalogString) {
                     // TODO: prompt to add catalog URL if it is not present in the sources list
                     catalogURL = url
                     dbg("parsing cagalog URL:", catalogURL.absoluteString)
@@ -704,7 +724,7 @@ extension NavigationRootView {
 
             // handle: https://appfair.app/fair?app=Tune-Out&catalog=appfair.net/fairapps-ios.json
 
-            let bundleID = BundleIdentifier(searchID)
+            let bundleID = AppIdentifier(searchID)
 
             // random crashes seem to happen without dispatching to main
             self.searchText = bundleID.rawValue // needed to cause the section to appear
@@ -720,6 +740,9 @@ extension NavigationRootView {
             // }
         }
     }
+}
+
+extension AddSourceDialogHandler {
 
     func isValidSourceURL(_ urlString: String) -> URL? {
         guard let url = URL(string: urlString) else {
@@ -794,7 +817,6 @@ extension NavigationRootView {
         }
     }
 
-
     func closeNewAppSourceDialog() {
         self.addSourceItem = nil
     }
@@ -806,7 +828,7 @@ extension NavigationRootView {
 
         let source = AppSource(rawValue: url.absoluteString)
 
-        if let _ = self.fairManager.appInventories.first(where: { inv in
+        if let _ = await self.fairManager.appInventories.first(where: { inv in
             inv.source == source
         }) {
             throw AppError(NSLocalizedString("A catalog with the same source URL is already added.", bundle: .module, comment: "error message when app source URL is already added"))
@@ -819,13 +841,13 @@ extension NavigationRootView {
 
         // since a catalog saves apps to '/Applications/Fair Ground/net.catalog.id/App Name.app',
         // we need to ensure that only a single catalog is managing a specific folder
-        if let _ = self.fairManager.appInventories.first(where: { inv in
-            (inv as? AppSourceInventory)?.catalog?.identifier == catalog.identifier
+        if let _ = await self.fairManager.appInventories.first(where: { inv in
+            (inv as? AppSourceInventory)?.catalogSuccess?.identifier == catalog.identifier
         }) {
             throw AppError(NSLocalizedString("A catalog with the same identifier is already added.", bundle: .module, comment: "error message when app source identifier is already added"), recoverySuggestion: NSLocalizedString("The other catalog must be removed before this one can be added.", bundle: .module, comment: "error message recover suggestion when app source URL identifier is already added"))
         }
 
-        guard let inventory = self.fairManager.addAppSource(url: url, load: true, persist: true) else {
+        guard let inventory = await self.fairManager.addAppSource(url: url, load: .userInitiated, persist: true) else {
             throw AppError(NSLocalizedString("Unable to add App Source", bundle: .module, comment: "error message when app source URL is not valid"))
         }
 

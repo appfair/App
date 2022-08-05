@@ -86,7 +86,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
         didSet {
             Task {
                 // whenever the enableHomebrew setting is changed, perform a scan of the casks
-                try await refreshAll(reloadFromSource: true)
+                try await reload(fromSource: true)
             }
         }
     }
@@ -334,7 +334,7 @@ extension HomebrewInventory : AppManagement {
     }
 
     /// Fetch the available casks and stats, and integrate them with the locally-installed casks
-    @MainActor public func refreshAll(reloadFromSource: Bool) async throws {
+    @MainActor public func reload(fromSource reloadFromSource: Bool) async throws {
         if enableHomebrew == false {
             dbg("skipping cask refresh because not isEnabled")
             return
@@ -362,11 +362,12 @@ extension HomebrewInventory : AppManagement {
     /// - Parameters:
     ///   - item: the catalog item to install
     ///   - parentProgress: optional progress for reporting download progress
+    ///   - downloadOnly: if true, only download the app into the source's folder
     ///   - update: whether the action should be an update or an initial install
     ///   - quarantine: whether the installation process should quarantine the installed app(s), which will trigger a Gatekeeper check and user confirmation dialog when the app is first launched.
     ///   - force: whether we should force install the package, which will overwrite any other version that is currently installed regardless of its source.
     ///   - verbose: whether to verbosely report progress
-    public func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
+    public func install(_ item: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool) async throws {
         guard let cask = item.cask else {
             return dbg("not a cask:", item)
         }
@@ -436,6 +437,10 @@ extension HomebrewInventory : AppManagement {
         }
 
         if self.requireCaskChecksum != false {
+            cmd += " --require-sha"
+        }
+
+        if downloadOnly {
             cmd += " --require-sha"
         }
 
@@ -1140,14 +1145,14 @@ extension HomebrewInventory {
         }
     }
 
-    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    @MainActor public func arrangedItems(sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
         visibleAppInfos
             .filter({ matchesSelection(item: $0, sourceSelection: sourceSelection) })
             .filter({ matchesSearch(item: $0, searchText: searchText) })
-            .sorted(using: sortOrder + categorySortOrder(category: sourceSelection?.section))
+            .sorted(using: sortOrder(category: sourceSelection?.section))
     }
 
-    func categorySortOrder(category: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
+    func sortOrder(category: SidebarSection?) -> [KeyPathComparator<AppInfo>] {
         switch category {
         case .none:
             return []

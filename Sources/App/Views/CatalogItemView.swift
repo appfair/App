@@ -908,28 +908,28 @@ private struct CatalogItemHostView: View {
         List {
             if metadata.permissionsEntitlements?.isEmpty == false {
                 Section {
-                    ForEach((metadata.permissionsEntitlements ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                    ForEach((metadata.permissionsEntitlements ?? []).uniquing(by: \.self).array(), id: \.self, content: permissionListItem)
                 } header: {
                     Text("Entitlements", bundle: .module, comment: "section header title in permissions section of catalog item")
                 }
             }
             if metadata.permissionsUsage?.isEmpty == false {
                 Section {
-                    ForEach((metadata.permissionsUsage ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                    ForEach((metadata.permissionsUsage ?? []).uniquing(by: \.self).array(), id: \.self, content: permissionListItem)
                 } header: {
                     Text("Usage", bundle: .module, comment: "section header title in permissions section of catalog item")
                 }
             }
             if metadata.permissionsBackgroundMode?.isEmpty == false {
                 Section {
-                    ForEach((metadata.permissionsBackgroundMode ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                    ForEach((metadata.permissionsBackgroundMode ?? []).uniquing(by: \.self).array(), id: \.self, content: permissionListItem)
                 } header: {
                     Text("Background Modes", bundle: .module, comment: "section header title in permissions section of catalog item")
                 }
             }
             if metadata.permissionsUnrecognized?.isEmpty == false {
                 Section {
-                    ForEach((metadata.permissionsUnrecognized ?? []).uniquing(by: \.self), id: \.self, content: permissionListItem)
+                    ForEach((metadata.permissionsUnrecognized ?? []).uniquing(by: \.self).array(), id: \.self, content: permissionListItem)
                 } header: {
                     Text("Other", bundle: .module, comment: "section header title in permissions section of catalog item")
                 }
@@ -1097,6 +1097,11 @@ private struct CatalogItemHostView: View {
 
     func catalogActionButtons() -> some View {
         let isCatalogApp = info.app.bundleIdentifier == Bundle.main.bundleID
+        var canLaunchApp = true
+        if info.isMobileApp {
+            // mobile apps can only be launched on ARM processors if platform conversion is enabled
+            canLaunchApp = ProcessInfo.isArmMac == true && fairManager.appSourceInventories.first?.enablePlatformConversion == true
+        }
 
         return GeometryReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -1104,13 +1109,16 @@ private struct CatalogItemHostView: View {
                     if isCatalogApp {
                         Spacer() // no button to install ourselves
                             .hcenter()
-                    } else {
+                    } else if canLaunchApp {
                         installButton()
+                            .hcenter()
+                    } else {
+                        downloadButton()
                             .hcenter()
                     }
                     updateButton()
                         .hcenter()
-                    if isCatalogApp || (info.isMobileApp && (fairManager.appSourceInventories.first?.enablePlatformConversion == false || ProcessInfo.isArmMac == false)) {
+                    if isCatalogApp || !canLaunchApp {
                         Spacer() // no button to launch ourselves, nor to run an unconverted app
                             .hcenter()
                     } else {
@@ -1158,6 +1166,29 @@ private struct CatalogItemHostView: View {
                 //    openURLAction(info.app.issuesURL)
                 // }
                 //.help(Text("Opens your web browsers and visits the developer site")) // sadly, tooltips on confirmationDialog buttons don't seem to work
+            }, message: installMessage)
+            .tint(.green)
+    }
+
+    func downloadButton() -> some View {
+        button(activity: .download, role: nil, needsConfirm: false)
+            .keyboardShortcut(currentActivity == .download ? .cancelAction : .defaultAction)
+            .disabled(appInstalled)
+            .confirmationDialog(Text("Download \(info.app.name)", bundle: .module, comment: "download button confirmation dialog title"), isPresented: confirmationBinding(.download), titleVisibility: .visible, actions: {
+                Text("Download \(info.app.name) to the catalog folder", bundle: .module, comment: "download button confirmation dialog confirm button text").button {
+                    runTask(activity: .install, confirm: true)
+                }
+                if let homepage = info.app.homepage {
+                    Text("Visit Homepage: \(homepage.host ?? "")", bundle: .module, comment: "install button confirmation dialog visit homepage button text").button {
+                        navigate(to: homepage)
+                    }
+                } else {
+                    if let discussionsURL = info.app.discussionsURL {
+                        Text("Visit Community Forum", bundle: .module, comment: "install button confirmation dialog visit discussions button text").button {
+                            navigate(to: discussionsURL)
+                        }
+                    }
+                }
             }, message: installMessage)
             .tint(.green)
     }
@@ -1371,6 +1402,7 @@ private struct CatalogItemHostView: View {
     func performAction(activity: CatalogActivity) async {
         switch activity {
         case .install: await installButtonTapped()
+        case .download: await downloadButtonTapped()
         case .update: await updateButtonTapped()
         case .trash: await deleteButtonTapped()
         case .reveal: await revealButtonTapped()
@@ -1381,7 +1413,7 @@ private struct CatalogItemHostView: View {
     /// Returns a warning if there is likely to be an issue with the given operation
     func warning(for activity: CatalogActivity) -> Text? {
         switch activity {
-        case .install, .update:
+        case .install, .download, .update:
             if info.app.sha256 == nil {
                 return Text("Installation artifact cannot be verified because it has no associated SHA-256 checksum.", bundle: .module, comment: "warning text when installing an item without a checksum")
             }
@@ -1460,14 +1492,21 @@ private struct CatalogItemHostView: View {
     func installButtonTapped() async {
         dbg("installButtonTapped")
         await fairManager.trying {
-            try await fairManagement.install(info, progress: startProgress(), update: false, verbose: true)
+            try await fairManagement.install(info, progress: startProgress(), downloadOnly: false, update: false, verbose: true)
+        }
+    }
+
+    func downloadButtonTapped() async {
+        dbg("downloadButtonTapped")
+        await fairManager.trying {
+            try await fairManagement.install(info, progress: startProgress(), downloadOnly: true, update: false, verbose: true)
         }
     }
 
     func updateButtonTapped() async {
         dbg("updateButtonTapped")
         await fairManager.trying {
-            try await fairManagement.install(info, progress: startProgress(), update: true, verbose: true)
+            try await fairManagement.install(info, progress: startProgress(), downloadOnly: false, update: true, verbose: true)
         }
     }
 
@@ -1823,6 +1862,8 @@ extension CatalogActivity {
         switch self {
         case .install:
             return (Text("Install", bundle: .module, comment: "catalog entry button title for install action"), .square_and_arrow_down_fill, Color.blue, Text("Download and install the app.", bundle: .module, comment: "catalog entry button tooltip for install action"))
+        case .download:
+            return (Text("Download", bundle: .module, comment: "catalog entry button title for download action"), .square_and_arrow_down_fill, Color.blue, Text("Downloads the app to the catalog's folder.", bundle: .module, comment: "catalog entry button tooltip for download action"))
         case .update:
             return (Text("Update", bundle: .module, comment: "catalog entry button title for update action"), .square_and_arrow_down_on_square, Color.orange, Text("Update to the latest version of the app.", bundle: .module, comment: "catalog entry button tooltip for update action")) // TODO: when pre-release, change to "Update to the latest pre-release version of the app"
         case .trash:

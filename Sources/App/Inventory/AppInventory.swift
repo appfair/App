@@ -42,7 +42,7 @@ public protocol AppManagement {
     func installedPath(for item: AppInfo) async throws -> URL?
 
     /// Installs the given item
-    func install(_ item: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws
+    func install(_ item: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool) async throws
 
     /// Instructs the system to reveal the path of the item using the Finder
     func reveal(_ item: AppInfo) async throws
@@ -71,18 +71,18 @@ public protocol AppInventory {
     /// The date when the catalog was last updated
     var catalogUpdated: Date? { get }
 
-    /// The badge indicating how many matches are available
+    /// The badge indicating how many matches are available; a nill Text indicates the category is empty
     @MainActor func badgeCount(for section: SidebarSection) -> Text?
 
     /// Returns an unfiltered, unsorted list of all the apps in this catalog.
     func appList() async -> [AppInfo]?
 
-    /// Refreshes the catalog(s) associated with this inventory.
+    /// Reloads the catalog(s) associated with this inventory.
     /// - Parameter reloadFromSource: whether to attempt to bypass any caching and reload directly from the source
-    func refreshAll(reloadFromSource: Bool) async throws
+    func reload(fromSource: Bool) async throws
 
     /// The app info items to be displayed for the given selection, filter, and sort order
-    @MainActor func arrangedItems(sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo]
+    @MainActor func arrangedItems(sourceSelection: SourceSelection?, searchText: String) -> [AppInfo]
 
     /// Returns the version string if the given inventory item is currently installed
     func appInstalled(_ item: AppInfo) -> String?
@@ -137,10 +137,14 @@ extension AppInventory {
 /// A type that is both an ``AppInventory`` and an ``AppManagement``
 typealias AppInventoryManagement = AppInventory & AppManagement
 
+// TODO: @available(*, deprecated, renamed: "AppInventoryOrderedDictionary")
+/// The collection of app inventories managed by the ``AppInventoryController``
+typealias AppInventoryList = Array<(inventory: AppInventoryManagement, observer: AnyCancellable)>
+
 /// A controller that handles multiple app inventory instances
 protocol AppInventoryController : AppManagement {
     /// The list of available inventories
-    @MainActor var inventories: [(AppInventoryManagement, AnyCancellable)] { get }
+    @MainActor var inventories: AppInventoryList { get }
 
     /// Finds the inventory for the given identifier in this controller's list of sources
     @MainActor func inventory(from source: AppSource) -> AppInventoryManagement?
@@ -148,15 +152,25 @@ protocol AppInventoryController : AppManagement {
 
 extension AppInventoryController {
     @MainActor var appInventories: [AppInventoryManagement] {
-        inventories.map(\.0)
+        inventories.map(\.inventory)
     }
 
     @MainActor var appSources: [AppSource] {
-        appInventories.map(\.source)
+        //appInventories.map(\.source)
+        inventories.map(\.inventory.source)
     }
 
+    /// Fetches the inventory for a given source.
+    /// - Parameter source: the souce identifier
+    /// - Returns: the inventory for that source if it exists in the ``inventories`` list.
+    /// - Complexity: O(N) based on the total number of inventories
+    /// - TODO: Improve performance with OrderedDictionary
     @MainActor func inventory(from source: AppSource) -> AppInventoryManagement? {
-        appInventories.first(where: { $0.source == source })
+        //appInventories.first(where: { $0.source == source })
+        inventories.first(where: { $0.inventory.source == source })?.inventory
+
+        // TODO: make AppInventoryList an OrderedDictionary<AppSource, AppInventoryManagement>
+        // inventoriesMap[source]
     }
 
     @MainActor func inventory(for appInfo: AppInfo) -> AppInventoryManagement? {

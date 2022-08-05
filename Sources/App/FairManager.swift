@@ -52,7 +52,7 @@ public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("userSources") var userSources: AppStorageArray<String> = []
 
     /// The inventories of app sources that are currently available
-    @Published var inventories: [(AppInventoryManagement, AnyCancellable)] = []
+    @Published var inventories: AppInventoryList = []
 
 //    /// The appManager, which should be extracted as a separate `EnvironmentObject`
 //    @Published var fairAppInv: AppSourceInventory
@@ -66,7 +66,7 @@ public final class FairManager: SceneManager, AppInventoryController {
     @Published private var appLaunchPrivacyDeactivator: NSObjectProtocol? = nil
 
     /// The current activities that are taking place for each bundle identifier
-    @Published var operations: [BundleIdentifier: CatalogOperation] = [:]
+    @Published var operations: [AppIdentifier: CatalogOperation] = [:]
 
     /// A cache for images that are loaded by this manager
     //let imageCache = Cache<URL, Image>()
@@ -77,7 +77,7 @@ public final class FairManager: SceneManager, AppInventoryController {
 
     required internal init() {
         super.init()
-        self.resetAppSources()
+        self.resetAppSources(load: nil)
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
@@ -94,8 +94,8 @@ public final class FairManager: SceneManager, AppInventoryController {
 
 extension FairManager : AppManagement {
 
-    public func install(_ appInfo: AppInfo, progress parentProgress: Progress?, update: Bool, verbose: Bool) async throws {
-        try await inventory(for: appInfo)?.install(appInfo, progress: parentProgress, update: update, verbose: verbose)
+    public func install(_ appInfo: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool) async throws {
+        try await inventory(for: appInfo)?.install(appInfo, progress: parentProgress, downloadOnly: downloadOnly, update: update, verbose: verbose)
         sessionInstalls.insert(appInfo.id)
     }
 
@@ -135,17 +135,31 @@ extension FairManager { // }: AppInventory {
 extension FairManager {
 
     /// Called when the user preference changes
-    func updateUserSources(enable: Bool) {
+    func loadUserSources(enable: Bool) {
         dbg(enable)
-        resetAppSources(load: true)
+        resetAppSources(load: .medium)
     }
 
     /// Resets the in-memory list of app sources without touching the
-    func resetAppSources(load: Bool = false) {
-        self.inventories.removeAll()
+    func resetAppSources(load: TaskPriority?, force: Bool = false) {
+        if force == false {
+            while self.inventories.count > 2 {
+                // remove all but the first-two sources
+                self.inventories.removeLast()
+            }
+        } else {
+            // otherwise nuke everything and re-add all the sources manually
+            self.inventories.removeAll()
+        }
 
-        addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL))
-        addAppSource(url: appfairCatalogURLMacOS, persist: false)
+        // always ensure the ordering of the first two
+        if self.inventories.count < 1 {
+            addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL), load: load)
+        }
+
+        if self.inventories.count < 2 {
+            addAppSource(url: appfairCatalogURLMacOS, load: load, persist: false)
+        }
 
         if enableUserSources {
             for source in self.userSources.compactMap(URL.init(string:)) {
@@ -162,19 +176,13 @@ extension FairManager {
     ///   - load: whether to start a task to load the contents of the source
     ///   - persist: whether to save the URL in the persistent list of sources
     /// - Returns: whether the source was successfully added
-    @discardableResult func addAppSource(url: URL, load: Bool = false, persist: Bool) -> AppSourceInventory? {
+    @discardableResult @MainActor func addAppSource(url: URL, load loadPriority: TaskPriority?, persist: Bool) -> AppSourceInventory? {
         let source = AppSource(rawValue: url.absoluteString)
         let inv = AppSourceInventory(source: source, sourceURL: url)
-        let added = addInventory(inv)
+        let added = addInventory(inv, load: loadPriority)
         if added == false {
             return nil
         } else {
-            if load {
-                Task {
-                    await self.load(inventory: inv, reloadFromSource: true)
-                }
-            }
-
             if persist { // save the source in the user defaults
                 userSources.append(url.absoluteString)
             }
@@ -198,7 +206,7 @@ extension FairManager {
         return found
     }
 
-    @discardableResult @MainActor func addInventory(_ inventory: AppInventoryManagement) -> Bool {
+    @discardableResult @MainActor func addInventory(_ inventory: AppInventoryManagement, load loadPriority: TaskPriority?) -> Bool {
         if let _ = self.inventories.first(where: { inv, _ in
             inv.source == inventory.source
         }) {
@@ -211,11 +219,18 @@ extension FairManager {
             self?.objectWillChange.send()
         }
         self.inventories.append((inventory, observer))
+
+        if let loadPriority = loadPriority {
+            Task(priority: loadPriority) {
+                await self.load(inventory: inventory, reloadFromSource: true)
+            }
+        }
+
         return true
     }
 
-    func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
-        self.inventory(for: source)?.arrangedItems(sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText) ?? []
+    func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
+        self.inventory(for: source)?.arrangedItems(sourceSelection: sourceSelection, searchText: searchText) ?? []
     }
 
     func badgeCount(for item: SourceSelection) -> Text? {
@@ -230,7 +245,7 @@ extension FairManager {
     private func load(inventory: AppInventory, reloadFromSource: Bool) async {
         await self.trying {
             do {
-                try await inventory.refreshAll(reloadFromSource: reloadFromSource)
+                try await inventory.reload(fromSource: reloadFromSource)
             } catch {
                 throw AppError(String(format: NSLocalizedString("Error Loading Catalog", bundle: .module, comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", bundle: .module, comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error)
             }
@@ -302,7 +317,7 @@ extension FairManager {
                         overview.joined(separator: Text(verbatim: "\n\n"))
                                 .font(Font.title2)
                     }
-                    if let description = (inv as? AppSourceInventory)?.catalog?.localizedDescription {
+                    if let description = (inv as? AppSourceInventory)?.catalogSuccess?.localizedDescription {
                         Text(atx: description)
                     }
                 }

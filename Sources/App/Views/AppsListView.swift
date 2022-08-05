@@ -14,7 +14,7 @@
  */
 import FairKit
 
-/// List version of the `AppsTableView` for list browsing mode.
+/// A list view of apps for a given ``AppSource`` and ``SourceSelection``.
 struct AppsListView : View {
     let source: AppSource
     let sourceSelection: SourceSelection?
@@ -29,8 +29,6 @@ struct AppsListView : View {
 
     /// The filter text for displayed items
     @State private var searchText: String = ""
-    @State private var sortOrder: [KeyPathComparator<AppInfo>] = []
-
 
     @ViewBuilder var body : some View {
         VStack(spacing: 0) {
@@ -133,8 +131,8 @@ struct AppsListView : View {
         return nil
     }
 
-    private func appInfoItems(section: AppListSection?) -> [AppInfo] {
-        arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
+    private func appInfoItems(section: AppListSection?) -> LazyFilterSequence<[AppInfo]> {
+        arrangedItems(source: source, sourceSelection: sourceSelection, searchText: searchText)
             .filter({
                 if section == nil { return true } // nil sections means unfiltered
                 let hasScreenshots = $0.app.screenshotURLs?.isEmpty == false
@@ -142,17 +140,17 @@ struct AppsListView : View {
                 // an app is in the "top" apps iff it has at least one screenshot and a category
                 return (section == .top) == (hasScreenshots && hasCategory)
             })
-            .uniquing(by: \.id) // ensure there are no duplicates with the same id
+            .uniquing(by: \.id) // ensure there are no duplicates with the same id, since that is the key used for uniquing
     }
 
-    private func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, sortOrder: [KeyPathComparator<AppInfo>], searchText: String) -> [AppInfo] {
+    private func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
         prf(msg: { items in "arranging: “\(source.rawValue)” items: \(items.count)" }) {
-            fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
+            fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, searchText: searchText)
         }
     }
 
     @ViewBuilder private func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {
-        let items = appInfoItems(section: section)
+        let items = appInfoItems(section: section).array()
         //let _ = dbg("items for:", section, wip(items.count))
         if fairManager.refreshing == true || items.isEmpty == false {
             if let section = section {
@@ -171,7 +169,7 @@ struct AppsListView : View {
     }
 
     private func appUpdateItems(section: AppsListView.AppUpdatesSection) -> [AppInfo] {
-        let updatedItems: [AppInfo] = arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
+        let updatedItems: [AppInfo] = arrangedItems(source: source, sourceSelection: sourceSelection, searchText: searchText)
         let updatedItemIDs = updatedItems.map(\.id).set()
 
         switch section {
@@ -179,7 +177,7 @@ struct AppsListView : View {
             return updatedItems
         case .recent:
             // get a list of all recently installed items that are not in the availabe updates set
-            let installedItems = arrangedItems(source: source, sourceSelection: .some(SourceSelection(source: source, section: .installed)), sortOrder: sortOrder, searchText: searchText)
+            let installedItems = arrangedItems(source: source, sourceSelection: .some(SourceSelection(source: source, section: .installed)), searchText: searchText)
                 .filter({ fairManager.sessionInstalls.contains($0.id) })
                 .filter({ !updatedItemIDs.contains($0.id) })
             return installedItems

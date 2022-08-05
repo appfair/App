@@ -31,7 +31,7 @@ struct AppsTableView : View, ItemTableView {
     @State private var searchTextBuffer: String = ""
 
     var items: [AppInfo] {
-        fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, sortOrder: sortOrder, searchText: searchText)
+        fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, searchText: searchText)
     }
 
     var tableRowBody: some TableRowContent {

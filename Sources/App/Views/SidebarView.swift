@@ -197,9 +197,8 @@ struct SidebarView: View {
     func categoriesSection() -> some View {
         Section {
             ForEach(AppCategory.allCases) { cat in
-                if fairManager.homeBrewInv?.apps(for: cat).isEmpty == false {
-                    sidebarItem(SourceSelection(source: .homebrew, section: .category(cat)))
-                }
+                // TODO: merge apps from all catalogs, not just homebrew
+                sidebarItem(SourceSelection(source: .homebrew, section: .category(cat)))
             }
             .symbolVariant(.fill)
         } header: {
@@ -208,16 +207,18 @@ struct SidebarView: View {
         }
     }
 
-    func sidebarItem(_ selection: SourceSelection) -> some View {
-        let info = fairManager.sourceInfo(for: selection)
-        let label = info?.tintedLabel(monochrome: false)
-        return NavigationLink(tag: selection, selection: $sourceSelection, destination: {
-            navigationDestinationView(item: selection)
-                .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
-        }, label: {
-            label
-                .badge(fairManager.badgeCount(for: selection))
-        })
+    @ViewBuilder func sidebarItem(_ selection: SourceSelection, hideEmpty: Bool = true) -> some View {
+        let badgeCount = fairManager.badgeCount(for: selection)
+        if hideEmpty == false || badgeCount != nil {
+            let info = fairManager.sourceInfo(for: selection)
+            let label = info?.tintedLabel(monochrome: false)
+            NavigationLink(tag: selection, selection: $sourceSelection, destination: {
+                navigationDestinationView(item: selection)
+                    .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
+            }, label: {
+                label.badge(badgeCount)
+            })
+        }
     }
 
     @ViewBuilder func navigationDestinationView(item: SourceSelection) -> some View {
