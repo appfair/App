@@ -900,7 +900,7 @@ extension AppSourceInventory {
         }
     }
 
-    public func badgeCount(for section: SidebarSection) -> Text? {
+    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
         func txt(_ num: Int) -> Text? {
             if num <= 0 {
                 return nil
