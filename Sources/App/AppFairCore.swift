@@ -478,6 +478,24 @@ public enum SidebarSection : Hashable {
     case recent
     case category(_ category: AppCategory)
 
+    /// The sections in the order of display in a sidebar
+    public static let orderedSections = [
+        Self.top,
+        .updated,
+        .sponsorable,
+        .installed,
+        .recent,
+    ]
+
+    func shouldDisplay(sectionWithCount count: Int?) -> Bool {
+        if case .sponsorable = self {
+            // the sponsorable section will only display when there are apps
+             return (count ?? 0) > 0
+        }
+
+        return count != nil
+    }
+
     /// The persistent identifier for this grouping
     var id: String {
         switch self {
@@ -1188,6 +1206,29 @@ extension NSUserScriptTask {
     }
 }
 #endif
+
+
+public extension Date {
+    /// Returns a ``SwiftUI/Text`` that will format the given date.
+    ///
+    /// - Parameters:
+    ///   - presentation: the presentation style
+    ///   - unitStyle: the units style
+    /// - Returns: A ``Text`` with the presentation format
+    func relativeText(presentation: RelativeFormatStyle.Presentation, unitStyle: RelativeFormatStyle.UnitsStyle) -> Text {
+        Text(self, format: RelativeFormatStyle.relative(presentation: presentation, unitsStyle: unitStyle))
+    }
+
+    func textDate(dateStyle: FormatStyle.DateStyle? = nil, timeStyle: FormatStyle.TimeStyle? = nil, locale: Locale = .autoupdatingCurrent, calender: Calendar = .autoupdatingCurrent, timeZone: TimeZone = .autoupdatingCurrent, capitalizationContext: FormatStyleCapitalizationContext = .unknown) -> Text {
+        Text(self, format: Date.FormatStyle(date: dateStyle, time: timeStyle, locale: locale, calendar: calender, timeZone: timeZone, capitalizationContext: capitalizationContext))
+    }
+}
+
+extension Int {
+    func textNumber() -> Text {
+        Text(self, format: .number)
+    }
+}
 
 extension Text {
     /// Converts this `Text` into a label with a yellow exclamation warning.

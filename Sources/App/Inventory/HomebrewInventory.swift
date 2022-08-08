@@ -282,8 +282,11 @@ extension HomebrewInventory {
     public func label(for source: AppSource) -> Label<Text, Image> {
         Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
     }
+
     public var supportedSidebars: [SidebarSection] {
-        [SidebarSection.top, .recent, .sponsorable, .installed, .updated]
+        SidebarSection.orderedSections.filter { sel in
+            sel.shouldDisplay(sectionWithCount: itemCount(for: sel))
+        }
     }
 
     public func icon(for item: AppInfo) -> AppIconView {
@@ -814,13 +817,21 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         }
     }
 
+    private func createFolders() {
+        if self.manageCaskDownloads == true {
+            try? FileManager.default.createDirectory(at: Self.caskAppSupportFolder, withIntermediateDirectories: true, attributes: nil)
+            try? FileManager.default.createDirectory(at: Self.caskDownloadCacheFolder, withIntermediateDirectories: true, attributes: nil)
+        }
+    }
+
     private func downloadCaskInfo(_ downloadURL: URL, _ cask: CaskItem, _ candidateURL: URL, _ expectedHash: String?, progress: Progress?) async throws {
         dbg("downloading:", downloadURL.absoluteString)
 
         let cacheDir = Self.caskDownloadCacheFolder
         dbg("checking cache:", cacheDir.path)
-        try? FileManager.default.createDirectory(at: Self.caskAppSupportFolder, withIntermediateDirectories: true, attributes: nil)
-        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true, attributes: nil) // do not create the folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Application Support/app.App-Fair/Homebrew/Cask/iterm2--3.4.15.zip`
+        createFolders()
+
+        // do not create the actual target folder – if we do so, homebrew won't seem to set up its own directory structure and we'll see errors like: `Download failed on Cask 'iterm2' with message: No such file or directory @ rb_file_s_symlink - (../downloads/a8b31e8025c88d4e76323278370a2ae1a6a4b274a53955ef5fe76b55d5a8a8fe--iTerm2-3_4_15.zip, ~/Library/Application Support/app.App-Fair/Homebrew/Cask/iterm2--3.4.15.zip`
 
         /// `HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"`
         let targetURL = URL(fileURLWithPath: candidateURL.cachePathName, relativeTo: cacheDir)
@@ -1269,26 +1280,25 @@ extension HomebrewInventory {
             .count
     }
 
-    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
-        func fmt(_ number: Int) -> Text? {
-            if number <= 0 { return nil }
-            return Text(number, format: .number)
-        }
-
+    func itemCount(for section: SidebarSection) -> Int? {
         switch section {
         case .top:
-            return fmt(visibleAppInfos.count)
+            return visibleAppInfos.count
         case .updated:
-            return fmt(updateCount())
+            return updateCount()
         case .sponsorable:
-            return fmt(sponsorableCount())
+            return sponsorableCount()
         case .installed:
-            return fmt(installedCasks.count)
+            return installedCasks.count
         case .recent:
-            return fmt(visibleAppInfos.filter({ isRecentlyUpdated($0) }).count)
+            return visibleAppInfos.filter({ isRecentlyUpdated($0) }).count
         case .category(let cat):
-            return fmt(apps(for: cat).count)
+            return apps(for: cat).count
         }
+    }
+
+    @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
+        itemCount(for: section)?.textNumber()
     }
 }
 

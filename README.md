@@ -3,7 +3,7 @@
 </p>
 <p align="center">
   <a alt="Visit Discord Channel" href="https://discord.gg/ZrnGQP6p3d"><img alt="Discord Server" src="https://img.shields.io/discord/959553736450142268?color=7489d5&logo=discord&logoColor=ffffff" /></a>
-  <a alt="Status of translation of App Fair.app" href="https://hosted.weblate.org/projects/appfair/app-fair/"><img alt="Weblate project translated" src="https://img.shields.io/weblate/progress/appfair?color=cyan" /></a>
+  <a alt="Status of translation of App Fair.app" href="https://hosted.weblate.org/engage/appfair/"><img alt="Weblate project translated" src="https://img.shields.io/weblate/progress/appfair?color=cyan" /></a>
   <a alt="AGPL 3.0" href="https://www.gnu.org/licenses/agpl-3.0.en.html"><img alt="Licensed under the AGPL 3.0" src="https://img.shields.io/static/v1?label=License&message=AGPL+3.0&color=forestgreen" /></a>
   <a alt="Download the latest version of App Fair.app for macOS" href="https://github.com/App-Fair/App/releases/latest/download/App-Fair-macOS.zip"><img alt="GitHub all releases" src="https://img.shields.io/github/downloads/App-Fair/App/total" /></a>
 </p>
@@ -13,7 +13,7 @@
 
 **App Fair.app** is a tool for macOS 12 that
 provides the ability to browse, search for, download,
-install, and update apps from a selection of appsource catalogs
+install, and update apps from a selection of *appsource* catalogs
 and Homebrew cask repositories.
 
 For more information, and to download the app,
@@ -24,7 +24,7 @@ publishing apps, visit [appfair.net](https://www.appfair.net).
 ## Description
 
 The App Fair app enables users to search, browse, install, and update
-applications from a free and unlimited online catalog.
+applications from a selection of online app catalogs.
 
 ## Installation
 
@@ -55,7 +55,7 @@ translation contirbutions without needing to use
 source control management directly.
 
 Start contributing by going to:
-[hosted.weblate.org/projects/appfair/app-fair](https://hosted.weblate.org/projects/appfair/app-fair/#translations).
+[https://hosted.weblate.org/engage/appfair/](https://hosted.weblate.org/engage/appfair/).
 
 ### Internal Notes
 

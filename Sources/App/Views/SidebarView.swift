@@ -208,16 +208,19 @@ struct SidebarView: View {
     }
 
     @ViewBuilder func sidebarItem(_ selection: SourceSelection, hideEmpty: Bool = true) -> some View {
-        let badgeCount = fairManager.badgeCount(for: selection)
-        if hideEmpty == false || badgeCount != nil {
-            let info = fairManager.sourceInfo(for: selection)
-            let label = info?.tintedLabel(monochrome: false)
-            NavigationLink(tag: selection, selection: $sourceSelection, destination: {
-                navigationDestinationView(item: selection)
-                    .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
-            }, label: {
-                label.badge(badgeCount)
-            })
+        if let inv = fairManager.inventory(for: selection.source) {
+            let badgeCountText = inv.badgeCount(for: selection.section)
+
+            if hideEmpty == false || badgeCountText != nil {
+                let info = fairManager.sourceInfo(for: selection)
+                let label = info?.tintedLabel(monochrome: false)
+                NavigationLink(tag: selection, selection: $sourceSelection, destination: {
+                    navigationDestinationView(item: selection)
+                        .navigationTitle(info?.fullTitle ?? Text(verbatim: ""))
+                }, label: {
+                    label.badge(inv.catalogUpdated == nil || inv.updateInProgress > 0 ? nil : badgeCountText)
+                })
+            }
         }
     }
 

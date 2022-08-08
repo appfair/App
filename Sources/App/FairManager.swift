@@ -52,7 +52,7 @@ public final class FairManager: SceneManager, AppInventoryController {
     @AppStorage("userSources") var userSources: AppStorageArray<String> = []
 
     /// The inventories of app sources that are currently available
-    @Published var inventories: AppInventoryList = []
+    @Published var inventories: AppInventoryList = .init()
 
 //    /// The appManager, which should be extracted as a separate `EnvironmentObject`
 //    @Published var fairAppInv: AppSourceInventory
@@ -231,10 +231,6 @@ extension FairManager {
 
     func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
         self.inventory(for: source)?.arrangedItems(sourceSelection: sourceSelection, searchText: searchText) ?? []
-    }
-
-    func badgeCount(for item: SourceSelection) -> Text? {
-        inventory(for: item.source)?.badgeCount(for: item.section)
     }
 
     /// Returns true is there are any refreshes in progress

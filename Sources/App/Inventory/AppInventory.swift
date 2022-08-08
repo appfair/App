@@ -137,9 +137,18 @@ extension AppInventory {
 /// A type that is both an ``AppInventory`` and an ``AppManagement``
 typealias AppInventoryManagement = AppInventory & AppManagement
 
-// TODO: @available(*, deprecated, renamed: "AppInventoryOrderedDictionary")
 /// The collection of app inventories managed by the ``AppInventoryController``
-typealias AppInventoryList = Array<(inventory: AppInventoryManagement, observer: AnyCancellable)>
+@available(*, deprecated, renamed: "AppInventoryOrderedDictionary")
+typealias AppInventoryListOrdered = Array<(inventory: AppInventoryManagement, observer: AnyCancellable)>
+
+/// The collection of app inventories managed by the ``AppInventoryController``
+ typealias AppInventoryList = IndexedCollection<AppSource, (inventory: AppInventoryManagement, observer: AnyCancellable)>
+
+extension AppInventoryList {
+    init() {
+        self.init(indexKeyPath: \.inventory.source)
+    }
+}
 
 /// A controller that handles multiple app inventory instances
 protocol AppInventoryController : AppManagement {

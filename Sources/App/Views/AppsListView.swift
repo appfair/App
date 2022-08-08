@@ -43,7 +43,7 @@ struct AppsListView : View {
         HStack {
             Group {
                 if let updated = catalog?.catalogUpdated {
-                    let updatedText = Text(updated, format: .relative(presentation: .numeric, unitsStyle: .wide))
+                    let updatedText = updated.relativeText(presentation: .named, unitStyle: .wide)
                     // to keep the updated date correct, update the label every minute
                     Text("Updated \(updatedText)", bundle: .module, comment: "apps list bottom bar title describing when the catalog was last updated")
                     //.refreshingEveryMinute()
@@ -76,7 +76,7 @@ struct AppsListView : View {
                 }
             }
             .searchable(text: $searchTextSource)
-            .animation(.easeInOut, value: searchTextSource)
+            //.animation(.easeInOut, value: searchTextSource)
             .onChange(of: searchTextSource, debounce: 0.18, priority: .userInitiated, perform: updateSearchTextSource) // a brief delay to allow for more responsive typing
         }
     }

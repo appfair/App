@@ -82,9 +82,8 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
 
     /// Returns the
     public var supportedSidebars: [SidebarSection] {
-        let allSidebars = [SidebarSection.top, .recent] + [.sponsorable, .installed, .updated]
-        return allSidebars.filter { selction in
-            itemCount(for: selction) != nil
+        SidebarSection.orderedSections.filter { sel in
+            sel.shouldDisplay(sectionWithCount: itemCount(for: sel))
         }
     }
 
@@ -160,9 +159,8 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
                     self.catalog = .success(catalog)
                 }
 
-                if self.catalogUpdated != response?.lastModifiedDate {
-                    self.catalogUpdated = response?.lastModifiedDate
-                }
+                // The "Last-Modified" header isn't always sent, so default to .now
+                self.catalogUpdated = response?.lastModifiedDate ?? .now
             }
 
             if isRootCatalogSource == true && autoUpdateCatalogApp == true {
@@ -188,10 +186,19 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
 
     public func label(for source: AppSource) -> Label<Text, Image> {
         func labelText() -> Text {
+            let txt = {
+                self.catalogSuccess?.name?.text()
+            }
+
+            let srcname = {
+                // self.source.rawValue.text()
+                self.sourceURL.host?.text()
+            }
+
             if self.updateInProgress > 0 {
-                return self.catalogSuccess?.name?.text() ?? Text("Loading…", bundle: .module, comment: "app source title for sidebad section while loading") }
-            else {
-                return self.catalogSuccess?.name?.text() ?? Text("App Source", bundle: .module, comment: "app source sidebar section title")
+                return txt() ?? srcname() ?? Text("Loading…", bundle: .module, comment: "app source title for sidebad section while loading")
+            } else {
+                return txt() ?? Text("App Source", bundle: .module, comment: "app source sidebar section title")
             }
         }
 
@@ -904,24 +911,22 @@ extension AppSourceInventory {
     func itemCount(for section: SidebarSection) -> Int? {
         switch section {
         case .top:
-            return (appInfoItems(includePrereleases: showPreReleases).count)
+            return appInfoItems(includePrereleases: showPreReleases).count
         case .recent:
-            return (appInfoItems(includePrereleases: showPreReleases).filter({ self.isRecentlyUpdated($0) }).count)
-        case .updated:
-            return (updateCount())
+            return catalog == nil ? nil : appInfoItems(includePrereleases: showPreReleases).filter({ self.isRecentlyUpdated($0) }).count
         case .sponsorable:
-            return (sponsorableCount())
+            return catalog == nil ? nil : sponsorableCount()
         case .installed:
-            return catalog == nil ? nil : (installedBundleIDs.count)
+            return catalog == nil ? nil : installedBundleIDs.count
+        case .updated:
+            return catalog == nil ? nil : updateCount()
         case .category:
             return nil
         }
     }
 
     @MainActor public func badgeCount(for section: SidebarSection) -> Text? {
-        itemCount(for: section).flatMap { count in
-            Text(count, format: .number)
-        }
+        itemCount(for: section)?.textNumber()
     }    
 }
 
