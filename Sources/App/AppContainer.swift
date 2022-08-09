@@ -15,13 +15,10 @@
 import FairApp
 
 public extension AppContainer {
-    /// The default size of the window; this will only be set the first time the app is launched; subsequent launches should automatically use whatever size the user left the app at
-    static let defaultWindowSize = CGSize(width: 1200, height: 700)
-
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
             RootView()
-                .initialViewSize(defaultWindowSize)
+                .initialViewSize(CGSize(width: 1200, height: 700)) // The default size of the window; this will only be set the first time the app is launched, and then restore whatever the user resizes to
                 .environmentObject(fairManager)
                 .preferredColorScheme(fairManager.themeStyle.colorScheme)
         }
