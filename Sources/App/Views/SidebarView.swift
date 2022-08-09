@@ -196,7 +196,7 @@ struct SidebarView: View {
 
     func categoriesSection() -> some View {
         Section {
-            ForEach(AppCategory.allCases) { cat in
+            ForEach(AppCategoryType.allCases) { cat in
                 // TODO: merge apps from all catalogs, not just homebrew
                 sidebarItem(SourceSelection(source: .homebrew, section: .category(cat)))
             }

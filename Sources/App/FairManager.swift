@@ -396,7 +396,7 @@ extension SourceSelection {
 //    }
 
     struct CategoryAppInfo : AppSourceInfo {
-        let category: AppCategory
+        let category: AppCategoryType
 
         func tintedLabel(monochrome: Bool) -> TintedLabel {
             category.tintedLabel(monochrome: monochrome)

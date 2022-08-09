@@ -35,7 +35,7 @@ extension AppCatalogItem {
     }
 
     /// The topic identfier for the initial category
-    var primaryCategoryIdentifier: AppCategory? {
+    var primaryCategoryIdentifier: AppCategoryType? {
         categories?.first
     }
 }

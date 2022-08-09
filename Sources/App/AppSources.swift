@@ -40,7 +40,7 @@ extension AppSourceInfo {
     }
 }
 
-public extension AppCategory {
+public extension AppCategoryType {
     /// The description of an app category.
     /// TODO: add in an extended description tuple
         var text: Text {
@@ -314,7 +314,7 @@ public extension AppCategory {
     /// if it is a root category.
     ///
     /// E.g., the parent category of ``boardgames`` is ``games``.
-    var parentCategory: AppCategory? {
+    var parentCategory: AppCategoryType? {
         switch self {
         case .business: return nil
         case .developertools: return nil

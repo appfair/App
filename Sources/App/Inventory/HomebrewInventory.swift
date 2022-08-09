@@ -140,7 +140,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
     @Published private(set) var appInfos: [AppInfo]? { didSet { updateAppCategories() } }
 
     /// The apps indexed by category
-    @Published private var appCategories: [AppCategory: [AppInfo]] = [:]
+    @Published private var appCategories: [AppCategoryType: [AppInfo]] = [:]
 
     /// The current catalog of casks
     @Published private var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
@@ -1229,7 +1229,7 @@ extension HomebrewInventory {
         }
     }
 
-    func apps(for category: AppCategory) -> [AppInfo] {
+    func apps(for category: AppCategoryType) -> [AppInfo] {
         appCategories[category] ?? []
     }
 

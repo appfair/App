@@ -57,7 +57,7 @@ extension AppInfo : Identifiable {
     }
 
     /// The categories as should be displayed in the UI; this will collapes sub-groups (i.e., game categories) into their parent groups.
-    var displayCategories: [AppCategory] {
+    var displayCategories: [AppCategoryType] {
         app.categories?.filter({ $0.parentCategory == nil }) ?? []
     }
 }
@@ -476,7 +476,7 @@ public enum SidebarSection : Hashable {
     case installed
     case sponsorable
     case recent
-    case category(_ category: AppCategory)
+    case category(_ category: AppCategoryType)
 
     /// The sections in the order of display in a sidebar
     public static let orderedSections = [
@@ -1055,7 +1055,7 @@ public struct EnabledView<V: View> : View {
 }
 
 struct CategoryAppInfo : AppSourceInfo {
-    let category: AppCategory
+    let category: AppCategoryType
 
     func tintedLabel(monochrome: Bool) -> TintedLabel {
         category.tintedLabel(monochrome: monochrome)
@@ -1083,7 +1083,7 @@ struct CategoryAppInfo : AppSourceInfo {
     }
 }
 
-extension AppCategory : Identifiable {
+extension AppCategoryType : Identifiable {
     public var id: Self { self }
 }
 
