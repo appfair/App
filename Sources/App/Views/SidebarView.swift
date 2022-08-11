@@ -89,7 +89,7 @@ struct SidebarView: View {
             Spacer()
             
             if fairManager.enableUserSources {
-                Text("Add Catalog", bundle: .module, comment: "button at the bottom of sidebar for adding a new catalog")
+                Text("Add Catalog", comment: "button at the bottom of sidebar for adding a new catalog")
                     .label(image: FairSymbol.plus)
                     .labelStyle(.iconOnly)
                     .button {
@@ -103,8 +103,8 @@ struct SidebarView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(4)
-        .confirmationDialog(Text("Remove Source", bundle: .module, comment: "confirmation dialog title when removing a source from the user sources"), isPresented: $removeSourceShowing, actions: {
-            Text("Remove", bundle: .module, comment: "delete button confirmation dialog delete button text").button {
+        .confirmationDialog(Text("Remove Source", comment: "confirmation dialog title when removing a source from the user sources"), isPresented: $removeSourceShowing, actions: {
+            Text("Remove", comment: "delete button confirmation dialog delete button text").button {
                 // there's a SwiftUI bug here: if you cancel the dialog and then try to re-delete the same catalog, the dialog won't appear; but if you try it delete another catalog and then go back to deleting this catalog, it will work!
                 if let source = removeSource {
                     removeAppSource(source)
@@ -113,7 +113,7 @@ struct SidebarView: View {
                 self.removeSourceShowing = false
             }
         }, message: {
-            Text("This will remove the source from your list of available app sources. Any apps that have been installed from this source will remain unaffected. This operation cannot be undone.", bundle: .module, comment: "confirmation dialog message text when removing an app source from the sidebar")
+            Text("This will remove the source from your list of available app sources. Any apps that have been installed from this source will remain unaffected. This operation cannot be undone.", comment: "confirmation dialog message text when removing an app source from the sidebar")
         })
     }
 
@@ -150,13 +150,13 @@ struct SidebarView: View {
                 HStack {
                     Spacer(minLength: 0)
                     if canRemove && hovering {
-                        Text("Remove Catalog", bundle: .module, comment: "sidebar button to remove a catalog")
+                        Text("Remove Catalog", comment: "sidebar button to remove a catalog")
                             .label(image: FairSymbol.minus_circle)
                             .labelStyle(.iconOnly)
                             .contentShape(Circle())
                             .button(action: removeAction)
                             .buttonStyle(.borderless)
-                            .help(Text("Removes this catalog from the list of available catalogs. This operaiton cannot be undone.", bundle: .module, comment: "help text for sidebar button to remove catalog"))
+                            .help(Text("Removes this catalog from the list of available catalogs. This operaiton cannot be undone.", comment: "help text for sidebar button to remove catalog"))
                     }
 
                     if updating {
@@ -202,7 +202,7 @@ struct SidebarView: View {
             }
             .symbolVariant(.fill)
         } header: {
-            Label(title: { Text("Categories", bundle: .module, comment: "sidebar section header title for homebrew app categories") }, icon: { FairSymbol.list_dash.image })
+            Label(title: { Text("Categories", comment: "sidebar section header title for homebrew app categories") }, icon: { FairSymbol.list_dash.image })
                 .labelStyle(.titleOnly)
         }
     }

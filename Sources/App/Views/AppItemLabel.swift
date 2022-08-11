@@ -74,7 +74,7 @@ struct AppItemLabel : View {
                         Label {
                             if let installedVersion = self.installedVersion,
                                catalogVersion != installedVersion {
-                                Text("\(installedVersion) (\(catalogVersion))", bundle: .module, comment: "formatting text for the app list version section displaying the installed version with the currently available version in parenthesis")
+                                Text("\(installedVersion) (\(catalogVersion))", comment: "formatting text for the app list version section displaying the installed version with the currently available version in parenthesis")
                                     .font(.subheadline)
                             } else {
                                 Text(verbatim: catalogVersion)
@@ -85,11 +85,11 @@ struct AppItemLabel : View {
                                 if installedVersion == catalogVersion {
                                     CatalogActivity.launch.info.systemSymbol
                                         .foregroundStyle(CatalogActivity.launch.info.tintColor ?? .accentColor) // same as launchButton()
-                                        .help(Text("The latest version of this app is installed", bundle: .module, comment: "tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version"))
+                                        .help(Text("The latest version of this app is installed", comment: "tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version"))
                                 } else {
                                     CatalogActivity.update.info.systemSymbol
                                         .foregroundStyle(CatalogActivity.update.info.tintColor ?? .accentColor) // same as updateButton()
-                                        .help(Text("An update to this app is available", bundle: .module, comment: "tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available"))
+                                        .help(Text("An update to this app is available", comment: "tooltip text for the checkmark in the apps list indicating that the app is currently installed but there is an update available"))
                                 }
                             }
                         }

@@ -141,18 +141,18 @@ struct AppFairCommands: Commands {
     @ObservedObject var fairManager: FairManager
 
     var body: some Commands {
-        CommandMenu(Text("Sources", bundle: .module, comment: "menu title for app source actions")) {
-            Text("Refresh Catalogs", bundle: .module, comment: "menu title for refreshing the app catalog")
+        CommandMenu(Text("Sources", comment: "menu title for app source actions")) {
+            Text("Refresh Catalogs", comment: "menu title for refreshing the app catalog")
                 .button(action: { reloadAll(fromSouce: false) })
                 .disabled(fairManager.refreshing)
                 .keyboardShortcut("R", modifiers: [.command])
 
-            Text("Reload Catalogs from Source", bundle: .module, comment: "menu title for reloading the app catalog")
+            Text("Reload Catalogs from Source", comment: "menu title for reloading the app catalog")
                 .button(action: { reloadAll(fromSouce: true) })
                 .disabled(fairManager.refreshing)
                 .keyboardShortcut("R", modifiers: [.command, .shift])
 
-//            Text("Add Catalog", bundle: .module, comment: "menu title for adding an app catalog")
+//            Text("Add Catalog", comment: "menu title for adding an app catalog")
 //                .button(action: { addCatalog() })
 //                .keyboardShortcut("N")
 
@@ -224,7 +224,7 @@ struct CopyAppURLCommand : View {
     @FocusedBinding(\.sourceSelection) private var sourceSelection: SourceSelection??
 
     var body: some View {
-        Text("Copy App URL", bundle: .module, comment: "menu title for command")
+        Text("Copy App URL", comment: "menu title for command")
             .button(action: commandSelected)
             .keyboardShortcut("C", modifiers: [.command, .shift])
             .disabled(selection??.app == nil)
@@ -414,14 +414,14 @@ public extension View {
                             //.focusable(false)
                             .frame(height: 200)
                     } label: {
-                        Text("More Info", bundle: .module, comment: "error dialog disclosure button title for showing more information")
+                        Text("More Info", comment: "error dialog disclosure button title for showing more information")
                     }
                 }
 
                 Button {
                     errorBinding.wrappedValue.removeFirst()
                 } label: {
-                    Text("OK", bundle: .module, comment: "error dialog button to dismiss the error").padding()
+                    Text("OK", comment: "error dialog button to dismiss the error").padding()
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -441,7 +441,7 @@ extension View {
     /// ```
     /// @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
     ///
-    /// Text("Reload", bundle: .module, comment: "help text")
+    /// Text("Reload", comment: "help text")
     ///     .label(symbol: "arrow.triangle.2.circlepath.circle")
     ///     .button(command: reloadCommand)
     /// ```
@@ -573,13 +573,13 @@ struct NavigationRootView : View {
                 }
 
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
-                    Text("Reload", bundle: .module, comment: "refresh catalog toolbar button title")
+                    Text("Reload", comment: "refresh catalog toolbar button title")
                         .label(image: FairSymbol.arrow_triangle_2_circlepath.symbolRenderingMode(.hierarchical).foregroundStyle(Color.teal, Color.yellow, Color.blue))
                         .button {
                             await fairManager.refresh(reloadFromSource: false) // TODO: true when option or control key is down?
                         }
                         .hoverSymbol(activeVariant: .fill)
-                        .help(Text("Refresh the app catalogs", bundle: .module, comment: "refresh catalog toolbar button tooltip"))
+                        .help(Text("Refresh the app catalogs", comment: "refresh catalog toolbar button tooltip"))
                 }
 
 
@@ -777,7 +777,7 @@ extension AddSourceDialogHandler {
             VStack {
                 Form {
                     TextField(text: Binding(get: { addSourceItem?.addSource ?? item.addSource }, set: { addSourceItem?.addSource = $0 })) {
-                        Text("Catalog URL:", bundle: .module, comment: "add catalog source dialog text")
+                        Text("Catalog URL:", comment: "add catalog source dialog text")
                     }
                     .onSubmit(of: .text) {
                         // clear error whenever we change the url
@@ -789,9 +789,9 @@ extension AddSourceDialogHandler {
                     }
                     .disableAutocorrection(true)
                     //.keyboardType(.default)
-                    Text("An app source is a URL pointing to a JSON file with a list of apps.", bundle: .module, comment: "add catalog source footer")
+                    Text("An app source is a URL pointing to a JSON file with a list of apps.", comment: "add catalog source footer")
                         .font(.footnote)
-                    Text("For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource).", bundle: .module, comment: "add catalog source footer")
+                    Text("For information on the catalog format see [appfair.net/#appsource](https://appfair.net/#appsource).", comment: "add catalog source footer")
                         .font(.footnote)
                     Spacer()
 
@@ -810,10 +810,10 @@ extension AddSourceDialogHandler {
                 HStack {
                     Spacer()
                     Button(role: .cancel, action: closeNewAppSourceDialog) {
-                        Text("Cancel", bundle: .module, comment: "add catalog source button text")
+                        Text("Cancel", comment: "add catalog source button text")
                     }
                     .keyboardShortcut(.escape)
-                    Text("Add", bundle: .module, comment: "add catalog source button text")
+                    Text("Add", comment: "add catalog source button text")
                         .button(priority: .userInitiated) {
                             do {
                                 try await validateNewAppSource(default: item)
@@ -829,7 +829,7 @@ extension AddSourceDialogHandler {
             .frame(width: 400)
             .padding()
         } label: {
-            Text("Add App Source", bundle: .module, comment: "add catalog source dialog title")
+            Text("Add App Source", comment: "add catalog source dialog title")
                 .font(.largeTitle)
                 .padding()
         }
@@ -841,7 +841,7 @@ extension AddSourceDialogHandler {
 
     func validateNewAppSource(default item: AddSourceItem) async throws {
         guard let url = isValidSourceURL(addSourceItem?.addSource ?? item.addSource) else {
-            throw AppError(NSLocalizedString("URL is invalid", bundle: .module, comment: "error message when app source URL is not valid"))
+            throw AppError(NSLocalizedString("URL is invalid", comment: "error message when app source URL is not valid"))
         }
 
         let source = AppSource(rawValue: url.absoluteString)
@@ -849,7 +849,7 @@ extension AddSourceDialogHandler {
         if let _ = await self.fairManager.appInventories.first(where: { inv in
             inv.source == source
         }) {
-            throw AppError(NSLocalizedString("A catalog with the same source URL is already added.", bundle: .module, comment: "error message when app source URL is already added"))
+            throw AppError(NSLocalizedString("A catalog with the same source URL is already added.", comment: "error message when app source URL is already added"))
         }
 
         let data = try await URLSession.shared.fetch(request: URLRequest(url: url)).data
@@ -862,11 +862,11 @@ extension AddSourceDialogHandler {
         if let _ = await self.fairManager.appInventories.first(where: { inv in
             (inv as? AppSourceInventory)?.catalogSuccess?.identifier == catalog.identifier
         }) {
-            throw AppError(NSLocalizedString("A catalog with the same identifier is already added.", bundle: .module, comment: "error message when app source identifier is already added"), recoverySuggestion: NSLocalizedString("The other catalog must be removed before this one can be added.", bundle: .module, comment: "error message recover suggestion when app source URL identifier is already added"))
+            throw AppError(NSLocalizedString("A catalog with the same identifier is already added.", comment: "error message when app source identifier is already added"), recoverySuggestion: NSLocalizedString("The other catalog must be removed before this one can be added.", comment: "error message recover suggestion when app source URL identifier is already added"))
         }
 
         guard let inventory = await self.fairManager.addAppSource(url: url, load: .userInitiated, persist: true) else {
-            throw AppError(NSLocalizedString("Unable to add App Source", bundle: .module, comment: "error message when app source URL is not valid"))
+            throw AppError(NSLocalizedString("Unable to add App Source", comment: "error message when app source URL is not valid"))
         }
 
         let _ = inventory
@@ -942,7 +942,7 @@ public struct AppDetailView : View {
                 Spacer()
 
 //                if !showOverviewText {
-//                    Text("No Selection", bundle: .module, comment: "placeholder text for detail panel indicating there is no app currently selected")
+//                    Text("No Selection", comment: "placeholder text for detail panel indicating there is no app currently selected")
 //                        .font(Font.title)
 //                        .foregroundColor(Color.secondary)
 //                    Spacer()
@@ -979,9 +979,9 @@ public struct AppDetailView : View {
                 }
             } header: {
                 VStack {
-                    Text("The App Fair", bundle: .module, comment: "header text for detail screen with no selection")
+                    Text("The App Fair", comment: "header text for detail screen with no selection")
                         .font(Font.system(size: 40, weight: .regular, design: .rounded).lowercaseSmallCaps())
-                    Text("Community App Sources", bundle: .module, comment: "header sub-text for detail screen with no selection")
+                    Text("Community App Sources", comment: "header sub-text for detail screen with no selection")
                         .font(Font.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -999,7 +999,7 @@ public struct AppDetailView : View {
             }
         } label: {
             let title = fairManager.sourceInfo(for: sourceSelection)?.fullTitle ?? Text(verbatim: "")
-            Text("Browse \(title)", bundle: .module, comment: "format pattern for the label of the button at the bottom of the category info screen")
+            Text("Browse \(title)", comment: "format pattern for the label of the button at the bottom of the category info screen")
         }
     }
 
@@ -1063,18 +1063,18 @@ struct CategoryAppInfo : AppSourceInfo {
 
     /// Subtitle text for this source
     var fullTitle: Text {
-        Text("Category: \(category.text)", bundle: .module, comment: "app category info: title pattern")
+        Text("Category: \(category.text)", comment: "app category info: title pattern")
     }
 
     /// A textual description of this source
     var overviewText: [Text] {
         []
-        // Text(wip("XXX"), bundle: .module, comment: "app category info: overview text")
+        // Text(wip("XXX"), comment: "app category info: overview text")
     }
 
     var footerText: [Text] {
         []
-        // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+        // Text(wip("XXX"), comment: "homebrew recent apps info: overview text")
     }
 
     /// A list of the features of this source, which will be displayed as a bulleted list
@@ -1129,7 +1129,7 @@ enum PromptSuppression : Int, CaseIterable {
 
 extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
-    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", bundle: .module, comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", bundle: .module, comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
+    @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
 
         let window = sheetWindow ?? UXApplication.shared.currentEvent?.window ?? NSApp.keyWindow ?? NSApp.mainWindow
 
@@ -1248,9 +1248,3 @@ internal func wip<T>(_ value: T) -> T { value }
 /// - TODO: @available(*, deprecated, message: "work in progress")
 internal func wipipa<T>(_ value: T) -> T { value }
 
-/// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
-/// Otherwise it will default to the main bundle's strings, which is always empty.
-@available(*, deprecated, message: "use bundle: .module, comment: arguments literally")
-@usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
-    SwiftUI.Text(string, bundle: .module, comment: comment)
-}

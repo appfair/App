@@ -48,7 +48,7 @@ private struct HomebrewDefaults {
 
 extension HomebrewInventory {
     public var title: String {
-        NSLocalizedString("Homebrew", bundle: .module, comment: "the default title of the Homebrew catalog")
+        NSLocalizedString("Homebrew", comment: "the default title of the Homebrew catalog")
     }
 }
 
@@ -245,7 +245,7 @@ extension HomebrewInventory : HomebrewManagement {
             downloadedArtifact = localURL
             removeArtifact = false
         } else if fromLocalOnly {
-            throw AppError(NSLocalizedString("Could not install from local artifact", bundle: .module, comment: "error message"))
+            throw AppError(NSLocalizedString("Could not install from local artifact", comment: "error message"))
         } else {
             fromURL = self.brewArchiveURLRemote
             let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
@@ -280,7 +280,7 @@ extension HomebrewInventory : HomebrewManagement {
 
 extension HomebrewInventory {
     public func label(for source: AppSource) -> Label<Text, Image> {
-        Label { Text("Homebrew", bundle: .module, comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
+        Label { Text("Homebrew", comment: "app source title for homebrew casks") } icon: { HomebrewInventory.symbol.image }
     }
 
     public var supportedSidebars: [SidebarSection] {
@@ -409,7 +409,7 @@ extension HomebrewInventory : AppManagement {
         let (downloadURL, expectedHash) = (candidateURL, sha256)
 
         if expectedHash == nil && self.requireCaskChecksum == true {
-            throw AppError(NSLocalizedString("Missing cryptographic checksum", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("The download has no SHA-256 checksum set and so its authenticity cannot be verified.", bundle: .module, comment: "error failure reason"))
+            throw AppError(NSLocalizedString("Missing cryptographic checksum", comment: "error message"), failureReason: NSLocalizedString("The download has no SHA-256 checksum set and so its authenticity cannot be verified.", comment: "error failure reason"))
         }
 
         // default config is to use: HOMEBREW_CACHE=$HOME/Library/Application Support/app.App-Fair/Homebrew
@@ -508,7 +508,7 @@ extension HomebrewInventory : AppManagement {
             dbg("revealing:", installPath.path)
             NSWorkspace.shared.activateFileViewerSelecting([installPath])
         } else {
-            throw AppError(String(format: NSLocalizedString("Could not find install path for “%@”", bundle: .module, comment: "error message"), item.app.name))
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “%@”", comment: "error message"), item.app.name))
         }
     }
 
@@ -526,7 +526,7 @@ extension HomebrewInventory : AppManagement {
             //
             // how should we try to identify the app to launch? we don't want to have to try to parse the
 
-            throw AppError(String(format: NSLocalizedString("Could not find install path for “\(item.app.name)”", bundle: .module, comment: "error message"), item.app.name))
+            throw AppError(String(format: NSLocalizedString("Could not find install path for “\(item.app.name)”", comment: "error message"), item.app.name))
         }
 
         // if we want to check for gatekeeper permission, and if the file is quarantined and it fails the gatekeeper check, offer the option to de-quarantine the app before launching
@@ -537,9 +537,9 @@ extension HomebrewInventory : AppManagement {
                 let result = try await Process.spctlAssess(appURL: installPath).expect(exitCode: nil)
                 if result.process.terminationStatus == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
                     dbg("gatekeeper check failed:", result)
-                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", bundle: .module, comment: "warning dialog title"),
-                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", bundle: .module, comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
-                                     accept: NSLocalizedString("Launch", bundle: .module, comment: "warning dialog launch anyway button title"))) == false {
+                    if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", comment: "warning dialog title"),
+                                     informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
+                                     accept: NSLocalizedString("Launch", comment: "warning dialog launch anyway button title"))) == false {
                         dbg("cancelling launch due to unidentified developer")
                         return
                     }
@@ -808,12 +808,12 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
         dbg("performing command:", cmd)
         do {
             guard let result = try await NSUserScriptTask.fork(command: cmd) else {
-                throw AppError(NSLocalizedString("No output from brew command", bundle: .module, comment: "error message"))
+                throw AppError(NSLocalizedString("No output from brew command", comment: "error message"))
             }
             dbg("command output:", result)
             return result
         } catch {
-            throw AppError(String(format: NSLocalizedString("Error running %@", bundle: .module, comment: "error message title when a tool fails to run"), toolName), failureReason: String(format: NSLocalizedString("The %@ for %@ failed to complete successfully.", bundle: .module, comment: "error message body when a tool fails to run"), toolName, appName), underlyingError: error)
+            throw AppError(String(format: NSLocalizedString("Error running %@", comment: "error message title when a tool fails to run"), toolName), failureReason: String(format: NSLocalizedString("The %@ for %@ failed to complete successfully.", comment: "error message body when a tool fails to run"), toolName, appName), underlyingError: error)
         }
     }
 
@@ -844,7 +844,7 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 
         dbg("comparing SHA-256 expected:", expectedHash, "with actual:", expectedHash)
         if let expectedHash = expectedHash, expectedHash != actualHash {
-            throw AppError(String(format: NSLocalizedString("Invalid SHA-256 Hash", bundle: .module, comment: "error message")), failureReason: String(format: NSLocalizedString("The downloaded SHA-256 (%@) hash did not match the expected hash (%@).", bundle: .module, comment: "error message"), actualHash, expectedHash))
+            throw AppError(String(format: NSLocalizedString("Invalid SHA-256 Hash", comment: "error message")), failureReason: String(format: NSLocalizedString("The downloaded SHA-256 (%@) hash did not match the expected hash (%@).", comment: "error message"), actualHash, expectedHash))
         }
 
         // dbg("moving:", downloadedArtifact.path, "to:", targetURL.path)
@@ -965,30 +965,30 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
 extension HomebrewInventory {
     enum SourceInfo {
         static var catalogDescriptionText: Text {
-            Text("The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.", bundle: .module, comment: "homebrew catalog description for header text of detail view")
+            Text("The Homebrew project is a community-maintained index of thousands of macOS apps, both free and commercial. *App Fair.app* manages the installation and updating of these apps directly from the creator's site using the `brew` package management tool.", comment: "homebrew catalog description for header text of detail view")
         }
 
         struct TopAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Casks", bundle: .module, comment: "homebrew sidebar category title"), symbol: HomebrewInventory.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Casks", comment: "homebrew sidebar category title"), symbol: HomebrewInventory.symbol, tint: monochrome ? nil : Color.cyan, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Casks", bundle: .module, comment: "homebrew top apps info: full title")
+                Text("Homebrew Casks")
             }
 
             /// A textual description of this source
             var overviewText: [Text] {
                 [
                     catalogDescriptionText,
-                    Text("Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.", bundle: .module, comment: "homebrew top apps info: overview text"),
+                    Text("Apps installed from the Homebrew catalog are not subject to any sort of review process, so you should only install apps from known and trusted sources. Homebrew apps may or may not be sandboxed, meaning they could have unmediated access to files and the device & network resources of the host machine.", comment: "homebrew top apps info: overview text"),
                 ]
             }
 
             var footerText: [Text] {
                 [
-                    Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", bundle: .module, comment: "homebrew top apps info: footer link text")
+                    Text("Learn more about the Homebrew community at [https://brew.sh](https://brew.sh)", comment: "homebrew top apps info: footer link text")
                 ]
             }
 
@@ -1000,25 +1000,25 @@ extension HomebrewInventory {
 
         struct RecentAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Recent", bundle: .module, comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Recent", comment: "homebrew sidebar category title"), symbol: .clock, tint: monochrome ? nil : Color.yellow, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Casks: Recent", bundle: .module, comment: "homebrew recent apps info: full title")
+                Text("Homebrew Casks: Recent", comment: "homebrew recent apps info: full title")
             }
 
             /// A textual description of this source
             var overviewText: [Text] {
                 [
                     catalogDescriptionText,
-                    Text("Recent apps contain those casks that have been newly released or updated within the past month.", bundle: .module, comment: "homebrew recent apps info: overview text")
+                    Text("Recent apps contain those casks that have been newly released or updated within the past month.", comment: "homebrew recent apps info: overview text")
                 ]
             }
 
             var footerText: [Text] {
                 []
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+                // Text(wip("XXX"), comment: "homebrew recent apps info: overview text")
             }
 
             /// A list of the features of this source, which will be displayed as a bulleted list
@@ -1029,25 +1029,25 @@ extension HomebrewInventory {
 
         struct InstalledAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Installed", bundle: .module, comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Installed", comment: "homebrew sidebar category title"), symbol: .internaldrive, tint: monochrome ? nil : Color.orange, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Casks: Installed", bundle: .module, comment: "homebrew installed apps info: full title")
+                Text("Homebrew Casks: Installed", comment: "homebrew installed apps info: full title")
             }
 
             /// A textual description of this source
             var overviewText: [Text] {
                 [
                     catalogDescriptionText,
-                    Text("The installed apps section contains all the apps that are currently installed from this catalog.", bundle: .module, comment: "homebrew installed apps info: overview text")
+                    Text("The installed apps section contains all the apps that are currently installed from this catalog.", comment: "homebrew installed apps info: overview text")
                 ]
             }
 
             var footerText: [Text] {
                 []
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+                // Text(wip("XXX"), comment: "homebrew recent apps info: overview text")
             }
 
             /// A list of the features of this source, which will be displayed as a bulleted list
@@ -1058,25 +1058,25 @@ extension HomebrewInventory {
 
         struct SponsorableAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Sponsorable", bundle: .module, comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
+                TintedLabel(title: Text("Sponsorable", comment: "homebrew sidebar category title"), symbol: .heart, tint: monochrome ? nil : Color.red, mode: monochrome ? .monochrome : .palette)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Casks: Sponsorable", bundle: .module, comment: "homebrew sponsorable apps info: full title")
+                Text("Homebrew Casks: Sponsorable", comment: "homebrew sponsorable apps info: full title")
             }
 
             /// A textual description of this source
             var overviewText: [Text] {
                 [
                     catalogDescriptionText,
-                    Text("The sponsorable apps section contains apps that have listed themselves as being available for patronage.", bundle: .module, comment: "homebrew sponsorable apps info: overview text")
+                    Text("The sponsorable apps section contains apps that have listed themselves as being available for patronage.", comment: "homebrew sponsorable apps info: overview text")
                 ]
             }
 
             var footerText: [Text] {
                 [
-                    Text("Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)", bundle: .module, comment: "homebrew sponsorable apps info: overview text")
+                    Text("Learn more about sponsorable apps at [appfair.app#sponsorable](https://appfair.app#sponsorable)", comment: "homebrew sponsorable apps info: overview text")
                 ]
             }
 
@@ -1088,25 +1088,25 @@ extension HomebrewInventory {
 
         struct UpdatedAppInfo : AppSourceInfo {
             func tintedLabel(monochrome: Bool) -> TintedLabel {
-                TintedLabel(title: Text("Updated", bundle: .module, comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
+                TintedLabel(title: Text("Updated", comment: "homebrew sidebar category title"), symbol: .arrow_down_app, tint: monochrome ? nil : Color.green, mode: monochrome ? .monochrome : .hierarchical)
             }
 
             /// Subtitle text for this source
             var fullTitle: Text {
-                Text("Homebrew Casks: Updated", bundle: .module, comment: "homebrew updated apps info: full title")
+                Text("Homebrew Casks: Updated", comment: "homebrew updated apps info: full title")
             }
 
             /// A textual description of this source
             var overviewText: [Text] {
                 [
                     catalogDescriptionText,
-                    Text("The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available.", bundle: .module, comment: "homebrew installed apps info: overview text")
+                    Text("The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available.", comment: "homebrew installed apps info: overview text")
                 ]
             }
 
             var footerText: [Text] {
                 []
-                // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+                // Text(wip("XXX"), comment: "homebrew recent apps info: overview text")
             }
 
             /// A list of the features of this source, which will be displayed as a bulleted list
@@ -1353,7 +1353,7 @@ extension HomebrewInventory {
     /// Fetches livecheck for the given cask
     func fetchLivecheck(for cask: String) async throws -> (strategy: String, url: URL)? {
         guard let caskSource = self.caskSource(name: cask) else {
-            throw AppError(NSLocalizedString("no metadata for package", bundle: .module, comment: "error message"))
+            throw AppError(NSLocalizedString("no metadata for package", comment: "error message"))
         }
         dbg("caskSource:", caskSource)
         let (data, _) = try await URLSession.shared.fetch(request: URLRequest(url: caskSource))
@@ -1372,7 +1372,7 @@ extension HomebrewInventory {
 
         // note that this will fail when the appcast URL is composed of tokens (e.g.: "https://kapeli.com/Dash#{version.major}.xml")
         guard let lcURL = livecheck["url"], let url = URL(string: lcURL.trimmedEvenly(["'", "\""])) else {
-            throw AppError(NSLocalizedString("unable to parse stanza for url property", bundle: .module, comment: "error message"))
+            throw AppError(NSLocalizedString("unable to parse stanza for url property", comment: "error message"))
         }
 
         return (strategy, url)

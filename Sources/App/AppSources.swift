@@ -46,89 +46,89 @@ public extension AppCategoryType {
         var text: Text {
         switch self {
         case .business:
-            return Text("Business", bundle: .module, comment: "app category label for appfair.business")
+            return Text("Business", comment: "app category label for appfair.business")
         case .developertools:
-            return Text("Developer Tools", bundle: .module, comment: "app category label for appfair.developer-tools")
+            return Text("Developer Tools", comment: "app category label for appfair.developer-tools")
         case .education:
-            return Text("Education", bundle: .module, comment: "app category label for appfair.education")
+            return Text("Education", comment: "app category label for appfair.education")
         case .entertainment:
-            return Text("Entertainment", bundle: .module, comment: "app category label for appfair.entertainment")
+            return Text("Entertainment", comment: "app category label for appfair.entertainment")
         case .finance:
-            return Text("Finance", bundle: .module, comment: "app category label for appfair.finance")
+            return Text("Finance", comment: "app category label for appfair.finance")
         case .graphicsdesign:
-            return Text("Graphics Design", bundle: .module, comment: "app category label for appfair.graphics-design")
+            return Text("Graphics Design", comment: "app category label for appfair.graphics-design")
         case .healthcarefitness:
-            return Text("Healthcare & Fitness", bundle: .module, comment: "app category label for appfair.healthcare-fitness")
+            return Text("Healthcare & Fitness", comment: "app category label for appfair.healthcare-fitness")
         case .lifestyle:
-            return Text("Lifestyle", bundle: .module, comment: "app category label for appfair.lifestyle")
+            return Text("Lifestyle", comment: "app category label for appfair.lifestyle")
         case .medical:
-            return Text("Medical", bundle: .module, comment: "app category label for appfair.medical")
+            return Text("Medical", comment: "app category label for appfair.medical")
         case .music:
-            return Text("Music", bundle: .module, comment: "app category label for appfair.music")
+            return Text("Music", comment: "app category label for appfair.music")
         case .news:
-            return Text("News", bundle: .module, comment: "app category label for appfair.news")
+            return Text("News", comment: "app category label for appfair.news")
         case .photography:
-            return Text("Photography", bundle: .module, comment: "app category label for appfair.photography")
+            return Text("Photography", comment: "app category label for appfair.photography")
         case .productivity:
-            return Text("Productivity", bundle: .module, comment: "app category label for appfair.productivity")
+            return Text("Productivity", comment: "app category label for appfair.productivity")
         case .reference:
-            return Text("Reference", bundle: .module, comment: "app category label for appfair.reference")
+            return Text("Reference", comment: "app category label for appfair.reference")
         case .socialnetworking:
-            return Text("Social Networking", bundle: .module, comment: "app category label for appfair.social-networking")
+            return Text("Social Networking", comment: "app category label for appfair.social-networking")
         case .sports:
-            return Text("Sports", bundle: .module, comment: "app category label for appfair.sports")
+            return Text("Sports", comment: "app category label for appfair.sports")
         case .travel:
-            return Text("Travel", bundle: .module, comment: "app category label for appfair.travel")
+            return Text("Travel", comment: "app category label for appfair.travel")
         case .utilities:
-            return Text("Utilities", bundle: .module, comment: "app category label for appfair.utilities")
+            return Text("Utilities", comment: "app category label for appfair.utilities")
         case .video:
-            return Text("Video", bundle: .module, comment: "app category label for appfair.video")
+            return Text("Video", comment: "app category label for appfair.video")
         case .weather:
-            return Text("Weather", bundle: .module, comment: "app category label for appfair.weather")
+            return Text("Weather", comment: "app category label for appfair.weather")
 
         case .games:
-            return Text("Games", bundle: .module, comment: "app category label for appfair.games")
+            return Text("Games", comment: "app category label for appfair.games")
         case .actiongames:
-            return Text("Action Games", bundle: .module, comment: "app category label for appfair.action-games")
+            return Text("Action Games", comment: "app category label for appfair.action-games")
         case .adventuregames:
-            return Text("Adventure Games", bundle: .module, comment: "app category label for appfair.adventure-games")
+            return Text("Adventure Games", comment: "app category label for appfair.adventure-games")
         case .arcadegames:
-            return Text("Arcade Games", bundle: .module, comment: "app category label for appfair.arcade-games")
+            return Text("Arcade Games", comment: "app category label for appfair.arcade-games")
         case .boardgames:
-            return Text("Board Games", bundle: .module, comment: "app category label for appfair.board-games")
+            return Text("Board Games", comment: "app category label for appfair.board-games")
         case .cardgames:
-            return Text("Card Games", bundle: .module, comment: "app category label for appfair.card-games")
+            return Text("Card Games", comment: "app category label for appfair.card-games")
         case .casinogames:
-            return Text("Casino Games", bundle: .module, comment: "app category label for appfair.casino-games")
+            return Text("Casino Games", comment: "app category label for appfair.casino-games")
         case .dicegames:
-            return Text("Dice Games", bundle: .module, comment: "app category label for appfair.dice-games")
+            return Text("Dice Games", comment: "app category label for appfair.dice-games")
         case .educationalgames:
-            return Text("Educational Games", bundle: .module, comment: "app category label for appfair.educational-games")
+            return Text("Educational Games", comment: "app category label for appfair.educational-games")
         case .familygames:
-            return Text("Family Games", bundle: .module, comment: "app category label for appfair.family-games")
+            return Text("Family Games", comment: "app category label for appfair.family-games")
         case .kidsgames:
-            return Text("Kids Games", bundle: .module, comment: "app category label for appfair.kids-games")
+            return Text("Kids Games", comment: "app category label for appfair.kids-games")
         case .musicgames:
-            return Text("Music Games", bundle: .module, comment: "app category label for appfair.music-games")
+            return Text("Music Games", comment: "app category label for appfair.music-games")
         case .puzzlegames:
-            return Text("Puzzle Games", bundle: .module, comment: "app category label for appfair.puzzle-games")
+            return Text("Puzzle Games", comment: "app category label for appfair.puzzle-games")
         case .racinggames:
-            return Text("Racing Games", bundle: .module, comment: "app category label for appfair.racing-games")
+            return Text("Racing Games", comment: "app category label for appfair.racing-games")
         case .roleplayinggames:
-            return Text("Role Playing Games", bundle: .module, comment: "app category label for appfair.role-playing-games")
+            return Text("Role Playing Games", comment: "app category label for appfair.role-playing-games")
         case .simulationgames:
-            return Text("Simulation Games", bundle: .module, comment: "app category label for appfair.simulation-games")
+            return Text("Simulation Games", comment: "app category label for appfair.simulation-games")
         case .sportsgames:
-            return Text("Sports Games", bundle: .module, comment: "app category label for appfair.sports-games")
+            return Text("Sports Games", comment: "app category label for appfair.sports-games")
         case .strategygames:
-            return Text("Strategy Games", bundle: .module, comment: "app category label for appfair.strategy-games")
+            return Text("Strategy Games", comment: "app category label for appfair.strategy-games")
         case .triviagames:
-            return Text("Trivia Games", bundle: .module, comment: "app category label for appfair.trivia-games")
+            return Text("Trivia Games", comment: "app category label for appfair.trivia-games")
         case .wordgames:
-            return Text("Word Games", bundle: .module, comment: "app category label for appfair.word-games")
+            return Text("Word Games", comment: "app category label for appfair.word-games")
 
         default:
-            return Text("Unknown", bundle: .module, comment: "app category label for an unknown category")
+            return Text("Unknown", comment: "app category label for an unknown category")
         }
     }
 

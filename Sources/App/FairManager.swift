@@ -81,7 +81,7 @@ public final class FairManager: SceneManager, AppInventoryController {
 
         /// The gloal quick actions for the App Fair
         self.quickActions = [
-            QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", bundle: .module, comment: "action button title for refreshing the catalog")) { completion in
+            QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", comment: "action button title for refreshing the catalog")) { completion in
                 dbg("refresh-action")
                 Task {
                     //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
@@ -243,7 +243,7 @@ extension FairManager {
             do {
                 try await inventory.reload(fromSource: reloadFromSource)
             } catch {
-                throw AppError(String(format: NSLocalizedString("Error Loading Catalog", bundle: .module, comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", bundle: .module, comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error)
+                throw AppError(String(format: NSLocalizedString("Error Loading Catalog", comment: "error wrapper string when a catalog URL fails to load")), failureReason: String(format: NSLocalizedString("The catalog failed to load from the URL: %@", comment: "error wrapper string when a catalog URL fails to load"), inventory.sourceURL.absoluteString), underlyingError: error)
             }
         }
     }
@@ -404,18 +404,18 @@ extension SourceSelection {
 
         /// Subtitle text for this source
         var fullTitle: Text {
-            Text("Category: \(category.text)", bundle: .module, comment: "app category info: title pattern")
+            Text("Category: \(category.text)", comment: "app category info: title pattern")
         }
 
         /// A textual description of this source
         var overviewText: [Text] {
             []
-            // Text(wip("XXX"), bundle: .module, comment: "app category info: overview text")
+            // Text(wip("XXX"), comment: "app category info: overview text")
         }
 
         var footerText: [Text] {
             []
-            // Text(wip("XXX"), bundle: .module, comment: "homebrew recent apps info: overview text")
+            // Text(wip("XXX"), comment: "homebrew recent apps info: overview text")
         }
 
         /// A list of the features of this source, which will be displayed as a bulleted list
@@ -470,7 +470,7 @@ extension FairManager {
         let duration = timeInterval ?? self.appLaunchPrivacyDuration
 
         guard let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() else {
-            throw AppError(String(format: NSLocalizedString("Could not find %@", bundle: .module, comment: "error message when failed to find app launch privacy tool"), Self.appLaunchPrivacyToolName))
+            throw AppError(String(format: NSLocalizedString("Could not find %@", comment: "error message when failed to find app launch privacy tool"), Self.appLaunchPrivacyToolName))
         }
 
         /// If we have launch telemetry blocking enabled, this will invoke the telemetry block script before executing the operation, and then disable it after the given time interval
@@ -478,7 +478,7 @@ extension FairManager {
             dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
             let privacyEnabled = try await Process.exec(cmd: appLaunchPrivacyTool.path, "enable").expect()
             if privacyEnabled.process.terminationStatus != 0 {
-                throw AppError(NSLocalizedString("Failed to block launch telemetry", bundle: .module, comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
+                throw AppError(NSLocalizedString("Failed to block launch telemetry", comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
             }
 
             // clear any previous observer
@@ -535,7 +535,7 @@ extension FairManager {
             dbg("writing binary to file:", executableFile.path)
             let encodedTool = try Self.appLaunchPrivacyToolBinary.get()
             guard let decodedTool = Data(base64Encoded: encodedTool, options: [.ignoreUnknownCharacters]) else {
-                throw AppError(String(format: NSLocalizedString("Unable to decode %@", bundle: .module, comment: "error message"), Self.appLaunchPrivacyToolName))
+                throw AppError(String(format: NSLocalizedString("Unable to decode %@", comment: "error message"), Self.appLaunchPrivacyToolName))
             }
             try decodedTool.write(to: executableFile)
             return executableFile
@@ -554,14 +554,14 @@ extension FairManager {
             let swiftCompilerInstalled = FileManager.default.isExecutableFile(atPath: compiler)
 
             if swiftCompilerInstalled {
-                throw AppError(NSLocalizedString("Developer tools not found", bundle: .module, comment: "error message"), failureReason: NSLocalizedString("This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.", bundle: .module, comment: "error failure reason message"))
+                throw AppError(NSLocalizedString("Developer tools not found", comment: "error message"), failureReason: NSLocalizedString("This operation requires that the swift compiler be installed on the host machine in order to build the necessary tools. Please install Xcode in order to enable telemetry blocking.", comment: "error failure reason message"))
             }
 
             dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
 
             let result = try await Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, swiftFile.path).expect()
             if result.process.terminationStatus != 0 {
-                throw AppError(String(format: NSLocalizedString("Error compiling %@", bundle: .module, comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+                throw AppError(String(format: NSLocalizedString("Error compiling %@", comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
             }
         } else {
             compiledOutput = try saveAppLaunchPrivacyTool(source: false)
@@ -604,23 +604,23 @@ extension FairManager {
     @ViewBuilder func launchPrivacyButton() -> some View {
         if self.appLaunchPrivacy == false {
         } else if self.appLaunchPrivacyDeactivator == nil {
-            Text("Ready", bundle: .module, comment: "launch privacy activate toolbar button title when in the inactive state")
+            Text("Ready", comment: "launch privacy activate toolbar button title when in the inactive state")
                 .label(image: FairSymbol.shield_slash_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.brown, Color.gray))
                 .button {
                     await self.trying {
                         try await self.enableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in \(Text(duration: self.appLaunchPrivacyDuration))", bundle: .module, comment: "launch privacy activate toolbar button tooltip when in the inactive state"))
+                .help(Text("App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in \(Text(duration: self.appLaunchPrivacyDuration))", comment: "launch privacy activate toolbar button tooltip when in the inactive state"))
         } else {
-            Text("Active", bundle: .module, comment: "launch privacy button toolbar button title when in the activate state")
+            Text("Active", comment: "launch privacy button toolbar button title when in the activate state")
                 .label(image: FairSymbol.shield_fill.symbolRenderingMode(.hierarchical).foregroundStyle(Color.orange, Color.blue))
                 .button {
                     await self.trying {
                         try await self.disableAppLaunchPrivacy()
                     }
                 }
-                .help(Text("App Launch Privacy is currently active for \(Text(duration: self.appLaunchPrivacyDuration)). Click this button to deactivate privacy mode.", bundle: .module, comment: "launch privacy button toolbar button title when in the inactivate state"))
+                .help(Text("App Launch Privacy is currently active for \(Text(duration: self.appLaunchPrivacyDuration)). Click this button to deactivate privacy mode.", comment: "launch privacy button toolbar button title when in the inactivate state"))
         }
     }
 }
