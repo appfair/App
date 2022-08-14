@@ -32,5 +32,10 @@ jobs:
       allow_from: ${{ secrets.APP_FAIR_ALLOW_FROM }}
       deny_from: ${{ secrets.APP_FAIR_DENY_FROM }}
       fairseal_key: ${{ secrets.APP_FAIR_FAIRSEAL_KEY }}
+      TESTFLIGHT_TEAMID: ${{ secrets.TESTFLIGHT_TEAMID }}
+      TESTFLIGHT_ISSUER_ID: ${{ secrets.TESTFLIGHT_ISSUER_ID }}
+      TESTFLIGHT_KEY_ID: ${{ secrets.TESTFLIGHT_KEY_ID }}
+      TESTFLIGHT_KEY_CONTENTS: ${{ secrets.TESTFLIGHT_KEY_CONTENTS }}
+      TESTFLIGHT_CODESIGNING_IDENTITY: ${{ secrets.TESTFLIGHT_CODESIGNING_IDENTITY }}
 
 
