@@ -12,7 +12,7 @@ on:
 
 jobs:
   call-workflow:
-    uses: appfair/fairground/workflows/configure_app.yml@main
+    uses: appfair/fairground/.github/workflows/configure_app.yml@main
     with:
       version: ${{ github.event.inputs.version }}
 
