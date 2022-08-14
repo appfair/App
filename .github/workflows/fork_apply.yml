@@ -12,15 +12,7 @@ on:
 
 jobs:
   call-workflow:
-    uses: fair-ground/Fair/.github/workflows/fair.yml@main
-    with:
-      fairground: appfair
-      target_macos: true
-      target_linux: false
-      target_windows: false
-      target_ios: true
-      target_tvos: false
-      target_watchos: false
+    uses: appfair/fairground/.github/workflows/fair.yml@main
     secrets:
       # These optional secrets can be added for app notarization.
       NOTARY_TEAMID: ${{ secrets.NOTARY_TEAMID }}
