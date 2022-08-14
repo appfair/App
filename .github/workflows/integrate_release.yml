@@ -13,10 +13,5 @@ on:
 
 jobs:
   call-workflow:
-    uses: fair-ground/Fair/.github/workflows/fair.yml@main
+    uses: appfair/fairground/workflows/fair.yml@main
     secrets: inherit
-    with:
-      fairground: appfair
-      fairseal_issuer: appfairbot
-      license: AGPL-3.0
-
