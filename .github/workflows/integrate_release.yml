@@ -13,5 +13,5 @@ on:
 
 jobs:
   call-workflow:
-    uses: appfair/fairground/workflows/fair.yml@main
+    uses: appfair/fairground/.github/workflows/fair.yml@main
     secrets: inherit
