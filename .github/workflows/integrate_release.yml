@@ -25,6 +25,7 @@ jobs:
       fairseal_issuer: appfairbot
       license: AGPL-3.0
     secrets:
+      XXXX: ZYZYZY
       token: ${{ secrets.GITHUB_TOKEN }}
       bot_token: ${{ secrets.APP_FAIR_BOT_TOKEN }}
       allow_name: ${{ secrets.APP_FAIR_ALLOW_NAME }}
