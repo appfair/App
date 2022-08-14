@@ -14,6 +14,7 @@ on:
 jobs:
   call-workflow:
     uses: fair-ground/Fair/.github/workflows/fair.yml@main
+    secrets: inherit
     with:
       fairground: appfair
       target_macos: true
@@ -24,13 +25,5 @@ jobs:
       target_watchos: false
       fairseal_issuer: appfairbot
       license: AGPL-3.0
-    secrets:
-      token: ${{ secrets.GITHUB_TOKEN }}
-      bot_token: ${{ secrets.APP_FAIR_BOT_TOKEN }}
-      allow_name: ${{ secrets.APP_FAIR_ALLOW_NAME }}
-      deny_name: ${{ secrets.APP_FAIR_DENY_NAME }}
-      allow_from: ${{ secrets.APP_FAIR_ALLOW_FROM }}
-      deny_from: ${{ secrets.APP_FAIR_DENY_FROM }}
-      fairseal_key: ${{ secrets.APP_FAIR_FAIRSEAL_KEY }}
 
 
