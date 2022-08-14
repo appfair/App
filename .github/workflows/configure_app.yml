@@ -12,9 +12,8 @@ on:
 
 jobs:
   call-workflow:
-    uses: fair-ground/Fair/.github/workflows/configure_app.yml@main
+    uses: appfair/fairground/workflows/configure_app.yml@main
     with:
-      fairground: appfair
       version: ${{ github.event.inputs.version }}
 
 
