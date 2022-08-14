@@ -6,9 +6,8 @@ name: "Fork Apply"
 #
 # See: https://www.appfair.net
 on:
-  push:
-    branches: [ main ]
-    tags: "[0-9]+.[0-9]+.[0-9]+"
+  release:
+    types: [created]
 
 jobs:
   call-workflow:
