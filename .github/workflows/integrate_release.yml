@@ -15,3 +15,6 @@ jobs:
   call-workflow:
     uses: appfair/fairground/.github/workflows/fair.yml@main
     secrets: inherit
+    with:
+      fairseal_issuer: appfairbot
+
