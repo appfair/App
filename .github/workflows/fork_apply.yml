@@ -12,7 +12,7 @@ on:
 
 jobs:
   call-workflow:
-    uses: appfair/fairground/workflows/fair.yml@main
+    uses: appfair/fairground/.github/workflows/fair.yml@main
     secrets:
       # These optional secrets can be added for app notarization.
       NOTARY_TEAMID: ${{ secrets.NOTARY_TEAMID }}
