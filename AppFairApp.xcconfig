@@ -7,10 +7,10 @@ PRODUCT_NAME = Cloud Cuckoo
 PRODUCT_BUNDLE_IDENTIFIER = app.Cloud-Cuckoo
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.9.189
+MARKETING_VERSION = 0.9.190
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 562
+CURRENT_PROJECT_VERSION = 563
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.games
@@ -26,7 +26,6 @@ ICON_SYMBOL = M 535.343750 170.531250 C 533.671872 170.484379 532.531254 170.543
 // SUPPORTED_PLATFORMS = macosx
 SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 
-// Specify the TestFlight platforms
-TESTFLIGHT_DEPLOY = true
-
+// Specify the app's app id to deploy to TestFlight
+TESTFLIGHT_DEPLOY_ID = 1639746748
 
