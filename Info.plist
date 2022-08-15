@@ -35,6 +35,8 @@
 			<string>Stanza book sidecar</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>app.stanza.sidecar</string>
