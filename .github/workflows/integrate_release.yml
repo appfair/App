@@ -17,4 +17,3 @@ jobs:
     secrets: inherit
     with:
       fairseal_issuer: appfairbot
-
