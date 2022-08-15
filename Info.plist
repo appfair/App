@@ -9,6 +9,8 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeName</key>
+			<string>ePub Book</string>
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>epub</string>
