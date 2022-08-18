@@ -51,8 +51,5 @@ precondition(package.targets[1].sources == nil, "second target sources must be e
 precondition(!package.targets[0].dependencies.isEmpty, "package target must have at least one dependency")
 
 // Target.Depencency is opaque and non-equatable, so resort to using the description for validation
-precondition(String(describing: package.targets[0].dependencies[0]) == "productItem(name: \"FairApp\", package: Optional(\"Fair\"), condition: nil)", "first package dependency must be FairApp")
-precondition(String(describing: package.platforms?.first) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"macos\"), version: Optional(\"12.0\")))", "package must support macOS 12")
-precondition(String(describing: package.platforms?.last) == "Optional(PackageDescription.SupportedPlatform(platform: PackageDescription.Platform(name: \"ios\"), version: Optional(\"15.0\")))", "package must support iOS 15")
-
+precondition(String(describing: package.targets[0].dependencies[0]).hasPrefix("productItem(name: \"FairApp\", package: Optional(\"Fair\")") == true, "first package dependency must be FairApp")
 
