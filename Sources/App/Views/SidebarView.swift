@@ -134,7 +134,7 @@ struct SidebarView: View {
 
     func removeAppSource(_ source: AppSource) {
         dbg("removing source:", source)
-        fairManager.removeInventory(for: source, persist: true)
+        _ = fairManager.removeInventory(for: source, persist: true)
     }
 
     struct SectionHeader : View {

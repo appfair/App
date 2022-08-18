@@ -241,7 +241,7 @@ extension AppSourceInventory {
     }
 
     /// If the catalog app is updated,
-    private func updateCatalogApp(catalogAppBundle: Bundle = Bundle.main) async throws {
+    @MainActor private func updateCatalogApp(catalogAppBundle: Bundle = Bundle.main) async throws {
         // auto-update the App Fair app itself to the latest non-pre-release version
         guard let catalogApp = self.catalogAppInfo else {
             return dbg("could not locate current app in app list")

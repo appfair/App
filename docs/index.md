@@ -384,7 +384,7 @@ The App Fair.app supports two separate catalog channels:
 1. **Homebrew Casks**: this community-driven project publishes an index of third-party apps and information about how to download and install them. You can learn more at [  https://brew.sh](https://brew.sh).
 2. **Fairground Apps**: these open-source SwiftUI apps are included in an index of the forks of a base SwiftUI app repository. Learn more at [https://appfair.net](https://appfair.net).
 
-If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as the automated build and release process, landing page generation, support for issues and discussions, and screenshot and icon previews, you can publish a starter app in under an hour using only your web browser with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
+If you are starting a brand-new green-field open-source SwiftUI project, and would like the services that are provided by appfair.net such as the automated build and release process, landing page generation, support for issues and discussions, and screenshot and icon previews, you can become an App Fair Creator with [appfair.net's Quick Start Guide](https://www.appfair.net/#quick-start).
 
 If, on the other hand, you already having an existing notarized Mac app that you are distributing, you can add it to the Homebrew Casks index by following the directions in their [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook).
 

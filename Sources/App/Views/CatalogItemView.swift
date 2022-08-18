@@ -77,8 +77,8 @@ private struct CatalogItemHostView: View {
 
         let config = WKWebViewConfiguration()
 
-        func createWebViewState(_ url: URL?) -> WebViewState {
-            let privateMode = (inlineHosts?.first(where: { $0.hasMatches(in: url?.host ?? "") }) == nil)
+        func createWebViewState(privateMode: Bool) -> WebViewState {
+            //let privateMode = (inlineHosts?.first(where: { $0.hasMatches(in: url?.host ?? "") }) == nil)
             //config.defaultWebpagePreferences.preferredContentMode = .mobile
             config.preferences.javaScriptCanOpenWindowsAutomatically = false
             if privateMode {
@@ -93,14 +93,21 @@ private struct CatalogItemHostView: View {
                 config.websiteDataStore = .nonPersistent()
             }
 
-            let state = WebViewState(initialRequest: url.flatMap { URLRequest(url: $0) }, configuration: config)
-            return state
+            return WebViewState(configuration: config)
         }
 
-        self._projectHomeWebViewState = .init(wrappedValue: createWebViewState(info.projectURL))
-        self._appHomeWebViewState = .init(wrappedValue: createWebViewState(info.homepage ?? info.app.landingPage))
+        let isPrivate = { (url: URL?) in
+            inlineHosts?.first(where: { $0.hasMatches(in: url?.host ?? "") }) == nil
+        }
+
+        self._projectHomeWebViewState = .init(wrappedValue: createWebViewState(privateMode: isPrivate(info.projectURL)))
+        self._appHomeWebViewState = .init(wrappedValue: createWebViewState(privateMode: isPrivate(info.homepage ?? info.app.landingPage)))
     }
 
+    /// The URL to be used in the Home Page tab
+    private var appHomeWebURL: URL? {
+        info.homepage ?? info.app.landingPage
+    }
 
 #if os(macOS) // horizontalSizeClass unavailable on macOS
     func horizontalCompact() -> Bool { false }
@@ -743,10 +750,16 @@ private struct CatalogItemHostView: View {
 
     @ViewBuilder func projectBrowserViewSection() -> some View {
         browserView(projectHomeWebViewState)
+            .task {
+                projectHomeWebViewState.load(info.projectURL)
+            }
     }
 
     @ViewBuilder func homepageBrowserViewSection() -> some View {
         browserView(appHomeWebViewState)
+            .task {
+                appHomeWebViewState.load(self.appHomeWebURL)
+            }
     }
 
     func screenshotsSection() -> some View {
@@ -1569,7 +1582,7 @@ fileprivate extension View {
         }
     }
 
-    func fetchMarkdownResource(url: URL, info: AppInfo) async throws -> AttributedString {
+    @MainActor func fetchMarkdownResource(url: URL, info: AppInfo) async throws -> AttributedString {
         let data = try await URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
             .fetch(validateFragmentHash: true)
         var atx = String(data: data, encoding: .utf8) ?? ""
@@ -1624,8 +1637,7 @@ struct ReadmeBox : View {
             }
     }
 
-
-    private func fetchReadme() async {
+    @MainActor private func fetchReadme() async {
         let readmeURL = info.app.readmeURL
         do {
             //dbg("fetching README for:", info.app.id, readmeURL?.absoluteString)
@@ -1747,7 +1759,7 @@ struct ReleaseNotesBox : View {
             }
     }
 
-    func fetchReleaseNotes() async {
+    @MainActor private func fetchReleaseNotes() async {
         do {
             dbg("fetching release notes for app:", info.app.id, info.app.releaseNotesURL?.absoluteString)
             if let versionDescription = info.app.versionDescription {

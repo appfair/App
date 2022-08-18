@@ -1147,8 +1147,8 @@ extension ObservableObject {
         if let informativeText = informativeText {
             alert.informativeText = informativeText
         }
-        alert.addButton(withTitle: accept)
-        alert.addButton(withTitle: refuse)
+        _ = alert.addButton(withTitle: accept)
+        _ = alert.addButton(withTitle: refuse)
 
         if let suppressionTitle = suppressionTitle {
             alert.suppressionButton?.title = suppressionTitle

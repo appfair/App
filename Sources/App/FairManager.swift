@@ -154,17 +154,17 @@ extension FairManager {
 
         // always ensure the ordering of the first two
         if self.inventories.count < 1 {
-            addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL), load: load)
+            _ = addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL), load: load)
         }
 
         if self.inventories.count < 2 {
-            addAppSource(url: appfairCatalogURLMacOS, load: load, persist: false)
+            _ = addAppSource(url: appfairCatalogURLMacOS, load: load, persist: false)
         }
 
         if enableUserSources {
             for source in self.userSources.compactMap(URL.init(string:)) {
                 dbg("adding user source:", source.absoluteString)
-                addAppSource(url: source, load: load, persist: false)
+                _ = addAppSource(url: source, load: load, persist: false)
             }
         }
     }
@@ -206,7 +206,7 @@ extension FairManager {
         return found
     }
 
-    @discardableResult @MainActor func addInventory(_ inventory: AppInventoryManagement, load loadPriority: TaskPriority?) -> Bool {
+    @MainActor @discardableResult func addInventory(_ inventory: AppInventoryManagement, load loadPriority: TaskPriority?) -> Bool {
         if let _ = self.inventories.first(where: { inv, _ in
             inv.source == inventory.source
         }) {
@@ -458,8 +458,8 @@ extension FairManager {
         if let appLaunchPrivacyTool = try Self.appLaunchPrivacyTool.get() {
             dbg("disabling app launch privacy")
             let unblock = try await Process.exec(cmd: appLaunchPrivacyTool.path, "disable").expect()
-            dbg(unblock.process.terminationStatus == 0 ? "successfully" : "unsuccessfully", "disabled app launch privacy:", unblock.stdout, unblock.stderr)
-            if unblock.process.terminationStatus == 0 {
+            dbg(unblock.terminationStatus == 0 ? "successfully" : "unsuccessfully", "disabled app launch privacy:", unblock.stdout, unblock.stderr)
+            if unblock.terminationStatus == 0 {
                 clearAppLaunchPrivacyObserver()
             }
         }
@@ -477,7 +477,7 @@ extension FairManager {
         if FileManager.default.fileExists(atPath: appLaunchPrivacyTool.path) {
             dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
             let privacyEnabled = try await Process.exec(cmd: appLaunchPrivacyTool.path, "enable").expect()
-            if privacyEnabled.process.terminationStatus != 0 {
+            if privacyEnabled.terminationStatus != 0 {
                 throw AppError(NSLocalizedString("Failed to block launch telemetry", comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
             }
 
@@ -560,7 +560,7 @@ extension FairManager {
             dbg("compiling script:", swiftFile.path, "to:", compiledOutput)
 
             let result = try await Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, swiftFile.path).expect()
-            if result.process.terminationStatus != 0 {
+            if result.terminationStatus != 0 {
                 throw AppError(String(format: NSLocalizedString("Error compiling %@", comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
             }
         } else {

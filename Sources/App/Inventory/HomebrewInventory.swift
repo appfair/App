@@ -459,9 +459,9 @@ extension HomebrewInventory : AppManagement {
 
         dbg("result of command:", cmd, ":", result)
         // manually re-scan to update the installed status of the item
-        withAnimation {
-            rescanInstalledCasks()
-        }
+        //withAnimation {
+            await rescanInstalledCasks()
+        //}
     }
 
     public func installedPath(for item: AppInfo) async throws -> URL? {
@@ -535,7 +535,7 @@ extension HomebrewInventory : AppManagement {
             do {
                 dbg("performing gatekeeper check for quarantined path:", installPath.path)
                 let result = try await Process.spctlAssess(appURL: installPath).expect(exitCode: nil)
-                if result.process.terminationStatus == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
+                if result.terminationStatus == 3 { // “spctl exits zero on success, or one if an operation has failed.  Exit code two indicates unrecognized or unsuitable arguments.  If an assessment operation results in denial but no other problem has occurred, the exit code is three.” e.g.: gatekeeper check failed: (exitCode: 3, stdout: [], stderr: ["/Applications/VSCodium.app: rejected", "source=Unnotarized Developer ID"])
                     dbg("gatekeeper check failed:", result)
                     if (await prompt(.warning, messageText: NSLocalizedString("Unidentified Developer", comment: "warning dialog title"),
                                      informativeText: String(format: NSLocalizedString("The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it.", comment: "warning dialog body"), item.app.name, item.homepage?.absoluteString ?? ""),
@@ -944,20 +944,28 @@ return text returned of (display dialog "\(prompt)" with title "\(title)" defaul
             // we need a small delay here because brew seems to create the directory eagerly before it unpacks and moves the app, which means there is often a signifcant delay between when the change occurs and the app version is available there
             for delay in delays {
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
-                    self.rescanInstalledCasks()
+                    Task {
+                        await self.rescanInstalledCasks()
+                    }
                 }
             }
         }
     }
 
     /// Performs a scan of the installed casks and updates the local cache
-    private func rescanInstalledCasks() {
+    private func rescanInstalledCasks() async {
         do {
-            self.installedCasks = try self.scanInstalledCasks()
+            let casks = try self.scanInstalledCasks()
+            await setInstalledCasks(casks: casks)
         } catch {
             dbg("error scanning for installed casks:", error)
         }
     }
+
+    @MainActor private func setInstalledCasks(casks: [CaskItem.ID : Set<String>]) async {
+        self.installedCasks = casks
+    }
+
 }
 
 // MARK: SourceInfo
