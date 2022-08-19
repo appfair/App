@@ -16,7 +16,7 @@ import FairKit
 
 /// A browser component that contains a URL/search field and a WebView
 struct BrowserView : View {
-    @StateObject private var state: BrowserState = BrowserState(initialRequest: nil)
+    @StateObject private var state: BrowserState = BrowserState()
     @EnvironmentObject private var store: Store
     @State var hoveredLink: String?
 
@@ -185,7 +185,7 @@ class BrowserState : WebViewState {
             if let dict = result as? NSDictionary,
                 let content = dict["content"] as? String {
                 dbg("content:", ByteCountFormatter().string(fromByteCount: .init(content.count)))
-                await webView?.loadHTMLString(content, baseURL: webView?.url)
+                _ = await webView?.loadHTMLString(content, baseURL: webView?.url)
             }
         }
     }
