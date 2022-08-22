@@ -1,3 +1,5 @@
-remote_theme: appfair/fairapp-theme
-description: A description of this app.
+name: Cloud Cuckoo
+description: A whimsical game of excitement and delight
+headline: A same game for the App Fair
 
+remote_theme: appfair/fairapp-theme
