@@ -7,7 +7,7 @@ PRODUCT_NAME = Todo Hero
 PRODUCT_BUNDLE_IDENTIFIER = app.Todo-Hero
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.1
+MARKETING_VERSION = 0.0.2
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1
@@ -22,8 +22,9 @@ APP_CATEGORY = public.app-category.utilities
 // ICON_SYMBOL = sparkles.rectangle.stack
 
 // Specify which platforms to build and release
-SUPPORTED_PLATFORMS = macosx
-// SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
+//SUPPORTED_PLATFORMS = macosx
+SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+

@@ -1,3 +1,6 @@
+
+// BE BACK SOON!!
+
 import FairApp
 
 /// The main content view for the app.
@@ -8,7 +11,8 @@ public struct ContentView: View {
         VStack {
             Text("Welcome to **\(Bundle.main.bundleName!)**")
                 .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)")
+                .foregroundColor(.pink)
+            Text("it will do something _soon_")
                 .font(.headline)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
