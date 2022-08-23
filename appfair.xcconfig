@@ -22,8 +22,9 @@ APP_CATEGORY = public.app-category.utilities
 // ICON_SYMBOL = sparkles.rectangle.stack
 
 // Specify which platforms to build and release
-SUPPORTED_PLATFORMS = macosx
-// SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
+// SUPPORTED_PLATFORMS = macosx
+// SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
