@@ -1,5 +1,9 @@
+# This file provides both runtime and buildtime metadata 
+# for this App Fair app and the associated static web content.
 name: Cloud Cuckoo
 description: A whimsical game of excitement and delight
 headline: A simple game for the App Fair
 
+# Configuration for GitHub Pages / Jekyll follows:
 remote_theme: appfair/fairapp-theme
+
