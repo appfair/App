@@ -25,6 +25,9 @@ open class Store: SceneManager {
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("someToggle") public var someToggle = false
+
+    public required init() {
+    }
 }
 
 public extension AppContainer {
