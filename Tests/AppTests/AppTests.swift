@@ -18,12 +18,11 @@ import XCTest
 import FairCore
 import FairExpo
 
-@MainActor final class AppTests: XCTestCase {
-    func testAppScene() throws {
-        // let store = AppContainer.AppStore()
-        // let scene = AppContainer.rootScene(store: store)
-        // let settings = AppContainer.settingsView(store: store)
-        // let (_, _) = (scene, settings)
+open class AppTests: XCTestCase {
+    @MainActor open func testAppStore() throws {
+        let store = AppContainer.AppStore()
+        XCTAssertEqual(store.someToggle, false)
+        //XCTAssertEqual(type(of: store).config["remote_theme"], "appfair/fairapp-theme")
     }
 
     func testCaskList() async throws {

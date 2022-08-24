@@ -12,16 +12,18 @@ let package = Package(
     platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
-        // the Fair main branch must be the first dependency
-        .package(name: "Fair", url: "https://fair-ground.org/Fair.git", .branch("main")),
-        // additional hosted dependencies can be added below
+        .package(url: "https://github.com/fair-ground/Fair", from: "0.5.0"), // required
     ],
     targets: [
         .target(name: "App", dependencies: [
-            .product(name: "FairApp", package: "Fair"),
+            .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairExpo", package: "Fair"),
             .product(name: "FairKit", package: "Fair"),
-        ], resources: [.process("Resources"), .copy("Bundle")]),
+        ], resources: [
+            .process("Resources"),
+            .copy("Bundle"),
+            .copy("App.yml"),
+        ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
 )

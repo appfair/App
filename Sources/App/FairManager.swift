@@ -16,7 +16,7 @@ import FairKit
 import FairExpo
 import Combine
 
-public final class FairManager: SceneManager, AppInventoryController {
+open class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     @AppStorage("enableInstallWarning") public var enableInstallWarning: Bool = true
@@ -75,20 +75,19 @@ public final class FairManager: SceneManager, AppInventoryController {
 
     //private var observers: [AnyCancellable] = []
 
-    required internal init() {
-        super.init()
+    public required init() {
         self.resetAppSources(load: nil)
 
-        /// The gloal quick actions for the App Fair
-        self.quickActions = [
-            QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", comment: "action button title for refreshing the catalog")) { completion in
-                dbg("refresh-action")
-                Task {
-                    //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                    completion(true)
-                }
-            }
-        ]
+//        /// The gloal quick actions for the App Fair
+//        self.quickActions = [
+//            QuickAction(id: "refresh-action", localizedTitle: NSLocalizedString("Refresh Catalog", comment: "action button title for refreshing the catalog")) { completion in
+//                dbg("refresh-action")
+//                Task {
+//                    //await self.appManager.fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
+//                    completion(true)
+//                }
+//            }
+//        ]
     }
 }
 
