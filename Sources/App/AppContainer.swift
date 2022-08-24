@@ -18,15 +18,11 @@ public struct ContentView: View {
 /// The shared app environment containing static configuration and
 /// global properties and defaults.
 ///
-/// The singleton instance of Store is available throughout the app with:
-/// ``@EnvironmentObject var store: Store```
+/// The shared instance of Store is available throughout the app with:
+/// ``@EnvironmentObject var store: Store``
 @MainActor public final class Store: SceneManager {
-    /// The shared static configuration for this app.
-    ///
-    /// Shared configuration parameters for the app are be stored in the `App.yml` file at the root of the package.
-    ///
-    /// - Note: Failure to parse the YAML source is fatal.
-    public static let configuration: JSum = try! JSum.parse(yaml: String(data: Bundle.module.loadResource(named: "App.yml"), encoding: .utf8)!)
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("someToggle") public var someToggle = false
