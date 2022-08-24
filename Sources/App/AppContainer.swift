@@ -15,10 +15,19 @@
 import FairApp
 import WebKit
 
-/// The shared app environment
-@MainActor public final class Store: SceneManager {
+/// The global app environment containing configuration metadata and shared defaults.
+///
+/// The shared instance of Store is available throughout the app with:
+/// ``@EnvironmentObject var store: Store``
+open class Store: SceneManager {
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
+
     @AppStorage("smoothScrolling") public var smoothScrolling = true
     @AppStorage("leadingTapAdvances") public var leadingTapAdvances = false
+
+    public required init() {
+    }
 }
 
 public extension AppContainer {
