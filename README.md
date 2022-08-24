@@ -1,4 +1,4 @@
-## App-Name: an App Fair app
+## Eternal-September: an App Fair app
 
 This is a utility app to help count Roman Numerals.
 
@@ -7,15 +7,15 @@ This is a utility app to help count Roman Numerals.
 ### App Fair Installation
 
 Once the initial release has been created,
-App-Name can be downloaded and installed using
+Eternal-September can be downloaded and installed using
 [App Fair.app](https://www.appfair.app)
 by opening
-[appfair.app/fair?app=App-Name](https://appfair.app/fair?app=App-Name).
+[appfair.app/fair?app=Eternal-September](https://appfair.app/fair?app=Eternal-September).
 
 ## Support
 
 The landing page for this app is available at
-[https://App-Name.github.io/App/](https://App-Name.github.io/App/).
+[https://Eternal-September.github.io/App/](https://Eternal-September.github.io/App/).
 
 Community Support for this app is available on the
 [Discussion](../../discussions) forums.
