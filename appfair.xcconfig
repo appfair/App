@@ -7,7 +7,7 @@ PRODUCT_NAME = Eternal September
 PRODUCT_BUNDLE_IDENTIFIER = app.Eternal-September
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.38
+MARKETING_VERSION = 0.0.39
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 157
@@ -24,7 +24,7 @@ ICON_SYMBOL = calendar.badge.exclamationmark
 // Specify which platforms to build and release
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
-SUPPORTED_PLATFORMS = 
+SUPPORTED_PLATFORMS = true true
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
