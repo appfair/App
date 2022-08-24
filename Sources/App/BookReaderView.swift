@@ -715,7 +715,7 @@ final class EPUBDocument: ReferenceFileDocument {
 
         config.userContentController = controller
 
-        return BookReaderState(initialRequest: nil, configuration: config)
+        return BookReaderState(configuration: config)
     }
 
     /// The extract pages from the spine
