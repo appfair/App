@@ -26,6 +26,6 @@ jobs:
     uses: appfair/fairground/.github/workflows/configure_app.yml@main
     with:
       version: ${{ github.event.inputs.version }}
-      build_ios: ${{ github.event.inputs.build_ios == true }}
-      build_macos: ${{ github.event.inputs.build_macos == true }}
+      build_ios: ${{ github.event.inputs.build_ios == 'true' }}
+      build_macos: ${{ github.event.inputs.build_macos == 'true' }}
 
