@@ -25,15 +25,15 @@ open class AppTests: XCTestCase {
         }
 
         let epub = try EPUB(url: ebookURL)
-        XCTAssertEqual(8, epub.metadata.count)
-        XCTAssertEqual(58, epub.manifest.count)
-        XCTAssertEqual(13, epub.spine.count)
+        XCTAssertEqual(8, epub.opf.metadata.count)
+        XCTAssertEqual(58, epub.opf.manifest.count)
+        XCTAssertEqual(13, epub.opf.spine.count)
 
-        XCTAssertEqual(["Lewis Carroll"], epub.metadata["creator"])
+        XCTAssertEqual(["Lewis Carroll"], epub.opf.metadata["creator"])
 
         // example of the metadata's title and the NCX's title being (slightly) different
 
-        XCTAssertEqual("Alice's Adventures in Wonderland", epub.title)
+        XCTAssertEqual("Alice's Adventures in Wonderland", epub.opf.title)
         XCTAssertEqual("\n\t\t\tAlice In Wonderland\n\t\t", epub.ncx?.title)
 
         XCTAssertEqual(12, epub.ncx?.allPoints.array().count)
@@ -50,8 +50,8 @@ open class AppTests: XCTestCase {
         for epubURL in try fm.contentsOfDirectory(at: booksFolder, includingPropertiesForKeys: nil).filter({ $0.pathExtension == "epub" }) {
             dbg("testing:", epubURL.lastPathComponent)
             let epub = try EPUB(url: epubURL)
-            XCTAssertNotNil(epub.title)
-            XCTAssertGreaterThan(epub.spine.count, 0)
+            XCTAssertNotNil(epub.opf.title)
+            XCTAssertGreaterThan(epub.opf.spine.count, 0)
             XCTAssertNotEqual("", epub.ncx?.title) // might be zero entries for empty TOC, but the title should always exist
         }
     }

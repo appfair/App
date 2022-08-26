@@ -373,7 +373,7 @@ final class BookReaderState : WebViewState {
         controller.addUserScript(WKUserScript(source: script, injectionTime: WKUserScriptInjectionTime.atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
     }
 
-    @discardableResult func movePage(by amount: Int, smooth: Bool? = nil) async throws -> Double? {
+    @MainActor @discardableResult func movePage(by amount: Int, smooth: Bool? = nil) async throws -> Double? {
         guard let webView = self.webView else {
             throw AppError("No book render host installed")
         }
@@ -381,7 +381,7 @@ final class BookReaderState : WebViewState {
         return handleNavigation(try await webView.evalJS("movePage(\(amount), \(smooth ?? smoothScrolling))"))
     }
 
-    func handleNavigation(_ result: Any) -> Double? {
+    @MainActor func handleNavigation(_ result: Any) -> Double? {
         dbg("result:", result)
         if let navigation = result as? NSDictionary {
             if let pos = navigation["pos"] as? Double,
@@ -401,7 +401,7 @@ final class BookReaderState : WebViewState {
     /// Sets the position in the current section to the given value
     /// - Parameter target: the target position, from 0.0–1.0, or nil to simply query the position
     /// - Returns: the current position in the current section
-    @discardableResult func position(_ target: Double? = nil) async throws -> Double? {
+    @MainActor @discardableResult func position(_ target: Double? = nil) async throws -> Double? {
         guard let webView = self.webView else {
             throw AppError("No book render host installed")
         }
@@ -426,7 +426,7 @@ final class BookReaderState : WebViewState {
                 }
     }
 
-    private func setPageScale(to scale: Double) async throws {
+    @MainActor private func setPageScale(to scale: Double) async throws {
         // while WKWebView.pageZoom works on macOS, on iOS it simply zooms the page rather than re-flows it, so we need to instead change the fontSize of the document element
         let newScale = try await webView?.evalJS("scaleText(\(scale))")
         dbg("zooming to:", scale, "result:", newScale)
@@ -436,7 +436,7 @@ final class BookReaderState : WebViewState {
         }
     }
 
-    func applyPageScale() {
+    @MainActor func applyPageScale() {
         // after loading the view, update the text scale
         Task {
             do {

@@ -18,7 +18,10 @@ let package = Package(
             .copy("Bundle"),
             .copy("App.yml"),
         ]),
-        .testTarget(name: "AppTests", dependencies: ["App"]),
+        .testTarget(name: "AppTests", dependencies: ["App"], resources: [
+            .process("Resources"),
+            .copy("Bundle"),
+        ]),
     ]
 )
 
