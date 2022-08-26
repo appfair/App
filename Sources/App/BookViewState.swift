@@ -450,9 +450,9 @@ final class BookReaderState : WebViewState {
 
     override func didFinish(navigation: WKNavigation) {
         super.didFinish(navigation: navigation)
-        self.applyPageScale()
-        if let targetPosition = self.targetPosition {
-            Task {
+        Task {
+            await self.applyPageScale()
+            if let targetPosition = self.targetPosition {
                 do {
                     dbg("jumping to targetPosition:", targetPosition)
                     let _ = try await self.position(targetPosition)
