@@ -6,15 +6,26 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version'     
+        type: string
+        description: 'App Version'
         required: true
         default: '0.0.1'
+      build_ios:
+        type: boolean
+        description: 'Build iOS App'
+        required: true
+        default: true
+      build_macos:
+        type: boolean
+        description: 'Build macOS App'
+        required: true
+        default: true
 
 jobs:
   call-workflow:
-    uses: fair-ground/Fair/.github/workflows/configure_app.yml@main
+    uses: appfair/fairground/.github/workflows/configure_app.yml@main
     with:
-      fairground: appfair
       version: ${{ github.event.inputs.version }}
-
+      build_ios: ${{ github.event.inputs.build_ios == 'true' }}
+      build_macos: ${{ github.event.inputs.build_macos == 'true' }}
 

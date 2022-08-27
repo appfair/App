@@ -35,11 +35,20 @@ public struct PlayerView: View {
     }
 }
 
-/// The shared app environment
-@MainActor public final class Store: SceneManager {
+/// The global app environment containing configuration metadata and shared defaults.
+///
+/// The shared instance of Store is available throughout the app with:
+/// ``@EnvironmentObject var store: Store``
+open class Store: SceneManager {
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
+
+    /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("someToggle") public var someToggle = false
 
     @Published public var errors: [Error] = []
+    public required init() {
+    }
 }
 
 public extension AppContainer {
@@ -75,14 +84,14 @@ extension URL {
             .filter { $0.lastPathComponent.hasPrefix(".") == false }
             .sorting(by: \.lastPathComponent)
 
-        let totalSize = try parts.compactMap({ try $0.fileSize() }).reduce(0, +)
+        let totalSize = parts.compactMap({ $0.fileSize() }).reduce(0, +)
         let lastModified = parts.compactMap(\.modificationDate).sorted().last
 
         if fm.isReadableFile(atPath: cacheFile.path) && overwrite == false {
             // ensure that the file size is equal to the sum of the individual path components
             // note that we skip any checksum validation here, so we expect the resource to be trusted (which it will be if it is included in a signed app bundle)
             let cacheNewerThanParts = (cacheFile.modificationDate ?? Date()) > (lastModified ?? Date())
-            if try cacheFile.fileSize() == totalSize && cacheNewerThanParts == true {
+            if cacheFile.fileSize() == totalSize && cacheNewerThanParts == true {
                 return cacheFile
             } else {
                 if !cacheNewerThanParts {
@@ -161,7 +170,7 @@ public struct AppSettingsView : View {
 }
 
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor final class MediaManager: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
+final class MediaManager: NSObject, ObservableObject, AVPlayerItemMetadataOutputPushDelegate {
     static let shared = MediaManager()
 
     @Published var itemTitle: String? = nil
