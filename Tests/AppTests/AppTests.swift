@@ -20,6 +20,12 @@ import FairApp
 open class AppTests: XCTestCase {
     let wv = WebDriver()
 
+    @MainActor open func testAppStore() throws {
+        let store = AppContainer.AppStore()
+        XCTAssertEqual(store.someToggle, false)
+        //XCTAssertEqual(type(of: store).config["remote_theme"], "appfair/fairapp-theme")
+    }
+
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testWebState() async throws {
     }

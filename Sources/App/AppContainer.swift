@@ -16,11 +16,17 @@ import FairKit
 
 /// The shared app environment
 @MainActor public final class Store: SceneManager {
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
+
     @AppStorage("homePage") public var homePage = "https://start.duckduckgo.com"
     @AppStorage("searchHost") public var searchHost = "duckduckgo.com"
     @AppStorage("themeStyle") public var themeStyle = ThemeStyle.system
 
     @Published var config: WKWebViewConfiguration = WKWebViewConfiguration()
+
+    public init() {
+    }
 }
 
 extension FocusedValues {
