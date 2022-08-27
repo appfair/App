@@ -205,7 +205,13 @@ public extension AppContainer {
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class Store: SceneManager {
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
+
     @AppStorage("someToggle") public var someToggle = false
+
+    public init() {
+    }
 }
 
 
