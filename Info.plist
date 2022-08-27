@@ -11,6 +11,8 @@
 		<dict>
 			<key>CFBundleTypeName</key>
 			<string>Lottie JSON</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
