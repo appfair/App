@@ -3,12 +3,6 @@ import FairKit
 import AVKit
 import TabularData
 
-// The entry point to creating your app is the `AppContainer` type,
-// which is a stateless enum declared in `AppMain.swift` and may not be changed.
-// 
-// App customization is done via extensions in `AppContainer.swift`,
-// which enables customization of the root scene, app settings, and
-// other features of the app.
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
@@ -132,6 +126,9 @@ struct ClockView: View {
 /// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor public final class Store: SceneManager {
+    /// The configuration metadata for the app from the `App.yml` file.
+    public static let config: JSum = configuration(for: .module)
+
     @AppStorage("autoplayStation") public var autoplayStation = true
 
     #if os(macOS)
@@ -141,16 +138,14 @@ struct ClockView: View {
     // @Published var queryString: String = ""
     // @Published var stations: DataFrame? = wip(nil)
 
-    internal required init() {
-        super.init()
-
-        /// The gloal quick actions for the App Fair
-        self.quickActions = [
-            QuickAction(id: "play-action", localizedTitle: loc("Play"), iconSymbol: "play") { completion in
-                dbg("play-action")
-                completion(true)
-            }
-        ]
+    public init() {
+//        /// The gloal quick actions for the App Fair
+//        self.quickActions = [
+//            QuickAction(id: "play-action", localizedTitle: loc("Play"), iconSymbol: "play") { completion in
+//                dbg("play-action")
+//                completion(true)
+//            }
+//        ]
     }
 
     @objc public func menuItemTapped(_ sender: Any?) {

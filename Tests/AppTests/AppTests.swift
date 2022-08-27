@@ -29,6 +29,10 @@ open class AppTests: XCTestCase {
         // awaiting Swift 5.5 final
         //let _ = AppContainer.rootScene
         //let _ = AppContainer.settingsView
+    @MainActor open func testAppStore() throws {
+        let store = AppContainer.AppStore()
+        XCTAssertEqual(store.someToggle, false)
+        //XCTAssertEqual(type(of: store).config["remote_theme"], "appfair/fairapp-theme")
     }
 
     // cannot run on CI until macOS12
