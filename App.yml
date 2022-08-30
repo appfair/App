@@ -1,5 +1,5 @@
-# Marketplace metadata
-deliver:
+# App store metadata
+app:
   # name: App
   subtitle: A really great App Fair app
   promotional_text: Be the first to download this app!
@@ -14,6 +14,6 @@ deliver:
       name: Le App
       description: Une app simple.
 
-# Configuration for GitHub Pages / Jekyll follows:
+# GitHub Pages Jekyll configuration
 remote_theme: appfair/fairapp-theme
 
