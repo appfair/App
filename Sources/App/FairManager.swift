@@ -494,7 +494,7 @@ extension FairManager {
             dbg("invoking telemetry launch block script:", appLaunchPrivacyTool.path)
             let privacyEnabled = try await Process.exec(cmd: appLaunchPrivacyTool.path, "enable").expect()
             if privacyEnabled.terminationStatus != 0 {
-                throw AppError(NSLocalizedString("Failed to block launch telemetry", comment: "error message"), failureReason: (privacyEnabled.stdout + privacyEnabled.stderr).joined(separator: "\n"))
+                throw AppError(NSLocalizedString("Failed to block launch telemetry", comment: "error message"), failureReason: [privacyEnabled.stdout, privacyEnabled.stderr].compactMap(\.utf8String).joined())
             }
 
             // clear any previous observer
@@ -577,7 +577,7 @@ extension FairManager {
 
             let result = try await Process.exec(cmd: "/usr/bin/swiftc", "-o", compiledOutput.path, swiftFile.path).expect()
             if result.terminationStatus != 0 {
-                throw AppError(String(format: NSLocalizedString("Error compiling %@", comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: (result.stdout + result.stderr).joined(separator: "\n"))
+                throw AppError(String(format: NSLocalizedString("Error compiling %@", comment: "error message"), Self.appLaunchPrivacyToolName), failureReason: [result.stdout, result.stderr].compactMap(\.utf8String).joined(separator: "\n"))
             }
         } else {
             compiledOutput = try saveAppLaunchPrivacyTool(source: false)
