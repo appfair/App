@@ -7,7 +7,7 @@ app:
   keywords: appfair
   primary_category: UTILITIES
   secondary_category: PRODUCTIVITY
-  locale:
+  locales:
     en-US:
       description: A simple app fair app.
     fr:
