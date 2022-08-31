@@ -1,19 +1,15 @@
 # App store metadata
 app:
-  # name: App
-  subtitle: A really great App Fair app
-  promotional_text: Be the first to download this app!
-  description: A simple app fair app.
-  keywords: appfair
-  primary_category: UTILITIES
-  secondary_category: PRODUCTIVITY
+  # name: "App"
+  subtitle: "A really great App Fair app"
+  promotional_text: "Be the first to download this app!"
+  description: "A simple app fair app."
+  keywords: "appfair"
+  primary_category: "UTILITIES"
+  secondary_category: "PRODUCTIVITY"
+
   locales:
     # Locale-specific keys: ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
-    en-US:
-      description: A simple app fair app.
-    fr-FR:
-      name: Le App
-      description: Une app simple.
 
 # GitHub Pages Jekyll configuration
 remote_theme: appfair/fairapp-theme
