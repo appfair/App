@@ -1,9 +1,14 @@
-# This file provides both runtime and buildtime metadata 
-# for this App Fair app and the associated static web content.
-name: Cloud Cuckoo
-description: A whimsical game of excitement and delight
-headline: A simple game for the App Fair
+# App store metadata
+app:
+  primary_category: "UTILITIES"
+  secondary_category: "PRODUCTIVITY"
+  # name: "App"
+  # subtitle: "A really great App Fair app"
+  # promotional_text: "Be the first to download this app!"
+  # description: "A simple app fair app."
+  # keywords: "appfair"
+  # locales: # Locale-specific keys: ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
 
-# Configuration for GitHub Pages / Jekyll follows:
+# Pages / Jekyll configuration::
 remote_theme: appfair/fairapp-theme
 
