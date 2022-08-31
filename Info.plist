@@ -1,1 +1,87 @@
-{"CFBundleName":"$(PRODUCT_NAME)","NSHumanReadableCopyright":"GNU Affero General Public License","FairUsage":{"com.apple.security.files.user-selected.read-only":"This app needs to read local files in order to load user-selected books","com.apple.security.files.user-selected.read-write":"This app needs to read and write files in order to…","com.apple.security.network.client":"This app needs to access the network in order to download books"},"ITSAppUsesNonExemptEncryption":false,"LSApplicationQueriesSchemes":["appfair"],"AppFairIconSymbol":"$(ICON_SYMBOL)","CFBundleVersion":"$(CURRENT_PROJECT_VERSION)","CFBundlePackageType":"$(PRODUCT_BUNDLE_PACKAGE_TYPE)","CFBundleShortVersionString":"$(MARKETING_VERSION)","UIApplicationSupportsIndirectInputEvents":true,"NSAppleEventsUsageDescription":"AppleScript can be used by this app.","UILaunchScreen":{},"LSUIPresentationMode":0,"NSAppTransportSecurity":{"NSAllowsArbitraryLoads":true},"CFBundleInfoDictionaryVersion":"6.0","CFBundleExecutable":"$(EXECUTABLE_NAME)","NSAppleScriptEnabled":true,"LSSupportsOpeningDocumentsInPlace":true,"CFBundleIdentifier":"$(PRODUCT_BUNDLE_IDENTIFIER)","LSApplicationCategoryType":"$(APP_CATEGORY)","AppFairIconTint":"$(ICON_TINT)","CFBundleURLTypes":[{"CFBundleTypeRole":"Editor","CFBundleURLName":"$(PRODUCT_NAME)","CFBundleURLSchemes":["$(PRODUCT_BUNDLE_IDENTIFIER)"]}],"LSMinimumSystemVersion":"$(MACOSX_DEPLOYMENT_TARGET)","UIApplicationSceneManifest":{"UIApplicationSupportsMultipleScenes":true},"UISupportedInterfaceOrientations":["UIInterfaceOrientationPortrait","UIInterfaceOrientationPortraitUpsideDown","UIInterfaceOrientationLandscapeLeft","UIInterfaceOrientationLandscapeRight"]}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>AppFairIconSymbol</key>
+    <string>$(ICON_SYMBOL)</string>
+    <key>AppFairIconTint</key>
+    <string>$(ICON_TINT)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>$(PRODUCT_NAME)</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            </array>
+        </dict>
+    </array>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>FairUsage</key>
+    <dict>
+        <key>com.apple.security.files.user-selected.read-only</key>
+        <string>This app needs to read local files in order to load user-selected books</string>
+        <key>com.apple.security.files.user-selected.read-write</key>
+        <string>This app needs to read and write files in order to…</string>
+        <key>com.apple.security.network.client</key>
+        <string>This app needs to access the network in order to download books</string>
+    </dict>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>LSApplicationCategoryType</key>
+    <string>$(APP_CATEGORY)</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>appfair</string>
+    </array>
+    <key>LSMinimumSystemVersion</key>
+    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>LSUIPresentationMode</key>
+    <integer>0</integer>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>AppleScript can be used by this app.</string>
+    <key>NSAppleScriptEnabled</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>GNU Affero General Public License</string>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+    </dict>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+</dict>
+</plist>
