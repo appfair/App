@@ -1,13 +1,15 @@
 # App store metadata
 app:
-  primary_category: "UTILITIES"
-  secondary_category: "PRODUCTIVITY"
-  # name: "App"
-  # subtitle: "A really great App Fair app"
-  # promotional_text: "Be the first to download this app!"
+  primary_category: "GAMES"
+  secondary_category: "GAMES"
+  subtitle: "A whimsical game of excitement and delight"
+  promotional_text: "Be the first to download this app!"
   # description: "A simple app fair app."
-  # keywords: "appfair"
-  # locales: # Locale-specific keys: ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
+  keywords: "cloud"
+  locales: # keys like "fr-FR" can contain localized description, name, etc.
+    fr-FR: 
+      name: "Cuckoo Cloud"
+      subtitle: "Un jeu fantaisiste d'excitation et de plaisir"
 
 # Pages / Jekyll configuration::
 remote_theme: appfair/fairapp-theme
