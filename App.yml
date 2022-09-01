@@ -11,6 +11,18 @@ app:
       name: "Cuckoo Cloud"
       subtitle: "Un jeu fantaisiste d'excitation et de plaisir"
 
+onboarding:
+  primary_category: "GAMES"
+  secondary_category: "GAMES"
+  subtitle: "A whimsical game of excitement and delight"
+  promotional_text: "Be the first to download this app!"
+  # description: "A simple app fair app."
+  keywords: "cloud"
+  locales: # keys like "fr-FR" can contain localized description, name, etc.
+    fr-FR:
+      name: "Cuckoo Cloud"
+      subtitle: "Un jeu fantaisiste d'excitation et de plaisir"
+
 # Pages / Jekyll configuration::
 remote_theme: appfair/fairapp-theme
 

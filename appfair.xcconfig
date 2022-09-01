@@ -7,10 +7,10 @@ PRODUCT_NAME = Cloud Cuckoo
 PRODUCT_BUNDLE_IDENTIFIER = app.Cloud-Cuckoo
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.9.273
+MARKETING_VERSION = 0.9.274
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 672
+CURRENT_PROJECT_VERSION = 673
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.games
@@ -26,6 +26,10 @@ ICON_SYMBOL = M 535.343750 170.531250 C 533.671872 170.484379 532.531254 170.543
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphonesimulator iphoneos
 SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
+
+// Dev team and unique id for on-device testing
+DEVELOPMENT_TEAM[config=Debug][sdk=iphoneos*] = 25KG25YA3R
+PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = org.appfair.app.Cloud-Cuckoo
 
 // Specify the app's app id to deploy to TestFlight
 TESTFLIGHT_APP_ID = 1639746748
