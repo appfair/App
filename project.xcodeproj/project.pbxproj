@@ -44,7 +44,7 @@
 		490B83DA288CB1830014F922 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		490B83DB288CB1860014F922 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		4917633F2773E08000FBB28B /* project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = project.swift; sourceTree = "<group>"; };
-		49555415268931C1003F1B5B /* App Name.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Name.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* Fair Skies.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fair Skies.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498E852827597DA100EE6F8C /* appfair.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = appfair.xcconfig; sourceTree = "<group>"; };
 		49D7F0B7288B407100275541 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -97,7 +97,7 @@
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* App Name.app */,
+				49555415268931C1003F1B5B /* Fair Skies.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,7 +134,7 @@
 				498DD183268CDB4600B79D43 /* App */,
 			);
 			productName = App;
-			productReference = 49555415268931C1003F1B5B /* App Name.app */;
+			productReference = 49555415268931C1003F1B5B /* Fair Skies.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
