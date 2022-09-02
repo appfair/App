@@ -29,7 +29,9 @@ public struct ContentView: View {
                 }
 
             }
+            #if os(iOS)
             .keyboardType(.decimalPad)
+            #endif
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

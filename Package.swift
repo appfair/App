@@ -8,7 +8,7 @@ let package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.5.0"), // required
-        .package(url: "https://github.com/tiqtiq/WeatherTiq", branch: "main"),
+        .package(url: "https://github.com/tiqtiq/WeatherTiq", from: "0.0.2"),
     ],
     targets: [
         .target(name: "App", dependencies: [
