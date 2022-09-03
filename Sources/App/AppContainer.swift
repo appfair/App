@@ -81,7 +81,7 @@ public struct WeatherView: View {
         }
         .task {
             do {
-                let result = try kit.eval(script: "1+1")
+                let result = try ctx.eval(script: "1+1")
                 dbg("JS result:", result)
             } catch {
                 dbg("error running script: \(error)")
