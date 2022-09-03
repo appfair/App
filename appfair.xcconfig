@@ -1,13 +1,13 @@
 // The configuration file for your App Fair App. See: https://www.appfair.net
 
 // PRODUCT_NAME is the app name, consisting of two words separated by a space
-PRODUCT_NAME = Fair Skies
+PRODUCT_NAME = Sun Bow
 
 // PRODUCT_BUNDLE_IDENTIFIER must be in the form: "app.App-Name"
-PRODUCT_BUNDLE_IDENTIFIER = app.Fair-Skies
+PRODUCT_BUNDLE_IDENTIFIER = app.Sun-Bow
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.5
+MARKETING_VERSION = 0.0.1
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 124
