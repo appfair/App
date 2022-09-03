@@ -1,5 +1,6 @@
 import FairApp
 import WeatherTiq
+import JXKit
 
 
 //@available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
@@ -7,6 +8,9 @@ import WeatherTiq
 
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 let service = WeatherService.shared
+
+// The shared script context
+let ctx = JXKit.JXContext()
 
 /// The main content view for the app.
 public struct ContentView: View {
@@ -74,6 +78,14 @@ public struct WeatherView: View {
         }
         .task(id: coords, priority: .userInitiated) {
             await fetchWeather(for: coords)
+        }
+        .task {
+            do {
+                let result = try kit.eval(script: "1+1")
+                dbg("JS result:", result)
+            } catch {
+                dbg("error running script: \(error)")
+            }
         }
     }
 
