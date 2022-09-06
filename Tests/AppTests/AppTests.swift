@@ -15,6 +15,7 @@
 import Swift
 import XCTest
 @testable import App
+import FairApp
 
 open class AppTests: XCTestCase {
     @MainActor open func testAppStore() throws {
@@ -23,4 +24,3 @@ open class AppTests: XCTestCase {
         //XCTAssertEqual(type(of: store).config["remote_theme"], "appfair/fairapp-theme")
     }
 }
-

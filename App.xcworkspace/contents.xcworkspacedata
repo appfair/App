@@ -8,9 +8,18 @@
       location = "group:">
    </FileRef>
    <FileRef
+      location = "group:../Fair/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/tiqtiq/WeatherTiq/">
    </FileRef>
    <FileRef
       location = "group:../../github/jectivex/JXKit/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/Judo/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/SwiftJack/">
    </FileRef>
 </Workspace>

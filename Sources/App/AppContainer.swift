@@ -1,7 +1,6 @@
 import FairApp
 import WeatherTiq
-import JXKit
-
+import SwiftJack
 
 //@available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
 //let service = WeatherService.weatherKit
@@ -12,8 +11,20 @@ public struct ContentView: View {
     @State var coords = Store.defaultCoords
 
     public var body: some View {
-        WeatherFormView(coords: $coords)
-            .padding()
+        VStack {
+            WeatherFormView(coords: $coords)
+                .padding()
+            Divider()
+            Text(store.msg)
+                .padding()
+                .task {
+                    do {
+                        try store.ctx.eval("msg = 'Welcome to Sun Bow!'")
+                    } catch {
+                        dbg("error evaluating script:", error)
+                    }
+                }
+        }
     }
 }
 
@@ -118,7 +129,7 @@ private struct WeatherFetcherView: View {
 ///
 /// The shared instance of Store is available throughout the app with:
 /// ``@EnvironmentObject var store: Store``
-open class Store: SceneManager {
+open class Store: SceneManager, JackedObject {
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
 
@@ -131,6 +142,11 @@ open class Store: SceneManager {
 
     // The shared script context for executing adjuncts
     public static let ctx = JXKit.JXContext()
+
+    @Jacked var msg = ""
+
+    /// The script context to use for this app
+    lazy var ctx = jack()
 
     public required init() {
     }

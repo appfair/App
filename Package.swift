@@ -8,17 +8,18 @@ let package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.5.0"), // required
-        .package(url: "https://github.com/tiqtiq/WeatherTiq", from: "0.0.2"),
-        .package(url: "https://github.com/jectivex/JXKit", from: "1.0.0"),
+        .package(url: "https://github.com/tiqtiq/WeatherTiq", branch: "HEAD"),
+        .package(url: "https://github.com/jectivex/SwiftJack", branch: "HEAD"),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
+            .product(name: "FairKit", package: "Fair"),
             .product(name: "WeatherTiq", package: "WeatherTiq"),
-            .product(name: "JXKit", package: "JXKit"),
+            .product(name: "SwiftJack", package: "SwiftJack"),
         ], resources: [
             .process("Resources"),
-            .copy("Bundle"),
+            .copy("Bundled"),
             .copy("App.yml"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
