@@ -9,14 +9,14 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.5.0"), // required
         .package(url: "https://github.com/tiqtiq/WeatherTiq", branch: "HEAD"),
-        .package(url: "https://github.com/jectivex/SwiftJack", branch: "HEAD"),
+        .package(url: "https://github.com/jectivex/JackPot", branch: "HEAD"),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairKit", package: "Fair"),
             .product(name: "WeatherTiq", package: "WeatherTiq"),
-            .product(name: "SwiftJack", package: "SwiftJack"),
+            .product(name: "JackPot", package: "JackPot"),
         ], resources: [
             .process("Resources"),
             .copy("Bundled"),
