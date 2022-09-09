@@ -17,11 +17,10 @@ import XCTest
 @testable import App
 
 open class AppTests: XCTestCase {
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func testAppScene() throws {
-        // awaiting Swift 5.5 final
-        //let _ = AppContainer.rootScene
-        //let _ = AppContainer.settingsView
+    @MainActor open func testAppStore() throws {
+        let store = AppContainer.AppStore()
+        XCTAssertEqual(store.someToggle, false)
+        //XCTAssertEqual(type(of: store).config["remote_theme"], "appfair/fairapp-theme")
     }
 }
 
