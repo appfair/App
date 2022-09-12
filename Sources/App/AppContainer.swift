@@ -18,11 +18,7 @@ public struct ContentView: View {
             Text(store.msg)
                 .padding()
                 .task {
-                    do {
-                        try store.ctx.eval("msg = 'Welcome to Sun Bow!'")
-                    } catch {
-                        dbg("error evaluating script:", error)
-                    }
+                    store.setWelcomeMessage()
                 }
         }
     }
@@ -46,7 +42,9 @@ struct WeatherFormView : View {
             Form {
                 Section {
                     TextField("Latitude:", value: $coords.latitude, format: .number, prompt: Text("Latitude"))
+                    Slider(value: $coords.latitude, in: -90...90)
                     TextField("Longitude:", value: $coords.longitude, format: .number, prompt: Text("Longitude"))
+                    Slider(value: $coords.longitude, in: -180...180)
                     TextField("Altitude:", value: $coords.altitude, format: .number, prompt: Text("Altitude"))
                 }
 
@@ -97,6 +95,9 @@ private struct WeatherFetcherView: View {
                 if error is CancellationError { // FIXME: this is only throws from Task.checkCancellation(), not from the URLSession task being cancelled
                     // expected; happens when the user cancels the fetch
                     Rectangle().fill(Color.cyan)
+                } else if (error as NSError).domain == "NSURLErrorDomain" && (error as NSError).code == URLError.cancelled.rawValue {
+                    // URL cancellation throws a different error
+                    Rectangle().fill(Color.gray.opacity(0.1))
                 } else {
                     HStack {
                         Text("Error:")
@@ -163,6 +164,13 @@ open class Store: SceneManager, JackedObject {
         return Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0)
     }()
 
+    func setWelcomeMessage() {
+        do {
+            try ctx.env.eval("msg = 'Welcome to Sun Bow!'")
+        } catch {
+            dbg("error evaluating script:", error)
+        }
+    }
 }
 
 public extension AppContainer {
