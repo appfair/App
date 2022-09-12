@@ -11,15 +11,50 @@ public struct ContentView: View {
     @State var coords = Store.defaultCoords
 
     public var body: some View {
-        VStack {
-            WeatherFormView(coords: $coords)
-                .padding()
-            Divider()
+        ScrollView {
+            Section {
+                CurrentWeatherView(coords: $coords)
+                    .font(.title2)
+                    .frame(minHeight: 100)
+                    .padding()
+                WeatherAnalysisView()
+                    .font(.headline)
+                    .frame(minHeight: 100)
+                    .padding()
+                Divider()
+                WeatherFormView(coords: $coords)
+                    .padding()
+            } header: {
+                Text(Bundle.main.bundleName!)
+                    .font(.body)
+            }
+        }
+    }
+}
+
+struct WeatherAnalysisView : View {
+    @EnvironmentObject var store: Store
+
+    public var body: some View {
+        GroupBox("Weather Analysis:") {
             Text(store.msg)
+                .textSelection(.enabled)
                 .padding()
                 .task {
                     store.setWelcomeMessage()
                 }
+                .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+struct CurrentWeatherView : View {
+    @Binding var coords: Coords
+
+    public var body: some View {
+        GroupBox("Current Weather") {
+            WeatherView(coords: coords)
+                .textSelection(.enabled)
         }
     }
 }
@@ -28,31 +63,42 @@ struct WeatherFormView : View {
     @Binding var coords: Coords
 
     var body: some View {
-        VStack {
-            Text(Bundle.main.bundleName!)
-                .font(.headline)
-            Spacer()
-            GroupBox("Current Weather") {
-                WeatherView(coords: coords)
-            }
-            .font(.title)
-            .padding()
-            Spacer()
-
-            Form {
-                Section {
-                    TextField("Latitude:", value: $coords.latitude, format: .number, prompt: Text("Latitude"))
-                    Slider(value: $coords.latitude, in: -90...90)
-                    TextField("Longitude:", value: $coords.longitude, format: .number, prompt: Text("Longitude"))
-                    Slider(value: $coords.longitude, in: -180...180)
-                    TextField("Altitude:", value: $coords.altitude, format: .number, prompt: Text("Altitude"))
+        Form {
+            Section {
+                // TextField("Latitude:", value: $coords.latitude, format: .measurement(width: .narrow), prompt: Text("Latitude"))//crash
+                HStack {
+                    Slider(value: $coords.latitude, in: -90...90) {
+                        Text("Latitude:")
+                    }
+                    TextField(value: $coords.latitude, format: .number, prompt: Text("lat")) {
+                        EmptyView()
+                    }
+                    .frame(width: 100)
                 }
-
+                HStack {
+                    Slider(value: $coords.longitude, in: -180...180) {
+                        Text("Longitude:")
+                    }
+                    TextField(value: $coords.longitude, format: .number, prompt: Text("lon")) {
+                        EmptyView()
+                    }
+                    .frame(width: 100)
+                }
+                HStack {
+                    Slider(value: $coords.altitude, in: 0...8_000) {
+                        Text("Altitude:")
+                    }
+                    TextField(value: $coords.altitude, format: .number, prompt: Text("alt")) {
+                        EmptyView()
+                    }
+                    .frame(width: 100)
+                }
             }
-            #if os(iOS)
-            .keyboardType(.decimalPad)
-            #endif
+
         }
+        #if os(iOS)
+        .keyboardType(.decimalPad)
+        #endif
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -85,6 +131,7 @@ public struct WeatherView: View, Equatable {
 private struct WeatherFetcherView: View {
     let coords: Coords
     @State private var weatherResult: Result<Weather, Error>? = .none
+    @EnvironmentObject var store: Store
 
     public var body: some View {
         VStack {
@@ -105,15 +152,18 @@ private struct WeatherFetcherView: View {
                     }
                 }
             case .success(let weather):
-                HStack {
-                    Text("Temperature:")
-                    Text(weather.currentWeather.temperature, format: .measurement(width: .wide))
-                }
-                HStack {
-                    Text("Wind:")
-                    Text(weather.currentWeather.wind.speed, format: .measurement(width: .narrow))
-                    let dir = Text(weather.currentWeather.wind.direction, format: .measurement(width: .abbreviated))
-                    Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                Form {
+//                    TextField("Temperature:", value: .constant(weather.currentWeather.temperature), format: .measurement(width: .wide), prompt: Text("updating temperature…"))
+                    HStack {
+                        Text("Temperature:")
+                        Text(weather.currentWeather.temperature, format: .measurement(width: .wide))
+                    }
+                    HStack {
+                        Text("Wind:")
+                        Text(weather.currentWeather.wind.speed, format: .measurement(width: .narrow))
+                        let dir = Text(weather.currentWeather.wind.direction, format: .measurement(width: .abbreviated))
+                        Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                    }
                 }
             }
         }
@@ -122,6 +172,9 @@ private struct WeatherFetcherView: View {
             self.weatherResult = await Result {
                 try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude))
             }
+        }
+        .onChange(of: weatherResult?.successValue) { weather in
+            store.updateWeatherMessage(weather)
         }
     }
 }
@@ -167,6 +220,38 @@ open class Store: SceneManager, JackedObject {
     func setWelcomeMessage() {
         do {
             try ctx.env.eval("msg = 'Welcome to Sun Bow!'")
+        } catch {
+            dbg("error evaluating script:", error)
+        }
+    }
+
+    func updateWeatherMessage(_ weather: Weather?) {
+        do {
+            guard var temp = weather?.currentWeather.temperature else {
+                try ctx.env.eval("msg = '🟡'")
+                return
+            }
+
+            temp.convert(to: .fahrenheit)
+
+            switch temp.value {
+            case ...0:
+                try ctx.env.eval("msg = 'It is very very cold!'")
+            case 0...33:
+                try ctx.env.eval("msg = 'It is cold.'")
+            case 33...50:
+                try ctx.env.eval("msg = 'It is chilly.'")
+            case 51...80:
+                try ctx.env.eval("msg = 'It is nice'")
+            case 80...90:
+                try ctx.env.eval("msg = 'It is hot'")
+            case 90...100:
+                try ctx.env.eval("msg = 'It is very hot'")
+            case 100...:
+                try ctx.env.eval("msg = 'It is very very hot!'")
+            default:
+                break
+            }
         } catch {
             dbg("error evaluating script:", error)
         }
