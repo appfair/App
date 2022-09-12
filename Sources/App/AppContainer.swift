@@ -14,7 +14,7 @@ public struct ContentView: View {
         ScrollView {
             Section {
                 CurrentWeatherView(coords: $coords)
-                    .font(.title2)
+                    .font(.callout)
                     .frame(minHeight: 100)
                     .padding()
                 WeatherAnalysisView()
@@ -24,6 +24,10 @@ public struct ContentView: View {
                 Divider()
                 WeatherFormView(coords: $coords)
                     .padding()
+
+                // TODO: show Fahrenheit/Celsius units
+                //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)
+
             } header: {
                 Text(Bundle.main.bundleName!)
                     .font(.body)
@@ -63,39 +67,36 @@ struct WeatherFormView : View {
     @Binding var coords: Coords
 
     var body: some View {
-        Form {
-            Section {
-                // TextField("Latitude:", value: $coords.latitude, format: .measurement(width: .narrow), prompt: Text("Latitude"))//crash
-                HStack {
-                    Slider(value: $coords.latitude, in: -90...90) {
-                        Text("Latitude:")
-                    }
-                    TextField(value: $coords.latitude, format: .number, prompt: Text("lat")) {
-                        EmptyView()
-                    }
-                    .frame(width: 100)
+        VStack { // Form doesn't render in iOS for some reason
+            HStack {
+                Slider(value: $coords.latitude, in: -90...90) {
+                    Text("Latitude:")
                 }
-                HStack {
-                    Slider(value: $coords.longitude, in: -180...180) {
-                        Text("Longitude:")
-                    }
-                    TextField(value: $coords.longitude, format: .number, prompt: Text("lon")) {
-                        EmptyView()
-                    }
-                    .frame(width: 100)
+                TextField(value: $coords.latitude, format: .number, prompt: Text("lat")) {
+                    EmptyView()
                 }
-                HStack {
-                    Slider(value: $coords.altitude, in: 0...8_000) {
-                        Text("Altitude:")
-                    }
-                    TextField(value: $coords.altitude, format: .number, prompt: Text("alt")) {
-                        EmptyView()
-                    }
-                    .frame(width: 100)
-                }
+                .frame(width: 100)
             }
-
+            HStack {
+                Slider(value: $coords.longitude, in: -180...180) {
+                    Text("Longitude:")
+                }
+                TextField(value: $coords.longitude, format: .number, prompt: Text("lon")) {
+                    EmptyView()
+                }
+                .frame(width: 100)
+            }
+            HStack {
+                Slider(value: $coords.altitude, in: 0...8_000) {
+                    Text("Altitude:")
+                }
+                TextField(value: $coords.altitude, format: .number, prompt: Text("alt")) {
+                    EmptyView()
+                }
+                .frame(width: 100)
+            }
         }
+        .textFieldStyle(.roundedBorder)
         #if os(iOS)
         .keyboardType(.decimalPad)
         #endif
@@ -152,7 +153,7 @@ private struct WeatherFetcherView: View {
                     }
                 }
             case .success(let weather):
-                Form {
+                VStack {
 //                    TextField("Temperature:", value: .constant(weather.currentWeather.temperature), format: .measurement(width: .wide), prompt: Text("updating temperature…"))
                     HStack {
                         Text("Temperature:")
@@ -188,7 +189,7 @@ open class Store: SceneManager, JackedObject {
     public static let config: JSum = configuration(for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
-    @AppStorage("someToggle") public var someToggle = false
+    @AppStorage("fahrenheit") public var fahrenheit = true
 
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
@@ -232,7 +233,7 @@ open class Store: SceneManager, JackedObject {
                 return
             }
 
-            temp.convert(to: .fahrenheit)
+            temp.convert(to: self.fahrenheit ? .fahrenheit : .celsius)
 
             switch temp.value {
             case ...0:
@@ -275,8 +276,8 @@ public struct AppSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
+        Toggle(isOn: $store.fahrenheit) {
+            Text("Fahrenheit Units")
         }
         .padding()
     }
