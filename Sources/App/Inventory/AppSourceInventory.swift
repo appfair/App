@@ -249,6 +249,10 @@ enum CatalogActivity : CaseIterable, Equatable {
 }
 
 
+
+/// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
+let minimumSearchLength = 1
+
 extension AppSourceInventory {
     /// The app info for the current app (which is the catalog browser app)
     var catalogAppInfo: AppInfo? {
@@ -580,8 +584,9 @@ extension AppSourceInventory {
     /// Install or update the given catalog item.
     @MainActor private func installApp(item info: AppInfo, progress parentProgress: Progress?, downloadOnly: Bool, update: Bool, verbose: Bool = true, removingURLAt: URL? = nil) async throws {
         let item = info.app
+        #if os(macOS)
         let window = UXApplication.shared.currentEvent?.window
-
+        #endif
         if update == false,
             let installPath = try await installedPath(for: info),
             installPath.pathIsDirectory == true {
@@ -638,6 +643,7 @@ extension AppSourceInventory {
 
 
         if info.isMobileApp {
+            #if os(macOS)
             let canConvertMobileApp = self.enablePlatformConversion && ProcessInfo.isArmMac
             if !canConvertMobileApp {
                 // TODO: simply stop after copying the ipa
@@ -646,6 +652,7 @@ extension AppSourceInventory {
 
             // update the app to be able to run on mac
             let _ = try await bundle.setCatalystPlatform()
+            #endif
         } else {
             // perform as much validation as possible before we attempt the install
             try self.validate(appPath: expandedAppPath, forItem: item)
@@ -695,6 +702,7 @@ extension AppSourceInventory {
             parentProgress.completedUnitCount = parentProgress.totalUnitCount
         }
 
+        #if os(macOS)
         if self.relaunchUpdatedApps == true {
             let bundleID = AppIdentifier(item.bundleIdentifier)
             // the catalog app is special, since re-launching requires quitting the current app
@@ -722,6 +730,7 @@ extension AppSourceInventory {
                 }
             }
         }
+        #endif
     }
 
     private func trash(_ fileURL: URL) async throws {

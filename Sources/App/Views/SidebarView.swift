@@ -68,11 +68,13 @@ struct SidebarView: View {
         List {
             ForEach(fairManager.appSources, id: \.self, content: appSidebarSection(for:))
 
+            #if os(macOS)
             // categories section
             // TODO: merge homebrew and fairapps into single category
             if fairManager.homeBrewInv?.enableHomebrew == true {
                 categoriesSection()
             }
+            #endif
         }
         //.symbolVariant(.none)
         .symbolRenderingMode(.hierarchical)

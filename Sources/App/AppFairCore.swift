@@ -32,7 +32,6 @@
 import FairKit
 import FairExpo
 import Combine
-import TabularData
 
 /// A source of apps.
 public struct AppSource: RawRepresentable, Hashable {
@@ -395,10 +394,12 @@ public extension View {
 
         return sheet(isPresented: presented) {
             VStack(alignment: .center, spacing: 16) {
+                #if os(macOS)
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
                     .frame(width: 55, height: 55, alignment: .center)
                     .padding()
+                #endif
 
                 if let errorDescription = firstError?.errorDescription {
                     Text(errorDescription)
@@ -585,10 +586,12 @@ struct NavigationRootView : View {
                 //                    })
                 //                }
 
+                #if os(macOS)
                 ToolbarItem(id: "AppPrivacy", placement: .automatic, showsByDefault: true) {
                     fairManager.launchPrivacyButton()
                 }
-
+                #endif
+                
                 ToolbarItem(id: "ReloadButton", placement: .automatic, showsByDefault: true) {
                     Text("Reload", comment: "refresh catalog toolbar button title")
                         .label(image: FairSymbol.arrow_triangle_2_circlepath.symbolRenderingMode(.hierarchical).foregroundStyle(Color.teal, Color.yellow, Color.blue))
@@ -619,12 +622,14 @@ struct NavigationRootView : View {
                 await fairManager.refresh(reloadFromSource: false)
             }
             .task(priority: .low) {
+                #if os(macOS)
                 do {
                     // TODO: check for system homebrew here and prompt user for which one to use
                     try await fairManager.homeBrewInv?.installHomebrew(force: true, fromLocalOnly: true, retainCasks: true)
                 } catch {
                     dbg("error unpacking homebrew in local cache:", error)
                 }
+                #endif
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .background || phase == .inactive {
@@ -1144,6 +1149,8 @@ enum PromptSuppression : Int, CaseIterable {
     case destructive
 }
 
+#if os(macOS)
+
 extension ObservableObject {
     /// Issues a prompt with the given parameters, returning whether the user selected OK or Cancel
     @MainActor func prompt(_ style: NSAlert.Style = .informational, window sheetWindow: NSWindow? = nil, messageText: String, informativeText: String? = nil, accept: String = NSLocalizedString("OK", comment: "default button title for prompt"), refuse: String = NSLocalizedString("Cancel", comment: "cancel button title for prompt"), suppressionTitle: String? = nil, suppressionKey: Binding<PromptSuppression>? = nil) async -> Bool {
@@ -1193,7 +1200,6 @@ extension ObservableObject {
 }
 
 
-#if os(macOS)
 extension NSUserScriptTask {
     /// Performs the given shell command and returns the output via an `NSAppleScript` operation
     /// - Parameters:

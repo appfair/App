@@ -134,7 +134,11 @@ public protocol AppInventory {
 /// The external-facing icon view for this inventory.
 public struct AppIconView : View {
     /// Wraps the internal views
+    #if os(macOS)
     typealias ViewType = XOr<AppSourceInventory.IconView>.Or<HomebrewInventory.IconView>
+    #else
+    typealias ViewType = XOr<AppSourceInventory.IconView>.Or<Never>
+    #endif
     let content: ViewType
 
     public var body: some View {
@@ -150,6 +154,14 @@ extension AppInventory {
         (item.app.versionDate ?? .distantPast) > (Date() - interval)
     }
 }
+
+extension AppInventory {
+    /// Returns `true` when an ap is sponsorable by a supported platform
+    func appSponsorable(_ info: AppInfo) -> Bool {
+        info.app.fundingLinks?.contains { $0.isValidFundingURL() } == true
+    }
+}
+
 
 /// A type that is both an ``AppInventory`` and an ``AppManagement``
 typealias AppInventoryManagement = AppInventory & AppManagement
@@ -213,15 +225,17 @@ extension AppInventoryController {
         inventory(from: source)
     }
 
+    /// Returns a list of all the inventories that extend from `AppSourceInventory`
+    @MainActor var appSourceInventories: [AppSourceInventory] {
+        appInventories.compactMap({ $0 as? AppSourceInventory })
+    }
+
+#if os(macOS)
     /// The caskManager, which should be extracted as a separate `EnvironmentObject`
     ///
     /// -TODO: @available(*, deprecated, renamed: "inventory(from:)")
     @MainActor var homeBrewInv: HomebrewInventory? {
         inventory(from: .homebrew) as? HomebrewInventory
     }
-
-    /// Returns a list of all the inventories that extend from `AppSourceInventory`
-    @MainActor var appSourceInventories: [AppSourceInventory] {
-        appInventories.compactMap({ $0 as? AppSourceInventory })
-    }
+#endif
 }

@@ -29,14 +29,11 @@
  obligated to do so.  If you do not wish to do so, delete this
  exception statement from your version.
  */
+#if os(macOS)
 import FairKit
 import FairExpo
 import Foundation
-import TabularData
 import var FairExpo.appfairCaskAppsURL
-
-/// The minimum number of characters before we will perform a search; helps improve performance for synchronous searches
-let minimumSearchLength = 1
 
 private let appfairBase = URL(string: "https://github.com/App-Fair/")
 
@@ -1154,14 +1151,6 @@ private extension AppCatalogItem {
 }
 
 
-extension AppInventory {
-    /// Returns `true` when an ap is sponsorable by a supported platform
-    func appSponsorable(_ info: AppInfo) -> Bool {
-        info.app.fundingLinks?.contains { $0.isValidFundingURL() } == true
-    }
-}
-
-
 extension HomebrewInventory {
     var visibleAppInfos: [AppInfo] {
         appInfos ?? []
@@ -1549,3 +1538,5 @@ extension CaskItem : Identifiable {
         return appNames
     }
 }
+#endif // #if os(macOS)
+

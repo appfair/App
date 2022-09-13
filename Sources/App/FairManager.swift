@@ -120,9 +120,11 @@ extension FairManager : AppManagement {
     }
 
     public func launch(_ appInfo: AppInfo) async throws {
+        #if os(macOS)
         if self.appLaunchPrivacy {
             try await self.enableAppLaunchPrivacy()
         }
+        #endif
         try await inventory(for: appInfo)?.launch(appInfo)
     }
 
@@ -168,10 +170,12 @@ extension FairManager {
             self.inventories.removeAll()
         }
 
+        #if os(macOS)
         // always ensure the ordering of the first two
         if self.inventories.count < 1 {
             _ = addInventory(HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL), load: load)
         }
+        #endif
 
         if self.inventories.count < 2 {
             _ = addAppSource(url: appfairCatalogURLMacOS, load: load, persist: false)
@@ -443,6 +447,7 @@ extension SourceSelection {
 
 // MARK: App Launch Privacy support
 
+#if os(macOS)
 extension FairManager {
     static let appLaunchPrivacyToolName = "applaunchprivacy"
 
@@ -640,7 +645,7 @@ extension FairManager {
         }
     }
 }
-
+#endif
 
 extension Error {
     /// Returns true if this error indicates that the user cancelled an operaiton

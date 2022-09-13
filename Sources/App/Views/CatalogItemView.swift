@@ -180,6 +180,12 @@ private struct CatalogItemHostView: View {
         }
     }
 
+    #if os(macOS)
+    typealias VSplitShim = VSplitView
+    #else
+    typealias VSplitShim = VStack
+    #endif
+
     @ViewBuilder func catalogStack() -> some View {
         VStack(spacing: 0) {
             catalogHeader()
@@ -193,7 +199,7 @@ private struct CatalogItemHostView: View {
             catalogSummaryCards()
                 .frame(height: 60)
             Divider()
-            VSplitView {
+            VSplitShim {
                 if previewAreaPinned == false {
                     HStack {
                         overviewTabView()
@@ -506,6 +512,7 @@ private struct CatalogItemHostView: View {
         ScrollView {
             Form {
                 if let cask = info.cask {
+#if os(macOS)
                     if let page = cask.homepage, let homepage = URL(string: page) {
                         linkTextField(Text("Homepage", comment: "app catalog entry info link title"), icon: .house, url: homepage)
                             .help(Text("Opens link to the home page for this app at: \(homepage.absoluteString)", comment: "app catalog entry info link tooltip"))
@@ -533,6 +540,7 @@ private struct CatalogItemHostView: View {
 
 //                    linkTextField(Text("Auto-Updates", comment: "app catalog entry info auto-update tooltip"), icon: .sparkle, url: nil, linkText: cask.auto_updates == nil ? "Unknown" : cask.auto_updates == true ? "Yes" : "No")
 //                        .help(Text("Whether this app handles updating itself", comment: "tooltip text describing when an app auto-updates"))
+#endif
                 } else if info.isGitHubHostedApp {
                     if let landingPage = info.app.landingPage {
                         linkTextField(Text("Home", comment: "app catalog entry info link title"), icon: .house, url: landingPage)
@@ -626,11 +634,17 @@ private struct CatalogItemHostView: View {
     /// The current preview tab, choosing a default based on the metadata
     private var previewTabDefaulted: Binding<PreviewTab> {
         Binding {
+            #if os(macOS)
+            let caskPreview = fairManager.homeBrewInv?.enableCaskHomepagePreview
+            #else
+            let caskPreview = false
+            #endif
+
             if let previewTab = previewTab {
                 return previewTab
             } else if metadata.screenshotURLs?.isEmpty == false {
                 return .screenshots
-            } else if fairManager.homeBrewInv?.enableCaskHomepagePreview == true {
+            } else if caskPreview == true {
                 return .homepage
             } else {
                 return .project
@@ -858,7 +872,9 @@ private struct CatalogItemHostView: View {
                         }
                     case .formula:
                         if let cask = info.cask {
+                            #if os(macOS)
                             CaskFormulaBox(cask: cask, json: false)
+                            #endif
                         } else {
                             AppInfoDetailBox(info: info)
                         }
@@ -1035,7 +1051,9 @@ private struct CatalogItemHostView: View {
                     }
 
                 }
+                #if os(macOS)
                 .prefersDefaultFocus(in: namespace)
+                #endif
                 .onTapGesture {
                     // tapping anywhere in the view will close the preview
                     withAnimation {
@@ -1129,8 +1147,10 @@ private struct CatalogItemHostView: View {
         let isCatalogApp = info.app.bundleIdentifier == Bundle.main.bundleID
         var canLaunchApp = true
         if info.isMobileApp {
+            #if os(macOS)
             // mobile apps can only be launched on ARM processors if platform conversion is enabled
             canLaunchApp = ProcessInfo.isArmMac == true && fairManager.appSourceInventories.first?.enablePlatformConversion == true
+            #endif
         }
 
         return GeometryReader { proxy in
@@ -1401,7 +1421,9 @@ private struct CatalogItemHostView: View {
             .frame(height: buttonHeight)
         })
             .buttonStyle(ActionButtonStyle(progress: .constant(currentActivity == activity ? progress.progress.fractionCompleted : 1.0), primary: true, highlighted: false))
+            #if os(macOS)
             .focusable(true)
+            #endif
             .accentColor(activity.info.tintColor)
             .disabled(currentActivity != nil && currentActivity != activity)
             .animation(.default, value: currentActivity) // make the enabled state of the button animate
@@ -1787,6 +1809,7 @@ struct ReleaseNotesBox : View {
                     self.releaseNotesText = .success(notes)
                 //}
             } else if let cask = info.cask {
+                #if os(macOS)
                 guard let (strategy, appcastURL) = try await fairManager.homeBrewInv?.fetchLivecheck(for: cask.token) else {
                     self.releaseNotesText = .success(AttributedString("Missing release notes"))
                     return
@@ -1805,6 +1828,9 @@ struct ReleaseNotesBox : View {
                     return
                 }
                 self.releaseNotesText = .success(AttributedString(channel.title ?? "No title"))
+                #else
+                self.releaseNotesText = .success(AttributedString("No release notes"))
+                #endif
             } else {
                 self.releaseNotesText = .success(AttributedString("No release notes"))
             }
@@ -1834,6 +1860,7 @@ struct AppInfoDetailBox : View, Equatable {
     }
 }
 
+#if os(macOS)
 struct CaskFormulaBox : View {
     let cask: CaskItem
     let json: Bool
@@ -1868,7 +1895,11 @@ struct CaskFormulaBox : View {
                 if jsonSource {
                     do {
                         let ob = try JSum(json: metadata.data)
-                        let pretty = try ob.json(outputFormatting: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
+                        let pretty = try ob.json(outputFormatting: [
+                            .prettyPrinted,
+                            .sortedKeys,
+                            .withoutEscapingSlashes,
+                        ])
                         self.caskSummary = .success(AttributedString(pretty.utf8String ?? ""))
                     } catch {
                         self.caskSummary = .success(AttributedString(metadata.data.utf8String ?? ""))
@@ -1885,6 +1916,7 @@ struct CaskFormulaBox : View {
         }
     }
 }
+#endif
 
 extension CatalogActivity {
     var info: (title: Text, systemSymbol: FairSymbol, tintColor: Color?, toolTip: Text) {
