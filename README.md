@@ -1,9 +1,6 @@
 ## Sun Bow: an App Fair app
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in App Fair.
-
-It supports **basic** formatting, but not images, lists, or links.
+Sun Bow is an extensible weather app.
 
 ## Installation
 
