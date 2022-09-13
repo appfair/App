@@ -595,7 +595,7 @@ extension AppSourceInventory {
         // grab the hash of the download to compare against the fairseal
         dbg("comparing fairseal expected:", item.sha256, "with actual:", downloadSha256)
         if let sha256 = item.sha256, sha256 != downloadSha256.hex() {
-            throw AppError(NSLocalizedString("Invalid checksum", comment: "error message when a checksum fails"), failureReason: NSLocalizedString("The app's checksum was not valid.", comment: "error message failure reason when a checksum fails"))
+            throw AppError(NSLocalizedString("Invalid checksum", comment: "error message when a checksum fails"), failureReason: NSLocalizedString("The app's checksum was not valid. This may indicate a network failure to download correctly, but it could also indicate the app's contents have been tampered with since it was sealed. It is recommended you do not install this app, and that you inform the app's vendor of the incicident.", comment: "error message failure reason when a checksum fails"))
         }
 
         try Task.checkCancellation()
