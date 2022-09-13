@@ -11,26 +11,37 @@ public struct ContentView: View {
     @State var coords = Store.defaultCoords
 
     public var body: some View {
-        ScrollView {
-            Section {
-                CurrentWeatherView(coords: $coords)
-                    .font(.callout)
-                    .frame(minHeight: 100)
-                    .padding()
-                WeatherAnalysisView()
-                    .font(.headline)
-                    .frame(minHeight: 100)
-                    .padding()
-                Divider()
-                WeatherFormView(coords: $coords)
-                    .padding()
+        NavigationView {
+            List {
+                Section {
+                    CurrentWeatherView(coords: $coords)
+                        .font(.callout)
+                        .padding(.horizontal)
+                } header: {
+                    Text("Current Weather")
+                }
+
+                Section {
+                    WeatherAnalysisView()
+                } header: {
+                    Text("Plug-In: Hot Take")
+                }
+
+                Section {
+
+                    WeatherFormView(coords: $coords)
+                }
 
                 // TODO: show Fahrenheit/Celsius units
                 //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)
-
-            } header: {
-                Text(Bundle.main.bundleName!)
-                    .font(.body)
+            }
+            .navigationTitle(Text("🌞 Sun Bow 🎁"))
+            .refreshable {
+                do {
+                    store.updateWeatherMessage(try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude)))
+                } catch {
+                    print("### error:", error)
+                }
             }
         }
     }
@@ -40,15 +51,12 @@ struct WeatherAnalysisView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        GroupBox("Weather Analysis:") {
-            Text(store.msg)
-                .textSelection(.enabled)
-                .padding()
-                .task {
-                    store.setWelcomeMessage()
-                }
-                .frame(maxWidth: .infinity)
-        }
+        Text(atx: store.msg)
+            .font(.title)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(1)
+            .truncationMode(.tail)
     }
 }
 
@@ -56,10 +64,9 @@ struct CurrentWeatherView : View {
     @Binding var coords: Coords
 
     public var body: some View {
-        GroupBox("Current Weather") {
-            WeatherView(coords: coords)
-                .textSelection(.enabled)
-        }
+        WeatherView(coords: coords)
+            .textSelection(.enabled)
+            .frame(minHeight: 100)
     }
 }
 
@@ -69,8 +76,9 @@ struct WeatherFormView : View {
     var body: some View {
         VStack { // Form doesn't render in iOS for some reason
             HStack {
+                Text("Latitude:").frame(width: 90, alignment: .trailing)
                 Slider(value: $coords.latitude, in: -90...90) {
-                    Text("Latitude:")
+                    EmptyView()
                 }
                 TextField(value: $coords.latitude, format: .number, prompt: Text("lat")) {
                     EmptyView()
@@ -78,8 +86,9 @@ struct WeatherFormView : View {
                 .frame(width: 100)
             }
             HStack {
+                Text("Longitude:").frame(width: 90, alignment: .trailing)
                 Slider(value: $coords.longitude, in: -180...180) {
-                    Text("Longitude:")
+                    EmptyView()
                 }
                 TextField(value: $coords.longitude, format: .number, prompt: Text("lon")) {
                     EmptyView()
@@ -87,8 +96,9 @@ struct WeatherFormView : View {
                 .frame(width: 100)
             }
             HStack {
+                Text("Altitude:").frame(width: 90, alignment: .trailing)
                 Slider(value: $coords.altitude, in: 0...8_000) {
-                    Text("Altitude:")
+                    EmptyView()
                 }
                 TextField(value: $coords.altitude, format: .number, prompt: Text("alt")) {
                     EmptyView()
@@ -96,6 +106,8 @@ struct WeatherFormView : View {
                 .frame(width: 100)
             }
         }
+        .lineLimit(1)
+        .truncationMode(.tail)
         .textFieldStyle(.roundedBorder)
         #if os(iOS)
         .keyboardType(.decimalPad)
@@ -121,21 +133,13 @@ extension Coords : Identifiable {
     public var id: Self { self }
 }
 
-public struct WeatherView: View, Equatable {
-    let coords: Coords
-
-    public var body: some View {
-        WeatherFetcherView(coords: coords)
-    }
-}
-
-private struct WeatherFetcherView: View {
+public struct WeatherView: View {
     let coords: Coords
     @State private var weatherResult: Result<Weather, Error>? = .none
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             switch self.weatherResult {
             case .none:
                 Text("Loading…")
@@ -145,7 +149,7 @@ private struct WeatherFetcherView: View {
                     Rectangle().fill(Color.cyan)
                 } else if (error as NSError).domain == "NSURLErrorDomain" && (error as NSError).code == URLError.cancelled.rawValue {
                     // URL cancellation throws a different error
-                    Rectangle().fill(Color.gray.opacity(0.1))
+                    //Rectangle().fill(Color.gray.opacity(0.1))
                 } else {
                     HStack {
                         Text("Error:")
@@ -153,29 +157,39 @@ private struct WeatherFetcherView: View {
                     }
                 }
             case .success(let weather):
-                VStack {
-//                    TextField("Temperature:", value: .constant(weather.currentWeather.temperature), format: .measurement(width: .wide), prompt: Text("updating temperature…"))
-                    HStack {
-                        Text("Temperature:")
-                        Text(weather.currentWeather.temperature, format: .measurement(width: .wide))
-                    }
-                    HStack {
-                        Text("Wind:")
+                HStack {
+                    Text("Temp:")
+                        .frame(width: 80)
+                        .frame(alignment: .trailing)
+                    Text(weather.currentWeather.temperature, format: .measurement(width: .narrow))
+                        .frame(alignment: .leading)
+                }
+                HStack {
+                    Text("Wind:")
+                        .frame(width: 80)
+                        .frame(alignment: .trailing)
+                    Group {
                         Text(weather.currentWeather.wind.speed, format: .measurement(width: .narrow))
-                        let dir = Text(weather.currentWeather.wind.direction, format: .measurement(width: .abbreviated))
-                        Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                        let dir = Text(weather.currentWeather.wind.direction, format: .measurement(width: .narrow))
+                        dir
+                        //Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
                     }
+                    .frame(alignment: .leading)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: coords, priority: .userInitiated) {
-            self.weatherResult = await Result {
-                try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude))
-            }
+            await refreshWeather()
         }
         .onChange(of: weatherResult?.successValue) { weather in
             store.updateWeatherMessage(weather)
+        }
+    }
+
+    func refreshWeather() async {
+        self.weatherResult = await Result {
+            try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude))
         }
     }
 }
@@ -218,41 +232,37 @@ open class Store: SceneManager, JackedObject {
         return Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0)
     }()
 
-    func setWelcomeMessage() {
-        do {
-            try ctx.env.eval("msg = 'Welcome to Sun Bow!'")
-        } catch {
-            dbg("error evaluating script:", error)
-        }
-    }
-
     func updateWeatherMessage(_ weather: Weather?) {
         do {
             guard var temp = weather?.currentWeather.temperature else {
-                try ctx.env.eval("msg = '🟡'")
+                try ctx.env.eval("msg = '🫥 `analyzing…`'")
                 return
             }
 
-            temp.convert(to: self.fahrenheit ? .fahrenheit : .celsius)
+            temp.convert(to: .fahrenheit)
 
-            switch temp.value {
-            case ...0:
-                try ctx.env.eval("msg = 'It is very very cold!'")
-            case 0...33:
-                try ctx.env.eval("msg = 'It is cold.'")
-            case 33...50:
-                try ctx.env.eval("msg = 'It is chilly.'")
-            case 51...80:
-                try ctx.env.eval("msg = 'It is nice'")
-            case 80...90:
-                try ctx.env.eval("msg = 'It is hot'")
-            case 90...100:
-                try ctx.env.eval("msg = 'It is very hot'")
-            case 100...:
-                try ctx.env.eval("msg = 'It is very very hot!'")
-            default:
-                break
+            try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
+
+            try ctx.env.eval("""
+            var temp = Math.round(temperature);
+            if (temp < 0) {
+                msg = `🥶 ${temp}° is **very** ***cold***!!`;
+            } else if (temp < 33) {
+                msg = `😶‍🌫️ ${temp}° is **cold**!`;
+            } else if (temp < 50) {
+                msg = `😨 ${temp}° is *chilly*.`;
+            } else if (temp < 80) {
+                msg = `🤗 ${temp}° is nice.`;
+            } else if (temp < 90) {
+                msg = `😡 ${temp}° is *warm*.`;
+            } else if (temp < 100) {
+                msg = `🥵 ${temp}° is **hot**!`;
+            } else if (temp < 200) {
+                msg = `🤯 ${temp}° is **very** ***hot***!!`;
+            } else {
+                msg = `It is surprising temperature (${temp}°)!`;
             }
+            """)
         } catch {
             dbg("error evaluating script:", error)
         }
