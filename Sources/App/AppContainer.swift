@@ -279,7 +279,8 @@ public extension AppContainer {
 
     /// The app-wide settings view
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
+        WeatherFacets.allCases.last!
+            .environmentObject(store)
     }
 }
 
@@ -342,13 +343,13 @@ public enum WeatherFacets : String, AppFacets {
 
 public struct WelcomeView : View {
     public var body: some View {
-        Text(wip("WelcomeView"))
+        Text("WelcomeView")
     }
 }
 
 public struct PlacesView : View {
     public var body: some View {
-        Text(wip("PlacesView"))
+        Text("PlacesView")
     }
 }
 
@@ -360,15 +361,11 @@ public struct TodayView : View {
 
 public struct ForecastView : View {
     public var body: some View {
-        Text(wip("ForecastView"))
+        Text("ForecastView")
     }
 }
 
 public enum WeatherSetting : String, SettingsFacets {
-    case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
-    public static let aboutTitle = Text("About", bundle: .module, comment: "about settings facet title")
-    public static let aboutSymbol = FairSymbol.info
-
     case preferences // app-specific settings
     public static let preferencesTitle = Text("Preferences", bundle: .module, comment: "preferences settings facet title")
     public static let preferencesSymbol = FairSymbol.gearshape_2
@@ -393,6 +390,9 @@ public enum WeatherSetting : String, SettingsFacets {
     public static let supportTitle = Text("Support", bundle: .module, comment: "support settings facet title")
     public static let supportSymbol = FairSymbol.questionmark_app
 
+    case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
+    public static let aboutTitle = Text("About", bundle: .module, comment: "about settings facet title")
+    public static let aboutSymbol = FairSymbol.info
 
 
     public var title: Text {
@@ -422,7 +422,7 @@ public enum WeatherSetting : String, SettingsFacets {
     public var body: some View {
         switch self {
         case .about: AboutSettingsView()
-        case .preferences: AppSettingsView()
+        case .preferences: PreferencesSettingsView()
         case .appearance: AppearanceSettingsView()
         case .language: LanguageSettingsView()
         case .icon: IconSettingsView()
@@ -432,11 +432,22 @@ public enum WeatherSetting : String, SettingsFacets {
     }
 }
 
+
+public struct AppSettingsView : View {
+    @SceneStorage("selectedSetting") var selectedSetting = WeatherSetting.allCases.first.unsafelyUnwrapped
+
+    public var body: some View {
+        NavTabBrowserView(nested: true, selection: $selectedSetting)
+    }
+}
+
+
 public struct AboutSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -444,7 +455,8 @@ public struct AppearanceSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -452,7 +464,8 @@ public struct LanguageSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -460,7 +473,8 @@ public struct IconSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -468,7 +482,8 @@ public struct PodsSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -476,17 +491,21 @@ public struct SupportSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text(wip("DESC"))
+        Text("DESC")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-public struct AppSettingsView : View {
+public struct PreferencesSettingsView : View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Toggle(isOn: $store.fahrenheit) {
-            Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
+        Form {
+            Toggle(isOn: $store.fahrenheit) {
+                Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
+            }
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
