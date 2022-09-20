@@ -350,13 +350,3 @@ internal func loc(_ key: String, tableName: String? = nil, comment: String? = ni
     NSLocalizedString(key, tableName: tableName, bundle: .module, comment: comment ?? "")
 }
 
-/// Work-in-Progress marker
-@available(*, deprecated, message: "work in progress")
-internal func wip<T>(_ value: T) -> T { value }
-
-/// Intercept `LocalizedStringKey` constructor and forward it to ``SwiftUI.Text/init(_:bundle)``
-/// Otherwise it will default to the main bundle's strings, which is always empty.
-@available(*, deprecated, message: "use localized bundle/comment initializer instead")
-@usableFromInline internal func Text(_ string: LocalizedStringKey, comment: StaticString? = nil) -> SwiftUI.Text {
-    SwiftUI.Text(string, bundle: .module, comment: comment)
-}
