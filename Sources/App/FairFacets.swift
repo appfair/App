@@ -42,7 +42,8 @@ import FairCore
 /// On iOS, the facets are represented by tabs.
 /// On macOS, facets are represented by top-level OutlineView sections.
 /// By convention, the initial element of the `CaseIterable` list will be a welcome screen that will be shown on macOS when there is no selection, and is represented by the initial tab.
-/// The final tab will be the settings tab, which is shown as a tab on iOS and is included in
+///
+/// The final tab will be the settings tab, which is shown as a tab on iOS and is included in the standard settings window on macOS.
 public protocol Facet : CaseIterable, Hashable, RawRepresentable where RawValue == String, AllCases : RandomAccessCollection, AllCases.Index == Int {
 
     /// Metadata for the facet
@@ -90,7 +91,7 @@ extension FocusedValues {
     }
 }
 
-extension KeyEquivalent {
+fileprivate extension KeyEquivalent {
     /// Returns a `KeyEquivalent` for the given number
     static func indexed(_ itemIndex: Int) -> Self? {
         switch itemIndex {

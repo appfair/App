@@ -345,7 +345,7 @@ public enum WeatherSetting : String, Facet, View {
     public var facetInfo: FacetInfo {
         switch self {
         case .preferences:
-            return info(title: Text("Preferences", bundle: .module, comment: "preferences settings facet title"), symbol: .gearshape_2, tint: .yellow)
+            return info(title: Text("Preferences", bundle: .module, comment: "preferences settings facet title"), symbol: .gear, tint: .yellow)
         case .appearance:
             return info(title: Text("Appearance", bundle: .module, comment: "appearance settings facet title"), symbol: .paintpalette, tint: .red)
         case .language:
@@ -375,7 +375,7 @@ public enum WeatherSetting : String, Facet, View {
 }
 
 public struct AppSettingsView : View {
-    @State var selectedSetting = WeatherSetting.allCases.first
+    @State var selectedSetting: WeatherSetting?
 
     public var body: some View {
         FacetBrowserView(selection: $selectedSetting)
