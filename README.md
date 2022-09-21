@@ -23,7 +23,7 @@ It can be un-installed by dragging it to the Trash.
 ## Support
 
 The landing page for this app is available at
-[https://App-Name.github.io/App/](https://App-Name.github.io/App/).
+[https://Net-Skip.github.io/App/](https://Net-Skip.github.io/App/).
 
 Community Support for this app is available on the
 [Discussion](../../discussions) forums.
