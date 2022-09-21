@@ -5,7 +5,7 @@ import WeatherTiq
 public struct WeatherSectionView: View {
     @EnvironmentObject var store: Store
     @State var coords = Store.defaultCoords
-
+    
     public var body: some View {
         List {
             Section {
@@ -15,26 +15,26 @@ public struct WeatherSectionView: View {
             } header: {
                 Text("Current Weather", bundle: .module, comment: "section header for weather section")
             }
-
+            
             Section {
                 WeatherAnalysisView()
             } header: {
                 Text("Plug-In: Hot Take", bundle: .module, comment: "plug-in title")
             }
-
+            
             Section {
                 WeatherFormView(coords: $coords)
             }
-
+            
             // TODO: show Fahrenheit/Celsius units
             //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)
         }
-        .navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
+        //.navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
         .refreshable {
             do {
-                store.updateWeatherMessage(try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude)))
+                store.updateWeatherMessage(try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
             } catch {
-                print("### error:", error)
+                print(wip("### error:"), error)
             }
         }
     }
@@ -42,7 +42,7 @@ public struct WeatherSectionView: View {
 
 struct WeatherAnalysisView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text(atx: store.msg)
             .font(.title)
@@ -55,7 +55,7 @@ struct WeatherAnalysisView : View {
 
 struct CurrentWeatherView : View {
     @Binding var coords: Coords
-
+    
     public var body: some View {
         WeatherView(coords: coords)
             .textSelection(.enabled)
@@ -63,9 +63,10 @@ struct CurrentWeatherView : View {
     }
 }
 
+
 struct WeatherFormView : View {
     @Binding var coords: Coords
-
+    
     var body: some View {
         VStack { // Form doesn't render in iOS for some reason
             HStack {
@@ -90,7 +91,7 @@ struct WeatherFormView : View {
             }
             HStack {
                 Text("Altitude:", bundle: .module, comment: "altitude form field label").frame(width: 90, alignment: .trailing)
-                Slider(value: $coords.altitude, in: 0...8_000) {
+                Slider(value: $coords.altitude[default: 0.0].pvalue, in: 0...8_000) {
                     EmptyView()
                 }
                 TextField(value: $coords.altitude, format: .number, prompt: Text("alt", bundle: .module, comment: "altitude form fiel placeholder")) {
@@ -102,9 +103,9 @@ struct WeatherFormView : View {
         .lineLimit(1)
         .truncationMode(.tail)
         .textFieldStyle(.roundedBorder)
-        #if os(iOS)
+#if os(iOS)
         .keyboardType(.decimalPad)
-        #endif
+#endif
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -112,14 +113,14 @@ struct WeatherFormView : View {
 public struct Coords : Hashable, Codable {
     var latitude: Double
     var longitude: Double
-    var altitude: Double
-
-    public init(latitude: Double, longitude: Double, altitude: Double) {
+    var altitude: Double?
+    
+    public init(latitude: Double, longitude: Double, altitude: Double? = nil) {
         self.latitude = latitude
         self.longitude = longitude
         self.altitude = altitude
     }
-
+    
 }
 
 extension Coords : Identifiable {
@@ -130,7 +131,7 @@ public struct WeatherView: View {
     let coords: Coords
     @State private var weatherResult: Result<Weather, Error>? = .none
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         VStack(alignment: .leading) {
             switch self.weatherResult {
@@ -179,10 +180,10 @@ public struct WeatherView: View {
             store.updateWeatherMessage(weather)
         }
     }
-
+    
     func refreshWeather() async {
         self.weatherResult = await Result {
-            try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude))
+            try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? .nan))
         }
     }
 }
@@ -194,48 +195,48 @@ public struct WeatherView: View {
 public final class Store: SceneManager, ObservableObject, JackedObject {
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
-
+    
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("fahrenheit") public var fahrenheit = true
-
-
+    
+    
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
     public static let service = WeatherService(serviceURL: defaultWeatherServer)
-
+    
     // The shared script context for executing adjuncts
     public static let ctx = JXKit.JXContext()
-
+    
     @Jacked var msg = ""
-
+    
     /// The script context to use for this app
     lazy var ctx = jack()
-
+    
     public required init() {
     }
-
+    
     static var defaultWeatherServer: URL = {
         Store.config["weather"]?["server"]?.str.flatMap(URL.init(string:)) ?? WeatherService.shared.serviceURL
     }()
-
+    
     static var defaultCoords: Coords = {
         let defloc = Store.config["weather"]?["default_location"] ?? [:]
         let lat = defloc["latitude"]?.num
         let lon = defloc["longitude"]?.num
         let alt = defloc["altitude"]?.num
-        return Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0)
+        return wip(Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0))
     }()
-
+    
     func updateWeatherMessage(_ weather: Weather?) {
         do {
             guard var temp = weather?.currentWeather.temperature else {
                 try ctx.env.eval("msg = '🫥 `analyzing…`'")
                 return
             }
-
+            
             temp.convert(to: .fahrenheit)
-
+            
             try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
-
+            
             try ctx.env.eval("""
             var temp = Math.round(temperature);
             if (temp < 0) {
@@ -268,7 +269,7 @@ public enum WeatherFacets : String, Facet, View {
     case today
     case forecast
     case settings
-
+    
     public var facetInfo: FacetInfo {
         switch self {
         case .welcome:
@@ -283,7 +284,7 @@ public enum WeatherFacets : String, Facet, View {
             return info(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: .brown)
         }
     }
-
+    
     public var body: some View {
         switch self {
         case .welcome: WelcomeView()
@@ -301,9 +302,34 @@ public struct WelcomeView : View {
     }
 }
 
+struct Place : Identifiable {
+    var id = UUID()
+    var name: String
+    var coordinates: Coords
+}
+
 public struct PlacesView : View {
+    @State var places: Array<Place> = [
+        wip(Place(name: "Boston", coordinates: Coords(latitude: 42.35843, longitude: -71.05977)))
+    ]
+    
     public var body: some View {
-        Text("PlacesView")
+        VStack {
+            List {
+                ForEach($places) { $place in
+                    //TextField("Title", text: $place.title)
+                    Text(place.name)
+                }
+                .onMove { indexSet, offset in
+                    places.move(fromOffsets: indexSet, toOffset: offset)
+                }
+                .onDelete { indexSet in
+                    places.remove(atOffsets: indexSet)
+                }
+            }
+        }
+        .toolbar { EditButton() }
+        
     }
 }
 
@@ -320,7 +346,7 @@ public struct ForecastView : View {
 }
 
 public extension Facet {
-
+    
     /// Facet metadata convenience builder.
     ///
     /// - Parameters:
@@ -341,7 +367,7 @@ public enum WeatherSetting : String, Facet, View {
     case pods // extension manager: add, remove, browse, and configure JackPods
     case support // links to support resources: issues, discussions, source code, "fork this app", "Report this App (to the App Fair Council)"), log accessor, and software BOM
     case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
-
+    
     public var facetInfo: FacetInfo {
         switch self {
         case .preferences:
@@ -360,7 +386,7 @@ public enum WeatherSetting : String, Facet, View {
             return info(title: Text("About", bundle: .module, comment: "about settings facet title"), symbol: .face_smiling, tint: .mint)
         }
     }
-
+    
     public var body: some View {
         switch self {
         case .about: AboutSettingsView()
@@ -376,7 +402,7 @@ public enum WeatherSetting : String, Facet, View {
 
 public struct AppSettingsView : View {
     @State var selectedSetting: WeatherSetting?
-
+    
     public var body: some View {
         FacetBrowserView(selection: $selectedSetting)
     }
@@ -385,7 +411,7 @@ public struct AppSettingsView : View {
 
 public struct AboutSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("About")
             .font(.largeTitle)
@@ -395,7 +421,7 @@ public struct AboutSettingsView : View {
 
 public struct AppearanceSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("Appearance")
             .font(.largeTitle)
@@ -405,7 +431,7 @@ public struct AppearanceSettingsView : View {
 
 public struct LanguageSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("Language")
             .font(.largeTitle)
@@ -415,7 +441,7 @@ public struct LanguageSettingsView : View {
 
 public struct IconSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("Icon")
             .font(.largeTitle)
@@ -425,7 +451,7 @@ public struct IconSettingsView : View {
 
 public struct PodsSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("Pods")
             .font(.largeTitle)
@@ -435,7 +461,7 @@ public struct PodsSettingsView : View {
 
 public struct SupportSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Text("Support")
             .font(.largeTitle)
@@ -445,7 +471,7 @@ public struct SupportSettingsView : View {
 
 public struct PreferencesSettingsView : View {
     @EnvironmentObject var store: Store
-
+    
     public var body: some View {
         Form {
             Toggle(isOn: $store.fahrenheit) {

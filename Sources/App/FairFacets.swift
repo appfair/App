@@ -134,6 +134,11 @@ public struct FacetCommands<AF: Facet> : Commands {
     }
 }
 
+extension Facet {
+    /// The tab's tag for the facet, which needs to be `Optional` to match the optional selection
+    var facetTag: Self? { self }
+}
+
 /// A view that can browse facets in either a tabbed or outline view configuration, depending on a combination of the current platform and the value if the `nested` setting.
 public struct FacetBrowserView<F: Facet> : View where F : View {
     /// Whether the browser is at the top level or a lower level. This will affect whether it is rendered as a navigation hierarchy or a tabbed interface.
@@ -146,25 +151,29 @@ public struct FacetBrowserView<F: Facet> : View where F : View {
     }
 
     private var displayInTabs: Bool {
-        #if os(macOS)
+#if os(macOS)
         nested
-        #else
+#else
         !nested
-        #endif
+#endif
     }
 
     public var body: some View {
         if displayInTabs {
             TabView(selection: $selection) {
-                ForEach(F.allCases, id: \.self) { facet in
-                    facet
-                        .tabItem {
-                            facet.facetInfo.title.label(image: facet.facetInfo.symbol)
-                                .symbolVariant(.fill)
-                        }
-                        .tag(Optional.some(facet))
-                        .tint(facet.facetInfo.tint)
-
+                ForEach(F.allCases, id: \.facetTag) { facet in
+                    NavigationView {
+                        facet
+                            .navigationTitle(facet.facetInfo.title)
+#if os(iOS)
+                            .navigationBarTitleDisplayMode(.inline)
+#endif
+                    }
+                    .tabItem {
+                        facet.facetInfo.title.label(image: facet.facetInfo.symbol)
+                            .symbolVariant(.fill)
+                    }
+                    .tint(facet.facetInfo.tint)
                 }
             }
         } else {
@@ -174,15 +183,15 @@ public struct FacetBrowserView<F: Facet> : View where F : View {
                         NavigationLink(tag: facet, selection: $selection) {
                             facet
                                 .navigationTitle(facet.facetInfo.title)
-                                #if os(iOS)
-                                .navigationBarTitleDisplayMode(.inline)
-                                #endif
                         } label: {
                             facet.facetInfo.title.label(image: facet.facetInfo.symbol)
                                 .tint(facet.facetInfo.tint)
                         }
                     }
                 }
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
 
                 if !nested {
                     // the default placeholder view is the welcome screen
