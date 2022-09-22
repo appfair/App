@@ -328,8 +328,9 @@ public struct PlacesView : View {
                 }
             }
         }
+        #if os(iOS)
         .toolbar { EditButton() }
-        
+        #endif
     }
 }
 
