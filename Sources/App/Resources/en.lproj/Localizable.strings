@@ -1,7 +1,12 @@
-// English strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+/* welcome subtitle */
+"(it doesn't do anything _yet_)" = "(it doesn't do anything _yet_)";
 
-"OK" = "OK";
-"Cancel" = "Cancel";
-"Welcome to %@!" = "Welcome to %@!";
+/* the localized name of this app */
+"App-Name" = "App-Name";
+
+/* a preferences toggle in the settings view */
+"Toggle" = "Toggle";
+
+/* welcome title */
+"Welcome to **%@**" = "Welcome to **%@**";
 

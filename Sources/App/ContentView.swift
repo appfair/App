@@ -1,36 +1,6 @@
 import FairApp
 
-/// The global app environment containing configuration metadata and shared defaults.
-///
-/// The shared instance of Store is available throughout the app with:
-/// ``@EnvironmentObject var store: Store``
-open class Store: SceneManager {
-    /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
-
-    /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
-    @AppStorage("someToggle") public var someToggle = false
-
-    public required init() {
-    }
-}
-
-public extension AppContainer {
-    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        WindowGroup {
-            ContentView()
-                .background(Color.black)
-                .colorScheme(.dark) // always use dark color scheme
-                .environmentObject(store)
-        }
-    }
-
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        EmptyView()
-    }
-}
-
+/// The main content view for the app. This is the starting point for customizing you app's behavior.
 @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
 struct ContentView: View {
     /// The elements that will be displayed in the grid
@@ -111,15 +81,3 @@ struct ContentView: View {
         }
     }
 }
-
-extension View {
-    /// Install a hover action on platforms that support it
-    func whenHovering(perform action: @escaping (Bool) -> ()) -> some View {
-        #if os(macOS) || os(iOS)
-        return self.onHover(perform: action)
-        #else
-        return self
-        #endif
-    }
-}
-
