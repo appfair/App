@@ -403,7 +403,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "sandbox-ios.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "sandbox-macos.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
@@ -431,7 +432,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Sandbox.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "sandbox-ios.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "sandbox-macos.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
