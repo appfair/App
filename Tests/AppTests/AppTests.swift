@@ -23,7 +23,6 @@ import FairApp
 
 @testable import App
 
-@available(macOS 12.0, iOS 15.0, *)
 open class AppTests: XCTestCase {
     open func testAppScene() throws {
         // awaiting Swift 5.5 final

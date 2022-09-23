@@ -18,12 +18,10 @@ import SwiftUI
 
 /// An `EnvironmentObject` that is used to coordinate the various
 /// components of a `FrameNavigator`.
-@available(macOS 12.0, iOS 15.0, *)
 public protocol FrameCoordinator : ObservableObject {
     //var frameColumns: [TabularData.ColumnID] { get }
 }
 
-//@available(macOS 12.0, iOS 15.0, *)
 //private extension TabularData.ColumnID {
 //    func createFrameColumn() -> FrameColumn<Never, Never, Never, Never> {
 //        //let xxx = SwiftUI.TableColumn(wip("")) { EmptyView() }
@@ -53,7 +51,7 @@ public struct FrameDisplayMode: OptionSet, Hashable {
 ///// and a focused detail view. In addition, on macOS, the sidebar can
 ///// be swapped for a `SwiftUI.TableView` to display additional
 ///// details about the list and permit advances sorting, selection, and filtering.
-//@available(macOS 12.0, iOS 15.0, *)
+
 //public struct FrameNavigator</*Coordinator: ObservableObject, */SidebarView: View, ListView: View, TableView: View, ContentView: View>: View {
 //    /*@Environment(\.frameDisplayMode)*/ let displayMode: Set<FrameDisplayMode> = [.table, .list]
 //
@@ -91,25 +89,20 @@ public struct FrameDisplayMode: OptionSet, Hashable {
 //    }
 //}
 
-@available(macOS 12.0, *)
-@available(iOS 15.0, *)
 struct FrameColumn<Value, RowValue : Identifiable, Sort : SortComparator, Content : View, Label : View> {
     let column: TabularData.ColumnID<Value>
 }
 
 
 #if os(macOS)
-@available(macOS 12.0, *)
-@available(iOS, unavailable)
-extension FrameColumn {
-    func createTableColumn() -> TableColumn<RowValue, Sort, Content, Label> {
-//        extension TableColumn where Sort == KeyPathComparator<RowValue>, Label == Text
 
-        fatalError(wip("TODO"))
-    }
-}
+//extension FrameColumn {
+//    func createTableColumn() -> TableColumn<RowValue, Sort, Content, Label> {
+////        extension TableColumn where Sort == KeyPathComparator<RowValue>, Label == Text
+//        fatalError(wip("TODO"))
+//    }
+//}
 
-@available(macOS 12.0, *)
 extension TableColumnContent {
 
     // -> TupleTableColumnContent<Self.TableRowValue, C, (Self, Content)>
@@ -125,7 +118,6 @@ extension TableColumnContent {
 }
 
 
-@available(macOS 12.0, *)
 extension XOr.Or : TableColumnContent where P : TableColumnContent, Q : TableColumnContent {
     public var tableColumnBody: P {
         p!

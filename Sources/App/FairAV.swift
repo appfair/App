@@ -1,6 +1,5 @@
 import AVKit
 
-@available(macOS 12.0, iOS 15.0, *)
 let allAVMetadataIdentifiers: [AVMetadataIdentifier] =  [
     AVMetadataIdentifier.commonIdentifierTitle,
     AVMetadataIdentifier.commonIdentifierCreator,

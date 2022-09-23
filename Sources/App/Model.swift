@@ -42,9 +42,6 @@ extension Source : Identifiable {
     var id: URL { url }
 }
 
-/// To fetch the latest catalog, run:
-/// curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
-@available(macOS 12.0, iOS 15.0, *)
 struct Station : Pure {
     // parsing as takes takes it from 500ms -> 12724ms
     // typealias DateString = Date
@@ -97,7 +94,6 @@ struct Station : Pure {
     var has_extended_info: Bool?
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension Station : Identifiable {
     /// The identifier of the station
     var id: UUID? {
@@ -218,7 +214,6 @@ extension Station : Identifiable {
 }
 
 
-@available(macOS 12.0, iOS 15.0, *)
 extension Station {
     /// The parsed `Tags` field
     var tagElements: [String] {
@@ -353,7 +348,6 @@ extension Station {
 
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension Station {
     var streamingURL: URL? {
         self.url.flatMap(URL.init(string:))
@@ -390,7 +384,6 @@ private extension String {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct StationCatalog {
     // StationID,Name,Url,Homepage,Favicon,Creation,Country,Language,Tags,Votes,Subcountry,clickcount,ClickTrend,ClickTimestamp,Codec,LastCheckOK,LastCheckTime,Bitrate,UrlCache,LastCheckOkTime,Hls,ChangeUuid,StationUuid,CountryCode,LastLocalCheckTime,CountrySubdivisionCode,GeoLat,GeoLong,SslError,LanguageCodes,ExtendedInfo
     var frame: DataFrame
@@ -420,7 +413,31 @@ struct StationCatalog {
     }()
 
     static let stations: Result<StationCatalog, Error> = {
-        prf { // 479ms
+        return stationsCSV
+    }()
+
+    /// To fetch the latest catalog, run:
+    /// curl -fsSL https://nl1.api.radio-browser.info/json/stations/search > Sources/App/Resources/stations.json
+    @available(*, deprecated, message: "too slow")
+    private static let stationsJSON: Result<JSum, Error> = {
+        prf { // 6872ms: too slow!
+            Result {
+                // load from the local resource bundle
+                // we could alternatively load from the source: https://fr1.api.radio-browser.info/csv/stations/search
+                guard let url = Bundle.module.url(forResource: "stations", withExtension: "json") else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
+
+                let contents = try JSum.parse(json: Data(contentsOf: url))
+                return contents
+            }
+        }
+    }()
+
+    /// To fetch the latest catalog, run:
+    /// curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
+    private static let stationsCSV: Result<StationCatalog, Error> = {
+        prf { // 1075ms
             Result {
                 // load from the local resource bundle
                 // we could alternatively load from the source: https://fr1.api.radio-browser.info/csv/stations/search
@@ -429,6 +446,7 @@ struct StationCatalog {
                 }
 
                 // the old ways are better
+                
                 var options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL", ""], trueEncodings: ["true"], falseEncodings: ["false"], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: false, delimiter: ",", escapeCharacter: "\\")
 
                 options.addDateParseStrategy(Date.ISO8601FormatStyle())
@@ -501,7 +519,6 @@ extension String {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension DataFrame {
     func valueCounts<T: Hashable>(column: ColumnID<T>) -> [ValueCount<T>] {
         self

@@ -18,7 +18,6 @@ import AVKit
 import AVFoundation
 import VideoToolbox
 import WebKit
-import AudioKit
 import SwiftUI
 #if os(iOS)
 import MediaPlayer
@@ -27,7 +26,6 @@ import MediaPlayer
 import TabularData
 #endif
 
-@available(macOS 12.0, iOS 15.0, *)
 public struct TuneOutView: View {
     @EnvironmentObject var store: Store
     @SceneStorage("displayMode") var displayMode: TriptychOrient = TriptychOrient.allCases.first!
@@ -37,7 +35,7 @@ public struct TuneOutView: View {
             Sidebar()
         } list: {
             if let frame = StationCatalog.stationsFrame {
-                StationList(title: Text("Stations"), frame: { frame }, hideEmpty: true)
+                StationList(title: Text("Stations", bundle: .module, comment: "stations"), frame: { frame }, hideEmpty: true)
             } else {
                 EmptyView()
             }
@@ -51,7 +49,7 @@ public struct TuneOutView: View {
             #endif
         } content: {
             // needs a third placeholder view to get the three-column NavigationView behavior
-            Text("Select Station")
+            Text("Select Station", bundle: .module, comment: "placeholder for empty station selection")
                 .font(.largeTitle)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -65,7 +63,6 @@ public struct TuneOutView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension DataFrame.Row {
     var stationID: Station.UUIDString? {
         self[Station.stationuuidColumn]
@@ -119,7 +116,6 @@ struct StationRowAccessor : Identifiable {
 
 
 #if os(macOS)
-@available(macOS 12.0, *)
 struct StationsTableView : View {
     let frame: DataFrame
     @State var selection: StationRowAccessor.ID? = nil
@@ -160,7 +156,6 @@ private extension Optional {
 
 
 
-@available(macOS 12.0, iOS 15.0, *)
 struct StationList<Frame: DataSlice> : View {
     /// The navigation title for this view
     let navTitle: Text
@@ -250,10 +245,10 @@ struct StationList<Frame: DataSlice> : View {
                     }
                 }
             } else {
-                Text("Station List").font(.largeTitle).foregroundColor(.secondary)
+                Text("Station List", bundle: .module, comment: "placeholder for empty station list").font(.largeTitle).foregroundColor(.secondary)
             }
         }
-        .searchable(text: $queryString, placement: .automatic, prompt: Text("Search"))
+        .searchable(text: $queryString, placement: .automatic, prompt: Text("Search", bundle: .module, comment: "search box placeholder"))
         .onSubmit(of: .search) {
             Task {
                 //await viewModel.executeQuery()
@@ -265,13 +260,13 @@ struct StationList<Frame: DataSlice> : View {
                     dbg("previous")
                     selectStation(next: false, query: false)
                 } label: {
-                    Text("Previous").label(symbol: "backward.frame").symbolVariant(.fill)
+                    Text("Previous", bundle: .module, comment: "previous button text").label(symbol: "backward.frame").symbolVariant(.fill)
                 }
                 .symbolVariant(.fill)
                 .symbolRenderingMode(.hierarchical)
                 .disabled(!selectStation(next: false, query: true))
                 .keyboardShortcut("[")
-                .help(Text("Select the previous station"))
+                .help(Text("Select the previous station", bundle: .module, comment: "previous button tooltip"))
             }
 
             ToolbarItem(id: "shuffle", placement: ToolbarItemPlacement.navigation, showsByDefault: true) {
@@ -285,13 +280,13 @@ struct StationList<Frame: DataSlice> : View {
                         }
                     }
                 } label: {
-                    Text("Shuffle").label(symbol: "shuffle")
+                    Text("Shuffle", bundle: .module, comment: "shuffle button text").label(symbol: "shuffle")
                 }
                 .keyboardShortcut("\\")
                 //.symbolVariant(self.shuffledIDs == nil ? .none : .circle)
                 .foregroundStyle(self.shuffledIDs == nil ? Color.primary : Color.accentColor)
                 .symbolRenderingMode(.hierarchical)
-                .help(Text("Shuffle the current selection"))
+                .help(Text("Shuffle the current selection", bundle: .module, comment: "shuffle button tooltip"))
             }
 
             ToolbarItem(id: "next", placement: ToolbarItemPlacement.accessory(or: .navigation), showsByDefault: true) {
@@ -299,13 +294,13 @@ struct StationList<Frame: DataSlice> : View {
                     dbg("next")
                     selectStation(next: true, query: false)
                 } label: {
-                    Text("Next").label(symbol: "forward.frame").symbolVariant(.fill)
+                    Text("Next", bundle: .module, comment: "next button text").label(symbol: "forward.frame").symbolVariant(.fill)
                 }
                 .symbolVariant(.fill)
                 .symbolRenderingMode(.hierarchical)
                 .disabled(!selectStation(next: true, query: true))
                 .keyboardShortcut("]")
-                .help(Text("Select the next station"))
+                .help(Text("Select the next station", bundle: .module, comment: "next button tooltip"))
             }
         }
         .navigation(title: nowPlayingTitleText, subtitle: subtitle)
@@ -335,7 +330,7 @@ struct StationList<Frame: DataSlice> : View {
         if let station = self.selectedStation,
            let stationName = station.name,
            !stationName.isEmpty {
-            title = title + Text(": ") + Text(stationName)
+            title = title + Text(verbatim: ": ") + Text(stationName)
         }
         return title
     }
@@ -346,7 +341,7 @@ struct StationList<Frame: DataSlice> : View {
             return Text(nowPlayingTitle)
         } else {
             // it might be better to return nil here, but it messes up the navigation headers
-            return Text("")
+            return Text(verbatim: "")
         }
     }
 
@@ -387,7 +382,7 @@ struct StationList<Frame: DataSlice> : View {
                 pinned(add: !pinned()) // toggle pinned
             } label: {
                 Label(title: {
-                    Text("Pin")
+                    Text("Pin", bundle: .module, comment: "pin swipe action label")
                 }, icon: {
                     Image(systemName: "pin")
                         .symbolVariant(pinned() ? SymbolVariants.slash : SymbolVariants.fill)
@@ -401,7 +396,7 @@ struct StationList<Frame: DataSlice> : View {
 
     func stationLabelTitle(_ station: Station) -> some View {
         VStack(alignment: .leading) {
-            (station.name.map(Text.init) ?? Text("Unknown Name"))
+            (station.name.map(Text.init) ?? Text("Unknown Name", bundle: .module, comment: "empty label text title"))
                 .font(.title3)
             .lineLimit(1)
             .allowsTightening(true)
@@ -418,7 +413,7 @@ struct StationList<Frame: DataSlice> : View {
 
 
                 let br = station.bitrate ?? 0
-                (Text(station.bitrate == nil ? Double.nan : Double(br), format: .number) + Text("k"))
+                (Text(station.bitrate == nil ? Double.nan : Double(br), format: .number) + Text("k", bundle: .module, comment: "kilobytes suffix"))
                     .foregroundColor(br >= 256 ? Color.green : br < 128 ? Color.gray : Color.blue)
                     .font(.body.monospaced())
 
@@ -487,7 +482,6 @@ extension Set: RawRepresentable where Element: Codable {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct Sidebar: View {
     @AppStorage("pinned") var pinnedStations: Set<String> = []
 
@@ -515,7 +509,7 @@ struct Sidebar: View {
                     let languageFrame = {
                         frame.filter(on: Station.languageColumn, { $0 == lang.value })
                     }
-                    NavigationLink(destination: StationList(title: Text("Language: ") + title, frame: languageFrame)) {
+                    NavigationLink(destination: StationList(title: Text("Language: ", bundle: .module, comment: "station list by language prefix") + title, frame: languageFrame)) {
                         title
                     }
                     .detailLink(false)
@@ -524,7 +518,7 @@ struct Sidebar: View {
             }
 
         } header: {
-            Text("Languages")
+            Text("Languages", bundle: .module, comment: "languages sidebar title")
         }
     }
 
@@ -537,7 +531,7 @@ struct Sidebar: View {
                     }
                     // let title = Text(tag.value) // un-localized
                     if let info = Station.tagInfo(tagString: tag.value) {
-                        NavigationLink(destination: StationList(title: Text("Tag: ") + info.title, frame: tagsFrame)) {
+                        NavigationLink(destination: StationList(title: Text("Tag: ", bundle: .module, comment: "tag label prefix") + info.title, frame: tagsFrame)) {
                             info.title.label(image: info.image.foregroundStyle(info.tint))
                                 .symbolVariant(.fill)
                                 .badge(Text(tag.count, format: .number))
@@ -568,7 +562,7 @@ struct Sidebar: View {
         (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code)
     }
 
-    func stationsSectionTrending(frame: DataFrame, count: Int = 200, title: Text = Text("Trending")) -> some View {
+    func stationsSectionTrending(frame: DataFrame, count: Int = 200, title: Text = Text("Trending", bundle: .module, comment: "trending section title")) -> some View {
         let trendingFrame = { frame.sorted(on: Station.clicktrendColumn, order: .descending).prefix(count) }
         return NavigationLink(destination: StationList(title: title, frame: trendingFrame)) {
             title.label(symbol: "flame", color: .orange)
@@ -576,7 +570,7 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
-    func stationsSectionPopular(frame: DataFrame, count: Int = 200, title: Text = Text("Popular")) -> some View {
+    func stationsSectionPopular(frame: DataFrame, count: Int = 200, title: Text = Text("Popular", bundle: .module, comment: "popular section title")) -> some View {
         let popularFrame = { frame.sorted(on: Station.clickcountColumn, order: .descending).prefix(count) }
 //        let popularFrame = { frame.sorted(on: Station.votesColumn, order: .descending).prefix(count) }
         return NavigationLink(destination: StationList(title: title, frame: popularFrame)) {
@@ -585,7 +579,7 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
-    func stationsSectionQuality(frame: DataFrame, targetBitrate: Double = 320, count: Int = 200, title: Text = Text("Hi–Fi")) -> some View {
+    func stationsSectionQuality(frame: DataFrame, targetBitrate: Double = 320, count: Int = 200, title: Text = Text("Hi–Fi", bundle: .module, comment: "high-fidelity section title")) -> some View {
         // filted by high-quality audio feeds,
         let selection = {
             frame
@@ -600,7 +594,7 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
-    func stationsSectionVideo(frame: DataFrame, count: Int = 200, title: Text = Text("TV")) -> some View {
+    func stationsSectionVideo(frame: DataFrame, count: Int = 200, title: Text = Text("TV", bundle: .module, comment: "video section title")) -> some View {
         // filted by high-quality audio feeds,
         let selection = {
             frame
@@ -615,7 +609,7 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
-    func stationsSectionAll(frame: DataFrame, count: Int = .max, title: Text = Text("All Stations")) -> some View {
+    func stationsSectionAll(frame: DataFrame, count: Int = .max, title: Text = Text("All Stations", bundle: .module, comment: "all stations section title")) -> some View {
         let selection = {
             frame
                 .prefix(count)
@@ -627,7 +621,7 @@ struct Sidebar: View {
         .detailLink(false)
     }
 
-    func stationsSectionPinned(frame: DataFrame, title: Text = Text("Pinned")) -> some View {
+    func stationsSectionPinned(frame: DataFrame, title: Text = Text("Pinned", bundle: .module, comment: "pinned section title")) -> some View {
         let stationsFrame = {
             frame.filter({ row in
                 pinnedStations.contains(row[Station.stationuuidColumn] ?? "")
@@ -674,8 +668,8 @@ struct Sidebar: View {
         Section {
             if let frame = StationCatalog.stationsFrame {
                 ForEach(sortedCountries(count: false), id: \.valueCount.value) { country in
-                    let title: Text = country.localName.flatMap(Text.init) ?? Text("Unknown")
-                    let navTitle = Text("Country: ") + title
+                    let title: Text = country.localName.flatMap(Text.init) ?? Text("Unknown", bundle: .module, comment: "unknown station name title")
+                    let navTitle = Text("Country: ", bundle: .module, comment: "country category prefix") + title
                     let countriesFrame = {
                         frame.filter(on: Station.countrycodeColumn, { $0 == country.valueCount.value })
                     }
@@ -700,7 +694,6 @@ struct Sidebar: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 struct StationView: View {
     let station: Station
     @State var collapseInfo = false
@@ -721,7 +714,7 @@ struct StationView: View {
     typealias VForm = Form
     #endif
 
-    let unknown = Text("Unknown")
+    let unknown = Text("Unknown", bundle: .module, comment: "generic unknown label")
 
     var body: some View {
         VideoPlayer(player: tuner.player) {
@@ -778,7 +771,7 @@ struct StationView: View {
         .onChange(of: tuner.itemTitle, perform: updateTitle)
         //.preference(key: TrackTitleKey.self, value: tuner.itemTitle)
         //.focusedSceneValue(\.trackTitle, tuner.itemTitle)
-        .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station"), subtitle: itemOrStatonTitle)
+        .navigation(title: station.name.flatMap(Text.init) ?? Text("Unknown Station", bundle: .module, comment: "title for a station that is not known"), subtitle: itemOrStatonTitle)
     }
 
     var itemOrStatonTitle: Text {
@@ -803,9 +796,9 @@ struct StationView: View {
                         collapseInfo.toggle()
                     }
                 } label: {
-                    (collapseInfo ? Text("Expand") : Text("Collapse"))
+                    (collapseInfo ? Text("Expand", bundle: .module, comment: "expand section title") : Text("Collapse", bundle: .module, comment: "collapse section title"))
                         .label(image: Image(systemName: collapseInfo ? "chevron.down.circle" : "chevron.up.circle"))
-                        .help(Text("Show or hide the station information"))
+                        .help(Text("Show or hide the station information", bundle: .module, comment: "expand/collapse tooltip title"))
                 }
                 .hoverSymbol(activeVariant: .fill, inactiveVariant: .none, animation: .easeInOut)
                 .symbolRenderingMode(.hierarchical)
@@ -829,7 +822,7 @@ struct StationView: View {
                 TextField(text: .constant(station.homepage ?? ""), prompt: unknown) {
                     Text("Home Page:", bundle: .module, comment: "text field label")
                 }
-                .overlink(to: station.homepage.flatMap(URL.init(string:)))
+                //.overlink(to: station.homepage.flatMap(URL.init(string:)))
                 TextField(text: .constant(station.tags ?? ""), prompt: unknown) {
                     Text("Tags:", bundle: .module, comment: "text field label")
                 }
@@ -972,7 +965,6 @@ extension RadioTunerBase : AVPlayerItemMetadataOutputPushDelegate {
 
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 @MainActor final class RadioTuner: RadioTunerBase {
     static let shared = RadioTuner()
 
@@ -1029,7 +1021,6 @@ func emojiFlag(countryCode: String) -> String {
 #if canImport(TabularData)
 
 /// A `DataFrameProtocol` that can filter itself efficiently.
-@available(macOS 12.0, iOS 15.0, *)
 public protocol DataSlice {
     /// Returns a selection of rows that satisfy a predicate in the columns you select by name.
     /// - Parameters:
@@ -1079,13 +1070,10 @@ public protocol DataSlice {
     var rows: DataFrame.Rows { get }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension DataFrame : DataSlice { }
 
-@available(macOS 12.0, iOS 15.0, *)
 extension DataFrame.Slice : DataSlice { }
 
-@available(macOS 12.0, iOS 15.0, *)
 @available(*, deprecated, renamed: "DataSlice")
 public typealias FilterableFrame = DataSlice
 
