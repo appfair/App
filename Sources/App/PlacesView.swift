@@ -304,6 +304,8 @@ extension AppDatabase {
     static let shared = makeShared()
 
     private static func makeShared() -> AppDatabase {
+        // to re-generate Sources/App/Resources/places.db :
+        // rmbk Sources/App/Resources/places.db; (echo 'id,name,asciiname,alternatenames,latitude,longitude,featureclass,featurecode,countrycode,cc2,admincode1,admincode2,admincode3,admincode4,population,elevation,dem,timezone,modificationdate'; (curl -fL https://download.geonames.org/export/dump/cities15000.zip | bsdtar -xOf - | sed 's/,/;/g' | tr '\t' ',')) | sqlite3 Sources/App/Resources/places.db ".import --csv /dev/stdin place"
         let dbURL = Bundle.module.url(forResource: "places", withExtension: "db")!
         let dbPool = try! DatabasePool(path: dbURL.path)
         let appDatabase = try! AppDatabase(dbPool)
@@ -320,12 +322,4 @@ extension AppDatabase {
         return try! AppDatabase(dbQueue)
     }
 
-    /// Creates a database full of random players for SwiftUI previews
-    @available(*, deprecated)
-    static func random() -> AppDatabase {
-        fatalError("random should not be used")
-        let appDatabase = empty()
-        //try! appDatabase.createRandomPlayersIfEmpty()
-        return appDatabase
-    }
 }
