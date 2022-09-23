@@ -172,7 +172,7 @@ class BrowserState : WebViewState {
     public func enterReaderView() async {
         dbg()
         await self.trying {
-            let readability = try Bundle.module.loadBundleResource(named: "Readability.js")
+            let readability = try Bundle.module.loadResource(named: "Readability.js")
             dbg("loading readability library:", ByteCountFormatter().string(fromByteCount: .init(readability.count)))
 
             // load the readbility script
