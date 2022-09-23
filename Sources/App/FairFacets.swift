@@ -151,29 +151,27 @@ public struct FacetBrowserView<F: Facet> : View where F : View {
     }
 
     private var displayInTabs: Bool {
-#if os(macOS)
+        #if os(macOS)
         nested
-#else
+        #else
         !nested
-#endif
+        #endif
     }
 
     public var body: some View {
         if displayInTabs {
             TabView(selection: $selection) {
                 ForEach(F.allCases, id: \.facetTag) { facet in
-                    NavigationView {
-                        facet
-                            .navigationTitle(facet.facetInfo.title)
-#if os(iOS)
-                            .navigationBarTitleDisplayMode(.inline)
-#endif
-                    }
-                    .tabItem {
-                        facet.facetInfo.title.label(image: facet.facetInfo.symbol)
-                            .symbolVariant(.fill)
-                    }
-                    .tint(facet.facetInfo.tint)
+                    facet
+                        .navigationTitle(facet.facetInfo.title)
+                        #if os(iOS)
+                        .navigationBarTitleDisplayMode(.inline)
+                        #endif
+                        .tabItem {
+                            facet.facetInfo.title.label(image: facet.facetInfo.symbol)
+                                .symbolVariant(.fill)
+                        }
+                        .tint(facet.facetInfo.tint)
                 }
             }
         } else {

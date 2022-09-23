@@ -1,7 +1,88 @@
-// English strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+/* No comment provided by engineer. */
+"%@ (%@)" = "%1$@ (%2$@)";
 
-"OK" = "OK";
-"Cancel" = "Cancel";
-"Welcome to %@!" = "Welcome to %@!";
+/* about settings facet title */
+"About" = "About";
+
+/* altitude form fiel placeholder */
+"alt" = "alt";
+
+/* altitude form field label */
+"Altitude:" = "Altitude:";
+
+/* appearance settings facet title
+   view body text */
+"Appearance" = "Appearance";
+
+/* section header for weather section */
+"Current Weather" = "Current Weather";
+
+/* error section title */
+"Error:" = "Error:";
+
+/* setting title for temperature units */
+"Fahrenheit Units" = "Fahrenheit Units";
+
+/* forecast facet title
+   view body text */
+"Forecast" = "Forecast";
+
+/* icon settings facet title
+   view body text */
+"Icon" = "Icon";
+
+/* language settings facet title
+   view body text */
+"Language" = "Language";
+
+/* latitude form field placeholder */
+"lat" = "lat";
+
+/* latitude form field label */
+"Latitude:" = "Latitude:";
+
+/* loading placeholder text */
+"Loading…" = "Loading…";
+
+/* longitude form field placeholder */
+"lon" = "lon";
+
+/* longitude form field label */
+"Longitude:" = "Longitude:";
+
+/* places facet title */
+"Places" = "Places";
+
+/* plug-in title */
+"Plug-In: Hot Take" = "Plug-In: Hot Take";
+
+/* pods settings facet title
+   view body text */
+"Pods" = "Pods";
+
+/* preferences settings facet title */
+"Preferences" = "Preferences";
+
+/* settings facet title */
+"Settings" = "Settings";
+
+/* support settings facet title
+   view body text */
+"Support" = "Support";
+
+/* temperature form label */
+"Temp:" = "Temp:";
+
+/* today facet title */
+"Today" = "Today";
+
+/* view body text
+   welcome facet title */
+"Welcome" = "Welcome";
+
+/* wind form label */
+"Wind:" = "Wind:";
+
+/* app name */
+"🌞 Sun Bow 🎁" = "🌞 Sun Bow 🎁";
 
