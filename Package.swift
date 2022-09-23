@@ -30,6 +30,7 @@ let package = Package(
             //.product(name: "FairKit", package: "Fair"), // optional enhancements
         ], resources: [
             .process("Resources"), // processed resources
+            .copy("App.yml"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
