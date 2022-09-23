@@ -4,6 +4,7 @@ import WeatherTiq
 
 public struct WeatherSectionView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pod: SunBowPod
     @State var coords = Store.defaultCoords
     
     public var body: some View {
@@ -32,7 +33,7 @@ public struct WeatherSectionView: View {
         //.navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
         .refreshable {
             do {
-                store.updateWeatherMessage(try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
+                await pod.updateWeatherMessage(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
             } catch {
                 print(wip("### error:"), error)
             }
@@ -42,9 +43,10 @@ public struct WeatherSectionView: View {
 
 struct WeatherAnalysisView : View {
     @EnvironmentObject var store: Store
-    
+    @EnvironmentObject var pod: SunBowPod
+
     public var body: some View {
-        Text(atx: store.msg)
+        Text(atx: pod.msg)
             .font(.title)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,7 +133,8 @@ public struct WeatherView: View {
     let coords: Coords
     @State private var weatherResult: Result<Weather, Error>? = .none
     @EnvironmentObject var store: Store
-    
+    @EnvironmentObject var pod: SunBowPod
+
     public var body: some View {
         VStack(alignment: .leading) {
             switch self.weatherResult {
@@ -175,25 +178,17 @@ public struct WeatherView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: coords, priority: .userInitiated) {
             await refreshWeather()
-        }
-        .onChange(of: weatherResult?.successValue) { weather in
-            store.updateWeatherMessage(weather)
+            await pod.updateWeatherMessage(weatherResult?.successValue)
         }
     }
     
     func refreshWeather() async {
         self.weatherResult = await Result {
-            try await Store.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? .nan))
+            try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? .nan))
         }
     }
 }
 
-
-struct Place : Identifiable {
-    var id = UUID()
-    var name: String
-    var coordinates: Coords
-}
 
 public extension Facet {
     

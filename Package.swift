@@ -20,6 +20,8 @@ let package = Package(
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/Jack", branch: "HEAD"),
         .package(url: "https://github.com/tiqtiq/WeatherTiq", branch: "HEAD"),
+        .package(url: "https://github.com/groue/GRDBQuery.git", from: "0.5.0"),
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "6.0.0"),
     ],
     targets: [
         .target(name: "App", dependencies: [
@@ -27,6 +29,8 @@ let package = Package(
             .product(name: "FairKit", package: "Fair"), // optional enhancements
             .product(name: "Jack", package: "Jack"),
             .product(name: "WeatherTiq", package: "WeatherTiq"),
+            .product(name: "GRDB", package: "GRDB.swift"),
+            .product(name: "GRDBQuery", package: "GRDBQuery"),
         ], resources: [
             .process("Resources"), // processed resources
             .copy("App.yml"),

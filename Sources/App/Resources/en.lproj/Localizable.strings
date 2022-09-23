@@ -1,7 +1,8 @@
 /* No comment provided by engineer. */
 "%@ (%@)" = "%1$@ (%2$@)";
 
-/* about settings facet title */
+/* about settings facet title
+   about settings title */
 "About" = "About";
 
 /* altitude form fiel placeholder */
@@ -11,7 +12,7 @@
 "Altitude:" = "Altitude:";
 
 /* appearance settings facet title
-   view body text */
+   appearance settings title */
 "Appearance" = "Appearance";
 
 /* section header for weather section */
@@ -28,11 +29,11 @@
 "Forecast" = "Forecast";
 
 /* icon settings facet title
-   view body text */
+   icon settings title */
 "Icon" = "Icon";
 
 /* language settings facet title
-   view body text */
+   language settings title */
 "Language" = "Language";
 
 /* latitude form field placeholder */
@@ -57,7 +58,7 @@
 "Plug-In: Hot Take" = "Plug-In: Hot Take";
 
 /* pods settings facet title
-   view body text */
+   pods settings title */
 "Pods" = "Pods";
 
 /* preferences settings facet title */
@@ -67,7 +68,7 @@
 "Settings" = "Settings";
 
 /* support settings facet title
-   view body text */
+   support settings title */
 "Support" = "Support";
 
 /* temperature form label */

@@ -7,7 +7,7 @@ import Jack
 /// The shared instance of Store is available throughout the app with:
 ///
 /// ``@EnvironmentObject var store: Store``
-public final class Store: SceneManager, ObservableObject, JackedObject {
+public final class Store: SceneManager, ObservableObject {
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
 
@@ -16,23 +16,9 @@ public final class Store: SceneManager, ObservableObject, JackedObject {
 
     public let appName = Bundle.localizedAppName
 
-    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-    public static let service = WeatherService(serviceURL: defaultWeatherServer)
-
-    // The shared script context for executing adjuncts
-    public static let ctx = JXKit.JXContext()
-
-    @Jacked var msg = ""
-
-    /// The script context to use for this app
-    lazy var ctx = jack()
 
     public required init() {
     }
-
-    static var defaultWeatherServer: URL = {
-        Store.config["weather"]?["server"]?.str.flatMap(URL.init(string:)) ?? WeatherService.shared.serviceURL
-    }()
 
     static var defaultCoords: Coords = {
         let defloc = Store.config["weather"]?["default_location"] ?? [:]
@@ -42,7 +28,30 @@ public final class Store: SceneManager, ObservableObject, JackedObject {
         return wip(Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0))
     }()
 
-    func updateWeatherMessage(_ weather: Weather?) {
+}
+
+@MainActor open class SunBowPod : JackedObject {
+    public static let shared = SunBowPod()
+
+    public static let service = WeatherService(serviceURL: defaultWeatherServer)
+
+    static var defaultWeatherServer: URL = {
+        Store.config["weather"]?["server"]?.str.flatMap(URL.init(string:)) ?? WeatherService.shared.serviceURL
+    }()
+
+
+    // The shared script context for executing adjuncts
+    public static let ctx = JXKit.JXContext()
+
+    @Jacked(queue: .main) var msg = ""
+
+    /// The script context to use for this app
+    lazy var ctx = jack()
+
+    private init() {
+    }
+
+    func updateWeatherMessage(_ weather: Weather?) async {
         do {
             guard var temp = weather?.currentWeather.temperature else {
                 try ctx.env.eval("msg = '🫥 `analyzing…`'")
@@ -77,4 +86,5 @@ public final class Store: SceneManager, ObservableObject, JackedObject {
             dbg("error evaluating script:", error)
         }
     }
+
 }

@@ -6,6 +6,7 @@ public extension AppContainer {
         WindowGroup {
             ContentView()
                 .environmentObject(store)
+                .environmentObject(SunBowPod.shared)
         }
         .commands {
             SidebarCommands()
@@ -21,6 +22,7 @@ public extension AppContainer {
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
         WeatherFacets.allCases.last.unsafelyUnwrapped
             .environmentObject(store)
+            .environmentObject(SunBowPod.shared)
     }
 }
 
