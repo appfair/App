@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.7
 import PackageDescription
 
 /// This package template is forked from [appfair/App](https://github.com/appfair/App/fork)
