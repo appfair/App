@@ -413,7 +413,7 @@ struct StationCatalog {
     }()
 
     static let stations: Result<StationCatalog, Error> = {
-        let _ = try! stationsPlist.get()
+        //let _ = try! stationsPlist.get()
         return stationsCSV
     }()
 

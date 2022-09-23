@@ -1,4 +1,5 @@
 import FairApp
+import AVKit
 
 /// The `FairApp.FairContainer` that acts as a factory for the content and settings view.
 public extension AppContainer {
