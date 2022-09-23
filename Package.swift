@@ -17,17 +17,14 @@ let package = Package(
     platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
-<<<<<<< HEAD
-        .package(url: "https://github.com/fair-ground/Fair", from: "0.5.0"), // required
-        .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "5.1.3")),
-=======
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
->>>>>>> 5276946 (chore: checkpoint)
+        .package(url: "https://github.com/ReactiveX/RxSwift.git", .upToNextMajor(from: "5.1.3")),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
-            //.product(name: "FairKit", package: "Fair"), // optional enhancements
+            .product(name: "FairKit", package: "Fair"), // optional enhancements
+            "RxSwift", // optional enhancements
         ], resources: [
             .process("Resources"), // processed resources
             .copy("App.yml"),

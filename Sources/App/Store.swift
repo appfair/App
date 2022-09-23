@@ -1,6 +1,6 @@
 import FairApp
-
 import Foundation
+import RxSwift
 
 /// The global app environment containing configuration metadata and shared defaults.
 ///
@@ -12,6 +12,8 @@ open class Store: SceneManager {
 
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
+
+    let rxprop = RxSwift.AsyncSubject<Bool>()
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("someToggle") public var someToggle = false
