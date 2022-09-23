@@ -413,40 +413,23 @@ struct StationCatalog {
     }()
 
     static let stations: Result<StationCatalog, Error> = {
+        let _ = try! stationsPlist.get()
         return stationsCSV
     }()
 
-    /// To fetch the latest catalog, run:
-    /// curl -fsSL https://nl1.api.radio-browser.info/json/stations/search > Sources/App/Resources/stations.json
-    @available(*, deprecated, message: "too slow")
-    private static let stationsJSON: Result<JSum, Error> = {
-        prf { // 6872ms: too slow!
-            Result {
-                // load from the local resource bundle
-                // we could alternatively load from the source: https://fr1.api.radio-browser.info/csv/stations/search
-                guard let url = Bundle.module.url(forResource: "stations", withExtension: "json") else {
-                    throw CocoaError(.fileReadNoSuchFile)
-                }
-
-                let contents = try JSum.parse(json: Data(contentsOf: url))
-                return contents
-            }
-        }
-    }()
 
     /// To fetch the latest catalog, run:
-    /// curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
+    ///
+    /// `curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv`
     private static let stationsCSV: Result<StationCatalog, Error> = {
         prf { // 1075ms
             Result {
-                // load from the local resource bundle
-                // we could alternatively load from the source: https://fr1.api.radio-browser.info/csv/stations/search
                 guard let url = Bundle.module.url(forResource: "stations", withExtension: "csv") else {
                     throw CocoaError(.fileReadNoSuchFile)
                 }
 
                 // the old ways are better
-                
+
                 var options = CSVReadingOptions(hasHeaderRow: true, nilEncodings: ["NULL", ""], trueEncodings: ["true"], falseEncodings: ["false"], floatingPointType: TabularData.CSVType.double, ignoresEmptyLines: true, usesQuoting: true, usesEscaping: false, delimiter: ",", escapeCharacter: "\\")
 
                 options.addDateParseStrategy(Date.ISO8601FormatStyle())
@@ -462,6 +445,42 @@ struct StationCatalog {
             }
         }
     }()
+
+    /// To fetch the latest catalog in plist form, run (note that removing nulls is needed for plist encoding):
+    ///
+    /// `curl -fsSL https://nl1.api.radio-browser.info/json/stations/search | jq 'del(.[][] | nulls)' | plutil -convert binary1 -o Sources/App/Resources/stations.plist -`
+    private static let stationsPlist: Result<Any, Error> = {
+        // TODO: it is much faster parsing this from the binary format, but we would need to perform a lot of transformations to get the model lined up
+        prf { // 264ms
+            Result {
+                guard let url = Bundle.module.url(forResource: "stations", withExtension: "plist") else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
+
+                let contents = try PropertyListSerialization.propertyList(from: Data(contentsOf: url), options: [], format: nil)
+                return contents
+            }
+        }
+    }()
+
+
+    /// To fetch the latest catalog, run:
+    ///
+    /// `curl -fsSL https://nl1.api.radio-browser.info/json/stations/search > Sources/App/Resources/stations.json`
+    @available(*, deprecated, message: "too slow")
+    private static let stationsJSON: Result<JSum, Error> = {
+        prf { // 6872ms: too slow!
+            Result {
+                guard let url = Bundle.module.url(forResource: "stations", withExtension: "json") else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
+
+                let contents = try JSum.parse(json: Data(contentsOf: url))
+                return contents
+            }
+        }
+    }()
+
 
     static let countryCounts: Result<[ValueCount<String>], Error> = {
         Result { try stations.get().frame.valueCounts(column: Station.countrycodeColumn) }
