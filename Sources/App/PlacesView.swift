@@ -7,7 +7,26 @@ import Combine
 struct Place : Identifiable {
     var id: Int64
 
-    var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, admincode2, admincode3, admincode4, population, elevation, dem, timezone, modificationdate: String
+    // var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, admincode2, admincode3, admincode4, population, elevation, dem, timezone, modificationdate: String
+
+    var name: String
+    var asciiname: String
+    var alternatenames: String
+    var latitude: Double
+    var longitude: Double
+    var featureclass: String
+    var featurecode: String
+    var countrycode: String
+    var cc2: String
+    var admincode1: String
+    var admincode2: String
+    var admincode3: String
+    var admincode4: String
+    var population: UInt64
+    var elevation: Double
+    var dem: String
+    var timezone: String
+    var modificationdate: Date
 }
 
 public class PlacesManager : ObservableObject {
@@ -18,26 +37,20 @@ public class PlacesManager : ObservableObject {
     /// ```
 }
 
-
 public struct PlacesView : View {
-    //@Query(PlacesRequest(ordering: .byPopulation)) var places: [Place]
-
-    /// The `players` property is automatically updated when the database changes
     @Query(PlacesRequest(ordering: .byPopulation)) private var places: [Place]
 
     public var body: some View {
-        VStack {
+        NavigationView {
             List {
                 ForEach(places) { place in
                     //TextField("Title", text: $place.title)
-                    Text(place.name)
+                    NavigationLink {
+                        Text("Welcome to: \(place.name)", bundle: .module, comment: "place labels")
+                    } label: {
+                        Text(place.name) // TODO: localized place databases
+                    }
                 }
-//                .onMove { indexSet, offset in
-//                    places.move(fromOffsets: indexSet, toOffset: offset)
-//                }
-//                .onDelete { indexSet in
-//                    places.remove(atOffsets: indexSet)
-//                }
             }
         }
         #if os(iOS)
@@ -307,7 +320,7 @@ extension AppDatabase {
         // to re-generate Sources/App/Resources/places.db :
         // rmbk Sources/App/Resources/places.db; (echo 'id,name,asciiname,alternatenames,latitude,longitude,featureclass,featurecode,countrycode,cc2,admincode1,admincode2,admincode3,admincode4,population,elevation,dem,timezone,modificationdate'; (curl -fL https://download.geonames.org/export/dump/cities15000.zip | bsdtar -xOf - | sed 's/,/;/g' | tr '\t' ',')) | sqlite3 Sources/App/Resources/places.db ".import --csv /dev/stdin place"
         let dbURL = Bundle.module.url(forResource: "places", withExtension: "db")!
-        let dbPool = try! DatabasePool(path: dbURL.path)
+        let dbPool = try! DatabaseQueue(path: dbURL.path)
         let appDatabase = try! AppDatabase(dbPool)
         return appDatabase
     }
@@ -323,3 +336,49 @@ extension AppDatabase {
     }
 
 }
+
+/// Testing laziness
+public struct LazyThingView : View {
+    struct Thing : Identifiable {
+        var index: Int
+        var id: Int { dump(index, name: "id") }
+        var property: UUID { dump(UUID(), name: "property") }
+    }
+
+    struct ThingsCollection : RandomAccessCollection {
+        let startIndex = 0
+        let endIndex = 9_999
+        subscript(index: Int) -> Thing {
+            dump(Thing(index: index), name: "subscript")
+        }
+        func index(after i: Int) -> Int { i + 1 }
+    }
+
+    let things = ThingsCollection()
+
+    public var body: some View {
+        //bodyList
+        bodyLazyVStack
+    }
+
+    public var bodyLazyVStack: some View {
+        ScrollView {
+            LazyVStack {
+                ForEach(things) { thing in
+                    Text("Thing: \(thing.property)")
+                }
+            }
+        }
+    }
+
+    public var bodyList: some View {
+        List {
+            ForEach(things) { thing in
+                Text("Thing: \(thing.property)")
+            }
+        }
+    }
+
+}
+
+
