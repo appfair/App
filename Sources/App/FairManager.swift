@@ -453,12 +453,12 @@ extension FairManager {
 
     /// The script that we will store in the Applications Script folder to block app launch snooping
     static let appLaunchPrivacyToolSource = Result {
-        try Bundle.module.loadBundleResource(named: appLaunchPrivacyToolName + "/main.swift")
+        try! Bundle.module.loadResource(named: appLaunchPrivacyToolName + "/alp.swift")
     }
 
     /// The executable that we will store in the Applications Script folder to block app launch snooping
     static let appLaunchPrivacyToolBinary = Result {
-        try Bundle.module.loadBundleResource(named: appLaunchPrivacyToolName + ".b64")
+        try Bundle.module.loadResource(named: appLaunchPrivacyToolName + ".b64")
     }
 
     /// The script that we will store in the Applications Script folder to block app launch snooping

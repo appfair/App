@@ -28,6 +28,15 @@
 /* footer markdown text of screenshots page indicating how to update catalog metadata */
 "(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)" = "(if you own or maintain this app, you can [contribute](https://www.appfair.app/#customize_app) screenshots and other metadata)";
 
+/* welcome subtitle */
+"(it doesn't do anything _yet_)" = "(it doesn't do anything _yet_)";
+
+/* error message when app source identifier is already added */
+"A catalog with the same identifier is already added." = "A catalog with the same identifier is already added.";
+
+/* error message when app source URL is already added */
+"A catalog with the same source URL is already added." = "A catalog with the same source URL is already added.";
+
 /* app entitlement info for temporary-exception.iokit-user-client-class */
 "Ability to specify additional IOUserClient subclasses." = "Ability to specify additional IOUserClient subclasses.";
 
@@ -125,8 +134,9 @@
 /* launch privacy activate toolbar button tooltip when in the inactive state */
 "App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in %@" = "App launch telemetry blocking is enabled but not currently active. It will automatically activate upon launching an app from the App Fair, or clicking this button will manually activate it and then deactivate in %@";
 
-/* app source title for fairground apps
-   fairapps top apps info: full title */
+/* app source sidebar section title
+   fairapps top apps info: full title
+   the default title of a fair apps catalog */
 "App Source" = "App Source";
 
 /* app catalog entry info link title */
@@ -176,6 +186,9 @@
 
 /* apps list section header text */
 "Available Updates" = "Available Updates";
+
+/* section header title in permissions section of catalog item */
+"Background Modes" = "Background Modes";
 
 /* fairapps preference checkbox */
 "Badge App Icon with update count" = "Badge App Icon with update count";
@@ -232,6 +245,9 @@
 /* homebrew sidebar category title */
 "Casks" = "Casks";
 
+/* error message */
+"Catalog not yet loaded." = "Catalog not yet loaded.";
+
 /* add catalog source dialog text */
 "Catalog URL:" = "Catalog URL:";
 
@@ -258,6 +274,12 @@
 
 /* app entitlement info for network.client */
 "Communicate over the internet and any local networks." = "Communicate over the internet and any local networks.";
+
+/* header sub-text for detail screen with no selection */
+"Community App Sources" = "Community App Sources";
+
+/* menu title for command */
+"Copy App URL" = "Copy App URL";
 
 /* app catalog entry header box title for the core size of the app */
 "Core Size" = "Core Size";
@@ -326,8 +348,15 @@
 /* catalog entry button tooltip for reveal action */
 "Displays the app install location in the Finder." = "Displays the app install location in the Finder.";
 
-/* app catalog entry info link title */
+/* app catalog entry info link title
+   catalog entry button title for download action */
 "Download" = "Download";
+
+/* download button confirmation dialog title */
+"Download %@" = "Download %@";
+
+/* download button confirmation dialog confirm button text */
+"Download %@ to the catalog folder" = "Download %@ to the catalog folder";
 
 /* install button confirmation dialog confirm button text */
 "Download & Install %@" = "Download & Install %@";
@@ -341,6 +370,9 @@
 /* app catalog entry header box title */
 "Downloads" = "Downloads";
 
+/* catalog entry button tooltip for download action */
+"Downloads the app to the catalog's folder." = "Downloads the app to the catalog's folder.";
+
 /* app launch privacy activation duration menu title */
 "Duration:" = "Duration:";
 
@@ -353,6 +385,12 @@
 /* app category label for appfair.educational-games */
 "Educational Games" = "Educational Games";
 
+/* fairapps preference checkbox tooltip */
+"Enable additional custom app sources, which can be added and removed from the sidebar with the plus and minus buttons." = "Enable additional custom app sources, which can be added and removed from the sidebar with the plus and minus buttons.";
+
+/* fairapps preference checkbox for whether user sources should be enabled */
+"Enable additional sources" = "Enable additional sources";
+
 /* homebrew preference checkbox */
 "Enable Homebrew self-update" = "Enable Homebrew self-update";
 
@@ -361,6 +399,9 @@
 
 /* app entitlement info for cs.allow-jit */
 "Enable performace booting." = "Enable performace booting.";
+
+/* fairapps preference checkbox for whether platform conversion should be enabled */
+"Enable platform conversion for download apps" = "Enable platform conversion for download apps";
 
 /* preference checkbox */
 "Enable sponsorship links" = "Enable sponsorship links";
@@ -395,6 +436,9 @@
 /* app category label for appfair.entertainment */
 "Entertainment" = "Entertainment";
 
+/* section header title in permissions section of catalog item */
+"Entitlements" = "Entitlements";
+
 /* error message */
 "Error compiling %@" = "Error compiling %@";
 
@@ -416,14 +460,8 @@
 /* error message */
 "Failed to block launch telemetry" = "Failed to block launch telemetry";
 
-/* the default title of a fair apps catalog */
-"Fair Ground" = "Fair Ground";
-
 /* fairapps preferences tab title */
 "Fairapps" = "Fairapps";
-
-/* app source title for fairground apps */
-"Fairground" = "Fairground";
 
 /* fairapps catalog description for header text of detail view */
 "Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry." = "Fairground apps are created through the appfair.net process. They are 100% open-source and disclose all their permissions in their App Fair catalog entry.";
@@ -487,8 +525,7 @@
    the default title of the Homebrew catalog */
 "Homebrew" = "Homebrew";
 
-/* homebrew top apps info: full title
-   settings switch title for enabling homebrew cask support */
+/* settings switch title for enabling homebrew cask support */
 "Homebrew Casks" = "Homebrew Casks";
 
 /* homebrew installed apps info: full title */
@@ -541,8 +578,8 @@
 /* preference checkbox tooltip */
 "Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation." = "Installing an app will present a confirmation alert to the user. If disabled, apps will be installed and updated without confirmation.";
 
-/* error message when a fairseal check fails */
-"Invalid fairseal" = "Invalid fairseal";
+/* error message when a checksum fails */
+"Invalid checksum" = "Invalid checksum";
 
 /* error message */
 "Invalid SHA-256 Hash" = "Invalid SHA-256 Hash";
@@ -589,7 +626,7 @@
 /* general preference for theme style in popup menu */
 "Light" = "Light";
 
-/* app source title for fairground apps
+/* app source title for sidebad section while loading
    apps list placeholder text while the catalog is loading */
 "Loading…" = "Loading…";
 
@@ -623,15 +660,6 @@
 /* error message */
 "Missing cryptographic checksum" = "Missing cryptographic checksum";
 
-/* error message when attempting to operate on unsupported app type */
-"Mobile app deletion unsupported" = "Mobile app deletion unsupported";
-
-/* error message when attempting to operate on unsupported app type */
-"Mobile app installation unsupported" = "Mobile app installation unsupported";
-
-/* error message when attempting to operate on unsupported app type */
-"Mobile app reveal unsupported" = "Mobile app reveal unsupported";
-
 /* error dialog disclosure button title for showing more information */
 "More Info" = "More Info";
 
@@ -661,6 +689,9 @@
 
 /* error message when no app description could be found */
 "No description found" = "No description found";
+
+/* error message */
+"No identifier in catalog." = "No identifier in catalog.";
 
 /* error message */
 "no metadata for package" = "no metadata for package";
@@ -713,6 +744,9 @@
 
 /* advanced preference text field label for the GitHub organization */
 "Organization" = "Organization";
+
+/* section header title in permissions section of catalog item */
+"Other" = "Other";
 
 /* risk assessment label for level 6 perilous apps */
 "Perilous" = "Perilous";
@@ -903,6 +937,9 @@
    refresh catalog toolbar button title */
 "Reload" = "Reload";
 
+/* menu title for reloading the app catalog */
+"Reload Catalogs from Source" = "Reload Catalogs from Source";
+
 /* delete button confirmation dialog delete button text */
 "Remove" = "Remove";
 
@@ -1050,14 +1087,14 @@
 /* app launch privacy duration menu tooltip */
 "The amount of time that App Launch Privacy will remain enabled before it is automatically disabled. Exiting the App Fair app will always disable App Launch privacy mode." = "The amount of time that App Launch Privacy will remain enabled before it is automatically disabled. Exiting the App Fair app will always disable App Launch privacy mode.";
 
-/* header sub-text for detail screen with no selection */
-"The App Fair enables browsing, installing, and updating apps from community sources." = "The App Fair enables browsing, installing, and updating apps from community sources.";
+/* header text for detail screen with no selection */
+"The App Fair" = "The App Fair";
 
 /* warning dialog body */
 "The app “%@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %@, you may override the quarantine for this app in order to launch it." = "The app “%1$@” is from an unidentified developer and has been quarantined.\n\nIf you trust the publisher of the app at %2$@, you may override the quarantine for this app in order to launch it.";
 
-/* error message when a fairseal check fails */
-"The app's fairseal was not valid." = "The app's fairseal was not valid.";
+/* error message failure reason when a checksum fails */
+"The app's checksum was not valid. This may indicate a network failure to download correctly, but it could also indicate the app's contents have been tampered with since it was sealed. It is recommended you do not install this app, and that you inform the app's vendor of the incicident." = "The app's checksum was not valid. This may indicate a network failure to download correctly, but it could also indicate the app's contents have been tampered with since it was sealed. It is recommended you do not install this app, and that you inform the app's vendor of the incicident.";
 
 /* error wrapper string when a catalog URL fails to load */
 "The catalog failed to load from the URL: %@" = "The catalog failed to load from the URL: %@";
@@ -1086,6 +1123,9 @@
 
 /* app catalog entry header box title tooltip text */
 "The number of downloads of this app in the past 90 days" = "The number of downloads of this app in the past 90 days";
+
+/* error message recover suggestion when app source URL identifier is already added */
+"The other catalog must be removed before this one can be added." = "The other catalog must be removed before this one can be added.";
 
 /* app catalog entry info link tooltip */
 "The page for the Homebrew Cask token" = "The page for the Homebrew Cask token";
@@ -1143,6 +1183,9 @@
 /* installation warning for homebrew apps */
 "This will use the Homebrew package manager to download and install the application “%@” from the developer “%@” at:\n\n[%@](%@)\n\nThis app has not undergone any formal review, so you will be installing and running it at your own risk.\n\nBefore installing, you should first review the home page for the app to learn more about it." = "This will use the Homebrew package manager to download and install the application “%1$@” from the developer “%2$@” at:\n\n[%3$@](%4$@)\n\nThis app has not undergone any formal review, so you will be installing and running it at your own risk.\n\nBefore installing, you should first review the home page for the app to learn more about it.";
 
+/* a preferences toggle in the settings view */
+"Toggle" = "Toggle";
+
 /* apps list section header text */
 "Top Apps" = "Top Apps";
 
@@ -1151,6 +1194,9 @@
 
 /* app category label for appfair.trivia-games */
 "Trivia Games" = "Trivia Games";
+
+/* error message when app source URL is not valid */
+"Unable to add App Source" = "Unable to add App Source";
 
 /* error message */
 "Unable to decode %@" = "Unable to decode %@";
@@ -1190,6 +1236,12 @@
 
 /* apps list bottom bar title describing when the catalog was last updated */
 "Updated %@" = "Updated %@";
+
+/* error message when app source URL is not valid */
+"URL is invalid" = "URL is invalid";
+
+/* section header title in permissions section of catalog item */
+"Usage" = "Usage";
 
 /* app entitlement title for device.usb */
 "USB" = "USB";
@@ -1242,8 +1294,8 @@
 /* app category label for appfair.weather */
 "Weather" = "Weather";
 
-/* header text for detail screen with no selection */
-"Welcome to the App Fair" = "Welcome to the App Fair";
+/* welcome title */
+"Welcome to **%@**" = "Welcome to **%@**";
 
 /* homebrew preference checkbox tooltip */
 "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app." = "When deleting apps, also try to delete all the info stored by the app, including preferences, user data, and other info. This operation is known as “zapping” the app, and it will attempt to purge all traces of the app from your system, with the possible side-effect of also removing infomation that could be useful if you were to ever re-install the app.";

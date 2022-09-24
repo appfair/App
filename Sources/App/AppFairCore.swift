@@ -1262,10 +1262,6 @@ extension Text {
 
 // MARK: Parochial (package-local) Utilities
 
-/// Work-in-Progress marker
-@available(*, deprecated, message: "work in progress")
-internal func wip<T>(_ value: T) -> T { value }
-
 /// Work-in-Progress marker for ipa installation
 ///
 /// - TODO: @available(*, deprecated, message: "work in progress")

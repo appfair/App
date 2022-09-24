@@ -1,5 +1,6 @@
 .*.swp
 fastlane/
+.fairtool/
 _site/
 Gemfile
 Gemfile.lock
@@ -8,7 +9,6 @@ Gemfile.lock
 .build
 staging/
 xcuserdata/
-xcshareddata/
 build/
 DerivedData/
 *.moved-aside

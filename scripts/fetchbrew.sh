@@ -1,5 +1,5 @@
 #!/bin/sh -e
-ZIPFILE="Sources/App/Bundle/appfair-homebrew.zip"
+ZIPFILE="Sources/App/Resources/appfair-homebrew.zip"
 echo "Fetching latest brew from https://github.com/App-Fair/appfair-homebrew (be sure to first merge from upstream)"
 printf "Hit return to continue…"
 read READY
