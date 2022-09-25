@@ -44,22 +44,22 @@ extension Place : Codable, FetchableRecord, MutablePersistableRecord {
         static let id = Column(CodingKeys.id)
         static let name = Column(CodingKeys.name)
 //        static let asciiname = Column(CodingKeys.asciiname)
-//        static let alternatenames = Column(CodingKeys.alternatenames)
+//        static let alternatenames = Column(CodingKeys.alternatenames) // excluded from database for 40% size savings
         static let latitude = Column(CodingKeys.latitude)
         static let longitude = Column(CodingKeys.longitude)
-//        static let featureclass = Column(CodingKeys.featureclass)
-//        static let featurecode = Column(CodingKeys.featurecode)
-//        static let countrycode = Column(CodingKeys.countrycode)
-//        static let cc2 = Column(CodingKeys.cc2)
-//        static let admincode1 = Column(CodingKeys.admincode1)
-//        static let admincode2 = Column(CodingKeys.admincode2)
-//        static let admincode3 = Column(CodingKeys.admincode3)
-//        static let admincode4 = Column(CodingKeys.admincode4)
+        static let featureclass = Column(CodingKeys.featureclass)
+        static let featurecode = Column(CodingKeys.featurecode)
+        static let countrycode = Column(CodingKeys.countrycode)
+        static let cc2 = Column(CodingKeys.cc2)
+        static let admincode1 = Column(CodingKeys.admincode1)
+        static let admincode2 = Column(CodingKeys.admincode2)
+        static let admincode3 = Column(CodingKeys.admincode3)
+        static let admincode4 = Column(CodingKeys.admincode4)
         static let population = Column(CodingKeys.population)
-//        static let elevation = Column(CodingKeys.elevation)
-//        static let dem = Column(CodingKeys.dem)
-//        static let timezone = Column(CodingKeys.timezone)
-//        static let modified = Column(CodingKeys.modified)
+        static let elevation = Column(CodingKeys.elevation)
+        static let dem = Column(CodingKeys.dem)
+        static let timezone = Column(CodingKeys.timezone)
+        static let modified = Column(CodingKeys.modified)
     }
 
     /// Updates a palce id after it has been inserted in the database.
@@ -72,9 +72,11 @@ public struct PlacesView : View {
     @Query(PlacesRequest(ordering: .byLongitude)) private var places: [Place]
 
     public var body: some View {
-        return NavigationView {
+        NavigationView {
             List {
-                ForEach(places, content: PlaceListItemView.init)
+                ForEach(places) { place in
+                    PlaceListItemView(place: place)
+                }
             }
         }
         #if os(iOS)
@@ -92,7 +94,15 @@ struct PlaceListItemView : View {
     var body: some View {
         //TextField("Title", text: $place.title)
         NavigationLink {
-            Text("Welcome to: \(place.name)", bundle: .module, comment: "place labels")
+            switch weatherResult {
+            case .success(let weather):
+                WeatherSummaryView(weather: weather.currentWeather)
+                    .navigationTitle(Text(place.name))
+            case .failure(let error):
+                Text("Error loading: \(place.name): \(error.localizedDescription)", bundle: .module, comment: "error message")
+            case .none:
+                Text("Loading: \(place.name)…", bundle: .module, comment: "loading")
+            }
         } label: {
             HStack {
                 Group {

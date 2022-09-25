@@ -8,11 +8,9 @@ public struct WeatherSectionView: View {
     @State var coords = Store.defaultCoords
     
     public var body: some View {
-        List {
+        Form {
             Section {
                 CurrentWeatherView(coords: $coords)
-                    .font(.callout)
-                    .padding(.horizontal)
             } header: {
                 Text("Current Weather", bundle: .module, comment: "section header for weather section")
             }
@@ -31,13 +29,13 @@ public struct WeatherSectionView: View {
             //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)
         }
         //.navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
-        .refreshable {
-            do {
-                await pod.updateWeatherMessage(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
-            } catch {
-                print(wip("### error:"), error)
-            }
-        }
+//        .refreshable {
+//            do {
+//                await pod.updateWeatherMessage(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
+//            } catch {
+//                print(wip("### error:"), error)
+//            }
+//        }
     }
 }
 
@@ -59,9 +57,7 @@ struct CurrentWeatherView : View {
     @Binding var coords: Coords
     
     public var body: some View {
-        WeatherView(coords: coords)
-            .textSelection(.enabled)
-            .frame(minHeight: 100)
+        WeatherResultView(coords: $coords)
     }
 }
 
@@ -70,6 +66,52 @@ struct WeatherFormView : View {
     @Binding var coords: Coords
     
     var body: some View {
+        //bodyForm // doesn't render the labels on iOS
+        bodyStack
+    }
+
+    var bodyForm: some View {
+        VStack { // Form doesn't render in iOS for some reason
+                Slider(value: $coords.latitude, in: -90...90) {
+                    Text("Latitude:", bundle: .module, comment: "latitude form field label")//.frame(width: 90, alignment: .trailing)
+//                    EmptyView()
+                }
+//                TextField(value: $coords.latitude, format: .number, prompt: Text("lat", bundle: .module, comment: "latitude form field placeholder")) {
+//                    EmptyView()
+//                }
+//                .frame(width: 100)
+//            }
+//            HStack {
+                Slider(value: $coords.longitude, in: -180...180) {
+                    Text("Longitude:", bundle: .module, comment: "longitude form field label")//.frame(width: 90, alignment: .trailing)
+//                    EmptyView()
+//                }
+//                TextField(value: $coords.longitude, format: .number, prompt: Text("lon", bundle: .module, comment: "longitude form field placeholder")) {
+//                    EmptyView()
+//                }
+//                .frame(width: 100)
+            }
+//            HStack {
+                Slider(value: $coords.altitude[default: 0.0].pvalue, in: 0...8_000) {
+                    Text("Altitude:", bundle: .module, comment: "altitude form field label")//.frame(width: 90, alignment: .trailing)
+//                    EmptyView()
+                }
+//                TextField(value: $coords.altitude, format: .number, prompt: Text("alt", bundle: .module, comment: "altitude form fiel placeholder")) {
+//                    EmptyView()
+//                }
+//                .frame(width: 100)
+//            }
+        }
+        .lineLimit(1)
+        .truncationMode(.tail)
+        .textFieldStyle(.roundedBorder)
+#if os(iOS)
+        .keyboardType(.decimalPad)
+#endif
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    var bodyStack: some View {
         VStack { // Form doesn't render in iOS for some reason
             HStack {
                 Text("Latitude:", bundle: .module, comment: "latitude form field label").frame(width: 90, alignment: .trailing)
@@ -129,8 +171,8 @@ extension Coords : Identifiable {
     public var id: Self { self }
 }
 
-public struct WeatherView: View {
-    let coords: Coords
+public struct WeatherResultView: View {
+    @Binding var coords: Coords
     @State private var weatherResult: Result<Weather, Error>? = .none
     @EnvironmentObject var store: Store
     @EnvironmentObject var pod: SunBowPod
@@ -154,25 +196,7 @@ public struct WeatherView: View {
                     }
                 }
             case .success(let weather):
-                HStack {
-                    Text("Temp:", bundle: .module, comment: "temperature form label")
-                        .frame(width: 80)
-                        .frame(alignment: .trailing)
-                    Text(weather.currentWeather.temperature, format: .measurement(width: .narrow))
-                        .frame(alignment: .leading)
-                }
-                HStack {
-                    Text("Wind:", bundle: .module, comment: "wind form label")
-                        .frame(width: 80)
-                        .frame(alignment: .trailing)
-                    Group {
-                        Text(weather.currentWeather.wind.speed, format: .measurement(width: .narrow))
-                        let dir = Text(weather.currentWeather.wind.direction, format: .measurement(width: .narrow))
-                        dir
-                        //Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
-                    }
-                    .frame(alignment: .leading)
-                }
+                WeatherSummaryView(weather: weather.currentWeather)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -189,6 +213,33 @@ public struct WeatherView: View {
     }
 }
 
+struct WeatherSummaryView : View, Equatable {
+    let weather: CurrentWeather
+    
+    var body: some View {
+        VStack {
+            HStack {
+                Text("Temp:", bundle: .module, comment: "temperature form label")
+                    .frame(width: 80)
+                    .frame(alignment: .trailing)
+                Text(weather.temperature, format: .measurement(width: .narrow))
+                    .frame(alignment: .leading)
+            }
+            HStack {
+                Text("Wind:", bundle: .module, comment: "wind form label")
+                    .frame(width: 80)
+                    .frame(alignment: .trailing)
+                Group {
+                    Text(weather.wind.speed, format: .measurement(width: .narrow))
+                    let dir = Text(weather.wind.direction, format: .measurement(width: .narrow))
+                    dir
+                    //Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                }
+                .frame(alignment: .leading)
+            }
+        }
+    }
+}
 
 public extension Facet {
     
