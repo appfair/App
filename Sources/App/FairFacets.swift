@@ -70,7 +70,7 @@ public struct FacetHostingView<AF: Facet & View> : View {
 
     /// The current selection is stored as the underlying Raw Value string, which enables us to easily store it if need be.
     private var selectionBinding: Binding<AF?> {
-        Binding(get: { AF(rawValue: facetSelection) }, set: { newValue in self.facetSelection = newValue?.rawValue ?? .init() })
+        Binding(get: { AF(rawValue: facetSelection) }, set: { facetSelection = $0?.rawValue ?? .init() })
     }
 
     /// The current selection is stored as the underlying Raw Value string, which enables us to easily store it if need be.
@@ -93,18 +93,18 @@ extension FocusedValues {
 
 fileprivate extension KeyEquivalent {
     /// Returns a `KeyEquivalent` for the given number
-    static func indexed(_ itemIndex: Int) -> Self? {
+    static func indexed(_ itemIndex: Int) -> KeyEquivalent? {
         switch itemIndex {
-        case 0: return "0"
-        case 1: return "1"
-        case 2: return "2"
-        case 3: return "3"
-        case 4: return "4"
-        case 5: return "5"
-        case 6: return "6"
-        case 7: return "7"
-        case 8: return "8"
-        case 9: return "9"
+        case 0: return KeyEquivalent("0")
+        case 1: return KeyEquivalent("1")
+        case 2: return KeyEquivalent("2")
+        case 3: return KeyEquivalent("3")
+        case 4: return KeyEquivalent("4")
+        case 5: return KeyEquivalent("5")
+        case 6: return KeyEquivalent("6")
+        case 7: return KeyEquivalent("7")
+        case 8: return KeyEquivalent("8")
+        case 9: return KeyEquivalent("9")
         default: return nil
         }
     }

@@ -2,16 +2,16 @@ import FairApp
 import GRDB
 import GRDBQuery
 import Combine
-
+import WeatherTiq
 
 struct Place : Identifiable {
     var id: Int64
 
-    // var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, admincode2, admincode3, admincode4, population, elevation, dem, timezone, modificationdate: String
+    // var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, admincode2, admincode3, admincode4, population, elevation, dem, timezone, modified: String
 
     var name: String
     var asciiname: String
-    var alternatenames: String
+    //var alternatenames: String // trimmed (reduces size by 40%)
     var latitude: Double
     var longitude: Double
     var featureclass: String
@@ -22,35 +22,59 @@ struct Place : Identifiable {
     var admincode2: String
     var admincode3: String
     var admincode4: String
-    var population: UInt64
-    var elevation: Double
-    var dem: String
+    var population: Int
+    var elevation: Int
+    var dem: Int
     var timezone: String
-    var modificationdate: Date
+    var modified: Date
 }
 
-public class PlacesManager : ObservableObject {
-    /// To rebuild the database from the latest `geonames.org`, run:
-    ///
-    /// ```
-    /// (echo 'id\tname\tasciiname\talternatenames\tlatitude\tlongitude\tfeatureclass\tfeaturecode\tcountrycode\tcc2\tadmincode1\tadmincode2\tadmincode3\tadmincode4\tpopulation\televation\tdem\ttimezone\tmodificationdate'; curl -fL https://download.geonames.org/export/dump/cities15000.zip | bsdtar -xOf -) | sed 's/,/;/g' | tr '\t' ',' | sqlite3 Sources/App/Resources/cities.db ".import --csv /dev/stdin cities"
-    /// ```
+extension Place {
+    var coords: Coords {
+        Coords(latitude: self.latitude, longitude: self.longitude)
+    }
+}
+
+/// Make Place a Codable Record.
+///
+/// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
+extension Place : Codable, FetchableRecord, MutablePersistableRecord {
+    // Define database columns from CodingKeys
+    enum Columns {
+        static let id = Column(CodingKeys.id)
+        static let name = Column(CodingKeys.name)
+//        static let asciiname = Column(CodingKeys.asciiname)
+//        static let alternatenames = Column(CodingKeys.alternatenames)
+        static let latitude = Column(CodingKeys.latitude)
+        static let longitude = Column(CodingKeys.longitude)
+//        static let featureclass = Column(CodingKeys.featureclass)
+//        static let featurecode = Column(CodingKeys.featurecode)
+//        static let countrycode = Column(CodingKeys.countrycode)
+//        static let cc2 = Column(CodingKeys.cc2)
+//        static let admincode1 = Column(CodingKeys.admincode1)
+//        static let admincode2 = Column(CodingKeys.admincode2)
+//        static let admincode3 = Column(CodingKeys.admincode3)
+//        static let admincode4 = Column(CodingKeys.admincode4)
+        static let population = Column(CodingKeys.population)
+//        static let elevation = Column(CodingKeys.elevation)
+//        static let dem = Column(CodingKeys.dem)
+//        static let timezone = Column(CodingKeys.timezone)
+//        static let modified = Column(CodingKeys.modified)
+    }
+
+    /// Updates a palce id after it has been inserted in the database.
+    mutating func didInsert(_ inserted: InsertionSuccess) {
+        id = inserted.rowID
+    }
 }
 
 public struct PlacesView : View {
-    @Query(PlacesRequest(ordering: .byPopulation)) private var places: [Place]
+    @Query(PlacesRequest(ordering: .byLongitude)) private var places: [Place]
 
     public var body: some View {
-        NavigationView {
+        return NavigationView {
             List {
-                ForEach(places) { place in
-                    //TextField("Title", text: $place.title)
-                    NavigationLink {
-                        Text("Welcome to: \(place.name)", bundle: .module, comment: "place labels")
-                    } label: {
-                        Text(place.name) // TODO: localized place databases
-                    }
-                }
+                ForEach(places, content: PlaceListItemView.init)
             }
         }
         #if os(iOS)
@@ -60,29 +84,84 @@ public struct PlacesView : View {
     }
 }
 
+struct PlaceListItemView : View {
+    let place: Place
+
+    @State private var weatherResult: Result<Weather, Error>? = .none
+
+    var body: some View {
+        //TextField("Title", text: $place.title)
+        NavigationLink {
+            Text("Welcome to: \(place.name)", bundle: .module, comment: "place labels")
+        } label: {
+            HStack {
+                Group {
+                    if let weather = weatherResult?.successValue {
+                        Image(systemName: weather.currentWeather.symbolName)
+                            .symbolVariant(.fill)
+                            .symbolRenderingMode(.multicolor)
+                    } else {
+                        ProgressView()
+                            .tint(.yellow) // matches the weather symbol multicolor tint
+                    }
+                }
+                .frame(width: 25)
+
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text(place.name) // TODO: localized place databases
+                        Text(place.countrycode)
+                        Text(place.population, format: .number)
+                    }
+                    HStack {
+                        Text("\(String(format: "%.2f", place.latitude))°/\(String(format: "%.2f", place.longitude))°", bundle: .module, comment: "subtitle for place list item")
+                    }
+                    .font(.subheadline)
+                }
+
+                Spacer()
+
+                switch weatherResult {
+                case .success(let weather):
+                    VStack(alignment: .trailing) {
+                        Text(weather.currentWeather.temperature, format: .measurement(width: .narrow))
+                        Text(weather.currentWeather.condition.localizedDescription)
+                            .font(.subheadline)
+                    }
+                case .failure:
+                    // TODO: if error is cancellation, don't show
+                    EmptyView()
+//                    FairSymbol.exclamationmark_octagon
+//                        .help(Text("Error: \(error.localizedDescription)", bundle: .module, comment: "error tooltip prefix"))
+//                        .symbolRenderingMode(.multicolor)
+                case .none:
+                    EmptyView()
+                }
+            }
+        }
+        .task(id: place.coords, priority: .userInitiated) {
+            self.weatherResult = await Result {
+                try await SunBowPod.service.weather(for: .init(latitude: place.coords.latitude, longitude: place.coords.longitude, altitude: .nan))
+            }
+        }
+    }
+}
+
 /// A @Query request that observes the place (any place, actually) in the database
 struct PlacesRequest: Queryable {
+    static var defaultValue: [Place] { [] }
+
+    var ordering: Ordering
     enum Ordering {
         case byPopulation
+        case byLongitude
         case byName
     }
 
-    var ordering: Ordering
-
-    static var defaultValue: [Place] { [] }
-
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[Place], Error> {
-        // Build the publisher from the general-purpose read-only access
-        // granted by `appDatabase.databaseReader`.
-        // Some apps will prefer to call a dedicated method of `appDatabase`.
         ValueObservation
             .tracking(fetchValue(_:))
-            .publisher(
-                in: appDatabase.databaseReader,
-                // The `.immediate` scheduling feeds the view right on
-                // subscription, and avoids an undesired animation when the
-                // application starts.
-                scheduling: .immediate)
+            .publisher(in: appDatabase.databaseReader, scheduling: .immediate)
             .eraseToAnyPublisher()
     }
 
@@ -90,6 +169,8 @@ struct PlacesRequest: Queryable {
     // to test PlaceRequest.
     func fetchValue(_ db: Database) throws -> [Place] {
         switch ordering {
+        case .byLongitude:
+            return try Place.all().orderedByLongitude().fetchAll(db)
         case .byPopulation:
             return try Place.all().orderedByPopulation().fetchAll(db)
         case .byName:
@@ -99,11 +180,9 @@ struct PlacesRequest: Queryable {
 }
 
 // MARK: - Give SwiftUI access to the database
-//
+
+
 // Define a new environment key that grants access to an AppDatabase.
-//
-// The technique is documented at
-// <https://developer.apple.com/documentation/swiftui/environmentkey>.
 private struct AppDatabaseKey: EnvironmentKey {
     static var defaultValue: AppDatabase { .shared }
 }
@@ -115,9 +194,9 @@ extension EnvironmentValues {
     }
 }
 
-// In this demo app, views observe the database with the @Query property
-// wrapper, defined in the GRDBQuery package. Its documentation recommends to
-// define a dedicated initializer for `appDatabase` access, so we comply:
+// Views observe the database with the @Query property wrapper,
+// defined in the GRDBQuery package, which recommends to
+// define a dedicated initializer for `appDatabase` access
 extension Query where Request.DatabaseContext == AppDatabase {
     /// Convenience initializer for requests that feed from `AppDatabase`.
     init(_ request: Request) {
@@ -213,38 +292,11 @@ extension AppDatabase {
             _ = try Place.deleteAll(db)
         }
     }
-
-    /// Refresh all places (by performing some random changes, for demo purpose).
-//    func refreshPlaces() async throws {
-//        try await dbWriter.write { db in
-//            if try Place.all().isEmpty(db) {
-//                // When database is empty, insert new random places
-//                try createRandomPlaces(db)
-//            } else {
-//                // Insert a place
-//                if Bool.random() {
-//                    _ = try Place.makeRandom().inserted(db) // insert but ignore inserted id
-//                }
-//
-//                // Delete a random place
-//                if Bool.random() {
-//                    try Place.order(sql: "RANDOM()").limit(1).deleteAll(db)
-//                }
-//
-//                // Update some places
-//                for var place in try Place.fetchAll(db) where Bool.random() {
-//                    try place.updateChanges(db) {
-//                        $0.population = Place.randomPopulation()
-//                    }
-//                }
-//            }
-//        }
-//    }
-
 }
 
 // MARK: - Database Access: Reads
-// This demo app does not provide any specific reading method, and instead
+
+// This app does not provide any specific reading method, and instead
 // gives an unrestricted read-only access to the rest of the application.
 // In your app, you are free to choose another path, and define focused
 // reading methods.
@@ -252,23 +304,6 @@ extension AppDatabase {
     /// Provides a read-only access to the database
     var databaseReader: DatabaseReader {
         dbWriter
-    }
-}
-
-// MARK: - Persistence
-/// Make Place a Codable Record.
-///
-/// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
-extension Place: Codable, FetchableRecord, MutablePersistableRecord {
-    // Define database columns from CodingKeys
-    fileprivate enum Columns {
-        static let name = Column(CodingKeys.name)
-        static let population = Column(CodingKeys.population)
-    }
-
-    /// Updates a palce id after it has been inserted in the database.
-    mutating func didInsert(_ inserted: InsertionSuccess) {
-        id = inserted.rowID
     }
 }
 
@@ -302,83 +337,86 @@ extension DerivableRequest<Place> {
     ///         try Place.all().orderedByPopulation().fetchOne(db)
     ///     }
     func orderedByPopulation() -> Self {
-        // Sort by descending population, and then by name, in a
-        // localized case insensitive fashion
-        // See https://github.com/groue/GRDB.swift/blob/master/README.md#string-comparison
-        order(
-            Place.Columns.population.desc,
-            Place.Columns.name.collating(.localizedCaseInsensitiveCompare))
+        order(Place.Columns.population.desc)
+    }
+
+    func orderedByLongitude() -> Self {
+        order(Place.Columns.longitude.asc)
     }
 }
-
 
 extension AppDatabase {
     /// The database for the application
-    static let shared = makeShared()
+    static let shared = createAppDatabase()
 
-    private static func makeShared() -> AppDatabase {
-        // to re-generate Sources/App/Resources/places.db :
-        // rmbk Sources/App/Resources/places.db; (echo 'id,name,asciiname,alternatenames,latitude,longitude,featureclass,featurecode,countrycode,cc2,admincode1,admincode2,admincode3,admincode4,population,elevation,dem,timezone,modificationdate'; (curl -fL https://download.geonames.org/export/dump/cities15000.zip | bsdtar -xOf - | sed 's/,/;/g' | tr '\t' ',')) | sqlite3 Sources/App/Resources/places.db ".import --csv /dev/stdin place"
-        let dbURL = Bundle.module.url(forResource: "places", withExtension: "db")!
-        let dbPool = try! DatabaseQueue(path: dbURL.path)
-        let appDatabase = try! AppDatabase(dbPool)
-        return appDatabase
-    }
-
-    /// Creates an empty database for SwiftUI previews
-    @available(*, deprecated)
-    static func empty() -> AppDatabase {
-        fatalError("empty should not be used")
-        // Connect to an in-memory database
-        // See https://github.com/groue/GRDB.swift/blob/master/README.md#database-connections
-        let dbQueue = try! DatabaseQueue()
-        return try! AppDatabase(dbQueue)
-    }
-
-}
-
-/// Testing laziness
-public struct LazyThingView : View {
-    struct Thing : Identifiable {
-        var index: Int
-        var id: Int { dump(index, name: "id") }
-        var property: UUID { dump(UUID(), name: "property") }
-    }
-
-    struct ThingsCollection : RandomAccessCollection {
-        let startIndex = 0
-        let endIndex = 9_999
-        subscript(index: Int) -> Thing {
-            dump(Thing(index: index), name: "subscript")
+    private static func createAppDatabase() -> AppDatabase {
+        Database.logError = { (resultCode, message) in
+            dbg("database error \(resultCode): \(message)")
         }
-        func index(after i: Int) -> Int { i + 1 }
-    }
 
-    let things = ThingsCollection()
+        // run scripts/importcities.bash to re-generate Sources/App/Resources/places.db
+        var config = Configuration()
+        //config.label = "places.db"
+        config.readonly = true
 
-    public var body: some View {
-        //bodyList
-        bodyLazyVStack
-    }
+        config.prepareDatabase { db in
+            db.trace(options: .profile) { event in
+                dbg("sql:", event) // all SQL statements with their duration
 
-    public var bodyLazyVStack: some View {
-        ScrollView {
-            LazyVStack {
-                ForEach(things) { thing in
-                    Text("Thing: \(thing.property)")
+                // Access to detailed profiling information
+                if case let .profile(statement, duration) = event, duration > 0.5 {
+                    dbg("slow query: \(statement.sql)")
                 }
             }
         }
-    }
 
-    public var bodyList: some View {
-        List {
-            ForEach(things) { thing in
-                Text("Thing: \(thing.property)")
-            }
-        }
-    }
+        let dbURL = Bundle.module.url(forResource: "places", withExtension: "db")!
 
+        return try! AppDatabase(DatabaseQueue(path: dump(dbURL.path), configuration: config))
+        //return try! AppDatabase(DatabasePool(path: dbURL.path, configuration: config))
+    }
 }
 
-
+/// Testing laziness
+//public struct LazyThingView : View {
+//    struct Thing : Identifiable {
+//        var index: Int
+//        var id: Int { dump(index, name: "id") }
+//        var property: UUID { dump(UUID(), name: "property") }
+//    }
+//
+//    struct ThingsCollection : RandomAccessCollection {
+//        let startIndex = 0
+//        let endIndex = 9_999
+//        subscript(index: Int) -> Thing {
+//            dump(Thing(index: index), name: "subscript")
+//        }
+//        func index(after i: Int) -> Int { i + 1 }
+//    }
+//
+//    let things = ThingsCollection()
+//
+//    public var body: some View {
+//        //bodyList
+//        bodyLazyVStack
+//    }
+//
+//    public var bodyLazyVStack: some View {
+//        ScrollView {
+//            LazyVStack {
+//                ForEach(things) { thing in
+//                    Text("Thing: \(thing.property)")
+//                }
+//            }
+//        }
+//    }
+//
+//    public var bodyList: some View {
+//        List {
+//            ForEach(things) { thing in
+//                Text("Thing: \(thing.property)")
+//            }
+//        }
+//    }
+//
+//}
