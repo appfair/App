@@ -374,9 +374,10 @@ extension DerivableRequest<Place> {
 
 extension AppDatabase {
     /// The database for the application
-    static let shared = createAppDatabase()
+    static let shared = createAppDatabase(url: GeoNamesCities15000.resourceURL)
+    //static let shared = createAppDatabase(url: GeoNamesCities1000.resourceURL)
 
-    private static func createAppDatabase() -> AppDatabase {
+    private static func createAppDatabase(url dbURL: URL) -> AppDatabase {
         Database.logError = { (resultCode, message) in
             dbg("database error \(resultCode): \(message)")
         }
@@ -396,8 +397,6 @@ extension AppDatabase {
                 }
             }
         }
-
-        let dbURL = GeoNamesCities15000.resourceURL
 
         return try! AppDatabase(DatabaseQueue(path: dump(dbURL.path), configuration: config))
         //return try! AppDatabase(DatabasePool(path: dbURL.path, configuration: config))
