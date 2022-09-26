@@ -7,6 +7,7 @@ public extension AppContainer {
             ContentView()
                 .environmentObject(store)
                 .environmentObject(SunBowPod.shared)
+                .preferredColorScheme(store.themeStyle.colorScheme)
         }
         .commands {
             SidebarCommands()
@@ -23,6 +24,7 @@ public extension AppContainer {
         WeatherFacets.allCases.last.unsafelyUnwrapped
             .environmentObject(store)
             .environmentObject(SunBowPod.shared)
+            .preferredColorScheme(store.themeStyle.colorScheme)
     }
 }
 

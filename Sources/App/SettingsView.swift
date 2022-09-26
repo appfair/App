@@ -64,11 +64,59 @@ private struct AppearanceSettingsView : View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        Text("Appearance", bundle: .module, comment: "appearance settings title")
-            .font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+//        Text("Appearance", bundle: .module, comment: "appearance settings title")
+//            .font(.largeTitle)
+//            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+        Form {
+            ThemeStylePicker(style: store.$themeStyle)
+        }
     }
 }
+
+struct ThemeStylePicker: View {
+
+    @Binding var style: ThemeStyle
+
+    var body: some View {
+        Picker(selection: $style) {
+            ForEach(ThemeStyle.allCases) { themeStyle in
+                themeStyle.label
+            }
+        } label: {
+            Text("Theme", bundle: .module, comment: "picker title for general preference for theme style")
+        }
+        //.radioPickerStyle()
+    }
+}
+
+/// The preferred theme style for the app
+public enum ThemeStyle: String, CaseIterable {
+    case system
+    case light
+    case dark
+}
+
+extension ThemeStyle : Identifiable {
+    public var id: Self { self }
+
+    public var label: Text {
+        switch self {
+        case .system: return Text("System", comment: "general preference for theme style in popup menu")
+        case .light: return Text("Light", comment: "general preference for theme style in popup menu")
+        case .dark: return Text("Dark", comment: "general preference for theme style in popup menu")
+        }
+    }
+
+    public var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 
 private struct LanguageSettingsView : View {
     @EnvironmentObject var store: Store

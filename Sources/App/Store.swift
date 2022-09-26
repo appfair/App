@@ -14,6 +14,8 @@ public final class Store: SceneManager, ObservableObject {
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("fahrenheit") public var fahrenheit = true
 
+    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
+
     public let appName = Bundle.localizedAppName
 
 

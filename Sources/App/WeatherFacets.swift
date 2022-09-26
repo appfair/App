@@ -151,22 +151,23 @@ public struct WeatherResultView: View {
         VStack(alignment: .leading) {
             switch self.weatherResult {
             case .none:
-                Text("Loading…", bundle: .module, comment: "loading placeholder text")
+                WeatherSummaryView(weather: nil, placeholder: Text("Loading…", bundle: .module, comment: "loading placeholder text"))
             case .failure(let error):
+                WeatherSummaryView(weather: nil, placeholder: Text("Error", bundle: .module, comment: "error text"))
                 if error is CancellationError { // FIXME: this is only throws from Task.checkCancellation(), not from the URLSession task being cancelled
                     // expected; happens when the user cancels the fetch
-                    Rectangle().fill(Color.cyan)
+                    //Rectangle().fill(Color.cyan)
                 } else if (error as NSError).domain == "NSURLErrorDomain" && (error as NSError).code == URLError.cancelled.rawValue {
                     // URL cancellation throws a different error
                     //Rectangle().fill(Color.gray.opacity(0.1))
                 } else {
-                    HStack {
-                        Text("Error:", bundle: .module, comment: "error section title")
-                        Text(error.localizedDescription)
-                    }
+//                    HStack {
+//                        Text("Error:", bundle: .module, comment: "error section title")
+//                        Text(error.localizedDescription)
+//                    }
                 }
             case .success(let weather):
-                WeatherSummaryView(weather: weather.currentWeather)
+                WeatherSummaryView(weather: weather.currentWeather, placeholder: Text(""))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -184,26 +185,35 @@ public struct WeatherResultView: View {
 }
 
 struct WeatherSummaryView : View, Equatable {
-    let weather: CurrentWeather
-    
+    let weather: CurrentWeather?
+    let placeholder: Text
+
     var body: some View {
         VStack {
             HStack {
                 Text("Temp:", bundle: .module, comment: "temperature form label")
                     .frame(width: 80)
                     .frame(alignment: .trailing)
-                Text(weather.temperature, format: .measurement(width: .narrow))
-                    .frame(alignment: .leading)
+                if let weather = weather {
+                    Text(weather.temperature, format: .measurement(width: .narrow))
+                        .frame(alignment: .leading)
+                } else {
+                    placeholder
+                }
             }
             HStack {
                 Text("Wind:", bundle: .module, comment: "wind form label")
                     .frame(width: 80)
                     .frame(alignment: .trailing)
                 Group {
-                    Text(weather.wind.speed, format: .measurement(width: .narrow))
-                    let dir = Text(weather.wind.direction, format: .measurement(width: .narrow))
-                    dir
-                    //Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                    if let weather = weather {
+                        Text(weather.wind.speed, format: .measurement(width: .narrow))
+                        let dir = Text(weather.wind.direction, format: .measurement(width: .narrow))
+                        dir
+                        //Text("\(weather.currentWeather.wind.compassDirection.description) (\(dir))")
+                    } else {
+                        placeholder
+                    }
                 }
                 .frame(alignment: .leading)
             }
