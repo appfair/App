@@ -1,43 +1,7 @@
 import FairKit
 import Jack
 import WeatherTiq
-
-public struct WeatherSectionView: View {
-    @EnvironmentObject var store: Store
-    @EnvironmentObject var pod: SunBowPod
-    @State var coords = Store.defaultCoords
-    
-    public var body: some View {
-        Form {
-            Section {
-                CurrentWeatherView(coords: $coords)
-            } header: {
-                Text("Current Weather", bundle: .module, comment: "section header for weather section")
-            }
-            
-            Section {
-                WeatherAnalysisView()
-            } header: {
-                Text("Plug-In: Hot Take", bundle: .module, comment: "plug-in title")
-            }
-            
-            Section {
-                WeatherFormView(coords: $coords)
-            }
-            
-            // TODO: show Fahrenheit/Celsius units
-            //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)
-        }
-        //.navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
-//        .refreshable {
-//            do {
-//                await pod.updateWeatherMessage(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
-//            } catch {
-//                print(wip("### error:"), error)
-//            }
-//        }
-    }
-}
+import LocationTiq
 
 struct WeatherAnalysisView : View {
     @EnvironmentObject var store: Store
@@ -119,6 +83,7 @@ struct WeatherFormView : View {
                     EmptyView()
                 }
                 TextField(value: $coords.latitude, format: .number, prompt: Text("lat", bundle: .module, comment: "latitude form field placeholder")) {
+//                TextField(value: $coords.latitude, format: .locationDegrees(format: .decimalDegrees, symbolStyle: .simple), prompt: Text("lat", bundle: .module, comment: "latitude form field placeholder")) {
                     EmptyView()
                 }
                 .frame(width: 100)
@@ -129,6 +94,7 @@ struct WeatherFormView : View {
                     EmptyView()
                 }
                 TextField(value: $coords.longitude, format: .number, prompt: Text("lon", bundle: .module, comment: "longitude form field placeholder")) {
+//               TextField(value: $coords.longitude, format: .locationDegrees(format: .decimalDegrees, symbolStyle: .simple), prompt: Text("lon", bundle: .module, comment: "longitude form field placeholder")) {
                     EmptyView()
                 }
                 .frame(width: 100)
@@ -164,7 +130,11 @@ public struct Coords : Hashable, Codable {
         self.longitude = longitude
         self.altitude = altitude
     }
-    
+
+    /// Conversion to `LocationTiq.Coordinate`
+    public var coordinate: Coordinate {
+        Coordinate(latitude: latitude, longitude: longitude)
+    }
 }
 
 extension Coords : Identifiable {
@@ -255,3 +225,28 @@ public extension Facet {
     }
 }
 
+extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
+    public static func locationDegrees(format: CoordinateFormat = .decimalDegrees, symbolStyle: SymbolStyle = .simple) -> FloatingPointFormatStyle<Double> {
+
+        wip(fatalError())
+    }
+}
+
+//extension ParseableFormatStyle where Self == Decimal.FormatStyle {
+//    public static func locationDegrees(format: CoordinateFormat = .decimalDegrees, symbolStyle: SymbolStyle = .simple) -> Self {
+//        wip(fatalError())
+//    }
+//}
+
+
+extension ParseableFormatStyle {
+
+//    let formatter = LocationDegreesFormatter()
+//    formatter.format = .decimalDegrees
+//    formatter.symbolStyle = .simple
+//    format.displayOptions = [.suffix]
+//
+//   public final class LocationDegreesFormatter: Formatter {
+//
+
+}

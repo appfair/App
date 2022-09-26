@@ -14,6 +14,9 @@
       location = "group:../../github/tiqtiq/WeatherTiq/">
    </FileRef>
    <FileRef
+      location = "group:../../github/tiqtiq/LocationTiq/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXKit/">
    </FileRef>
    <FileRef

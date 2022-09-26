@@ -3,30 +3,32 @@ import GRDB
 import GRDBQuery
 import Combine
 import WeatherTiq
+import LocationTiq
+import GeoNamesCities15000
 
-struct Place : Identifiable {
-    var id: Int64
+public struct Place : Identifiable {
+    public var id: Int64
 
-    // var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, admincode2, admincode3, admincode4, population, elevation, dem, timezone, modified: String
+    // var name, asciiname, alternatenames, latitude, longitude, featureclass, featurecode, countrycode, cc2, admincode1, public admincode2, admincode3, admincode4, population, elevation, dem, timezone, modified: String
 
-    var name: String
-    var asciiname: String
+    public var name: String
+    public var asciiname: String
     //var alternatenames: String // trimmed (reduces size by 40%)
-    var latitude: Double
-    var longitude: Double
-    var featureclass: String
-    var featurecode: String
-    var countrycode: String
-    var cc2: String
-    var admincode1: String
-    var admincode2: String
-    var admincode3: String
-    var admincode4: String
-    var population: Int
-    var elevation: Int
-    var dem: Int
-    var timezone: String
-    var modified: Date
+    public var latitude: Double
+    public var longitude: Double
+    public var featureclass: String
+    public var featurecode: String
+    public var countrycode: String
+    public var cc2: String
+    public var admincode1: String
+    public var admincode2: String
+    public var admincode3: String
+    public var admincode4: String
+    public var population: Int
+    public var elevation: Int
+    public var dem: Int
+    public var timezone: String
+    public var modified: Date
 }
 
 extension Place {
@@ -63,7 +65,7 @@ extension Place : Codable, FetchableRecord, MutablePersistableRecord {
     }
 
     /// Updates a palce id after it has been inserted in the database.
-    mutating func didInsert(_ inserted: InsertionSuccess) {
+    public mutating func didInsert(_ inserted: InsertionSuccess) {
         id = inserted.rowID
     }
 }
@@ -108,10 +110,14 @@ struct PlaceListItemView : View {
                 Group {
                     if let weather = weatherResult?.successValue {
                         Image(systemName: weather.currentWeather.symbolName)
-                            .symbolVariant(.fill)
-                            .symbolRenderingMode(.multicolor)
+                            //.symbolVariant(.circle)
+                            //.symbolRenderingMode(.multicolor) // clouds are white on white
+                            //.symbolRenderingMode(.palette)
+                            .foregroundStyle(Color.yellow, Color.cyan)
                     } else {
                         ProgressView()
+                            .progressViewStyle(.circular)
+                            .controlSize(.small)
                             .tint(.yellow) // matches the weather symbol multicolor tint
                     }
                 }
@@ -119,14 +125,22 @@ struct PlaceListItemView : View {
 
                 VStack(alignment: .leading) {
                     HStack {
-                        Text(place.name) // TODO: localized place databases
-                        Text(place.countrycode)
-                        Text(place.population, format: .number)
+//                        Text(place.name) // TODO: localized place databases
+                        //Text(place.admincode3)
+                        //Text(place.admincode2)
+//                        Text(place.admincode1)
+//                        Text(place.countrycode)
+                        //Text(place.population, format: .number)
+                        Text(place.formattedAddress) // ?? Text("Unknown Location", bundle: .module, comment: "placeholder label for no address")
                     }
+                    .lineLimit(1)
                     HStack {
-                        Text("\(String(format: "%.2f", place.latitude))°/\(String(format: "%.2f", place.longitude))°", bundle: .module, comment: "subtitle for place list item")
+                        let fmt = LocationCoordinateFormatter.degreesMinutesSecondsFormatter.string(from: place.coords.coordinate) ?? ""
+                        Text(fmt)
+                            .font(.caption2)
                     }
                     .font(.subheadline)
+                    .lineLimit(1)
                 }
 
                 Spacer()
@@ -135,8 +149,11 @@ struct PlaceListItemView : View {
                 case .success(let weather):
                     VStack(alignment: .trailing) {
                         Text(weather.currentWeather.temperature, format: .measurement(width: .narrow))
+                            .font(.headline.monospacedDigit())
+                            .lineLimit(1)
                         Text(weather.currentWeather.condition.localizedDescription)
-                            .font(.subheadline)
+                            .font(.caption2)
+                            .lineLimit(1)
                     }
                 case .failure:
                     // TODO: if error is cancellation, don't show
@@ -151,7 +168,7 @@ struct PlaceListItemView : View {
         }
         .task(id: place.coords, priority: .userInitiated) {
             self.weatherResult = await Result {
-                try await SunBowPod.service.weather(for: .init(latitude: place.coords.latitude, longitude: place.coords.longitude, altitude: .nan))
+                try await SunBowPod.service.weather(for: Location(latitude: place.coords.latitude, longitude: place.coords.longitude, altitude: .nan))
             }
         }
     }
@@ -380,7 +397,7 @@ extension AppDatabase {
             }
         }
 
-        let dbURL = Bundle.module.url(forResource: "places", withExtension: "db")!
+        let dbURL = GeoNamesCities15000.resourceURL
 
         return try! AppDatabase(DatabaseQueue(path: dump(dbURL.path), configuration: config))
         //return try! AppDatabase(DatabasePool(path: dbURL.path, configuration: config))
@@ -430,3 +447,20 @@ extension AppDatabase {
 //    }
 //
 //}
+
+
+
+import class Contacts.CNPostalAddressFormatter
+import class Contacts.CNMutablePostalAddress
+
+extension Place {
+    var formattedAddress: String {
+        let addr = CNMutablePostalAddress()
+        addr.city = self.name
+        addr.state = self.admincode1
+        addr.subAdministrativeArea = self.admincode2
+        addr.isoCountryCode = self.countrycode // doesn't seem to show up in the formatted address
+        let str = CNPostalAddressFormatter.string(from: addr, style: .mailingAddress)
+        return str.replacingOccurrences(of: "\n", with: ", ")
+    }
+}
