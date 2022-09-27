@@ -154,26 +154,18 @@ public struct WeatherResultView: View {
                 WeatherSummaryView(weather: nil, placeholder: Text("Loading…", bundle: .module, comment: "loading placeholder text"))
             case .failure(let error):
                 WeatherSummaryView(weather: nil, placeholder: Text("Error", bundle: .module, comment: "error text"))
-                if error is CancellationError { // FIXME: this is only throws from Task.checkCancellation(), not from the URLSession task being cancelled
-                    // expected; happens when the user cancels the fetch
-                    //Rectangle().fill(Color.cyan)
-                } else if (error as NSError).domain == "NSURLErrorDomain" && (error as NSError).code == URLError.cancelled.rawValue {
-                    // URL cancellation throws a different error
-                    //Rectangle().fill(Color.gray.opacity(0.1))
-                } else {
-//                    HStack {
-//                        Text("Error:", bundle: .module, comment: "error section title")
-//                        Text(error.localizedDescription)
-//                    }
-                }
             case .success(let weather):
                 WeatherSummaryView(weather: weather.currentWeather, placeholder: Text(""))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: coords, priority: .userInitiated) {
-            await refreshWeather()
-            await pod.updateHotTake(weatherResult?.successValue)
+            await store.trying {
+                try Task.checkCancellation()
+                await refreshWeather()
+                try Task.checkCancellation()
+                try await pod.updateHotTake(weatherResult?.successValue)
+            }
         }
     }
     

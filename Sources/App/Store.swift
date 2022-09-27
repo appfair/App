@@ -16,10 +16,24 @@ public final class Store: SceneManager, ObservableObject {
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
+    /// The current errors to display to the user
+    @State var errors: [Error] = []
+
     public let appName = Bundle.localizedAppName
 
 
     public required init() {
+    }
+
+    public func trying(action: @escaping () async throws -> ()) async {
+        do {
+            try await action()
+        } catch {
+            if !error.isCancellation { // permit cancellation errors
+                dbg("error performing action:", error)
+                errors.append(error)
+            }
+        }
     }
 
     static var defaultCoords: Coords = {
@@ -30,6 +44,21 @@ public final class Store: SceneManager, ObservableObject {
         return wip(Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0))
     }()
 
+}
+
+extension Error {
+    /// Returns true if this is a routing cancellation-related error that should not be handled as a normal error
+    var isCancellation: Bool {
+        if self is CancellationError { // thrown from Task.checkCancellation()
+            return true
+        }
+
+        if (self as NSError).domain == "NSURLErrorDomain" && (self as NSError).code == URLError.cancelled.rawValue {
+            return true
+        }
+
+        return false
+    }
 }
 
 @MainActor open class SunBowPod : JackedObject {
@@ -53,41 +82,37 @@ public final class Store: SceneManager, ObservableObject {
     private init() {
     }
 
-    func updateHotTake(_ weather: Weather?) {
-        do {
-            guard var temp = weather?.currentWeather.temperature else {
-                try ctx.env.eval("msg = '🫥 `analyzing…`'")
-                return
-            }
-
-            // temp.convert(to: store.fahrenheit ? .fahrenheit : .celsius) // TODO
-            temp.convert(to: .fahrenheit)
-
-            try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
-
-            try ctx.env.eval("""
-            var temp = Math.round(temperature);
-            if (temp < 0) {
-                msg = `🥶 ${temp}° is **very** ***cold***!!`;
-            } else if (temp < 33) {
-                msg = `😶‍🌫️ ${temp}° is **cold**!`;
-            } else if (temp < 50) {
-                msg = `😨 ${temp}° is *chilly*.`;
-            } else if (temp < 80) {
-                msg = `🤗 ${temp}° is nice.`;
-            } else if (temp < 90) {
-                msg = `😡 ${temp}° is *warm*.`;
-            } else if (temp < 100) {
-                msg = `🥵 ${temp}° is **hot**!`;
-            } else if (temp < 200) {
-                msg = `🤯 ${temp}° is **very** ***hot***!!`;
-            } else {
-                msg = `It is surprising temperature (${temp}°)!`;
-            }
-            """)
-        } catch {
-            dbg("error evaluating script:", error)
+    func updateHotTake(_ weather: Weather?) async throws {
+        guard var temp = weather?.currentWeather.temperature else {
+            try ctx.env.eval("msg = '🫥 `analyzing…`'")
+            return
         }
+
+        // temp.convert(to: store.fahrenheit ? .fahrenheit : .celsius) // TODO
+        temp.convert(to: .fahrenheit)
+
+        try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
+
+        try ctx.env.eval("""
+        var temp = Math.round(temperature);
+        if (temp < 0) {
+            msg = `🥶 ${temp}° is **very** ***cold***!!`;
+        } else if (temp < 33) {
+            msg = `😶‍🌫️ ${temp}° is **cold**!`;
+        } else if (temp < 50) {
+            msg = `😨 ${temp}° is *chilly*.`;
+        } else if (temp < 80) {
+            msg = `🤗 ${temp}° is nice.`;
+        } else if (temp < 90) {
+            msg = `😡 ${temp}° is *warm*.`;
+        } else if (temp < 100) {
+            msg = `🥵 ${temp}° is **hot**!`;
+        } else if (temp < 200) {
+            msg = `🤯 ${temp}° is **very** ***hot***!!`;
+        } else {
+            msg = `It is surprising temperature (${temp}°)!`;
+        }
+        """)
     }
 
 }
