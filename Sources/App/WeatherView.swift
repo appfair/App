@@ -29,7 +29,7 @@ public struct WeatherView: View {
         //.navigationTitle(Text("🌞 Sun Bow 🎁", bundle: .module, comment: "app name"))
 //        .refreshable {
 //            do {
-//                await pod.updateWeatherMessage(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
+//                await pod.updateHotTake(try await SunBowPod.service.weather(for: .init(latitude: coords.latitude, longitude: coords.longitude, altitude: coords.altitude ?? 0)))
 //            } catch {
 //                print(wip("### error:"), error)
 //            }

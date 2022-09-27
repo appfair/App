@@ -19,13 +19,13 @@ public enum WeatherFacets : String, Facet, View {
     public var facetInfo: FacetInfo {
         switch self {
         case .welcome:
-            return info(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .seal, tint: .gray)
+            return info(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .figure_wave, tint: .orange)
         case .places:
-            return info(title: Text("Places", bundle: .module, comment: "places facet title"), symbol: .pin, tint: .green)
+            return info(title: Text("Places", bundle: .module, comment: "places facet title"), symbol: .mappin_and_ellipse, tint: .green)
         case .weather:
-            return info(title: Text("Weather", bundle: .module, comment: "weather facet title"), symbol: .sun_max, tint: .yellow)
+            return info(title: Text("Weather", bundle: .module, comment: "weather facet title"), symbol: .sun_and_horizon, tint: .yellow)
         case .forecast:
-            return info(title: Text("Forecast", bundle: .module, comment: "forecast facet title"), symbol: .calendar, tint: .teal)
+            return info(title: Text("Forecast", bundle: .module, comment: "forecast facet title"), symbol: .calendar_day_timeline_left, tint: .teal)
         case .settings:
             return info(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: .brown)
         }

@@ -123,6 +123,8 @@ public struct FacetCommands<AF: Facet> : Commands {
                     .button {
                         self.facetSelection = facet.rawValue
                     }
+                    .accessibilityLabel(Text("Select facet view for \(facet.facetInfo.title)", bundle: .module, comment: "accessibility label for facet menu"))
+                    .disabled(facetSelection == nil)
 
                 if let key = KeyEquivalent.indexed(index) {
                     menu.keyboardShortcut(key) // 0-9 have automatic shortcuts assigned
@@ -182,8 +184,8 @@ public struct FacetBrowserView<F: Facet> : View where F : View {
                             facet
                                 .navigationTitle(facet.facetInfo.title)
                         } label: {
-                            facet.facetInfo.title.label(image: facet.facetInfo.symbol)
-                                .tint(facet.facetInfo.tint)
+                            facet.facetInfo.title.label(image: facet.facetInfo.symbol) // .foregroundStyle(facet.facetInfo.tint!)) // makes the label tint color stand out
+
                         }
                     }
                 }

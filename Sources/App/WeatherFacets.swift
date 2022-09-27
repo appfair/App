@@ -173,7 +173,7 @@ public struct WeatherResultView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: coords, priority: .userInitiated) {
             await refreshWeather()
-            await pod.updateWeatherMessage(weatherResult?.successValue)
+            await pod.updateHotTake(weatherResult?.successValue)
         }
     }
     

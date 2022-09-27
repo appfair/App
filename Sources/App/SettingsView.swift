@@ -6,6 +6,10 @@ public struct SettingsView : View {
 
     public var body: some View {
         FacetBrowserView(selection: $selectedSetting)
+        #if os(macOS)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: 500, height: 300)
+        #endif
     }
 }
 
@@ -86,6 +90,7 @@ struct ThemeStylePicker: View {
         } label: {
             Text("Theme", bundle: .module, comment: "picker title for general preference for theme style")
         }
+        .pickerStyle(.inline)
         //.radioPickerStyle()
     }
 }
@@ -167,7 +172,5 @@ private struct PreferencesSettingsView : View {
                 Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

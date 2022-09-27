@@ -53,13 +53,14 @@ public final class Store: SceneManager, ObservableObject {
     private init() {
     }
 
-    func updateWeatherMessage(_ weather: Weather?) async {
+    func updateHotTake(_ weather: Weather?) {
         do {
             guard var temp = weather?.currentWeather.temperature else {
                 try ctx.env.eval("msg = '🫥 `analyzing…`'")
                 return
             }
 
+            // temp.convert(to: store.fahrenheit ? .fahrenheit : .celsius) // TODO
             temp.convert(to: .fahrenheit)
 
             try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
