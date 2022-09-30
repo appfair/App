@@ -23,11 +23,11 @@ public struct WeatherView: View {
                 WeatherFormView(coords: $coords)
             }
 
-            Section {
-                PodUIView()
-            } header: {
-                Text("Plug-In: Pod UI", bundle: .module, comment: "plug-in title")
-            }
+//            Section {
+//                PodUIView()
+//            } header: {
+//                Text("Plug-In: Pod UI", bundle: .module, comment: "plug-in title")
+//            }
 
             // TODO: show Fahrenheit/Celsius units
             //Toggle("Fahrenheit Units", isOn: store.$fahrenheit)

@@ -22,4 +22,7 @@
    <FileRef
       location = "group:../../github/jectivex/Jack/">
    </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JackPot/">
+   </FileRef>
 </Workspace>

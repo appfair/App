@@ -87,7 +87,7 @@ extension Error {
     // The shared script context for executing adjuncts
     public static let ctx = JXKit.JXContext()
 
-    @Jacked(queue: .main) var msg = ""
+    @Stack(queue: .main) var msg = ""
 
     /// The script context to use for this app
     lazy var ctx = jack()
