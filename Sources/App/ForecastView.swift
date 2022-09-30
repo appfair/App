@@ -94,6 +94,7 @@ struct SampleJackPodView : JackView {
                     Text("Execution", bundle: .module, comment: "tab title for execution")
                 }
                 .toolbar {
+                    #if !os(macOS)
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             editing.toggle()
@@ -102,6 +103,7 @@ struct SampleJackPodView : JackView {
                         }
                         .buttonStyle(.bordered)
                     }
+                    #endif
                 }
 
                 TextEditor(text: $script)
@@ -111,6 +113,7 @@ struct SampleJackPodView : JackView {
                         Text("Editor", bundle: .module, comment: "script editor title")
                     }
                     .toolbar {
+                        #if !os(macOS)
                         ToolbarItem(placement: .navigationBarLeading) {
                             Button {
                                 self.script = Self.defaultScript
@@ -129,9 +132,12 @@ struct SampleJackPodView : JackView {
                             }
                             .buttonStyle(.borderedProminent)
                         }
+                        #endif
                     }
             }
+            #if !os(macOS)
             .tabViewStyle(.page)
+            #endif
         }
     }
 
