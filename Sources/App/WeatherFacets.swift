@@ -153,11 +153,12 @@ public struct WeatherResultView: View {
             case .none:
                 WeatherSummaryView(weather: nil, placeholder: Text("Loading…", bundle: .module, comment: "loading placeholder text"))
             case .failure(let error):
-                WeatherSummaryView(weather: nil, placeholder: Text("Error", bundle: .module, comment: "error text"))
+                WeatherSummaryView(weather: nil, placeholder: error.isCancellation ? Text(verbatim: "") : Text("Error: \(error.localizedDescription)", bundle: .module, comment: "error text"))
             case .success(let weather):
-                WeatherSummaryView(weather: weather.currentWeather, placeholder: Text(""))
+                WeatherSummaryView(weather: weather.currentWeather, placeholder: Text(verbatim: ""))
             }
         }
+        .lineLimit(1)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: coords, priority: .userInitiated) {
             await store.trying {

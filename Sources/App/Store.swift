@@ -25,7 +25,20 @@ public final class Store: SceneManager, ObservableObject {
     public required init() {
     }
 
-    public func trying(action: @escaping () async throws -> ()) async {
+    /// Try the given non-async action and add any thrown error to the queue
+    @MainActor public func trying(action: @escaping () throws -> ()) {
+        do {
+            try action()
+        } catch {
+            if !error.isCancellation { // permit cancellation errors
+                dbg("error performing action:", error)
+                errors.append(error)
+            }
+        }
+    }
+
+    /// Try the given async action and add any thrown error to the queue
+    @MainActor public func trying(action: @escaping () async throws -> ()) async {
         do {
             try await action()
         } catch {
@@ -116,3 +129,5 @@ extension Error {
     }
 
 }
+
+

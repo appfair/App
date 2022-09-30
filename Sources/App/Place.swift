@@ -287,6 +287,7 @@ extension AppDatabase {
         //config.label = "places.db"
         config.readonly = true
 
+        #if DEBUG
         config.prepareDatabase { db in
             db.trace(options: .profile) { event in
                 dbg("sql:", event) // all SQL statements with their duration
@@ -297,6 +298,7 @@ extension AppDatabase {
                 }
             }
         }
+        #endif
 
         return try! AppDatabase(DatabaseQueue(path: dbURL.path, configuration: config))
     }
