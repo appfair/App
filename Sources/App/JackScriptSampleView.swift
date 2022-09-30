@@ -114,7 +114,7 @@ struct JackScriptSampleView : JackPodView {
         }
     }
 
-    var resetButtion: some View {
+    var resetButton: some View {
         Button {
             withAnimation {
                 self.script = Self.defaultScript
