@@ -26,15 +26,25 @@ extension JackPodView {
 struct JackScriptSampleView : JackPodView {
     @State var editing = false
     @StateObject var viewModel = ViewModel()
+
     class ViewModel: UIPod {
+        // Read-Only variables
+
         @Stack var txt1 = "*Jack*"
         @Stack var txt2 = "**Pod**"
+
+        @Stack var reversed = false
+
+        // Read-write bindings exported as `this[$varName]`
+
         @Stack(bind: "$") var showHeader = true
         @Stack(bind: "$") var n1 = 0.0
         @Stack(bind: "$") var n2 = 0.5
         @Stack(bind: "$") var n3 = 1.0
 
-        lazy var jxc = jack().env
+        lazy var jacked = Result {
+            try jack()
+        }
     }
 
     @State var script = Self.defaultScript
@@ -85,8 +95,36 @@ struct JackScriptSampleView : JackPodView {
         .padding()
         """
 
-    func evaluateView() throws -> ViewProxy {
-        try viewModel.jxc.eval(script).convey()
+//    private static let defaultScript = """
+//        var texts = [
+//              Text('Large Title').fontStyle('largeTitle').id('v1'),
+//              Text('Title').fontStyle('title').id('v2'),
+//              Text('Title Two').fontStyle('title2').id('v3'),
+//              Text('Title Three').fontStyle('title3').id('v4'),
+//              Text('Sub Headline').fontStyle('subheadline').id('v5'),
+//              Text('Callout').fontStyle('callout').id('v6'),
+//              Text('Footnote').fontStyle('footnote').id('v7'),
+//              Text('Caption').fontStyle('caption').id('v8'),
+//              Text('Caption Two').fontStyle('caption2').id('v9'),
+//            ];
+//
+//        if(reversed === true) {
+//            texts.reverse();
+//        }
+//
+//        VStack([
+//          Group(texts),
+//          Divider(),
+//          Spacer(),
+//          Button(Text('Reverse').fontStyle('largeTitle'), () => {
+//            //reversed = reversed === true ? false : true;
+//          })
+//        ])
+//        """
+
+    func evaluateView() throws -> ViewTemplate {
+        try viewModel.jacked.get().ctx.eval(script).convey()
+        //try viewModel.jack().ctx.eval(script).convey()
     }
 
     @ViewBuilder var editorView: some View {
@@ -100,7 +138,7 @@ struct JackScriptSampleView : JackPodView {
             success
                 .animation(.default, value: script)
         case .failure(let error):
-            TextEditor(text: .constant("ERROR: \(String(describing: error))"))
+            TextEditor(text: .constant("ERROR: \(String(describing: dump(error, name: "error in rendering view")))"))
                 .foregroundColor(.red)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -160,7 +198,7 @@ struct JackScriptSampleView : JackPodView {
                         .buttonStyle(.borderedProminent)
                 }
             }
-            .tabViewStyle(.page)
+            .tabViewStyle(.automatic)
         }
         #endif
     }

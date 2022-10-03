@@ -1,5 +1,5 @@
-import GRDB
-import GRDBQuery
+import TiqDB
+import TiqDB
 import GeoNamesCities15000
 
 import protocol Foundation.LocalizedError
@@ -43,7 +43,7 @@ extension Place {
 
 /// Make Place a Codable Record.
 ///
-/// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
+/// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#records>
 extension Place : Codable, FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
     enum Columns {
@@ -68,10 +68,10 @@ extension Place : Codable, FetchableRecord, MutablePersistableRecord {
         static let modified = Column(CodingKeys.modified)
     }
 
-    /// Updates a palce id after it has been inserted in the database.
-    public mutating func didInsert(_ inserted: InsertionSuccess) {
-        id = inserted.rowID
-    }
+//    /// Updates a palce id after it has been inserted in the database.
+//    public func didInsert(with rowID: Int64, for column: String?) {
+//        id = rowID
+//    }
 }
 
 /// A @Query request that observes the place (any place, actually) in the database
@@ -122,7 +122,7 @@ extension EnvironmentValues {
 }
 
 // Views observe the database with the @Query property wrapper,
-// defined in the GRDBQuery package, which recommends to
+// defined in the TiqDB package, which recommends to
 // define a dedicated initializer for `appDatabase` access
 extension Query where Request.DatabaseContext == AppDatabase {
     /// Convenience initializer for requests that feed from `AppDatabase`.
@@ -135,7 +135,7 @@ extension Query where Request.DatabaseContext == AppDatabase {
 /// AppDatabase lets the application access the database.
 ///
 /// It applies the pratices recommended at
-/// <https://github.com/groue/GRDB.swift/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
+/// <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
 struct AppDatabase {
     /// Creates an `AppDatabase`, and make sure the database schema is ready.
     init(_ dbWriter: any DatabaseWriter) throws {
@@ -148,24 +148,24 @@ struct AppDatabase {
     /// Application can use a `DatabasePool`, while SwiftUI previews and tests
     /// can use a fast in-memory `DatabaseQueue`.
     ///
-    /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#database-connections>
+    /// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#database-connections>
     private let dbWriter: any DatabaseWriter
 
     /// The DatabaseMigrator that defines the database schema.
     ///
-    /// See <https://github.com/groue/GRDB.swift/blob/master/Documentation/Migrations.md>
+    /// See <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/Migrations.md>
     private var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
 
         #if DEBUG
         // Speed up development by nuking the database when migrations change
-        // See https://github.com/groue/GRDB.swift/blob/master/Documentation/Migrations.md#the-erasedatabaseonschemachange-option
+        // See https://github.com/tiqtiq/TiqDB/blob/master/Documentation/Migrations.md#the-erasedatabaseonschemachange-option
         migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
 //        migrator.registerMigration("createPlace") { db in
 //            // Create a table
-//            // See https://github.com/groue/GRDB.swift#create-tables
+//            // See https://github.com/tiqtiq/TiqDB#create-tables
 //            try db.create(table: "place") { t in
 //                t.autoIncrementedPrimaryKey("id")
 //            }
@@ -195,30 +195,30 @@ extension AppDatabase {
         }
     }
 
-    /// Saves (inserts or updates) a place. When the method returns, the
-    /// place is present in the database, and its id is not nil.
-    func savePlace(_ place: inout Place) async throws {
-        if place.name.isEmpty {
-            throw ValidationError.missingName
-        }
-        place = try await dbWriter.write { [place] db in
-            try place.saved(db)
-        }
-    }
-
-    /// Delete the specified places
-    func deletePlaces(ids: [Int64]) async throws {
-        try await dbWriter.write { db in
-            _ = try Place.deleteAll(db, ids: ids)
-        }
-    }
-
-    /// Delete all places
-    func deleteAllPlaces() async throws {
-        try await dbWriter.write { db in
-            _ = try Place.deleteAll(db)
-        }
-    }
+//    /// Saves (inserts or updates) a place. When the method returns, the
+//    /// place is present in the database, and its id is not nil.
+//    func savePlace(_ place: inout Place) async throws {
+//        if place.name.isEmpty {
+//            throw ValidationError.missingName
+//        }
+//        place = try await dbWriter.write { [place] db in
+//            try place.saved(db)
+//        }
+//    }
+//
+//    /// Delete the specified places
+//    func deletePlaces(ids: [Int64]) async throws {
+//        try await dbWriter.write { db in
+//            _ = try Place.deleteAll(db, ids: ids)
+//        }
+//    }
+//
+//    /// Delete all places
+//    func deleteAllPlaces() async throws {
+//        try await dbWriter.write { db in
+//            _ = try Place.deleteAll(db)
+//        }
+//    }
 }
 
 // MARK: - Database Access: Reads
@@ -237,9 +237,9 @@ extension AppDatabase {
 // MARK: - Place Database Requests
 /// Define some palce requests used by the application.
 ///
-/// See <https://github.com/groue/GRDB.swift/blob/master/README.md#requests>
-/// See <https://github.com/groue/GRDB.swift/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
-extension DerivableRequest<Place> {
+/// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#requests>
+/// See <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
+extension DerivableRequest {
     /// A request of places ordered by name.
     ///
     /// For example:
@@ -249,7 +249,7 @@ extension DerivableRequest<Place> {
     ///     }
     func orderedByName() -> Self {
         // Sort by name in a localized case insensitive fashion
-        // See https://github.com/groue/GRDB.swift/blob/master/README.md#string-comparison
+        // See https://github.com/tiqtiq/TiqDB/blob/master/README.md#string-comparison
         order(Place.Columns.name.collating(.localizedCaseInsensitiveCompare))
     }
 

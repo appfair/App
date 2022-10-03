@@ -1,8 +1,8 @@
 import FairApp
 import Combine
+import TiqDB
 import WeatherTiq
 import LocationTiq
-import GRDBQuery
 
 public struct PlacesView : View {
     @Query(PlacesRequest(ordering: .byLongitude)) private var places: [Place]

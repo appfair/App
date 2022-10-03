@@ -83,30 +83,27 @@ extension Error {
         Store.config["weather"]?["server"]?.str.flatMap(URL.init(string:)) ?? WeatherService.shared.serviceURL
     }()
 
-
-    // The shared script context for executing adjuncts
-    public static let ctx = JXKit.JXContext()
+    lazy var jacked = Result { try jack() }
 
     @Stack(queue: .main) var msg = ""
-
-    /// The script context to use for this app
-    lazy var ctx = jack()
 
     private init() {
     }
 
     func updateHotTake(_ weather: Weather?) async throws {
+        let ctx = try jacked.get().ctx
+
         guard var temp = weather?.currentWeather.temperature else {
-            try ctx.env.eval("msg = '🫥 `analyzing…`'")
+            try ctx.eval("msg = '🫥 `analyzing…`'")
             return
         }
 
         // temp.convert(to: store.fahrenheit ? .fahrenheit : .celsius) // TODO
         temp.convert(to: .fahrenheit)
 
-        try ctx.env.global.setProperty("temperature", ctx.env.number(temp.value))
+        try ctx.global.setProperty("temperature", ctx.number(temp.value))
 
-        try ctx.env.eval("""
+        try ctx.eval("""
         var temp = Math.round(temperature);
         if (temp < 0) {
             msg = `🥶 ${temp}° is **very** ***cold***!!`;
