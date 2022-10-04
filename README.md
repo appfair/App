@@ -1,4 +1,4 @@
-## App-Name: an App Fair app
+## World-Fair: an App Fair app
 
 The _Description_ section of the `README.md` file contains the description
 of this app as it will appear in App Fair.
@@ -10,15 +10,15 @@ It supports **basic** formatting, but not images, lists, or links.
 ### App Fair Installation
 
 Once the initial release has been created,
-App-Name can be downloaded and installed using
+World-Fair can be downloaded and installed using
 [App Fair.app](https://www.appfair.app)
 by opening
-[appfair.app/fair?app=App-Name](https://appfair.app/fair?app=App-Name).
+[appfair.app/fair?app=World-Fair](https://appfair.app/fair?app=World-Fair).
 
 ## Support
 
 The landing page for this app is available at
-[https://App-Name.github.io/App/](https://App-Name.github.io/App/).
+[https://World-Fair.github.io/App/](https://World-Fair.github.io/App/).
 
 Community Support for this app is available on the
 [Discussion](../../discussions) forums.
