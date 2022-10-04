@@ -8,7 +8,7 @@ public struct ContentView: View {
         VStack {
             Text("Welcome to **\(store.appName)**", bundle: .module, comment: "welcome title")
                 .font(.largeTitle)
-            Text("(it doesn't do anything _yet_)", bundle: .module, comment: "welcome subtitle")
+            Text("(coming very soon)", bundle: .module, comment: "welcome subtitle")
                 .font(.headline)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
