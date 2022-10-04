@@ -989,3 +989,87 @@
 
 /* tooltip text for the checkmark in the apps list indicating that the app is currently updated to the latest version */
 "The latest version of this app is installed" = "La dernière version de cette application est installée";
+
+/* error message */
+"Could not find install path for “%@”" = "Impossible de trouver le chemin d'installation pour « %@ »";
+
+/* button tooltip for embedded browser maximize */
+"Maximizes the preview area so it takes all the available space" = "Agrandit la zone d'aperçu afin qu'elle prenne tout l'espace disponible";
+
+/* apps list placeholder text where there are no results to display */
+"No apps" = "Aucune application";
+
+/* error message */
+"no metadata for package" = "Aucune métadonnée pour le paquet";
+
+/* sidebar button to remove a catalog */
+"Remove Catalog" = "Supprimer le catalogue";
+
+/* fairapps installed apps info: overview text
+   homebrew installed apps info: overview text */
+"The installed apps section contains all the apps that are currently installed from this catalog." = "La section des applications installées contient toutes les applications actuellement installées depuis de catalogue.";
+
+/* app category info: overview text
+   homebrew recent apps info: overview text */
+"XXX" = "XXX";
+
+/* add catalog source button text */
+"Add" = "Ajouter";
+
+/* add catalog source dialog text */
+"Catalog URL:" = "URL du catalogue :";
+
+/* error message when failed to find app launch privacy tool */
+"Could not find %@" = "Impossible de trouver %@";
+
+/* error message */
+"Could not find install path for “\(item.app.name)”" = "Impossible de trouver le chemin d'installation pour « (item.app.name) »";
+
+/* error message */
+"Could not install from local artifact" = "Impossible d'effectuer l'installation à partir de l'artefact local";
+
+/* error message */
+"Developer tools not found" = "Outils de développement non trouvés";
+
+/* error message */
+"Error compiling %@" = "Erreur lors de la compilation de %@";
+
+/* error wrapper string when a catalog URL fails to load */
+"Error Loading Catalog" = "Erreur de chargement du catalogue";
+
+/* catalog description for header text of app source */
+"External source" = "Source externe";
+
+/* error message */
+"Invalid SHA-256 Hash" = "Hash SHA-256 invalide";
+
+/* delete button confirmation dialog delete button text */
+"Remove" = "Supprimer";
+
+/* confirmation dialog title when removing a source from the user sources */
+"Remove Source" = "Supprimer la source";
+
+/* help text for sidebar button to remove catalog */
+"Removes this catalog from the list of available catalogs. This operaiton cannot be undone." = "Supprime le catalogue de la liste des catalogues disponibles. Cette opération est irréversible.";
+
+/* app catalog cask entry metadata tab title for app raw formula specification */
+"Scheme" = "Schéma";
+
+/* error wrapper string when a catalog URL fails to load */
+"The catalog failed to load from the URL: %@" = "Impossible de charger le catalogue à partir de l'URL : %@";
+
+/* error failure reason */
+"The download has no SHA-256 checksum set and so its authenticity cannot be verified." = "Le téléchargement n'a pas de somme de contrôle SHA-256 alors son authenticité ne peut pas être vérifiée.";
+
+/* error message */
+"The downloaded SHA-256 (%@) hash did not match the expected hash (%@)." = "Le hash SHA-256 (%1$@) ne correspond pas à celui attendu (%2$@).";
+
+/* app catalog entry header box title tooltip text */
+"The number of downloads of this app in the past 90 days" = "Le nombre de téléchargements de cette application ces 90 derniers jours";
+
+/* fairapps installed apps info: overview text
+   homebrew installed apps info: overview text */
+"The updated apps section contains all the apps that are currently installed from this catalog and that currently have updates available." = "La section des applications mises à jour contient toutes les applications actuellement installées depuis ce catalogue et pouvant être mises à jour.";
+
+/* error message */
+"Unable to decode %@" = "Impossible de décoder %@";
