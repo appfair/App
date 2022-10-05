@@ -25,13 +25,13 @@ open class Store: SceneManager {
     public required init() {
     }
 
-    func loadCatalog() async {
+    func loadCatalog(reload: Bool = false) async {
         do {
             guard let url = URL(string: catalogURL) else {
                 return dbg("unable to parse URL:", catalogURL)
             }
 
-            let (data, _) = try await URLSession.shared.fetch(request: URLRequest(url: url))
+            let (data, _) = try await URLSession.shared.fetch(request: URLRequest(url: url, cachePolicy: reload ? .reloadIgnoringLocalAndRemoteCacheData : .useProtocolCachePolicy))
             let catalog = try AppCatalog(json: data)
             dbg("loaded catalog with", catalog.apps.count, "apps", data.count)
             self.catalog = catalog

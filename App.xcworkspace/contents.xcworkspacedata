@@ -23,6 +23,6 @@
       location = "group:../../github/jectivex/SQLPod/">
    </FileRef>
    <FileRef
-      location = "group:../../github/tiqtiq/TiqDB/">
+      location = "group:../../github/sqlenclave/SQLEnclave/">
    </FileRef>
 </Workspace>

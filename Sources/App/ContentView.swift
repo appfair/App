@@ -7,6 +7,7 @@ public struct ContentView: View {
     public var body: some View {
         NavigationView {
             JackScriptListView()
+                .navigation(title: Text("Jack Scripts"), subtitle: nil)
         }
     }
 }
