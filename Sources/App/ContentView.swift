@@ -5,12 +5,8 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        VStack {
-            Text("Welcome to **\(store.appName)**", bundle: .module, comment: "welcome title")
-                .font(.largeTitle)
-            Text("(coming very soon)", bundle: .module, comment: "welcome subtitle")
-                .font(.headline)
+        NavigationView {
+            JackScriptListView()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

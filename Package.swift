@@ -13,8 +13,8 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
-            .product(name: "FairKit", package: "Fair"), // optional enhancements
-            .product(name: "JackPot", package: "JackPot"), // JackPods
+            .product(name: "FairKit", package: "Fair"),
+            .product(name: "JackPot", package: "JackPot"),
         ], resources: [
             .process("Resources"), // processed resources
             .copy("App.yml"),
