@@ -1,5 +1,4 @@
-import TiqDB
-import TiqDB
+import SQLEnclave
 import GeoNamesCities15000
 
 import protocol Foundation.LocalizedError

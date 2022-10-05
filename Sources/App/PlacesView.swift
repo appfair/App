@@ -1,6 +1,6 @@
 import FairApp
 import Combine
-import TiqDB
+import SQLEnclave
 import WeatherTiq
 import LocationTiq
 
