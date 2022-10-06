@@ -8,13 +8,34 @@ public struct JackScriptListView: View {
 
     public var body: some View {
         List {
+            JackScriptCatalogListView()
+        }
+        #if os(macOS)
+        .listStyle(.sidebar)
+        #endif
+    }
+}
+
+/// The main content view for the app. This is the starting point for customizing you app's behavior.
+public struct JackScriptCatalogListView: View {
+    @EnvironmentObject var store: Store
+
+    public var body: some View {
+        Section {
             ForEach(store.catalog?.apps ?? [], id: \.bundleIdentifier) { scriptItem in
                 NavigationLink(destination: {
                     JackScriptView(scriptItem: scriptItem)
                 }, label: {
-                    Text(scriptItem.localizedDescription ?? scriptItem.name)
+                    VStack(alignment: .leading) {
+                        Text(scriptItem.localizedDescription ?? scriptItem.name)
+                        Text(scriptItem.downloadURL.deletingLastPathComponent().lastPathComponent)
+                            .truncationMode(.head)
+                            .font(.subheadline)
+                    }
                 })
             }
+        } header: {
+            Text("GitHub Forks", bundle: .module, comment: "header title for jackscript forks")
         }
         .task {
             await store.loadCatalog()
@@ -24,6 +45,7 @@ public struct JackScriptListView: View {
         }
     }
 }
+
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 public struct JackScriptView: View {
@@ -95,9 +117,12 @@ public struct JackScriptView: View {
             success
                 .animation(.default, value: script)
         case .failure(let error):
-            TextEditor(text: .constant("ERROR: \(String(describing: dump(error, name: "error in rendering view")))"))
+            Spacer()
+            Text("ERROR: \(String(describing: dump(error, name: "error in rendering view")))")
+                .textSelection(.enabled)
                 .foregroundColor(.red)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Spacer()
         }
     }
 

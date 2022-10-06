@@ -7,7 +7,7 @@ public struct ContentView: View {
     public var body: some View {
         NavigationView {
             JackScriptListView()
-                .navigation(title: Text("Jack Scripts"), subtitle: nil)
+                .navigation(title: Text("SDUI", bundle: .module, comment: "header title for app"), subtitle: nil)
         }
     }
 }

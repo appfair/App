@@ -2,6 +2,13 @@ import FairApp
 
 import Foundation
 
+extension URL {
+    static func jackscript(appName: String) -> URL? {
+        // e.g., https://world-fair.github.io/World-Fair.JackScript/jackscripts.json
+        URL(string: "https://\(appName.lowercased()).github.io/\(appName).JackScript/jackscripts.json")
+    }
+}
+
 /// The global app environment containing configuration metadata and shared defaults.
 ///
 /// The shared instance of Store is available throughout the app with:
@@ -17,7 +24,7 @@ open class Store: SceneManager {
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("someToggle") public var someToggle = false
 
-    @AppStorage("catalogURL") public var catalogURL = "https://world-fair.github.io/World-Fair.JackScript/jackscripts.json"
+    @AppStorage("catalogURL") public var catalogURL = URL.jackscript(appName: "World-Fair")?.absoluteString ?? ""
 
     @Published var catalog: AppCatalog?
     @Published var errors: [Error] = []

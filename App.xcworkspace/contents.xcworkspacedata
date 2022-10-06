@@ -20,7 +20,7 @@
       location = "group:../../github/jectivex/JackPot/">
    </FileRef>
    <FileRef
-      location = "group:../../github/jectivex/SQLPod/">
+      location = "group:../../github/sqlenclave/SQLPod/">
    </FileRef>
    <FileRef
       location = "group:../../github/sqlenclave/SQLEnclave/">
