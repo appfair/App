@@ -82,8 +82,8 @@ public struct JackScriptView: View {
     @ViewBuilder var editorView: some View {
         TextEditor(text: $script)
             .font(.system(.callout, design: .monospaced))
-            .autocorrectionDisabled(true)
-            .autocapitalization(.none)
+//            .autocorrectionDisabled(true)
+//            .autocapitalization(.none)
     }
 
     @ViewBuilder var dynamicView: some View {
