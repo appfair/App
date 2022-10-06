@@ -54,6 +54,7 @@ public struct JackScriptView: View {
 //            }
         }
         .navigation(title: Text(scriptItem.localizedDescription ?? ""), subtitle: nil)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -66,6 +67,7 @@ public struct JackScriptView: View {
                     .buttonStyle(.borderedProminent)
             }
         }
+        #endif
         .task {
             await loadScriptContents()
         }
@@ -79,6 +81,7 @@ public struct JackScriptView: View {
         //try viewModel.jack().ctx.eval(script).convey()
     }
 
+    let x = FileManager().currentDirectoryPath
     @ViewBuilder var editorView: some View {
         TextEditor(text: $script)
             .font(.system(.callout, design: .monospaced))
