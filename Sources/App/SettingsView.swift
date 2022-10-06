@@ -171,6 +171,19 @@ private struct PreferencesSettingsView : View {
             Toggle(isOn: $store.fahrenheit) {
                 Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
             }
+            Section {
+                Slider(value: $store.populationMinimum, in: 0...10_000_000) {
+                    Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
+                }
+            } header: {
+                HStack {
+                    Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
+                    Spacer()
+                    Text(Int64(store.populationMinimum), format: .number)
+                        .font(.caption.monospacedDigit())
+                }
+            }
+
         }
     }
 }

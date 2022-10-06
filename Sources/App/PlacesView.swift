@@ -5,12 +5,13 @@ import WeatherTiq
 import LocationTiq
 
 public struct PlacesView : View {
-    @Query(PlacesRequest(ordering: .byLongitude)) private var places: [Place]
+    @Query(PlacesRequest(ordering: .byName)) private var places: [Place]
+    @EnvironmentObject var store: Store
 
     public var body: some View {
         NavigationView {
             List {
-                ForEach(places) { place in
+                ForEach(places.filter({ .init($0.population) > store.populationMinimum })) { place in
                     PlaceListItemView(place: place)
                 }
             }
@@ -59,19 +60,21 @@ struct PlaceListItemView : View {
 
                 VStack(alignment: .leading) {
                     HStack {
-//                        Text(place.name) // TODO: localized place databases
+                        Text(place.name) // TODO: localized place databases
                         //Text(place.admincode3)
                         //Text(place.admincode2)
-//                        Text(place.admincode1)
-//                        Text(place.countrycode)
-                        //Text(place.population, format: .number)
-                        Text(place.formattedAddress) // ?? Text("Unknown Location", bundle: .module, comment: "placeholder label for no address")
+                        //Text(place.admincode1) // state in US, just a number in many other countries
+                        Text(place.countrycode)
+                        //Text(place.formattedAddress) // ?? Text("Unknown Location", bundle: .module, comment: "placeholder label for no address")
                     }
                     .lineLimit(1)
                     HStack {
+                        Text(place.population, format: .number)
+                            .font(.caption2.monospacedDigit())
+
                         let fmt = LocationCoordinateFormatter.degreesMinutesSecondsFormatter.string(from: place.coords.coordinate) ?? ""
                         Text(fmt)
-                            .font(.caption2)
+                            .font(.caption2.monospacedDigit())
                     }
                     .font(.subheadline)
                     .lineLimit(1)

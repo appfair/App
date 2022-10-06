@@ -42,7 +42,7 @@ extension Place {
 
 /// Make Place a Codable Record.
 ///
-/// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#records>
+/// See <https://github.com/SQLEnclave/SQLEnclave/blob/master/README.md#records>
 extension Place : Codable, FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
     enum Columns {
@@ -134,7 +134,7 @@ extension Query where Request.DatabaseContext == AppDatabase {
 /// AppDatabase lets the application access the database.
 ///
 /// It applies the pratices recommended at
-/// <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
+/// <https://github.com/SQLEnclave/SQLEnclave/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
 struct AppDatabase {
     /// Creates an `AppDatabase`, and make sure the database schema is ready.
     init(_ dbWriter: any DatabaseWriter) throws {
@@ -147,24 +147,24 @@ struct AppDatabase {
     /// Application can use a `DatabasePool`, while SwiftUI previews and tests
     /// can use a fast in-memory `DatabaseQueue`.
     ///
-    /// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#database-connections>
+    /// See <https://github.com/SQLEnclave/SQLEnclave/blob/master/README.md#database-connections>
     private let dbWriter: any DatabaseWriter
 
     /// The DatabaseMigrator that defines the database schema.
     ///
-    /// See <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/Migrations.md>
+    /// See <https://github.com/SQLEnclave/SQLEnclave/blob/master/Documentation/Migrations.md>
     private var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
 
         #if DEBUG
         // Speed up development by nuking the database when migrations change
-        // See https://github.com/tiqtiq/TiqDB/blob/master/Documentation/Migrations.md#the-erasedatabaseonschemachange-option
+        // See https://github.com/SQLEnclave/SQLEnclave/blob/master/Documentation/Migrations.md#the-erasedatabaseonschemachange-option
         migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
 //        migrator.registerMigration("createPlace") { db in
 //            // Create a table
-//            // See https://github.com/tiqtiq/TiqDB#create-tables
+//            // See https://github.com/SQLEnclave/SQLEnclave#create-tables
 //            try db.create(table: "place") { t in
 //                t.autoIncrementedPrimaryKey("id")
 //            }
@@ -236,8 +236,8 @@ extension AppDatabase {
 // MARK: - Place Database Requests
 /// Define some palce requests used by the application.
 ///
-/// See <https://github.com/tiqtiq/TiqDB/blob/master/README.md#requests>
-/// See <https://github.com/tiqtiq/TiqDB/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
+/// See <https://github.com/SQLEnclave/SQLEnclave/blob/master/README.md#requests>
+/// See <https://github.com/SQLEnclave/SQLEnclave/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md>
 extension DerivableRequest {
     /// A request of places ordered by name.
     ///
@@ -248,7 +248,7 @@ extension DerivableRequest {
     ///     }
     func orderedByName() -> Self {
         // Sort by name in a localized case insensitive fashion
-        // See https://github.com/tiqtiq/TiqDB/blob/master/README.md#string-comparison
+        // See https://github.com/SQLEnclave/SQLEnclave/master/README.md#string-comparison
         order(Place.Columns.name.collating(.localizedCaseInsensitiveCompare))
     }
 

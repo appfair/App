@@ -16,11 +16,13 @@ public final class Store: SceneManager, ObservableObject {
 
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
+    /// The minimum population before a city will show up
+    @AppStorage("populationMinimum") var populationMinimum = 666_666.0
+
     /// The current errors to display to the user
     @State var errors: [Error] = []
 
     public let appName = Bundle.localizedAppName
-
 
     public required init() {
     }
