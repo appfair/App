@@ -58,6 +58,7 @@ struct ContentView: View {
                 .disabled(i != 0)
                 .zIndex(i == 0 ? 1 : 0) // tappable always on top
                 .frame(width: bspan, height: bspan)
+                .overlay(i == 0 ? Bundle.fairIconView(color: nil).allowsHitTesting(false) : nil)
                 .padding(.vertical, 2)
                 .whenHovering { if $0 { self.hovering = i } }
                 .help(i > 0 ? Text("Find the Cloud Cuckoo among the Shapes", bundle: .module) : Text("Keep tapping the Cuckoo Bird!", bundle: .module))
