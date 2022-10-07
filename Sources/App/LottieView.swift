@@ -3,44 +3,81 @@ import Lottie
 
 public struct LottieView: View {
     let animation: Lottie.Animation
-    fileprivate var loopMode: Lottie.LottieLoopMode?
+    fileprivate var _loopMode: Lottie.LottieLoopMode?
+    fileprivate var _contentMode: UXView.ContentMode?
+    fileprivate var _animationSpan: CGFloat?
 
     public init(animation: Lottie.Animation) {
         self.animation = animation
     }
 
     public var body: some View {
-        LottieViewRepresentable(source: self)
+        GeometryReader { proxy in
+            LottieViewRepresentable(source: self)
+                .frame(width: _animationSpan == nil ? nil : proxy.size.width * _animationSpan!)
+        }
     }
 
     /// Changes the loop mode.
-    public func loopMode(_ mode: Lottie.LottieLoopMode) -> Self {
+    public func loopMode(_ mode: Lottie.LottieLoopMode?) -> Self {
         var view = self
-        view.loopMode = mode
+        view._loopMode = mode
+        return view
+    }
+
+    /// Changes the loop mode.
+    public func contentMode(_ mode: UXView.ContentMode?) -> Self {
+        var view = self
+        view._contentMode = mode
+        return view
+    }
+
+    /// Changes the loop mode.
+    public func animationSpan(_ span: CGFloat?) -> Self {
+        var view = self
+        view._animationSpan = span
         return view
     }
 }
 
 private struct LottieViewRepresentable : UXViewRepresentable {
     let source: LottieView
-    typealias UXViewType = AnimationView
+    //typealias UXViewType = AnimationView
+    typealias UXViewType = UXView
 
     func makeUXView(context: Context) -> UXViewType {
+        let container = UXView()
+        let animationView = makeAnimationView(context: context)
+        container.addSubview(animationView)
+        container.autoresizingMask = [.flexibleHeight, .flexibleWidth]
+        return container
+    }
+
+    func makeAnimationView(context: Context) -> AnimationView {
         let animationView = AnimationView()
 
+        animationView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        animationView.translatesAutoresizingMaskIntoConstraints = true
+
         animationView.animation = source.animation
-        if let loopMode = source.loopMode {
+
+        if let loopMode = source._loopMode {
             animationView.loopMode = loopMode
         }
+        if let contentMode = source._contentMode {
+            animationView.contentMode = contentMode
+        }
+
+        animationView.play() // TODO: add start/stop controls
+
         return animationView
     }
 
     func updateUXView(_ view: UXViewType, context: Context) {
-        view.play()
     }
 
     static func dismantleUXView(_ view: UXViewType, coordinator: ()) {
-        view.stop()
+        //view.stop()
     }
 
 //    func updateUIView(_ uiView: UXViewType, context: Context) {
@@ -54,27 +91,25 @@ struct AnimatedBannerItem : View {
     var body: some View {
         VStack {
             Text(atx: item.title)
-                .font(.title2)
+                .font(.title)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
+                .padding()
                 .foregroundColor(item.foregroundColor?.systemColor)
-            HStack {
+            HStack(alignment: .top) {
                 if item.subtitleTrailing != true, let subtitle = item.subtitle {
-                    Text(atx: subtitle)
-                        .multilineTextAlignment(.trailing)
-                        .font(.title3)
-                        .foregroundColor(item.foregroundColor?.systemColor)
+                    sub(subtitle, leading: true)
                 }
                 if let animation = item.animation {
                     LottieView(animation: animation)
                         .loopMode(.loop)
-                        .frame(minHeight: 100)
+                        .contentMode(.scaleAspectFit)
+                        //.animationSpan(0.3)
+                        //.frame(width: 300)
+                        //.frame(minHeight: 100)
                 }
                 if item.subtitleTrailing == true, let subtitle = item.subtitle {
-                    Text(atx: subtitle)
-                        .multilineTextAlignment(.leading)
-                        .font(.title3)
-                        .foregroundColor(item.foregroundColor?.systemColor)
+                    sub(subtitle, leading: false)
                 }
             }
             if let body = item.body {
@@ -85,12 +120,17 @@ struct AnimatedBannerItem : View {
                     .foregroundColor(item.foregroundColor?.systemColor)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(item.background)
-        .cornerRadius(18)
-        .shadow(radius: 5)
     }
+
+    private func sub(_ string: String, leading: Bool) -> some View {
+        Text(atx: string)
+            .multilineTextAlignment(!leading ? .leading : .trailing)
+            .font(.title3)
+            .foregroundColor(item.foregroundColor?.systemColor)
+            .frame(maxWidth: .infinity)
+            .frame(alignment: !leading ? .leading : .trailing)
+    }
+
 }
 
 /// An item that contains a title, subtitle, and optional animation
