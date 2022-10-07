@@ -14,16 +14,18 @@ public struct SettingsView : View {
 }
 
 public enum WeatherSetting : String, Facet, View {
+    case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
     case preferences // app-specific settings
     case appearance // text/colors
     case language // language selector
     case icon // icon variant picker: background, foreground, alternate paths, squircle corner radius
     case pods // extension manager: add, remove, browse, and configure JackPods
     case support // links to support resources: issues, discussions, source code, "fork this app", "Report this App (to the App Fair Council)"), log accessor, and software BOM
-    case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
 
     public var facetInfo: FacetInfo {
         switch self {
+        case .about:
+            return info(title: Text("About", bundle: .module, comment: "about settings facet title"), symbol: .face_smiling, tint: .mint)
         case .preferences:
             return info(title: Text("Preferences", bundle: .module, comment: "preferences settings facet title"), symbol: .gear, tint: .yellow)
         case .appearance:
@@ -36,8 +38,6 @@ public enum WeatherSetting : String, Facet, View {
             return info(title: Text("Pods", bundle: .module, comment: "pods settings facet title"), symbol: .cylinder_split_1x2, tint: .teal)
         case .support:
             return info(title: Text("Support", bundle: .module, comment: "support settings facet title"), symbol: .questionmark_app, tint: .cyan)
-        case .about:
-            return info(title: Text("About", bundle: .module, comment: "about settings facet title"), symbol: .face_smiling, tint: .mint)
         }
     }
 
@@ -157,9 +157,11 @@ private struct SupportSettingsView : View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        Text("Support", bundle: .module, comment: "support settings title")
-            .font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        List {
+            SupportCommands(builder: {
+                $0.link(to: $1)
+            })
+        }
     }
 }
 

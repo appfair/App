@@ -24,6 +24,7 @@ let package = Package(
         .package(url: "https://github.com/tiqtiq/WeatherTiq", from: "0.0.1"),
         .package(url: "https://github.com/tiqtiq/LocationTiq", from: "0.0.1"),
         .package(url: "https://github.com/tiqtiq/GeoNamesCities15000", from: "0.0.1"),
+        .package(url: "https://github.com/airbnb/lottie-ios.git", from: "3.4.3"),
     ],
     targets: [
         .target(name: "App", dependencies: [
@@ -35,6 +36,7 @@ let package = Package(
             .product(name: "LocationTiq", package: "LocationTiq"),
             .product(name: "GeoNamesCities15000", package: "GeoNamesCities15000"),
             .product(name: "WeatherTiq", package: "WeatherTiq"),
+            .product(name: "Lottie", package: "lottie-ios"),
         ], resources: [
             .process("Resources"), // processed resources
             .copy("App.yml"),
