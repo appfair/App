@@ -25,6 +25,7 @@ let package = Package(
         .package(url: "https://github.com/tiqtiq/LocationTiq", from: "0.0.1"),
         .package(url: "https://github.com/tiqtiq/GeoNamesCities15000", from: "0.0.1"),
         .package(url: "https://github.com/airbnb/lottie-ios.git", from: "3.4.3"),
+        //.package(url: "https://github.com/Cloud-Cuckoo/App.git", from: "0.8.0"),
     ],
     targets: [
         .target(name: "App", dependencies: [

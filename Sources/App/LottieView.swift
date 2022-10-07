@@ -4,8 +4,15 @@ import Lottie
 public struct LottieView: View {
     let animation: Lottie.Animation
     fileprivate var _loopMode: Lottie.LottieLoopMode?
-    fileprivate var _contentMode: UXView.ContentMode?
     fileprivate var _animationSpan: CGFloat?
+    #if os(iOS)
+    public typealias CMode = UXView.ContentMode
+    #else
+    public typealias CMode = LottieContentMode
+    #endif
+
+
+    fileprivate var _contentMode: CMode?
 
     public init(animation: Lottie.Animation) {
         self.animation = animation
@@ -26,7 +33,7 @@ public struct LottieView: View {
     }
 
     /// Changes the loop mode.
-    public func contentMode(_ mode: UXView.ContentMode?) -> Self {
+    public func contentMode(_ mode: CMode?) -> Self {
         var view = self
         view._contentMode = mode
         return view
@@ -47,16 +54,25 @@ private struct LottieViewRepresentable : UXViewRepresentable {
 
     func makeUXView(context: Context) -> UXViewType {
         let container = UXView()
+        #if os(macOS)
+        container.autoresizingMask = [.height, .width]
+        #else
+        container.autoresizingMask = [.flexibleHeight, .flexibleWidth]
+        #endif
+        container.translatesAutoresizingMaskIntoConstraints = true
         let animationView = makeAnimationView(context: context)
         container.addSubview(animationView)
-        container.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         return container
     }
 
     func makeAnimationView(context: Context) -> AnimationView {
         let animationView = AnimationView()
 
-        animationView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        #if os(macOS)
+        animationView.autoresizingMask = [.height, .width]
+        #else
+        animationView.autoresizingMask = [.flexibleHeight, .flexibleWidth]
+        #endif
         animationView.translatesAutoresizingMaskIntoConstraints = true
 
         animationView.animation = source.animation
