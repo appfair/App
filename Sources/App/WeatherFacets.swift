@@ -214,20 +214,6 @@ struct WeatherSummaryView : View, Equatable {
     }
 }
 
-public extension Facet {
-    
-    /// Facet metadata convenience builder.
-    ///
-    /// - Parameters:
-    ///   - title: the localized title of the facet
-    ///   - symbol: the symbol to represent the facet
-    ///   - tint: the tint of the facet
-    /// - Returns: a tuple with the metadata needed to show the facet
-    func info(title: Text, symbol: FairSymbol? = nil, tint: Color? = nil) -> FacetInfo {
-        (title, symbol, tint)
-    }
-}
-
 extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
     public static func locationDegrees(format: CoordinateFormat = .decimalDegrees, symbolStyle: SymbolStyle = .simple) -> FloatingPointFormatStyle<Double> {
 

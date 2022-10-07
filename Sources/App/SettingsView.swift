@@ -2,7 +2,7 @@ import FairApp
 
 /// The settings view for app.
 public struct SettingsView : View {
-    @State var selectedSetting: WeatherSetting?
+    @State var selectedSetting: AppSettings?
 
     public var body: some View {
         FacetBrowserView(selection: $selectedSetting)
@@ -12,6 +12,9 @@ public struct SettingsView : View {
         #endif
     }
 }
+
+/// The app-wide settings view consists of the weather-specific settings along with some standard utilities
+public typealias AppSettings = WeatherSetting.With<LicenseSetting>
 
 public enum WeatherSetting : String, Facet, View {
     case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
@@ -177,6 +180,7 @@ private struct PreferencesSettingsView : View {
                 Slider(value: $store.populationMinimum, in: 0...10_000_000) {
                     Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
                 }
+                .labelsHidden() // label in header; text left in for accessibility purposes
             } header: {
                 HStack {
                     Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
