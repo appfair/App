@@ -8,13 +8,19 @@ import Jack
 ///
 /// ``@EnvironmentObject var store: Store``
 public final class Store: SceneManager, ObservableObject {
+    public let bundle = Bundle.module
+
+    //public typealias AppFacets = Never
+    // public typealias AppFacets = WeatherFacets
+
+    /// The app-wide settings view consists of the weather-specific settings along with some standard utilities
+    public typealias ConfigFacets = WeatherSetting.WithStandardSettings
+
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("fahrenheit") public var fahrenheit = true
-
-    @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
     /// The minimum population before a city will show up
     @AppStorage("populationMinimum") var populationMinimum = 666_666.0
@@ -93,7 +99,7 @@ extension Error {
     }
 
     func updateHotTake(_ weather: Weather?) async throws {
-        let ctx = try jacked.get().ctx
+        let ctx = try jacked.get().context
 
         guard var temp = weather?.currentWeather.temperature else {
             try ctx.eval("msg = '🫥 `analyzing…`'")

@@ -4,27 +4,25 @@ import FairApp
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(store)
+            // create a top-level facet host (tabs on iOS, outline view on macOS) with the app's facets
+            FacetHostingView(store: store)
                 .environmentObject(SunBowPod.shared)
-                .preferredColorScheme(store.themeStyle.colorScheme)
         }
         .commands {
             SidebarCommands()
             ToolbarCommands()
-            FacetCommands<WeatherFacets>()
+            FacetCommands(store: store)
         }
         #if os(macOS)
         .windowToolbarStyle(.unified(showsTitle: true))
         #endif
     }
 
-    /// The app-wide settings view
+    /// The app-wide settings view, which, by convention, is the final element of the app facets
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        WeatherFacets.allCases.last.unsafelyUnwrapped
+        Store.AppFacets.facets(for: store).last.unsafelyUnwrapped
             .environmentObject(store)
             .environmentObject(SunBowPod.shared)
-            .preferredColorScheme(store.themeStyle.colorScheme)
     }
 }
 

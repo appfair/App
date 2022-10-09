@@ -123,8 +123,8 @@ struct JackScriptSampleView : JackPodView {
 //        """
 
     func evaluateView() throws -> ViewTemplate {
-        try viewModel.jacked.get().ctx.eval(script).convey()
-        //try viewModel.jack().ctx.eval(script).convey()
+        try viewModel.jacked.get().context.eval(script).convey()
+        //try viewModel.jack().context.eval(script).convey()
     }
 
     @ViewBuilder var editorView: some View {
