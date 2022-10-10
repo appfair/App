@@ -15,7 +15,10 @@ open class Store: SceneManager {
     public static let config: JSum = configuration(for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
-    @AppStorage("someToggle") public var someToggle = false
+    @AppStorage("showScore") public var showScore = true
+
+    /// The high score that will be displayed.
+    @AppStorage("highScore") public var highScore = 0
 
     public required init() {
     }
@@ -39,7 +42,7 @@ open class Store: SceneManager {
 
         @ViewBuilder public var body: some View {
             switch self {
-            case .about: Text("Welcome to Cloud Cuckoo!", bundle: .module, comment: "welcome text")
+            case .about: AboutView()
             case .content: ContentView()
             case .settings: StandardSettingsView()
             }
@@ -61,6 +64,40 @@ open class Store: SceneManager {
             switch self {
             case .preferences: SettingsView()
             }
+        }
+    }
+}
+
+struct AboutView : View {
+    @EnvironmentObject var store: Store
+    @EnvironmentObject var facetManaer: FacetManager
+
+    var body: some View {
+        VStack {
+            Text("""
+            Welcome to
+            **Cloud Cuckoo Land**
+
+            Here you will find excitement and delight!
+
+            There is a cuckoo bird hiding amongst the dots. Tap it!
+
+            Keep it in motion to maximize your points!
+            """, bundle: .module, comment: "welcome text")
+            .font(.system(size: 30, weight: .ultraLight, design: .rounded))
+            .multilineTextAlignment(.center)
+            .padding()
+
+            Button {
+                store
+            } label: {
+                Text("Play!", bundle: .module, comment: "play game button")
+            }
+
+            Text("High Score\n\(store.highScore, format: .number)", bundle: .module, comment: "welcome screen title for high score")
+                .font(.largeTitle.monospacedDigit().bold())
+                .multilineTextAlignment(.center)
+                .padding()
         }
     }
 }

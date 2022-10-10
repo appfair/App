@@ -6,10 +6,15 @@ public struct SettingsView : View {
 
     public var body: some View {
         Form {
-            Toggle(isOn: $store.someToggle) {
-                Text("Toggle", bundle: .module, comment: "a preferences toggle in the settings view")
+            Toggle(isOn: $store.showScore) {
+                Text("Show Score", bundle: .module, comment: "score preferences in the settings view")
             }
+            Button {
+                store.highScore = 0
+            } label: {
+                Text("Reset High Score", bundle: .module, comment: "reset high score button title")
+            }
+
         }
-        .padding()
     }
 }
