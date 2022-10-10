@@ -70,7 +70,7 @@ open class Store: SceneManager {
 
 struct AboutView : View {
     @EnvironmentObject var store: Store
-    @EnvironmentObject var facetManaer: FacetManager
+    //@EnvironmentObject var facetManaer: FacetManager
 
     var body: some View {
         VStack {
@@ -88,11 +88,11 @@ struct AboutView : View {
             .multilineTextAlignment(.center)
             .padding()
 
-            Button {
-                store
-            } label: {
-                Text("Play!", bundle: .module, comment: "play game button")
-            }
+//            Button {
+//                store
+//            } label: {
+//                Text("Play!", bundle: .module, comment: "play game button")
+//            }
 
             Text("High Score\n\(store.highScore, format: .number)", bundle: .module, comment: "welcome screen title for high score")
                 .font(.largeTitle.monospacedDigit().bold())
