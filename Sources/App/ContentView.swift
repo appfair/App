@@ -21,12 +21,11 @@ struct ContentView: View {
 
     var body: some View {
         GeometryReader(content: contentView(withGeometry:))
-            .animatingVectorOverlay(for: Double(currentScore), alignment: .topTrailing) { number in
-                if store.showScore {
-                    Text(Int64(number), format: .number)
-                        .font(.largeTitle.monospacedDigit().bold())
-                        .padding(.trailing)
-                }
+            .animatingVectorOverlay(for: Double(currentScore), alignment: .top) { score in
+                Text(score: score, locale: store.currencyScore ? locale : nil)
+                    .font(.largeTitle.monospacedDigit().bold())
+                    .foregroundStyle(currentScore >= .init(store.highScore) ? .primary : .secondary)
+                    .padding(.trailing)
             }
     }
 
@@ -51,11 +50,11 @@ struct ContentView: View {
         let shuffle = { elements = (0..<rows*columns).shuffled() }
 
         func tapSpecial() {
-            withAnimation(reduceMotion ? .none : .interpolatingSpring(mass: 1.0, stiffness: .init(1 + tapCount), damping: 0.4)) {
+            withAnimation(reduceMotion ? .none : .interpolatingSpring(mass: 1.0, stiffness: .init(1 + tapCount), damping: 1.0)) {
                 shuffle()
                 tapCount += 1
             }
-            withAnimation(.easeOut(duration: 30)) {
+            withAnimation(.easeOut(duration: 12.0)) {
                 currentScore = tapCount * tapCount
             }
             withAnimation(.none) {
@@ -102,6 +101,16 @@ struct ContentView: View {
     }
 }
 
+extension Text {
+    init(score number: Double, locale: Locale?) {
+        if let code = locale?.currencyCode {
+            self = Text(Double(number), format: .currency(code: code))
+        } else {
+            self = Text(Int64(number), format: .number)
+        }
+    }
+}
+
 extension View {
     /// Install a hover action on platforms that support it
     func whenHovering(perform action: @escaping (Bool) -> ()) -> some View {
@@ -113,4 +122,40 @@ extension View {
     }
 }
 
+
+struct AboutView : View {
+    @EnvironmentObject var store: Store
+    @Environment(\.locale) var locale
+
+    var body: some View {
+        VStack {
+            Text("""
+            Welcome, friend, to
+            **Cloud Cuckoo Land**
+
+            There is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!
+
+            Keep it in motion! Maximize your prosperity!
+            """, bundle: .module, comment: "welcome text")
+            .font(.system(size: 30, weight: .ultraLight, design: .rounded))
+            .multilineTextAlignment(.center)
+            .padding()
+
+//            Button {
+//                store
+//            } label: {
+//                Text("Play!", bundle: .module, comment: "play game button")
+//            }
+
+            VStack {
+                Text("High Score:", bundle: .module, comment: "welcome screen title for high score")
+                Text(score: .init(store.highScore), locale: store.currencyScore ? locale : nil)
+                    .bold()
+            }
+            .font(.largeTitle.monospacedDigit())
+            .multilineTextAlignment(.center)
+            .padding()
+        }
+    }
+}
 
