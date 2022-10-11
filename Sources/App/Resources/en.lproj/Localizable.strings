@@ -1,12 +1,43 @@
-/* welcome subtitle */
-"(it doesn't do anything _yet_)" = "(it doesn't do anything _yet_)";
+/* preferences for displaying the score as currency in the settings view */
+"Currency Score" = "Currency Score";
 
-/* the localized name of this app */
-"App-Name" = "App-Name";
+/* help text */
+"Find the Cloud Cuckoo among the Shapes" = "Find the Cloud Cuckoo among the Shapes";
 
-/* a preferences toggle in the settings view */
-"Toggle" = "Toggle";
+/* welcome screen title for high score */
+"High Score:" = "High Score:";
 
-/* welcome title */
-"Welcome to **%@**" = "Welcome to **%@**";
+/* help text */
+"Keep tapping the Cuckoo Bird!" = "Keep tapping the Cuckoo Bird!";
 
+/* content facet title
+   play game button */
+"Play!" = "Play!";
+
+/* preferences title */
+"Preferences" = "Preferences";
+
+/* reset high score button title */
+"Reset High Score" = "Reset High Score";
+
+/* settings facet title */
+"Settings" = "Settings";
+
+/* welcome facet title */
+"Welcome" = "Welcome";
+
+/* welcome text */
+"Welcome, friend, to\n**Cloud Cuckoo Land**\n\nThere is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!" = "Welcome, friend, to\n**Cloud Cuckoo Land**\n\nThere is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!";
+
+/* intro card contents to be displayed on the CardBoard */
+//"card-title-1" = "Cloud Cuckoo";
+//"card-subtitle-1" = "Welcome, friend, to\n**Cloud Cuckoo Land**";
+//"card-body-1" = "There is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!";
+
+"card-title-2" = "Score Modes";
+"card-subtitle-2" = "Low-stakes or High-stakes";
+"card-body-2" = "Use the Settings tab to select the scoring mode. Activate simualted currency mode for maximum excitement!";
+
+"card-title-3" = "Multi-lingual";
+"card-subtitle-3" = "Worldwide Support";
+"card-body-3" = "Help us translate this app by going to Settings / Languages";

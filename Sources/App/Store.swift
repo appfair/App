@@ -9,7 +9,7 @@ import Foundation
 /// ``@EnvironmentObject var store: Store``
 open class Store: SceneManager {
     /// The module bundle for this store, used for looking up embedded resources
-    public let bundle: Bundle = Bundle.module
+    public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
@@ -21,18 +21,25 @@ open class Store: SceneManager {
     /// The high score that will be displayed.
     @AppStorage("highScore") public var highScore = 0
 
+    /// The current game ID
+    @Published var gameID = UUID()
+
     public required init() {
+    }
+
+    func resetGame() {
+        self.gameID = UUID()
     }
 
     /// AppFacets describes the top-level app, expressed as tabs on a mobile device and outline items on desktops.
     public enum AppFacets : String, Facet, CaseIterable, View {
-        case about
+        case welcome
         case content
         case settings
 
         public var facetInfo: FacetInfo {
             switch self {
-            case .about:
+            case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .init(rawValue: "house"), tint: nil)
             case .content:
                 return FacetInfo(title: Text("Play!", bundle: .module, comment: "content facet title"), symbol: .init(rawValue: "command"), tint: nil)
@@ -43,9 +50,9 @@ open class Store: SceneManager {
 
         @ViewBuilder public var body: some View {
             switch self {
-            case .about: AboutView()
+            case .welcome: WelcomeView()
             case .content: ContentView()
-            case .settings: StandardSettingsView()
+            case .settings: SettingsView()
             }
         }
     }
@@ -63,22 +70,8 @@ open class Store: SceneManager {
 
         @ViewBuilder public var body: some View {
             switch self {
-            case .preferences: SettingsView()
+            case .preferences: PreferencesView()
             }
         }
-    }
-}
-
-/// The settings view for app, which includes the stores .
-public struct StandardSettingsView : View {
-    typealias StoreSettings = Store.ConfigFacets.WithStandardSettings
-    @State var selectedSetting: StoreSettings?
-
-    public var body: some View {
-        FacetBrowserView<Store, StoreSettings>(selection: $selectedSetting)
-        #if os(macOS)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .frame(width: 600, height: 300)
-        #endif
     }
 }

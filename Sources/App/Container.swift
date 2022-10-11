@@ -6,6 +6,10 @@ public extension AppContainer {
         WindowGroup { // or DocumentGroup
             FacetHostingView(store: store).environmentObject(store)
         }
+        .commands {
+            //SidebarCommands()
+            FacetCommands(store: store)
+        }
     }
 
     static func settingsView(store: Store) -> some SwiftUI.View {

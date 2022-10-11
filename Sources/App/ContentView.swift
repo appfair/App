@@ -3,11 +3,20 @@ import FairApp
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
 struct ContentView: View {
+    @EnvironmentObject var store: Store
+    var body: some View {
+        // assign an ID to allow re-setting the game's state from the settings
+        GameView().id(store.gameID)
+    }
+}
+
+/// The main content view for the app. This is the starting point for customizing you app's behavior.
+@available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+struct GameView: View {
     /// The elements that will be displayed in the grid
     @State var elements = [0]
     @State var tapCount = 0
     @State var currentScore = 0
-    @State var hovering = 0
 
     @Environment(\.locale) var locale
     @Environment(\.sizeCategory) var sizeCategory
@@ -20,11 +29,11 @@ struct ContentView: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        GeometryReader(content: contentView(withGeometry:))
+        GeometryReader(content: gameGrid(withGeometry:))
+            .edgesIgnoringSafeArea(.all)
             .animatingVectorOverlay(for: Double(currentScore), alignment: .top) { score in
                 Text(score: score, locale: store.currencyScore ? locale : nil)
-                    .font(.largeTitle.monospacedDigit().bold())
-                    .foregroundStyle(currentScore >= .init(store.highScore) ? .primary : .secondary)
+                    .font(.largeTitle.monospacedDigit().weight(.semibold))
                     .padding(.trailing)
             }
     }
@@ -39,24 +48,73 @@ struct ContentView: View {
         return elements
     }
 
-    func contentView(withGeometry proxy: GeometryProxy) -> some View {
-        let size = proxy.size
-        let (width, height) = (size.width * 0.9, size.height * 0.9)
-        let buttonSize = 44 * itemScale
-        let (rows, columns) = (Int(floor(height / buttonSize)), Int(floor(width / buttonSize)))
-        let (bwidth, bheight) = (height / .init(rows), width / .init(columns))
-        let bspan = min(bwidth, bheight)
+    var dotCount: Int {
+        ((tapCount * tapCount) + 2)
+    }
 
-        let shuffle = { elements = (0..<rows*columns).shuffled() }
+    func gameGrid(withGeometry proxy: GeometryProxy) -> some View {
+        // the fixed size of the dots
+        let span = 80.0
+
+        return VStack {
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: span, maximum: span))], alignment: .center) {
+                    ForEach(aligning(elements, to: dotCount), id: \.self, content: target(at:))
+                }
+            }
+            .refreshable {
+                if tapCount > 0 {
+                    withAnimation {
+                        shuffle()
+                        tapCount -= 1
+                        updateCurrentScore()
+                    }
+                }
+            }
+        }
+
+        func target(at i: Int) -> some View {
+            Button(action: tapSpecial) {
+                Circle()
+                    .fill((i == 0) == invertColors ? hue(for: i) : .accentColor)
+                    .overlay(i == 0 ? Bundle.fairIconView(color: .accentColor).mask(Circle()) : nil)
+            }
+            .frame(width: span, height: span)
+            .zIndex(i == 0 ? 1 : 0) // tappable always on top
+            .disabled(i != 0)
+            .allowsHitTesting(i == 0)
+            #if os(iOS)
+            .hoverEffect(.highlight)
+            #endif
+            .buttonStyle(.zoomable(level: sqrt(Double(tapCount + 2))))
+            .transition(.scale)
+            .help(i > 0 ? Text("Find the Cloud Cuckoo among the Shapes", bundle: .module, comment: "help text") : Text("Keep tapping the Cuckoo Bird!", bundle: .module, comment: "help text"))
+        }
+
+        func shuffle(ensureSpecialMoved: Bool = true) {
+            let specialIndex = ensureSpecialMoved ? elements.firstIndex(of: 0) : nil
+            elements = (0..<dotCount).shuffled()
+            while let specialIndex = specialIndex, elements.firstIndex(of: 0) == specialIndex {
+                // keep shuffling until the special moves
+                elements = (0..<dotCount).shuffled()
+            }
+        }
+
+        func updateCurrentScore() {
+            // similar to `withAnimation(.easeOut)`, but with a very long trail-off
+            withAnimation(.interactiveSpring(response: 3, dampingFraction: 2, blendDuration: 30.0)) {
+                currentScore = tapCount * tapCount
+            }
+        }
 
         func tapSpecial() {
             withAnimation(reduceMotion ? .none : .interpolatingSpring(mass: 1.0, stiffness: .init(1 + tapCount), damping: 1.0)) {
                 shuffle()
                 tapCount += 1
             }
-            withAnimation(.easeOut(duration: 12.0)) {
-                currentScore = tapCount * tapCount
-            }
+
+            updateCurrentScore()
+
             withAnimation(.none) {
                 if currentScore > store.highScore {
                     store.highScore = currentScore
@@ -65,25 +123,7 @@ struct ContentView: View {
         }
 
         func hue(for index: Int) -> Color {
-            Color(hue: .init(index) / .init(rows * columns), saturation: 1.0, brightness: hovering == index ? 1.0 : 0.9, opacity: index == 0 ? 1.0 : 0.5)
-        }
-
-        func target(at i: Int) -> some View {
-            Circle()
-                .fill((i == 0) == invertColors ? hue(for: i) : .accentColor)
-                .onTapGesture(count: 1, perform: tapSpecial)
-                .disabled(i != 0)
-                .zIndex(i == 0 ? 0 : 1) // tappable always on bottom
-                .allowsHitTesting(i == 0)
-                .frame(width: bspan, height: bspan)
-                .overlay(i == 0 ? Bundle.fairIconView(color: .accentColor).mask(Circle()).allowsHitTesting(false) : nil)
-                .padding(.vertical, 2)
-                .whenHovering { if $0 { self.hovering = i } }
-                .help(i > 0 ? Text("Find the Cloud Cuckoo among the Shapes", bundle: .module, comment: "help text") : Text("Keep tapping the Cuckoo Bird!", bundle: .module, comment: "help text"))
-        }
-
-        return LazyVGrid(columns: Array(repeating: GridItem(.fixed(bwidth)), count: columns), alignment: .center) {
-            ForEach(aligning(elements, to: rows*columns), id: \.self, content: target(at:))
+            Color(hue: .init(index) / .init(dotCount), saturation: 1.0, brightness: 1.0, opacity: index == 0 ? 1.0 : 0.5)
         }
     }
 
@@ -110,52 +150,3 @@ extension Text {
         }
     }
 }
-
-extension View {
-    /// Install a hover action on platforms that support it
-    func whenHovering(perform action: @escaping (Bool) -> ()) -> some View {
-        #if os(macOS) || os(iOS)
-        return self.onHover(perform: action)
-        #else
-        return self
-        #endif
-    }
-}
-
-
-struct AboutView : View {
-    @EnvironmentObject var store: Store
-    @Environment(\.locale) var locale
-
-    var body: some View {
-        VStack {
-            Text("""
-            Welcome, friend, to
-            **Cloud Cuckoo Land**
-
-            There is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!
-
-            Keep it in motion! Maximize your prosperity!
-            """, bundle: .module, comment: "welcome text")
-            .font(.system(size: 30, weight: .ultraLight, design: .rounded))
-            .multilineTextAlignment(.center)
-            .padding()
-
-//            Button {
-//                store
-//            } label: {
-//                Text("Play!", bundle: .module, comment: "play game button")
-//            }
-
-            VStack {
-                Text("High Score:", bundle: .module, comment: "welcome screen title for high score")
-                Text(score: .init(store.highScore), locale: store.currencyScore ? locale : nil)
-                    .bold()
-            }
-            .font(.largeTitle.monospacedDigit())
-            .multilineTextAlignment(.center)
-            .padding()
-        }
-    }
-}
-
