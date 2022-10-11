@@ -19,7 +19,7 @@ import XCTest
 open class AppTests: XCTestCase {
     @MainActor open func testAppStore() throws {
         let store = AppContainer.AppStore()
-        XCTAssertEqual(store.someToggle, false)
+        //XCTAssertEqual(store.someToggle, false)
         let cfg = AppContainer.AppStore.config
         XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
     }
