@@ -3,45 +3,56 @@ import FairApp
 struct WelcomeView : View {
     @EnvironmentObject var store: Store
     @Environment(\.locale) var locale
+    typealias SymbolCard = Card<String>
 
     var body: some View {
-        CardBoard(cards: localizedCards)
+        CardBoard(cards: localizedCards) { symbolName in
+            if let symbolName = symbolName {
+                Image(systemName: symbolName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding()
+            }
+        }
             .background(.regularMaterial)
     }
 
-    var localizedCards: [Card] {
+    var localizedCards: [SymbolCard] {
         (1...20).compactMap(createCard)
     }
 
-    func createCard(index: Int) -> Card? {
+    func createCard(index: Int) -> SymbolCard? {
         switch index {
         case 1:
             return makeCard(1,
-                            title: NSLocalizedString("card-title-1", bundle: .module, value: "Hi There", comment: "intro card #1 title"),
-                            subtitle: NSLocalizedString("card-subtitle-1", bundle: .module, value: "Welcome to your App Fair App!", comment: "intro card #1 title"),
-                            body: NSLocalizedString("card-body-1", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-body-1` key.", comment: "intro card #1 body"),
-                            symbol: .init(rawValue: "figure.wave")
-            )
+                            title: NSLocalizedString("card-01-banner", bundle: .module, value: "Welcome", comment: "app intro card #1 banner markdown"),
+                            subtitle: NSLocalizedString("card-01-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #1 caption markdown"),
+                            body: NSLocalizedString("card-01-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-01-content` key.", comment: "app intro card #1 content markdown"),
+                            graphic: NSLocalizedString("card-01-graphic", bundle: .module, value: "figure.wave", comment: "app intro card #1 graphic symbol name"))
         case 2:
             return makeCard(2,
-                            title: NSLocalizedString("card-title-2", bundle: .module, comment: "intro card #2 title"),
-                            subtitle: NSLocalizedString("card-subtitle-2", bundle: .module, comment: "intro card #2 title"),
-                            body: NSLocalizedString("card-body-2", bundle: .module, comment: "intro card #2 body"),
-                            symbol: .init(rawValue: "camera.macro")
-            )
+                            title: NSLocalizedString("card-02-banner", bundle: .module, value: "Welcome", comment: "app intro card #2 banner markdown"),
+                            subtitle: NSLocalizedString("card-02-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #2 caption markdown"),
+                            body: NSLocalizedString("card-02-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-02-content` key.", comment: "app intro card #2 content markdown"),
+                            graphic: NSLocalizedString("card-02-graphic", bundle: .module, value: "camera.macro", comment: "app intro card #2 graphic symbol name"))
         case 3:
             return makeCard(3,
-                            title: NSLocalizedString("card-title-3", bundle: .module, comment: "intro card #3 title"),
-                            subtitle: NSLocalizedString("card-subtitle-3", bundle: .module, comment: "intro card #3 title"),
-                            body: NSLocalizedString("card-body-3", bundle: .module, comment: "intro card #3 body"),
-                            symbol: .init(rawValue: "globe.europe.africa")
-            )
+                            title: NSLocalizedString("card-03-banner", bundle: .module, value: "Welcome", comment: "app intro card #3 banner markdown"),
+                            subtitle: NSLocalizedString("card-03-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #3 caption markdown"),
+                            body: NSLocalizedString("card-03-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-03-content` key.", comment: "app intro card #3 content markdown"),
+                            graphic: NSLocalizedString("card-03-graphic", bundle: .module, value: "globe.europe.africa", comment: "app intro card #3 graphic symbol name"))
+        case 4:
+            return makeCard(4,
+                            title: NSLocalizedString("card-04-banner", bundle: .module, value: "Welcome", comment: "app intro card #4 banner markdown"),
+                            subtitle: NSLocalizedString("card-04-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #4 caption markdown"),
+                            body: NSLocalizedString("card-04-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-body-4` key.", comment: "app intro card #4 content markdown"),
+                            graphic: NSLocalizedString("card-04-graphic", bundle: .module, value: "checkmark.seal", comment: "app intro card #4 graphic symbol name"))
         // more cards can be added here
         default:
             return nil
         }
 
-        func makeCard(_ index: Int, title: String, subtitle: String, body: String, symbol: FairSymbol) -> Card? {
+        func makeCard(_ index: Int, title: String, subtitle: String, body: String, graphic: String) -> SymbolCard? {
             func localized(_ value: String) -> String? {
                 // only show cards that have a localization set
                 if value.hasPrefix("card-") { return nil }
@@ -51,11 +62,11 @@ struct WelcomeView : View {
                 return nil
             }
 
-            let colors: [Card.BannerColor.SystemColor] = [
-                .accent, .brown, .orange, .green, .teal, .cyan, .blue, .red, .indigo, .purple, .mint, .yellow, .pink
+            let colors: [SymbolCard.BannerColor.SystemColor] = [
+                .accent, .orange, .teal, .brown, .cyan, .blue, .green, .red, .indigo, .purple, .mint, .yellow, .pink
             ]
             let color = colors[((index - 1) % colors.count)]
-            return Card(title: title, subtitle: localized(subtitle), body: localized(body), backgroundColors: [.init(color)], graphic: .init(symbol))
+            return Card(title: title, subtitle: localized(subtitle), body: localized(body), backgroundColors: [.init(color)], graphic: .init(stringLiteral: graphic))
         }
     }
 }

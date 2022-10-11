@@ -1,21 +1,68 @@
+/* app intro card #1 banner markdown */
+"card-01-banner" = "Welcome";
+
+/* app intro card #1 caption markdown */
+"card-01-caption" = "Welcome to your App Fair App!";
+
+/* app intro card #1 content markdown */
+"card-01-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-01-content` key.";
+
+/* app intro card #1 graphic symbol name */
+"card-01-graphic" = "figure.wave";
+
+/* app intro card #2 banner markdown */
+"card-02-banner" = "Welcome";
+
+/* app intro card #2 caption markdown */
+"card-02-caption" = "Welcome to your App Fair App!";
+
+/* app intro card #2 content markdown */
+"card-02-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-02-content` key.";
+
+/* app intro card #2 graphic symbol name */
+"card-02-graphic" = "camera.macro";
+
+/* app intro card #3 banner markdown */
+"card-03-banner" = "Welcome";
+
+/* app intro card #3 caption markdown */
+"card-03-caption" = "Welcome to your App Fair App!";
+
+/* app intro card #3 content markdown */
+"card-03-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-03-content` key.";
+
+/* app intro card #3 graphic symbol name */
+"card-03-graphic" = "globe.europe.africa";
+
+/* app intro card #4 banner markdown */
+"card-04-banner" = "Welcome";
+
+/* app intro card #4 caption markdown */
+"card-04-caption" = "Welcome to your App Fair App!";
+
+/* app intro card #4 content markdown */
+"card-04-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-body-4` key.";
+
+/* app intro card #4 graphic symbol name */
+"card-04-graphic" = "checkmark.seal";
+
 /* preferences for displaying the score as currency in the settings view */
 "Currency Score" = "Currency Score";
 
 /* help text */
 "Find the Cloud Cuckoo among the Shapes" = "Find the Cloud Cuckoo among the Shapes";
 
-/* welcome screen title for high score */
-"High Score:" = "High Score:";
-
 /* help text */
 "Keep tapping the Cuckoo Bird!" = "Keep tapping the Cuckoo Bird!";
 
-/* content facet title
-   play game button */
+/* content facet title */
 "Play!" = "Play!";
 
 /* preferences title */
 "Preferences" = "Preferences";
+
+/* reset game button title */
+"Reset Game" = "Reset Game";
 
 /* reset high score button title */
 "Reset High Score" = "Reset High Score";
@@ -26,18 +73,3 @@
 /* welcome facet title */
 "Welcome" = "Welcome";
 
-/* welcome text */
-"Welcome, friend, to\n**Cloud Cuckoo Land**\n\nThere is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!" = "Welcome, friend, to\n**Cloud Cuckoo Land**\n\nThere is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!";
-
-/* intro card contents to be displayed on the CardBoard */
-//"card-title-1" = "Cloud Cuckoo";
-//"card-subtitle-1" = "Welcome, friend, to\n**Cloud Cuckoo Land**";
-//"card-body-1" = "There is a cuckoo bird hiding amongst the dots. Tap it! Achieve your potential!\n\nKeep it in motion! Maximize your prosperity!";
-
-"card-title-2" = "Score Modes";
-"card-subtitle-2" = "Low-stakes or High-stakes";
-"card-body-2" = "Use the Settings tab to select the scoring mode. Activate simualted currency mode for maximum excitement!";
-
-"card-title-3" = "Multi-lingual";
-"card-subtitle-3" = "Worldwide Support";
-"card-body-3" = "Help us translate this app by going to Settings / Languages";
