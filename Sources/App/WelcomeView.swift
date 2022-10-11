@@ -1,5 +1,8 @@
 import FairApp
 
+/// The default welcome shows a series of introductory "cards" using a ``CardBoard``.
+///
+/// The card markdown text is defined in the `Localizable.strings` files for each supproted language.
 struct WelcomeView : View {
     @EnvironmentObject var store: Store
     @Environment(\.locale) var locale
@@ -26,14 +29,14 @@ struct WelcomeView : View {
         case 1:
             return makeCard(1,
                             title: NSLocalizedString("card-01-banner", bundle: .module, value: "Welcome", comment: "app intro card #1 banner markdown"),
-                            subtitle: NSLocalizedString("card-01-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #1 caption markdown"),
-                            body: NSLocalizedString("card-01-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-01-content` key.", comment: "app intro card #1 content markdown"),
+                            subtitle: NSLocalizedString("card-01-caption", bundle: .module, value: "This to your App Fair App!", comment: "app intro card #1 caption markdown"),
+                            body: NSLocalizedString("card-01-content", bundle: .module, value: "This is your app. There are many like it, but this one is yours.", comment: "app intro card #1 content markdown"),
                             graphic: NSLocalizedString("card-01-graphic", bundle: .module, value: "checkmark.seal", comment: "app intro card #1 graphic symbol name"))
         case 2:
             return makeCard(2,
-                            title: NSLocalizedString("card-02-banner", bundle: .module, value: "Welcome", comment: "app intro card #2 banner markdown"),
-                            subtitle: NSLocalizedString("card-02-caption", bundle: .module, value: "Welcome to your App Fair App!", comment: "app intro card #2 caption markdown"),
-                            body: NSLocalizedString("card-02-content", bundle: .module, value: "Describe how to use the app by editing the localized `.strings` file and updating the `card-02-content` key.", comment: "app intro card #2 content markdown"),
+                            title: NSLocalizedString("card-02-banner", bundle: .module, value: "Get Started", comment: "app intro card #2 banner markdown"),
+                            subtitle: NSLocalizedString("card-02-caption", bundle: .module, value: "Start developing your app.", comment: "app intro card #2 caption markdown"),
+                            body: NSLocalizedString("card-02-content", bundle: .module, value: "My app is my best friend. It is my life. I must master it as I must master my life.", comment: "app intro card #2 content markdown"),
                             graphic: NSLocalizedString("card-02-graphic", bundle: .module, value: "camera.macro", comment: "app intro card #2 graphic symbol name"))
         case 3:
             return makeCard(3,

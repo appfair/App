@@ -2,22 +2,22 @@
 "card-01-banner" = "Welcome";
 
 /* app intro card #1 caption markdown */
-"card-01-caption" = "Welcome to your App Fair App!";
+"card-01-caption" = "This to your App Fair App!";
 
 /* app intro card #1 content markdown */
-"card-01-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-01-content` key.";
+"card-01-content" = "This is your app. There are many like it, but this one is yours.";
 
 /* app intro card #1 graphic symbol name */
 "card-01-graphic" = "checkmark.seal";
 
 /* app intro card #2 banner markdown */
-"card-02-banner" = "Welcome";
+"card-02-banner" = "Get Started";
 
 /* app intro card #2 caption markdown */
-"card-02-caption" = "Welcome to your App Fair App!";
+"card-02-caption" = "Start developing your app.";
 
 /* app intro card #2 content markdown */
-"card-02-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-02-content` key.";
+"card-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
 
 /* app intro card #2 graphic symbol name */
 "card-02-graphic" = "camera.macro";
