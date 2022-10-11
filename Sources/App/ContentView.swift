@@ -102,7 +102,7 @@ struct GameView: View {
 
         func updateCurrentScore() {
             // similar to `withAnimation(.easeOut)`, but with a very long trail-off
-            withAnimation(.interactiveSpring(response: 3, dampingFraction: 2, blendDuration: 30.0)) {
+            withAnimation(.interactiveSpring(response: 3, dampingFraction: 3, blendDuration: 30.0)) {
                 currentScore = tapCount * tapCount
             }
         }

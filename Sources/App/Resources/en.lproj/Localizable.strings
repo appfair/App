@@ -8,7 +8,7 @@
 "card-01-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-01-content` key.";
 
 /* app intro card #1 graphic symbol name */
-"card-01-graphic" = "figure.wave";
+"card-01-graphic" = "checkmark.seal";
 
 /* app intro card #2 banner markdown */
 "card-02-banner" = "Welcome";
@@ -23,10 +23,10 @@
 "card-02-graphic" = "camera.macro";
 
 /* app intro card #3 banner markdown */
-"card-03-banner" = "Welcome";
+"card-03-banner" = "International";
 
 /* app intro card #3 caption markdown */
-"card-03-caption" = "Welcome to your App Fair App!";
+"card-03-caption" = "App Fair Apps are International";
 
 /* app intro card #3 content markdown */
 "card-03-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-03-content` key.";
@@ -35,16 +35,16 @@
 "card-03-graphic" = "globe.europe.africa";
 
 /* app intro card #4 banner markdown */
-"card-04-banner" = "Welcome";
+"card-04-banner" = "Enjoy";
 
 /* app intro card #4 caption markdown */
-"card-04-caption" = "Welcome to your App Fair App!";
+"card-04-caption" = "Have fun making your app!";
 
 /* app intro card #4 content markdown */
-"card-04-content" = "Describe how to use the app by editing the localized `.strings` file and updating the `card-body-4` key.";
+"card-04-content" = "Make something fun and useful for yourself, your community, and your world.";
 
 /* app intro card #4 graphic symbol name */
-"card-04-graphic" = "checkmark.seal";
+"card-04-graphic" = "figure.wave";
 
 /* preferences for displaying the score as currency in the settings view */
 "Currency Score" = "Currency Score";
