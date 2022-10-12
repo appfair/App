@@ -19,7 +19,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/Jack", from: "2.1.0"),
-        .package(url: "https://github.com/jectivex/JackPot", from: "0.1.0"),
+        .package(url: "https://github.com/jectivex/JackPot", from: "0.1.2"),
         .package(url: "https://github.com/sqlenclave/SQLEnclave", from: "0.0.1"),
         .package(url: "https://github.com/tiqtiq/WeatherTiq", from: "0.0.1"),
         .package(url: "https://github.com/tiqtiq/LocationTiq", from: "0.0.1"),
