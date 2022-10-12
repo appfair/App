@@ -1,7 +1,9 @@
-// Spanish strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+/* welcome subtitle */
+"(it doesn't do anything _yet_)" = "(it doesn't do anything _yet_)";
 
-"OK" = "Aceptar";
-"Cancel" = "Cancelar";
-"Welcome to %@!" = "¡Bienvenido a %@!";
+/* a preferences toggle in the settings view */
+"Toggle" = "Toggle";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
 

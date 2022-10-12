@@ -73,3 +73,9 @@
 /* welcome facet title */
 "Welcome" = "Welcome";
 
+/* a preferences toggle in the settings view */
+"Toggle" = "Toggle";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
+
