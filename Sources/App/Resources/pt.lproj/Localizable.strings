@@ -1,7 +1,9 @@
-// Portugese strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+/* welcome subtitle */
+"(it doesn't do anything _yet_)" = "(it doesn't do anything _yet_)";
 
-"OK" = "OK";
-"Cancel" = "Cancelar";
-"Welcome to %@!" = "Bem-vindo ao %@!";
+/* a preferences toggle in the settings view */
+"Toggle" = "Toggle";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
 
