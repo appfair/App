@@ -1,3 +1,7 @@
+// Localized English (English) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
+
 /* app intro card #1 banner markdown */
 "card-01-banner" = "Welcome";
 
@@ -72,6 +76,7 @@
 
 /* welcome facet title */
 "Welcome" = "Welcome";
+
 
 /* a preferences toggle in the settings view */
 "Toggle" = "Toggle";
