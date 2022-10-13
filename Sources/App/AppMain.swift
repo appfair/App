@@ -5,7 +5,6 @@ import FairApp
 ///
 /// - Note: This source in `AppMain.swift` must not be modified or else integration will fail;
 ///         App customization should be implemented with extensions in `Container.swift`
-@available(macOS 12.0, iOS 15.0, *)
 @main public enum AppContainer : FairApp.FairContainer {
     public static func main() async throws { try await launch(bundle: Bundle.module) }
 }
@@ -20,7 +19,7 @@ import FairApp
 extension Text {
     /// Clients should use the localized form of `Text.init` in order
     /// to take advantage of the provided Localizable.strings localizations.
-    @available(*, deprecated, renamed: "Text.init(_:bundle:comment:)")
+    @available(*, deprecated, message: "Facilitate translation with: `Text(\"My String\", bundle: .module, comment: \"description of My String for translators\")`", renamed: "Text.init(_:bundle:comment:)")
     internal init(_ key: LocalizedStringKey) {
         self.init(key, bundle: .module, comment: "no comment")
     }
