@@ -1,7 +1,5 @@
 import FairApp
 
-import Foundation
-
 /// The global app environment containing configuration metadata and shared defaults.
 ///
 /// The shared instance of Store is available throughout the app with:
@@ -40,11 +38,11 @@ open class Store: SceneManager {
         public var facetInfo: FacetInfo {
             switch self {
             case .welcome:
-                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .init(rawValue: "house"), tint: nil)
+                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: "house", tint: nil)
             case .content:
-                return FacetInfo(title: Text("Play!", bundle: .module, comment: "content facet title"), symbol: .init(rawValue: "command"), tint: nil)
+                return FacetInfo(title: Text("Content", bundle: .module, comment: "content facet title"), symbol: "puzzlepiece", tint: nil)
             case .settings:
-                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .init(rawValue: "gearshape"), tint: nil)
+                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: "gearshape", tint: nil)
             }
         }
 

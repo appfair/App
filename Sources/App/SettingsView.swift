@@ -14,7 +14,7 @@ public struct SettingsView : View {
     }
 }
 
-/// The app preferences.
+/// A form that presents controls for manipualting the app's preferences.
 public struct PreferencesView : View {
     @EnvironmentObject var store: Store
     @Environment(\.locale) var locale
