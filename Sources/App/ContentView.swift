@@ -86,7 +86,7 @@ struct GameView: View {
             #if os(iOS)
             .hoverEffect(.highlight)
             #endif
-            .buttonStyle(.zoomable(level: sqrt(Double(tapCount + 2))))
+            .buttonStyle(.zoomable(level: min(3.0, sqrt(Double(tapCount + 2)))))
             .transition(.scale)
             .help(i > 0 ? Text("Find the Cloud Cuckoo among the Shapes", bundle: .module, comment: "help text") : Text("Keep tapping the Cuckoo Bird!", bundle: .module, comment: "help text"))
         }
