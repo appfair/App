@@ -56,19 +56,18 @@ struct GameView: View {
         // the fixed size of the dots
         let span = 80.0
 
-        return VStack {
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: span, maximum: span))], alignment: .center) {
-                    ForEach(aligning(elements, to: dotCount), id: \.self, content: target(at:))
-                }
+        return ScrollView(.vertical, showsIndicators: false) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: span, maximum: span))], alignment: .center) {
+                ForEach(aligning(elements, to: dotCount), id: \.self, content: target(at:))
             }
-            .refreshable {
-                if tapCount > 0 {
-                    withAnimation {
-                        shuffle()
-                        tapCount -= 1
-                        updateCurrentScore()
-                    }
+        }
+        .refreshable { // only seems to work on iOS 16+
+            dbg("refresh")
+            if tapCount > 0 {
+                withAnimation {
+                    shuffle()
+                    tapCount -= 1
+                    updateCurrentScore()
                 }
             }
         }
@@ -86,7 +85,7 @@ struct GameView: View {
             #if os(iOS)
             .hoverEffect(.highlight)
             #endif
-            .buttonStyle(.zoomable(level: min(3.0, sqrt(Double(tapCount + 2)))))
+            .buttonStyle(.zoomable(level: min(1.5, sqrt(Double(tapCount + 2)))))
             .transition(.scale)
             .help(i > 0 ? Text("Find the Cloud Cuckoo among the Shapes", bundle: .module, comment: "help text") : Text("Keep tapping the Cuckoo Bird!", bundle: .module, comment: "help text"))
         }

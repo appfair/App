@@ -6,22 +6,22 @@
 "about-card-01-banner" = "Welcome";
 
 /* app intro card #1 caption markdown */
-"about-card-01-caption" = "This is your app";
+"about-card-01-caption" = "to Cloud Cuckoo Land";
 
 /* app intro card #1 content markdown */
-"about-card-01-content" = "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.";
+"about-card-01-content" = "This is a whimsical game of excitement and delight.";
 
 /* app intro card #2 banner markdown */
-"about-card-02-banner" = "Get Started";
+"about-card-02-banner" = "Search";
 
 /* app intro card #2 caption markdown */
-"about-card-02-caption" = "Start developing your app.";
+"about-card-02-caption" = "for the Lost Cuckoo";
 
 /* app intro card #2 content markdown */
-"about-card-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+"about-card-02-content" = "There is a cuckoo bird on the loose. You must find it and tap it. At first, it will be easy, but as your dots accrue, the difficulty of finding the cuckoo bird increases.";
 
 /* app intro card #3 banner markdown */
-"about-card-03-banner" = "Internationalize";
+"about-card-03-banner" = "Extitement";
 
 /* app intro card #3 caption markdown */
 "about-card-03-caption" = "Bring your app to the World";
@@ -38,24 +38,30 @@
 /* app intro card #4 content markdown */
 "about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
 
-/* togglePreference preference title */
-"Boolean Preference" = "Boolean Preference";
+/* preferences for displaying the score as currency in the settings view */
+"Currency Score" = "Currency Score";
+
+/* help text */
+"Find the Cloud Cuckoo among the Shapes" = "Find the Cloud Cuckoo among the Shapes";
+
+/* help text */
+"Keep tapping the Cuckoo Bird!" = "Keep tapping the Cuckoo Bird!";
 
 /* content facet title */
-"Content" = "Content";
-
-/* numberPreference preference title */
-"Numeric Preference" = "Numeric Preference";
+"Play" = "Play";
 
 /* preferences title */
 "Preferences" = "Preferences";
+
+/* reset game button title */
+"Reset Game" = "Reset Game";
+
+/* reset high score button title */
+"Reset High Score" = "Reset High Score";
 
 /* settings facet title */
 "Settings" = "Settings";
 
 /* welcome facet title */
 "Welcome" = "Welcome";
-
-/* welcome title */
-"Welcome to %@!" = "Welcome to %@!";
 

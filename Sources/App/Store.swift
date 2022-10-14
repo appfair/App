@@ -40,7 +40,7 @@ open class Store: SceneManager {
             case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: "house", tint: nil)
             case .content:
-                return FacetInfo(title: Text("Content", bundle: .module, comment: "content facet title"), symbol: "puzzlepiece", tint: nil)
+                return FacetInfo(title: Text("Play", bundle: .module, comment: "content facet title"), symbol: "gamecontroller", tint: nil)
             case .settings:
                 return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: "gearshape", tint: nil)
             }
