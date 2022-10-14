@@ -19,7 +19,7 @@ import FairApp
 extension Text {
     /// Clients should use the localized form of `Text.init` in order
     /// to take advantage of the provided Localizable.strings localizations.
-    @available(*, deprecated, message: "Facilitate translation with: `Text(\"My String\", bundle: .module, comment: \"description of My String for translators\")`", renamed: "Text.init(_:bundle:comment:)")
+    @available(*, deprecated, message: "Facilitate translation with: `Text(”My String”, bundle: .module, comment: “description of My String for translators”)`", renamed: "Text.init(_:bundle:comment:)")
     internal init(_ key: LocalizedStringKey) {
         self.init(key, bundle: .module, comment: "no comment")
     }
