@@ -26,6 +26,8 @@ let package = Package(
         ], resources: [
             .process("Resources"), // processed resources
             .copy("../../App.yml"),
+        ], plugins: [
+            .plugin(name: "FairBuild", package: "Fair"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]
