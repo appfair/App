@@ -13,9 +13,12 @@ struct WelcomeView : View {
 
     var body: some View {
         // a flexible board of welcome cards, providing the introduction and onboarding experience for the app
-        CardBoard(selection: $selectedCard, selectedMode: .hierarchical, unselectedMode: .hierarchical, selectedVariants: .fill, cards: localizedCards)
-            .autocycle() // expanding each card after a delay
+        CardBoard(selection: $selectedCard, selectedMode: .monochrome, unselectedMode: .hierarchical, selectedVariants: .circle, unselectedVariants: .fill.circle, cards: Self.localizedCards)
+            .autocycle() // expand each card after a delay
     }
+
+    /// Random card colors each time
+    private static var cardColors = ([.accentColor] + CodableColor.systemColors.shuffled()).makeIterator()
 
     /// The card defintions for the welcome screen.
     ///
@@ -27,28 +30,25 @@ struct WelcomeView : View {
     /// Links are provided to the source repository for these files from within the app to facilitate the contribution of translations.
     /// These translation files must be kept up to date with your source code, which can be done manually or using `genstrings`.
     /// Alternatively, an app localization refresh can be done with `fairtool app localize` or the corresponding build plug-in.
-    var localizedCards = [
-        card("checkmark.circle",
+    static let localizedCards = [
+        card("checkmark", color: cardColors.next(),
              title: NSLocalizedString("about-card-01-banner", bundle: .module, value: "Welcome", comment: "app intro card #1 banner markdown"),
              subtitle: NSLocalizedString("about-card-01-caption", bundle: .module, value: "This is your app", comment: "app intro card #1 caption markdown"),
              body: NSLocalizedString("about-card-01-content", bundle: .module, value: "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.", comment: "app intro card #1 content markdown")),
-        card("hammer.circle",
+        card("hammer", color: cardColors.next(),
              title: NSLocalizedString("about-card-02-banner", bundle: .module, value: "Get Started", comment: "app intro card #2 banner markdown"),
              subtitle: NSLocalizedString("about-card-02-caption", bundle: .module, value: "Start developing your app.", comment: "app intro card #2 caption markdown"),
              body: NSLocalizedString("about-card-02-content", bundle: .module, value: "My app is my best friend. It is my life. I must master it as I must master my life.", comment: "app intro card #2 content markdown")),
-        card("circle.hexagongrid.circle",
+        card("flag", color: cardColors.next(),
              title: NSLocalizedString("about-card-03-banner", bundle: .module, value: "Internationalize", comment: "app intro card #3 banner markdown"),
              subtitle: NSLocalizedString("about-card-03-caption", bundle: .module, value: "Bring your app to the World", comment: "app intro card #3 caption markdown"),
              body: NSLocalizedString("about-card-03-content", bundle: .module, value: "App Fair apps are global, with support for multiple languages and locales.", comment: "app intro card #3 content markdown")),
-        card("heart.circle",
+        card("star", color: cardColors.next(),
              title: NSLocalizedString("about-card-04-banner", bundle: .module, value: "Think Different", comment: "app intro card #4 banner markdown"),
              subtitle: NSLocalizedString("about-card-04-caption", bundle: .module, value: "Here’s to the Crazy Ones", comment: "app intro card #4 caption markdown"),
              body: NSLocalizedString("about-card-04-content", bundle: .module, value: "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.", comment: "app intro card #4 content markdown")),
     ]
     .compactMap({ $0 })
-
-
-    private static let cardColors: [CodableColor.SystemColor] = [.orange, .teal, .brown, .cyan, .blue, .green, .red, .indigo, .purple, .mint, .pink]
 
     /// Loads the localized card string for the current locale.
     private static func card(_ symbolName: String, color: CodableColor? = nil, title: String, subtitle: String, body: String) -> Card<String>? {
@@ -61,10 +61,7 @@ struct WelcomeView : View {
             return nil
         }
 
-        // pseudo-random background color for the card based on the symbol name
-        let color = color ?? CodableColor(cardColors[abs(symbolName.hashValue) % cardColors.count])
-
-        return Card(title: title, subtitle: checkLocalized(subtitle), body: checkLocalized(body), background: [color], flair: symbolName)
+        return Card(title: title, subtitle: checkLocalized(subtitle), body: checkLocalized(body), background: [color].compacted(), flair: symbolName)
     }
 }
 
