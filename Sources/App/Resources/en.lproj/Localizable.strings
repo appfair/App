@@ -99,7 +99,7 @@
 "about-card-03-caption" = "Bring your app to the World";
 
 /* app intro card #3 content markdown */
-"about-card-03-content" = "App Fair Apps are International. Describe how to use the app by editing the localized `.strings` file and updating the `about-card-03-content` key.";
+"about-card-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
 
 /* app intro card #4 banner markdown */
 "about-card-04-banner" = "Think Different";
@@ -115,9 +115,6 @@
 
 /* content facet title */
 "Content" = "Content";
-
-/* No comment provided by engineer. */
-"My String\", bundle: .module, comment: \"description of My String for translators\")`" = "My String\", bundle: .module, comment: \"description of My String for translators\")`";
 
 /* numberPreference preference title */
 "Numeric Preference" = "Numeric Preference";
