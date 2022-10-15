@@ -1,14 +1,19 @@
 import FairApp
 import JackPot
+import FairKit
 
-
-/// The main content view for the app. This is the starting point for customizing you app's behavior.
+/// A list of sections of available files
 public struct JackScriptListView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
         List {
+            JackScriptFileListView()
             JackScriptCatalogListView()
+        }
+        .refreshable {
+            await store.loadFileStore(reload: true)
+            await store.loadCatalog(reload: true)
         }
         #if os(macOS)
         .listStyle(.sidebar)
@@ -16,13 +21,79 @@ public struct JackScriptListView: View {
     }
 }
 
+/// A list of files available to the user
+public struct JackScriptFileListView: View {
+    @EnvironmentObject var store: Store
+    @State var fileOpen = false
+
+    public var body: some View {
+        Section {
+            ForEach(store.fileStore?.apps ?? [], id: \.downloadURL) { scriptItem in
+                NavigationLink(destination: {
+                    JackScriptView(scriptItem: scriptItem)
+                }, label: {
+                    VStack(alignment: .leading) {
+                        Text(scriptItem.localizedDescription ?? scriptItem.name)
+                        Text(scriptItem.downloadURL.deletingLastPathComponent().lastPathComponent)
+                            .truncationMode(.head)
+                            .font(.subheadline)
+                    }
+                })
+            }
+        } header: {
+            Text("File List", bundle: .module, comment: "header title for jackscript file list")
+        }
+        .toolbar {
+            ToolbarItem {
+                openFileButton
+            }
+        }
+        .fileImporter(isPresented: $fileOpen, allowedContentTypes: [.item], onCompletion: openFile)
+        .task {
+            await store.loadFileStore()
+        }
+    }
+
+    func openFile(result: Result<URL, Error>) {
+        switch result {
+        case .success(let url):
+            do {
+                try loadFile(url: url)
+            } catch {
+                store.addError(error)
+            }
+        case .failure(let error):
+            store.addError(error)
+        }
+    }
+
+    func loadFile(url: URL) throws {
+        let data = try Data(contentsOf: url)
+        let app = AppCatalogItem(name: url.lastPathComponent, bundleIdentifier: url.lastPathComponent, downloadURL: url)
+        let catalog = AppCatalog(name: wip("File Store"), identifier: wip("World-Fair.local"), apps: [app])
+        store.catalog = catalog
+    }
+
+    var openFileButton: some View {
+        Button {
+            dbg("opening files")
+            fileOpen = true
+        } label: {
+            Text("Open", bundle: .module, comment: "button title for opening a script")
+                .label(image: FairSymbol.plus)
+                .labelStyle(.iconOnly)
+        }
+    }
+}
+
+
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 public struct JackScriptCatalogListView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
         Section {
-            ForEach(store.catalog?.apps ?? [], id: \.bundleIdentifier) { scriptItem in
+            ForEach(store.catalog?.apps ?? [], id: \.downloadURL) { scriptItem in
                 NavigationLink(destination: {
                     JackScriptView(scriptItem: scriptItem)
                 }, label: {
@@ -39,9 +110,6 @@ public struct JackScriptCatalogListView: View {
         }
         .task {
             await store.loadCatalog()
-        }
-        .refreshable {
-            await store.loadCatalog(reload: true)
         }
     }
 }
@@ -62,11 +130,10 @@ public struct JackScriptView: View {
 
     public var body: some View {
         Group {
-            if editing {
-                editorView
-                    .padding()
-            } else {
-                ScrollView {
+            ScrollView {
+                if editing {
+                    editorView
+                } else {
                     dynamicView
                 }
             }
@@ -78,18 +145,27 @@ public struct JackScriptView: View {
         .navigation(title: Text(scriptItem.localizedDescription ?? ""), subtitle: nil)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .navigationBarLeading) {
                 reloadButton
-                    .buttonStyle(.bordered)
             }
-
             ToolbarItem(placement: .navigationBarTrailing) {
                 saveEditButton
-                    .buttonStyle(.borderedProminent)
             }
+            #endif
+            #if os(macOS)
+            ToolbarItem {
+                reloadButton
+                    .keyboardShortcut("R")
+            }
+            ToolbarItem {
+                saveEditButton
+                    .keyboardShortcut(.return)
+            }
+            #endif
         }
-        #endif
         .task {
             await loadScriptContents()
         }
@@ -103,12 +179,13 @@ public struct JackScriptView: View {
         //try viewModel.jack().ctx.eval(script).convey()
     }
 
-    let x = FileManager().currentDirectoryPath
     @ViewBuilder var editorView: some View {
         TextEditor(text: $script)
-            .font(.system(.callout, design: .monospaced))
-//            .autocorrectionDisabled(true)
-//            .autocapitalization(.none)
+            .font(.system(.body, design: .monospaced))
+            #if os(iOS)
+            .autocorrectionDisabled(true)
+            .autocapitalization(.none)
+            #endif
     }
 
     @ViewBuilder var dynamicView: some View {

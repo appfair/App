@@ -27,11 +27,28 @@ open class Store: SceneManager {
     @AppStorage("catalogURL") public var catalogURL = URL.jackscript(appName: "World-Fair")?.absoluteString ?? ""
 
     @Published var catalog: AppCatalog?
+    @Published var fileStore: AppCatalog?
     @Published var errors: [Error] = []
 
     public required init() {
     }
 
+    func loadFileStore(reload: Bool = false) async {
+        dbg("loading file store")
+
+        let driveURL = FileManager.default.url(forUbiquityContainerIdentifier:
+               nil)?.appendingPathComponent("Documents")
+                       if driveURL != nil {
+                               dbg("iCloud available")
+                               let fileURL = driveURL!.appendingPathComponent("test.txt")
+                               try? "Hello word".data(using: .utf8)?.write(to: fileURL)
+                           } else {
+                               dbg("iCloud not available")
+                           }
+
+    }
+
+    /// Loads the online forks of the app from the app's fork list
     func loadCatalog(reload: Bool = false) async {
         do {
             guard let url = URL(string: catalogURL) else {
