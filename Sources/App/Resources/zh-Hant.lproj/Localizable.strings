@@ -1,7 +1,61 @@
-// Traditional Chinese strings for this App Fair app.
-// Translators wanted! Simply edit this file…
+// Localized Chinese (中文) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
 
-"OK" = "好";
-"Cancel" = "取消";
-"Welcome to %@!" = "歡迎使用 %@！";
+/* app intro card #1 banner markdown */
+"about-card-01-banner" = "Welcome";
+
+/* app intro card #1 caption markdown */
+"about-card-01-caption" = "This is your app";
+
+/* app intro card #1 content markdown */
+"about-card-01-content" = "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.";
+
+/* app intro card #2 banner markdown */
+"about-card-02-banner" = "Get Started";
+
+/* app intro card #2 caption markdown */
+"about-card-02-caption" = "Start developing your app.";
+
+/* app intro card #2 content markdown */
+"about-card-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+
+/* app intro card #3 banner markdown */
+"about-card-03-banner" = "Internationalize";
+
+/* app intro card #3 caption markdown */
+"about-card-03-caption" = "Bring your app to the World";
+
+/* app intro card #3 content markdown */
+"about-card-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
+
+/* app intro card #4 banner markdown */
+"about-card-04-banner" = "Think Different";
+
+/* app intro card #4 caption markdown */
+"about-card-04-caption" = "Here’s to the Crazy Ones";
+
+/* app intro card #4 content markdown */
+"about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
+
+/* togglePreference preference title */
+"Boolean Preference" = "Boolean Preference";
+
+/* content facet title */
+"Content" = "Content";
+
+/* numberPreference preference title */
+"Numeric Preference" = "Numeric Preference";
+
+/* preferences title */
+"Preferences" = "Preferences";
+
+/* settings facet title */
+"Settings" = "Settings";
+
+/* welcome facet title */
+"Welcome" = "Welcome";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
 
