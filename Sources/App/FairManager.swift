@@ -106,6 +106,8 @@ open class FairManager: SceneManager, AppInventoryController {
 //            }
 //        ]
     }
+
+    public var bundle: Bundle { Bundle.module }
 }
 
 extension FairManager : AppManagement {
@@ -443,6 +445,11 @@ extension SourceSelection {
             []
         }
     }
+}
+
+extension FairManager {
+    public typealias AppFacets = Never
+    public typealias ConfigFacets = Never
 }
 
 // MARK: App Launch Privacy support

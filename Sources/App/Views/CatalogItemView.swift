@@ -2044,25 +2044,6 @@ public struct TitleAndIconFlippedLabelStyle : LabelStyle {
     }
 }
 
-struct ZoomableButtonStyle: ButtonStyle {
-    var zoomLevel = 0.95
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? zoomLevel : 1, anchor: .center)
-    }
-}
-
-extension ButtonStyle where Self == ZoomableButtonStyle {
-    static var zoomable: ZoomableButtonStyle {
-        ZoomableButtonStyle()
-    }
-
-    static func zoomable(level: Double = 0.95) -> ZoomableButtonStyle {
-        ZoomableButtonStyle(zoomLevel: level)
-    }
-}
-
 extension NSRegularExpression {
     /// Returns true if the given regular expression has any matches with the specified string
     func hasMatches(in string: String) -> Bool {
