@@ -21,10 +21,13 @@ public struct PreferencesView : View {
 
     public var body: some View {
         Form {
-//            Toggle(isOn: $store.currencyScore) {
-//                Text("Currency Score", bundle: .module, comment: "preferences for displaying the score as currency in the settings view")
-//            }
-//            Spacer()
+            #if DEBUG
+            let _ = wip("TODO")
+            Toggle(isOn: $store.currencyScore) {
+                Text("Currency Score", bundle: .module, comment: "preferences for displaying the score as currency in the settings view")
+            }
+            Spacer()
+            #endif
 
             Button {
                 store.resetGame()
