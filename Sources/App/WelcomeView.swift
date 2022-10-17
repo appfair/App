@@ -34,19 +34,17 @@ struct WelcomeView : View {
         card("heart", color: cardColors.next(),
              title: NSLocalizedString("about-card-01-banner", bundle: .module, value: "Welcome", comment: "app intro card #1 banner markdown"),
              subtitle: NSLocalizedString("about-card-01-caption", bundle: .module, value: "to Cloud Cuckoo Land", comment: "app intro card #1 caption markdown"),
-             body: NSLocalizedString("about-card-01-content", bundle: .module, value: "This is a whimsical game of excitement and delight.", comment: "app intro card #1 content markdown")),
+             body: NSLocalizedString("about-card-01-content", bundle: .module, value: "This is a whimsical game of excitement and delight. Tap the `Play` tab to begin!", comment: "app intro card #1 content markdown")),
+
         card("magnifyingglass", color: cardColors.next(),
              title: NSLocalizedString("about-card-02-banner", bundle: .module, value: "Search", comment: "app intro card #2 banner markdown"),
              subtitle: NSLocalizedString("about-card-02-caption", bundle: .module, value: "for the Lost Cuckoo", comment: "app intro card #2 caption markdown"),
              body: NSLocalizedString("about-card-02-content", bundle: .module, value: "There is a cuckoo bird on the loose. You must find it and tap it. At first, it will be easy, but as your dots accrue, the difficulty of finding the cuckoo bird increases.", comment: "app intro card #2 content markdown")),
-//        card("dollarsign.circle", color: cardColors.next(),
-//             title: NSLocalizedString("about-card-03-banner", bundle: .module, value: "Extitement", comment: "app intro card #3 banner markdown"),
-//             subtitle: NSLocalizedString("about-card-03-caption", bundle: .module, value: "Bring your app to the World", comment: "app intro card #3 caption markdown"),
-//             body: NSLocalizedString("about-card-03-content", bundle: .module, value: "App Fair apps are global, with support for multiple languages and locales.", comment: "app intro card #3 content markdown")),
-//        card("star", color: cardColors.next(),
-//             title: NSLocalizedString("about-card-04-banner", bundle: .module, value: "Think Different", comment: "app intro card #4 banner markdown"),
-//             subtitle: NSLocalizedString("about-card-04-caption", bundle: .module, value: "Here’s to the Crazy Ones", comment: "app intro card #4 caption markdown"),
-//             body: NSLocalizedString("about-card-04-content", bundle: .module, value: "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.", comment: "app intro card #4 content markdown")),
+
+        card("dollarsign.circle", color: cardColors.next(),
+             title: NSLocalizedString("about-card-03-banner", bundle: .module, value: "Raise the Stakes", comment: "app intro card #3 banner markdown"),
+             subtitle: NSLocalizedString("about-card-03-caption", bundle: .module, value: "Enable Currency Mode", comment: "app intro card #3 caption markdown"),
+             body: NSLocalizedString("about-card-03-content", bundle: .module, value: "Currency mode turns cuckoo-points into pretend money. Toggle this cosmetic preference in the Settings tab", comment: "app intro card #3 content markdown")),
     ]
     .compactMap({ $0 })
 

@@ -9,7 +9,7 @@
 "about-card-01-caption" = "to Cloud Cuckoo Land";
 
 /* app intro card #1 content markdown */
-"about-card-01-content" = "This is a whimsical game of excitement and delight.";
+"about-card-01-content" = "This is a whimsical game of excitement and delight. Tap the `Play` tab to begin!";
 
 /* app intro card #2 banner markdown */
 "about-card-02-banner" = "Search";
@@ -21,22 +21,13 @@
 "about-card-02-content" = "There is a cuckoo bird on the loose. You must find it and tap it. At first, it will be easy, but as your dots accrue, the difficulty of finding the cuckoo bird increases.";
 
 /* app intro card #3 banner markdown */
-"about-card-03-banner" = "Extitement";
+"about-card-03-banner" = "Raise the Stakes";
 
 /* app intro card #3 caption markdown */
-"about-card-03-caption" = "Bring your app to the World";
+"about-card-03-caption" = "Enable Currency Mode";
 
 /* app intro card #3 content markdown */
-"about-card-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
-
-/* app intro card #4 banner markdown */
-"about-card-04-banner" = "Think Different";
-
-/* app intro card #4 caption markdown */
-"about-card-04-caption" = "Here’s to the Crazy Ones";
-
-/* app intro card #4 content markdown */
-"about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
+"about-card-03-content" = "Currency mode turns cuckoo-points into pretend money. Toggle this cosmetic preference in the Settings tab";
 
 /* preferences for displaying the score as currency in the settings view */
 "Currency Score" = "Currency Score";
