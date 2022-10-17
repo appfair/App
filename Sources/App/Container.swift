@@ -1,6 +1,6 @@
 import FairApp
 
-/// The `FairApp.FairContainer` that acts as a factory for the content and settings view.
+/// The entry point to creating a scene and settings.
 public extension AppContainer {
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
@@ -40,3 +40,4 @@ public extension AppContainer {
     }
 
 }
+

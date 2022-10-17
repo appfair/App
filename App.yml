@@ -2,6 +2,7 @@
 app:
   primary_category: "UTILITIES"
   secondary_category: "PRODUCTIVITY"
+  privacy_url: "https://appfair.net/privacy"
   # subtitle: "A really great App Fair app"
   # promotional_text: "Be the first to download this app!"
   # description: "A simple app fair app."
