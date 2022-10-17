@@ -21,8 +21,3 @@ open class Store: SceneManager {
     public required init() {
     }
 }
-
-extension Store {
-    public typealias AppFacets = Never
-    public typealias ConfigFacets = Never
-}
