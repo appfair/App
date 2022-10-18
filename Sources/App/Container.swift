@@ -1,7 +1,7 @@
 import FairApp
 import AVKit
 
-/// The `FairApp.FairContainer` that acts as a factory for the content and settings view.
+/// The entry point to creating a scene and settings.
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
@@ -30,10 +30,19 @@ public extension AppContainer {
                 // only permit a single window
             }
         }
+
+        //WindowGroup { // or DocumentGroup
+            //FacetHostingView(store: store).environmentObject(store)
+        //}
+        //.commands {
+            //SidebarCommands()
+            //FacetCommands(store: store)
+        //}
     }
 
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
+    static func settingsView(store: Store) -> some SwiftUI.View {
+        //Store.AppFacets.settings.environmentObject(store)
         SettingsView().environmentObject(store)
     }
 }
+

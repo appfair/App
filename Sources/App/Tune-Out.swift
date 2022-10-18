@@ -531,8 +531,9 @@ struct Sidebar: View {
                     }
                     // let title = Text(tag.value) // un-localized
                     if let info = Station.tagInfo(tagString: tag.value) {
-                        NavigationLink(destination: StationList(title: Text("Tag: ", bundle: .module, comment: "tag label prefix") + info.title, frame: tagsFrame)) {
-                            info.title.label(image: info.image.foregroundStyle(info.tint))
+                        NavigationLink(destination: StationList(title: Text("Tag: ", bundle: .module, comment: "tag label prefix") + Text(info.title), frame: tagsFrame)) {
+                            Text(info.title)
+                                .label(image: info.image.foregroundStyle(info.tint))
                                 .symbolVariant(.fill)
                                 .badge(Text(tag.count, format: .number))
                         }

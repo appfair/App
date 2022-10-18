@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.7
 import PackageDescription
 
 /// This package template is forked from [appfair/App](https://github.com/appfair/App/fork)
@@ -31,13 +31,15 @@ let package = Package(
             .product(name: "SQLPod", package: "SQLPod"),
         ], resources: [
             .process("Resources"), // processed resources
-            .copy("App.yml"),
+            .copy("../../App.yml"),
         ],
         linkerSettings: [
             .linkedFramework("AVKit"),
         ]),
         .testTarget(name: "AppTests", dependencies: [
             "App"
+        ], plugins: [
+            //.plugin(name: "FairBuild", package: "Fair"),
         ]),
     ]
 )

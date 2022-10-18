@@ -1,0 +1,501 @@
+// Localized Indonesian (Indonesia) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
+
+/* app intro card #1 banner markdown */
+"about-card-01-banner" = "Welcome";
+
+/* app intro card #1 caption markdown */
+"about-card-01-caption" = "This is your app";
+
+/* app intro card #1 content markdown */
+"about-card-01-content" = "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.";
+
+/* app intro card #2 banner markdown */
+"about-card-02-banner" = "Get Started";
+
+/* app intro card #2 caption markdown */
+"about-card-02-caption" = "Start developing your app.";
+
+/* app intro card #2 content markdown */
+"about-card-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+
+/* app intro card #3 banner markdown */
+"about-card-03-banner" = "Internationalize";
+
+/* app intro card #3 caption markdown */
+"about-card-03-caption" = "Bring your app to the World";
+
+/* app intro card #3 content markdown */
+"about-card-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
+
+/* app intro card #4 banner markdown */
+"about-card-04-banner" = "Think Different";
+
+/* app intro card #4 caption markdown */
+"about-card-04-caption" = "Here’s to the Crazy Ones";
+
+/* app intro card #4 content markdown */
+"about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
+
+/* all stations section title */
+"All Stations" = "All Stations";
+
+/* preferences toggle for auto-playing stations */
+"Auto-play stations when selected" = "Auto-play stations when selected";
+
+/* text field label */
+"Bitrate:" = "Bitrate:";
+
+/* text field label */
+"Clicks:" = "Clicks:";
+
+/* text field label */
+"Codec:" = "Codec:";
+
+/* collapse section title */
+"Collapse" = "Collapse";
+
+/* content facet title */
+"Content" = "Content";
+
+/* section header for countries outline sidebar */
+"Countries" = "Countries";
+
+/* text field label */
+"Country:" = "Country:";
+
+/* country category prefix */
+"Country: " = "Country: ";
+
+/* expand section title */
+"Expand" = "Expand";
+
+/* high-fidelity section title */
+"Hi–Fi" = "Hi–Fi";
+
+/* text field label */
+"Home Page:" = "Home Page:";
+
+/* text field label */
+"ID:" = "ID:";
+
+/* kilobytes suffix */
+"k" = "k";
+
+/* text field label */
+"Language:" = "Language:";
+
+/* station list by language prefix */
+"Language: " = "Language: ";
+
+/* languages sidebar title */
+"Languages" = "Languages";
+
+/* text field label */
+"Last Change:" = "Last Change:";
+
+/* next button text */
+"Next" = "Next";
+
+/* pause button title */
+"Pause" = "Pause";
+
+/* pause button tooltip */
+"Pause the current track" = "Pause the current track";
+
+/* pin swipe action label */
+"Pin" = "Pin";
+
+/* pinned section title */
+"Pinned" = "Pinned";
+
+/* play button title */
+"Play" = "Play";
+
+/* play button tooltip */
+"Play the current track" = "Play the current track";
+
+/* popular section title */
+"Popular" = "Popular";
+
+/* preferences title */
+"Preferences" = "Preferences";
+
+/* previous button text */
+"Previous" = "Previous";
+
+/* search box placeholder */
+"Search" = "Search";
+
+/* placeholder for empty station selection */
+"Select Station" = "Select Station";
+
+/* next button tooltip */
+"Select the next station" = "Select the next station";
+
+/* previous button tooltip */
+"Select the previous station" = "Select the previous station";
+
+/* settings facet title */
+"Settings" = "Settings";
+
+/* expand/collapse tooltip title */
+"Show or hide the station information" = "Show or hide the station information";
+
+/* shuffle button text */
+"Shuffle" = "Shuffle";
+
+/* shuffle button tooltip */
+"Shuffle the current selection" = "Shuffle the current selection";
+
+/* text field label */
+"State:" = "State:";
+
+/* placeholder for empty station list */
+"Station List" = "Station List";
+
+/* text field label */
+"Station Name:" = "Station Name:";
+
+/* section header for stations outline sidebar
+   stations */
+"Stations" = "Stations";
+
+/* station tag name */
+"tag-60s" = "60s";
+
+/* station tag name */
+"tag-70s" = "70s";
+
+/* station tag name */
+"tag-80s" = "80s";
+
+/* station tag name */
+"tag-90s" = "90s";
+
+/* station tag name */
+"tag-aac" = "AAC";
+
+/* station tag name */
+"tag-adult-contemporary" = "Adult Contemporary";
+
+/* station tag name */
+"tag-alternative" = "Alternative";
+
+/* station tag name */
+"tag-alternative-rock" = "Alternative Rock";
+
+/* station tag name */
+"tag-ambient" = "Ambient";
+
+/* station tag name */
+"tag-blues" = "Blues";
+
+/* station tag name */
+"tag-catholic" = "Catholic";
+
+/* station tag name */
+"tag-charts" = "Charts";
+
+/* station tag name */
+"tag-chillout" = "Chillout";
+
+/* station tag name */
+"tag-christian" = "Christian";
+
+/* station tag name */
+"tag-classic-hits" = "Classic Hits";
+
+/* station tag name */
+"tag-classic-rock" = "Classic Rock";
+
+/* station tag name */
+"tag-classical" = "Classical";
+
+/* station tag name */
+"tag-college-radio" = "College Radio";
+
+/* station tag name */
+"tag-commercial" = "Commercial";
+
+/* station tag name */
+"tag-community-radio" = "Community Radio";
+
+/* station tag name */
+"tag-country" = "Country";
+
+/* station tag name */
+"tag-culture" = "Culture";
+
+/* station tag name */
+"tag-dance" = "Dance";
+
+/* station tag name */
+"tag-deutsch" = "Deutsch";
+
+/* station tag name */
+"tag-disco" = "Disco";
+
+/* station tag name */
+"tag-easy-listening" = "Easy Listening";
+
+/* station tag name */
+"tag-edm" = "EDM";
+
+/* station tag name */
+"tag-electro" = "Electro";
+
+/* station tag name */
+"tag-electronic" = "Electronic";
+
+/* station tag name */
+"tag-english" = "English";
+
+/* station tag name */
+"tag-entertainment" = "Entertainment";
+
+/* station tag name */
+"tag-entretenimiento" = "Entretenimiento";
+
+/* station tag name */
+"tag-español" = "Español";
+
+/* station tag name */
+"tag-estación" = "Estación";
+
+/* station tag name */
+"tag-fm" = "FM";
+
+/* station tag name */
+"tag-folk" = "Folk";
+
+/* station tag name */
+"tag-french" = "French";
+
+/* station tag name */
+"tag-funk" = "Funk";
+
+/* station tag name */
+"tag-g_7" = "G_7";
+
+/* station tag name */
+"tag-german" = "German";
+
+/* station tag name */
+"tag-greek" = "Greek";
+
+/* station tag name */
+"tag-grupera" = "Grupera";
+
+/* station tag name */
+"tag-hard-rock" = "Hard Rock";
+
+/* station tag name */
+"tag-hiphop" = "Hiphop";
+
+/* station tag name */
+"tag-hits" = "Hits";
+
+/* station tag name */
+"tag-house" = "House";
+
+/* station tag name */
+"tag-indie" = "Indie";
+
+/* station tag name */
+"tag-information" = "Information";
+
+/* station tag name */
+"tag-jazz" = "Jazz";
+
+/* station tag name */
+"tag-juvenil" = "Juvenil";
+
+/* station tag name */
+"tag-latin-music" = "Latin Music";
+
+/* station tag name */
+"tag-local-music" = "Local Music";
+
+/* station tag name */
+"tag-local-news" = "Local News";
+
+/* station tag name */
+"tag-lounge" = "Lounge";
+
+/* station tag name */
+"tag-mainstream" = "Mainstream";
+
+/* station tag name */
+"tag-metal" = "Metal";
+
+/* station tag name */
+"tag-mex" = "Mex";
+
+/* station tag name */
+"tag-mexico" = "Mexico";
+
+/* station tag name */
+"tag-méxico" = "México";
+
+/* station tag name */
+"tag-music" = "Music";
+
+/* station tag name */
+"tag-musica" = "Musica";
+
+/* station tag name */
+"tag-musica-regional" = "Musica Regional";
+
+/* station tag name */
+"tag-musica-regional-mexicana" = "Musica Regional Mexicana";
+
+/* station tag name */
+"tag-música" = "Música";
+
+/* station tag name */
+"tag-música-pop" = "Música Pop";
+
+/* station tag name */
+"tag-mx" = "Mx";
+
+/* station tag name */
+"tag-news" = "News";
+
+/* station tag name */
+"tag-news-talk" = "News Talk";
+
+/* station tag name */
+"tag-noticias" = "Noticias";
+
+/* station tag name */
+"tag-npr" = "NPR";
+
+/* station tag name */
+"tag-oldies" = "Oldies";
+
+/* station tag name */
+"tag-on" = "On";
+
+/* station tag name */
+"tag-pop" = "Pop";
+
+/* station tag name */
+"tag-pop-music" = "Pop Music";
+
+/* station tag name */
+"tag-pop-rock" = "Pop Rock";
+
+/* station tag name */
+"tag-public-radio" = "Public Radio";
+
+/* station tag name */
+"tag-radio" = "Radio";
+
+/* station tag name */
+"tag-rap" = "Rap";
+
+/* station tag name */
+"tag-reggae" = "Reggae";
+
+/* station tag name */
+"tag-regional" = "Regional";
+
+/* station tag name */
+"tag-regional-mexican" = "Regional Mexican";
+
+/* station tag name */
+"tag-regional-radio" = "Regional Radio";
+
+/* station tag name */
+"tag-religion" = "Religion";
+
+/* station tag name */
+"tag-rnb" = "RNB";
+
+/* station tag name */
+"tag-rock" = "Rock";
+
+/* station tag name */
+"tag-russian" = "Russian";
+
+/* station tag name */
+"tag-s" = "S";
+
+/* station tag name */
+"tag-soul" = "Soul";
+
+/* station tag name */
+"tag-spanish" = "Spanish";
+
+/* station tag name */
+"tag-sport" = "Sport";
+
+/* station tag name */
+"tag-talk" = "Talk";
+
+/* station tag name */
+"tag-talk-&-speech" = "Talk & Speech";
+
+/* station tag name */
+"tag-techno" = "Techno";
+
+/* station tag name */
+"tag-top-40" = "Top 40";
+
+/* station tag name */
+"tag-trance" = "Trance";
+
+/* station tag name */
+"tag-university-radio" = "University Radio";
+
+/* station tag name */
+"tag-variety" = "Variety";
+
+/* station tag name */
+"tag-world-music" = "World Music";
+
+/* station tag name */
+"tag-xp_5" = "XP_5";
+
+/* tag label prefix */
+"Tag: " = "Tag: ";
+
+/* section header for tags outline sidebar */
+"Tags" = "Tags";
+
+/* text field label */
+"Tags:" = "Tags:";
+
+/* No comment provided by engineer. */
+"Tags: " = "Tags: ";
+
+/* text field label */
+"Trend:" = "Trend:";
+
+/* trending section title */
+"Trending" = "Trending";
+
+/* video section title */
+"TV" = "TV";
+
+/* generic unknown label
+   unknown station name title */
+"Unknown" = "Unknown";
+
+/* empty label text title */
+"Unknown Name" = "Unknown Name";
+
+/* title for a station that is not known */
+"Unknown Station" = "Unknown Station";
+
+/* text field label */
+"Votes:" = "Votes:";
+
+/* welcome facet title */
+"Welcome" = "Welcome";
+
+/* help text for preferences toggle for auto-playing stations */
+"Whether to automatically start playing selected stations." = "Whether to automatically start playing selected stations.";
+
