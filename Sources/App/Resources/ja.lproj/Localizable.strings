@@ -6,10 +6,10 @@
 "about-card-01-banner" = "Welcome";
 
 /* app intro card #1 caption markdown */
-"about-card-01-caption" = "This is your app";
+"about-card-01-caption" = "Internet Radio";
 
 /* app intro card #1 content markdown */
-"about-card-01-content" = "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.";
+"about-card-01-content" = "Tune-Out enables you to browse, search, and stream internet radio stations from around the world.";
 
 /* app intro card #2 banner markdown */
 "about-card-02-banner" = "Get Started";
@@ -55,9 +55,6 @@
 
 /* collapse section title */
 "Collapse" = "Collapse";
-
-/* content facet title */
-"Content" = "Content";
 
 /* section header for countries outline sidebar */
 "Countries" = "Countries";
@@ -159,7 +156,8 @@
 "Station Name:" = "Station Name:";
 
 /* section header for stations outline sidebar
-   stations */
+   stations
+   stations facet title */
 "Stations" = "Stations";
 
 /* station tag name */

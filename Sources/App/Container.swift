@@ -4,6 +4,21 @@ import AVKit
 /// The entry point to creating a scene and settings.
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
+        rootSceneFacet(store: store)
+        //rootSceneClassic(store: store)
+    }
+
+    @SceneBuilder static func rootSceneFacet(store: Store) -> some SwiftUI.Scene {
+        WindowGroup { // or DocumentGroup
+            FacetHostingView(store: store).environmentObject(store)
+        }
+        .commands {
+            SidebarCommands()
+            FacetCommands(store: store)
+        }
+    }
+
+    @SceneBuilder static func rootSceneClassic(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView()
                 .windowToolbarUnified(compact: true, showsTitle: true)
@@ -30,14 +45,6 @@ public extension AppContainer {
                 // only permit a single window
             }
         }
-
-        //WindowGroup { // or DocumentGroup
-            //FacetHostingView(store: store).environmentObject(store)
-        //}
-        //.commands {
-            //SidebarCommands()
-            //FacetCommands(store: store)
-        //}
     }
 
     static func settingsView(store: Store) -> some SwiftUI.View {
