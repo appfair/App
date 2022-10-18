@@ -26,6 +26,7 @@ let package = Package(
         ], resources: [
             .process("Resources"), // processed resources
             .copy("../../App.yml"),
+            .copy("../../LICENSE.AGPL"),
         ], plugins: [
             //.plugin(name: "FairBuild", package: "Fair"),
         ]),
