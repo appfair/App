@@ -36,6 +36,8 @@ import Foundation
 }
 
 extension Store {
+    public var bundle: Bundle { .module }
+
     func setDockMenu() {
         #if os(macOS)
         let clockView = ClockView()
