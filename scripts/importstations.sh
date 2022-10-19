@@ -3,15 +3,19 @@
 PACKAGE=App
 FILE=stations
 
+STATIONS=${TMPDIR}/stations.csv
+
 # see: https://api.radio-browser.info
-#curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
+curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > ${STATIONS}
+
+rm -vf "Sources/${PACKAGE}/Resources/${FILE}.db"
 
 sqlite3 "Sources/${PACKAGE}/Resources/${FILE}.db" << EOF
 DROP TABLE IF EXISTS station;
 
 CREATE TABLE IF NOT EXISTS "station" (
     "changeuuid" TEXT,
-    "stationuuid" TEXT,
+    "stationuuid" TEXT PRIMARY KEY,
     "serveruuid" TEXT,
     "name" TEXT,
     "url" TEXT,
@@ -49,7 +53,9 @@ CREATE TABLE IF NOT EXISTS "station" (
 
     -- STRICT; -- needs more recent version of sqlite
 
-.import --skip 1 --csv Sources/App/Resources/stations.csv station
+.import --skip 1 --csv ${STATIONS} station
+
+-- ALTER TABLE "station" DROP COLUMN "XXX";
 
 ALTER TABLE "station" DROP COLUMN "country";
 ALTER TABLE "station" DROP COLUMN "lastcheckok";

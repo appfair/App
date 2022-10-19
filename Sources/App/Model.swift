@@ -379,6 +379,8 @@ struct StationCatalog {
     private static let stationsCSV: Result<StationCatalog, Error> = {
         prf { // 1075ms
             Result {
+                throw wip(CocoaError(CocoaError.featureUnsupported))
+
                 guard let url = Bundle.module.url(forResource: "stations", withExtension: "csv") else {
                     throw CocoaError(.fileReadNoSuchFile)
                 }

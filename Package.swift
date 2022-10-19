@@ -19,8 +19,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/AudioKit/AudioKit", from: "5.5.2"),
-        .package(url: "https://github.com/jectivex/JackPot", from: "0.0.1"),
-        .package(url: "https://github.com/sqlenclave/SQLPod", from: "0.0.1"),
+        .package(url: "https://github.com/jectivex/JackPot", from: "0.1.1"),
+        .package(url: "https://github.com/sqlenclave/SQLPod", from: "0.0.2"),
     ],
     targets: [
         .target(name: "App", dependencies: [ 

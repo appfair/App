@@ -46,26 +46,17 @@ import FairApp
         case welcome
         /// The initial facet, which typically shows a welcome / onboarding experience
         case discover
-        /// The legacy tablar data view
-        @available(*, deprecated)
-        case legacy
         /// The setting for the app, which contains app-specific preferences as well as other standard settings
         case settings
-
-        public static var allCases: [Store.AppFacets] {
-            [.welcome, .discover, .legacy, .settings]
-        }
 
         public var facetInfo: FacetInfo {
             switch self {
             case .welcome:
-                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: "house", tint: nil)
+                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .music_note_house, tint: nil)
             case .discover:
-                return FacetInfo(title: Text("Discover", bundle: .module, comment: "discover facet title"), symbol: "waveform.and.magnifyingglass", tint: nil)
-            case .legacy:
-                return FacetInfo(title: Text("Stations", bundle: .module, comment: "stations facet title"), symbol: "music.note.house", tint: nil)
+                return FacetInfo(title: Text("Discover", bundle: .module, comment: "discover facet title"), symbol: .waveform, tint: nil)
             case .settings:
-                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: "gearshape", tint: nil)
+                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: nil)
             }
         }
 
@@ -73,7 +64,6 @@ import FairApp
             switch self {
             case .welcome: WelcomeView()
             case .discover: DiscoverView()
-            case .legacy: TuneOutView()
             case .settings: SettingsView()
             }
         }
