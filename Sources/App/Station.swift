@@ -75,7 +75,7 @@ extension Station : Codable, FetchableRecord, MutablePersistableRecord {
 struct StationsRequest: Queryable {
     static var defaultValue: [Station] { [] }
 
-    var ordering: SearchScope
+    var ordering: SearchSort
 
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[Station], Error> {
         ValueObservation

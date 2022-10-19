@@ -1,16 +1,20 @@
 import FairApp
 import SQLEnclave
 
+@MainActor class SearchModel : ObservableObject {
+    /// Updated when the search field changes
+    @Published var filteredStations: [Station]?
+
+}
+
 struct DiscoverView : View {
-    @State var scope: SearchScope = SearchScope.byClickCount
+    @State var scope: SearchScope = SearchScope.tag
+    @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
+    @StateObject private var searchModel = SearchModel()
+
 
     var stations: [Station] {
-        switch self.scope {
-        case .byClickCount: return stationsByClicks // stationsByClicks
-        case .byClickTrend: return stationsByClicks // stationsByClickTrend
-        case .byName: return stationsByClicks
-        }
-
+        searchModel.filteredStations ?? stationsByClicks
     }
 
     @EnvironmentObject var store: Store
@@ -23,28 +27,9 @@ struct DiscoverView : View {
     @State var tokens: [SearchToken] = []
 
     @State var suggestedTokens: [SearchToken] = [
-        SearchToken(tokenType: .byClickTrend, text: Text("Token A")),
-        SearchToken(tokenType: .byName, text: Text("Token B")),
+//        SearchToken(tokenType: .tag, text: Text("Rock")),
+//        SearchToken(tokenType: .language, text: Text("English")),
     ]
-
-//    @Query(StationsRequest(ordering: .byName)) private var stationsByName: [Station]
-
-    @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
-//    @Query(StationsRequest(ordering: .byClickTrend)) private var stationsByClickTrend: [Station]
-
-//    enum SearchScope : Hashable, CaseIterable {
-//        case name
-//        case language
-//        case country
-//
-//        @ViewBuilder var label: some View {
-//            switch self {
-//            case .name: Text("Name", bundle: .module, comment: "search scope label")
-//            case .language: Text("Language", bundle: .module, comment: "search scope label")
-//            case .country: Text("Country", bundle: .module, comment: "search scope label")
-//            }
-//        }
-//    }
 
     struct SearchToken : Identifiable {
         let id = UUID()
@@ -98,6 +83,10 @@ struct DiscoverView : View {
         List {
             ForEach(stations, content: stationRowView)
         }
+        .onChange(of: self.searchText, debounce: 0.075, priority: .low) { search in
+            let filtered = self.stationsByClicks
+
+        }
         //.navigation(title: Text("Discover"), subtitle: Text("Stations"))
     }
 
@@ -131,13 +120,6 @@ struct DiscoverView : View {
         }
     }
 }
-
-enum SearchScope : Hashable, CaseIterable {
-    case byClickCount
-    case byClickTrend
-    case byName
-}
-
 
 extension View {
     func stationLabelTitle(_ station: Station) -> some View {
@@ -185,7 +167,32 @@ extension View {
         }
     }
 }
+
+enum SearchScope : Hashable, CaseIterable {
+    case language
+    case tag
+    case country
+}
+
+
 extension SearchScope {
+
+    @ViewBuilder var label: some View {
+        switch self {
+        case .tag: Text("Tag", bundle: .module, comment: "search scope label")
+        case .language: Text("Language", bundle: .module, comment: "search scope label")
+        case .country: Text("Country", bundle: .module, comment: "search scope label")
+        }
+    }
+}
+
+enum SearchSort : Hashable, CaseIterable {
+    case byClickCount
+    case byClickTrend
+    case byName
+}
+
+extension SearchSort {
     @ViewBuilder var label: some View {
         switch self {
         case .byName: Text("Name", bundle: .module, comment: "search scope label")
