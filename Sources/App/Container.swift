@@ -7,7 +7,7 @@ public extension AppContainer {
             FacetHostingView(store: store).environmentObject(store)
         }
         .commands {
-            //SidebarCommands()
+            SidebarCommands()
             FacetCommands(store: store)
         }
     }

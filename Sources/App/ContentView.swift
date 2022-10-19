@@ -30,7 +30,7 @@ struct GameView: View {
 
     var body: some View {
         GeometryReader(content: gameGrid(withGeometry:))
-            .edgesIgnoringSafeArea(.all)
+//            .edgesIgnoringSafeArea(.all)
             .animatingVectorOverlay(for: Double(currentScore), alignment: .top) { score in
                 Text(score: score, locale: store.currencyScore ? locale : nil)
                     .font(.largeTitle.monospacedDigit().weight(.semibold))
@@ -101,7 +101,7 @@ struct GameView: View {
 
         func updateCurrentScore() {
             // similar to `withAnimation(.easeOut)`, but with a very long trail-off
-            withAnimation(.interactiveSpring(response: 3, dampingFraction: 3, blendDuration: 30.0)) {
+            withAnimation(.interactiveSpring(response: 1.15, dampingFraction: 0.86, blendDuration: 5.0)) {
                 currentScore = tapCount * tapCount
             }
         }

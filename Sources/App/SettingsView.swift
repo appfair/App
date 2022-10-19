@@ -21,30 +21,44 @@ public struct PreferencesView : View {
 
     public var body: some View {
         Form {
-            Toggle(isOn: $store.currencyScore) {
-                Text("Currency Score", bundle: .module, comment: "preferences for displaying the score as currency in the settings view")
-            }
-            Spacer()
-
-            Button {
-                store.resetGame()
-            } label: {
-                HStack {
-                    Text("Reset Game", bundle: .module, comment: "reset game button title")
+            Section {
+                Toggle(isOn: $store.currencyScore) {
+                    Text("Currency Score", bundle: .module, comment: "preferences for displaying the score as currency in the settings view")
                 }
+            } footer: {
+                Text("Currency score represents points as local currency units.", bundle: .module, comment: "footer text describing currency score mode")
             }
 
-            Button {
-                store.highScore = 0 // will also trigger a game reset
-            } label: {
-                HStack {
-                    Text("Reset High Score", bundle: .module, comment: "reset high score button title")
-                    Spacer()
-                    Text(score: .init(store.highScore), locale: store.currencyScore ? locale : nil)
-                        .font(.body.monospacedDigit())
+            GroupBox {
+                Button {
+                    store.resetGame()
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text("Reset Game", bundle: .module, comment: "reset game button title")
+                        Spacer()
+                    }
                 }
-            }
+                .buttonStyle(.borderedProminent)
 
+                Button {
+                    store.highScore = 0 // will also trigger a game reset
+                } label: {
+                    HStack {
+                        Text("Reset High Score", bundle: .module, comment: "reset high score button title")
+                        Spacer()
+                        Text(score: .init(store.highScore), locale: store.currencyScore ? locale : nil)
+                            .font(.body.monospacedDigit())
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.highScore <= 0)
+            } label: {
+                Text("Manage Game", bundle: .module, comment: "preferences group setting for reset game buttons")
+            }
         }
+
+
+
     }
 }
