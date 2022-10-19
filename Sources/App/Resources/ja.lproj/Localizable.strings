@@ -1,9 +1,9 @@
+// Localized Japanese (日本語) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
+
 /* No comment provided by engineer. */
 "%@ (%@)" = "%1$@ (%2$@)";
-
-/* about settings facet title
-   about settings title */
-"About" = "About";
 
 /* altitude form fiel placeholder */
 "alt" = "alt";
@@ -78,7 +78,7 @@
 /* plug-in title */
 "Plug-In: Pod UI" = "Plug-In: Pod UI";
 
-/* preferences settings facet title */
+/* preferences title */
 "Preferences" = "Preferences";
 
 /* reset the script to the default */
@@ -113,6 +113,9 @@
 
 /* welcome facet title */
 "Welcome" = "Welcome";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
 
 /* card title */
 "Welcome to **Sun Bow**" = "Welcome to **Sun Bow**";

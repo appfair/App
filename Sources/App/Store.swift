@@ -7,14 +7,9 @@ import Jack
 /// The shared instance of Store is available throughout the app with:
 ///
 /// ``@EnvironmentObject var store: Store``
-public final class Store: SceneManager, ObservableObject {
-    public let bundle = Bundle.module
-
-    //public typealias AppFacets = Never
-    // public typealias AppFacets = WeatherFacets
-
-    /// The app-wide settings view consists of the weather-specific settings along with some standard utilities
-    public typealias ConfigFacets = WeatherSetting.WithStandardSettings
+open class Store: SceneManager {
+    /// The module bundle for this store, used for looking up embedded resources
+    public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = configuration(for: .module)
@@ -30,6 +25,7 @@ public final class Store: SceneManager, ObservableObject {
 
     public let appName = Bundle.localizedAppName
 
+
     public required init() {
     }
 
@@ -41,6 +37,40 @@ public final class Store: SceneManager, ObservableObject {
             if !error.isCancellation { // permit cancellation errors
                 dbg("error performing action:", error)
                 errors.append(error)
+            }
+        }
+    }
+
+    /// The facets for this app, which declares the logical sections of the user interface. The initial element must be a welcome/onboarding view, and the final element must be the settings element.
+    public enum AppFacets : String, Facet, CaseIterable, View {
+        case welcome
+        case places
+        case weather
+        case forecast
+        case settings
+
+        public var facetInfo: FacetInfo {
+            switch self {
+            case .welcome:
+                return info(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .house, tint: .orange)
+            case .places:
+                return info(title: Text("Places", bundle: .module, comment: "places facet title"), symbol: .mappin_and_ellipse, tint: .green)
+            case .weather:
+                return info(title: Text("Weather", bundle: .module, comment: "weather facet title"), symbol: .sun_and_horizon, tint: .yellow)
+            case .forecast:
+                return info(title: Text("Forecast", bundle: .module, comment: "forecast facet title"), symbol: .calendar_day_timeline_right, tint: .purple)
+            case .settings:
+                return info(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: .brown)
+            }
+        }
+
+        public var body: some View {
+            switch self {
+            case .welcome: WelcomeView()
+            case .places: PlacesView()
+            case .weather: WeatherView()
+            case .forecast: ForecastView()
+            case .settings: SettingsView()
             }
         }
     }
@@ -65,6 +95,24 @@ public final class Store: SceneManager, ObservableObject {
         return wip(Coords(latitude: lat ?? 42.35843, longitude: lon ?? -71.05977, altitude: alt ?? 0))
     }()
 
+
+    /// A ``Facets`` that describes the app's configuration settings.
+    public enum ConfigFacets : String, Facet, CaseIterable, View {
+        case preferences
+
+        public var facetInfo: FacetInfo {
+            switch self {
+            case .preferences:
+                return FacetInfo(title: Text("Preferences", bundle: .module, comment: "preferences title"), symbol: "gearshape", tint: nil)
+            }
+        }
+
+        @ViewBuilder public var body: some View {
+            switch self {
+            case .preferences: PreferencesView()
+            }
+        }
+    }
 }
 
 extension Error {

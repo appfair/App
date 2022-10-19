@@ -40,7 +40,8 @@ let package = Package(
             .product(name: "Lottie", package: "lottie-ios"),
         ], resources: [
             .process("Resources"), // processed resources
-            .copy("App.yml"),
+        ], plugins: [
+            //.plugin(name: "FairBuild", package: "Fair"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]

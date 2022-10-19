@@ -1,12 +1,15 @@
 import FairApp
 
-/// The `FairApp.FairContainer` that acts as a factory for the content and settings view.
+/// The entry point to creating a scene and settings.
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        WindowGroup {
-            // create a top-level facet host (tabs on iOS, outline view on macOS) with the app's facets
-            FacetHostingView(store: store)
+        WindowGroup { // or DocumentGroup
+            FacetHostingView(store: store).environmentObject(store)
                 .environmentObject(SunBowPod.shared)
+        }
+        .commands {
+            SidebarCommands()
+            FacetCommands(store: store)
         }
         .commands {
             SidebarCommands()
@@ -19,9 +22,8 @@ public extension AppContainer {
     }
 
     /// The app-wide settings view, which, by convention, is the final element of the app facets
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        Store.AppFacets.facets(for: store).last.unsafelyUnwrapped
-            .environmentObject(store)
+    static func settingsView(store: Store) -> some SwiftUI.View {
+        Store.AppFacets.settings.environmentObject(store)
             .environmentObject(SunBowPod.shared)
     }
 }

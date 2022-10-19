@@ -1,0 +1,134 @@
+// Localized Finnish (suomi) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
+
+/* No comment provided by engineer. */
+"%@ (%@)" = "%1$@ (%2$@)";
+
+/* altitude form fiel placeholder */
+"alt" = "alt";
+
+/* altitude form field label */
+"Altitude:" = "Altitude:";
+
+/* card title */
+"Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database." = "Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database.";
+
+/* setting title for population filter */
+"City Population Filter" = "City Population Filter";
+
+/* section header for weather section */
+"Current Weather" = "Current Weather";
+
+/* edit button title */
+"Edit" = "Edit";
+
+/* script editor title */
+"Editor" = "Editor";
+
+/* error message */
+"Error loading: %@: %@" = "Error loading: %1$@: %2$@";
+
+/* error text
+   error tooltip prefix */
+"Error: %@" = "Error: %@";
+
+/* tab title for execution */
+"Execution" = "Execution";
+
+/* setting title for temperature units */
+"Fahrenheit Units" = "Fahrenheit Units";
+
+/* forecast facet title */
+"Forecast" = "Forecast";
+
+/* card title */
+"Global Database Updated" = "Global Database Updated";
+
+/* latitude form field placeholder */
+"lat" = "lat";
+
+/* latitude form field label */
+"Latitude:" = "Latitude:";
+
+/* loading */
+"Loading: %@…" = "Loading: %@…";
+
+/* loading placeholder text */
+"Loading…" = "Loading…";
+
+/* longitude form field placeholder */
+"lon" = "lon";
+
+/* longitude form field label */
+"Longitude:" = "Longitude:";
+
+/* card title */
+"New cities, updated locations." = "New cities, updated locations.";
+
+/* card title */
+"New Features" = "New Features";
+
+/* places facet title */
+"Places" = "Places";
+
+/* plug-in title */
+"Plug-In: Hot Take" = "Plug-In: Hot Take";
+
+/* plug-in title */
+"Plug-In: Pod UI" = "Plug-In: Pod UI";
+
+/* preferences title */
+"Preferences" = "Preferences";
+
+/* reset the script to the default */
+"Reset" = "Reset";
+
+/* save button title */
+"Save" = "Save";
+
+/* settings facet title */
+"Settings" = "Settings";
+
+/* No comment provided by engineer. */
+"Show Header" = "Show Header";
+
+/* temperature form label */
+"Temp:" = "Temp:";
+
+/* card title */
+"The weather never sleeps.\n*Neither do we*." = "The weather never sleeps.\n*Neither do we*.";
+
+/* No comment provided by engineer. */
+"Thing: %@" = "Thing: %@";
+
+/* placeholder label for no address */
+"Unknown Location" = "Unknown Location";
+
+/* card title */
+"We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\nWe are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\nWe are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements." = "We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\nWe are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\nWe are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.";
+
+/* weather facet title */
+"Weather" = "Weather";
+
+/* welcome facet title */
+"Welcome" = "Welcome";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
+
+/* card title */
+"Welcome to **Sun Bow**" = "Welcome to **Sun Bow**";
+
+/* card title */
+"Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered." = "Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered.";
+
+/* wind form label */
+"Wind:" = "Wind:";
+
+/* card title */
+"Your **forever weather buddy**!" = "Your **forever weather buddy**!";
+
+/* app name */
+"🌞 Sun Bow 🎁" = "🌞 Sun Bow 🎁";
+

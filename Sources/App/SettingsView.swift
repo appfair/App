@@ -1,12 +1,12 @@
 import FairApp
 
-
-/// The settings view for app.
+/// The settings view for app, which includes the preferences along with standard settings.
 public struct SettingsView : View {
-    @State var selectedSetting: Store.ConfigFacets?
+    typealias StoreSettings = Store.ConfigFacets.WithStandardSettings
+    @State var selectedSetting: StoreSettings?
 
     public var body: some View {
-        FacetBrowserView<Store, Store.ConfigFacets>(selection: $selectedSetting)
+        FacetBrowserView<Store, StoreSettings>(selection: $selectedSetting)
         #if os(macOS)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(width: 600, height: 300)
@@ -14,41 +14,11 @@ public struct SettingsView : View {
     }
 }
 
-public enum WeatherSetting : String, Facet, CaseIterable, View {
-    case about // initial setting nav menu on iOS, about window on macOS: author, entitlements
-    case preferences // app-specific settings
-
-    public var facetInfo: FacetInfo {
-        switch self {
-        case .about:
-            return info(title: Text("About", bundle: .module, comment: "about settings facet title"), symbol: .face_smiling, tint: .mint)
-        case .preferences:
-            return info(title: Text("Preferences", bundle: .module, comment: "preferences settings facet title"), symbol: .gear, tint: .yellow)
-        }
-    }
+/// A form that presents controls for manipualting the app's preferences.
+public struct PreferencesView : View {
+    @EnvironmentObject var store: Store
 
     public var body: some View {
-        switch self {
-        case .about: AboutSettingsView()
-        case .preferences: PreferencesSettingsView()
-        }
-    }
-}
-
-struct AboutSettingsView : View {
-    @EnvironmentObject var store: Store
-
-    var body: some View {
-        Text("About", bundle: .module, comment: "about settings title")
-            .font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-struct PreferencesSettingsView : View {
-    @EnvironmentObject var store: Store
-
-    var body: some View {
         Form {
             Toggle(isOn: $store.fahrenheit) {
                 Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
@@ -66,7 +36,6 @@ struct PreferencesSettingsView : View {
                         .font(.caption.monospacedDigit())
                 }
             }
-
         }
     }
 }

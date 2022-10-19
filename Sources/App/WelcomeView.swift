@@ -1,18 +1,20 @@
 import FairKit
 
 public struct WelcomeView : View {
+    @State var selection: UUID? = nil
+
     static let introItems: [Card<VectorAnimation>] = [
-        Card(id: UUID(uuidString: "98213687-6551-4B64-B9F4-E18EA9479708")!,
+        Card(
              title: NSLocalizedString("Welcome to **Sun Bow**", bundle: .module, comment: "card title"),
              subtitle: NSLocalizedString("Your **forever weather buddy**!", bundle: .module, comment: "card title"),
              body: NSLocalizedString("""
             Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered.
             """, bundle: .module, comment: "card title"),
-             foregroundColor: .init(.white),
-             backgroundColors: [.init(.accent)],
-             graphic: .weatherDayBrokenClouds
+             foreground: .init(.white),
+             background: [.init(.accent)],
+             flair: .weatherDayBrokenClouds
              ),
-        Card(id: UUID(uuidString: "F5121E79-2902-4068-98D0-5063A7E317C7")!,
+        Card(
              title: NSLocalizedString("New Features", bundle: .module, comment: "card title"),
              subtitle: NSLocalizedString("The weather never sleeps.\n*Neither do we*.", bundle: .module, comment: "card title"),
              body: NSLocalizedString("""
@@ -20,24 +22,24 @@ public struct WelcomeView : View {
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
             """, bundle: .module, comment: "card title"),
-             foregroundColor: .init(.white),
-             backgroundColors: [.init(.blue)],
-             graphic: .weatherNightScatteredClouds
+             foreground: .init(.white),
+             background: [.init(.blue)],
+             flair: .weatherNightScatteredClouds
              ),
-        Card(id: UUID(uuidString: "F0E7A835-E20F-44AA-9BF7-2947569179B3")!,
+        Card(
              title: NSLocalizedString("Global Database Updated", bundle: .module, comment: "card title"),
              subtitle: NSLocalizedString("New cities, updated locations.", bundle: .module, comment: "card title"),
              body: NSLocalizedString("""
             Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database.
             """, bundle: .module, comment: "card title"),
-             foregroundColor: .init(.white),
-             backgroundColors: [.init(.brown)],
-             graphic: .weatherDaySnow
+             foreground: .init(.white),
+             background: [.init(.brown)],
+             flair: .weatherDaySnow
              ),
     ]
 
     public var body: some View {
-        CardBoard(cards: Self.introItems) { (graphic: VectorAnimation?) in
+        CardBoard(selection: $selection, cards: Self.introItems) { (graphic: VectorAnimation?, selected: Bool) in
             if let graphic = graphic {
                 VectorAnimationView(animation: graphic)
             }
