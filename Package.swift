@@ -19,7 +19,6 @@ let package = Package(
             .product(name: "SQLPod", package: "SQLPod"),
         ], resources: [
             .process("Resources"), // processed resources
-            .copy("../../App.yml"),
         ], plugins: [
             //.plugin(name: "FairBuild", package: "Fair"),
         ]),
