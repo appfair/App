@@ -8,8 +8,7 @@ extension UTType {
 }
 
 final class Document: ReferenceFileDocument {
-    @Published var animation: Lottie.Animation
-    @Published var sceneStore = SceneStore()
+    @Published var animation: LottieAnimation
 
     static var readableContentTypes: [UTType] {
         [
@@ -23,7 +22,7 @@ final class Document: ReferenceFileDocument {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        self.animation = try Lottie.Animation(json: data)
+        self.animation = try LottieAnimation(json: data)
     }
 
     func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
@@ -40,7 +39,7 @@ public struct ContentView: View {
     @Namespace var mainNamespace
     let document: Document
     @EnvironmentObject var appStore: Store
-    @EnvironmentObject var sceneStore: SceneStore
+    @State var sceneStore: SceneStore = SceneStore()
     @State var animationTime: TimeInterval = 0
     @State var searchString = ""
 
@@ -70,11 +69,11 @@ public struct ContentView: View {
     /// Play/pause progress video controls
     @ViewBuilder func controlStrip() -> some View {
         HStack(spacing: 20) {
-            PlayPauseCommand()
+            PlayPauseCommand(sceneStore: sceneStore)
                 .font(.title)
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .help(sceneStore.playing ? Text("Pause the animation") : Text("Play the animation"))
+                .help(sceneStore.playing ? Text("Pause the animation", bundle: .module, comment: "button text for pausing animation") : Text("Play the animation", bundle: .module, comment: "button text for playing animation"))
 
             Slider(value: $animationTime, in: 0...document.animation.duration, label: {
             }, minimumValueLabel: {
@@ -97,7 +96,7 @@ public struct ContentView: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .help(Text("Toggle playback looping"))
+                .help(Text("Toggle playback looping", bundle: .module, comment: "help text for toggling play loop"))
         }
         .padding()
     }
@@ -107,15 +106,15 @@ extension LottieLoopMode {
     @ViewBuilder var textLabel: some View {
         switch self {
         case .playOnce:
-            Text("Play Once").label(image: FairSymbol.repeat_1.image)
+            Text("Play Once", bundle: .module, comment: "loop mode description").label(image: FairSymbol.repeat_1.image)
         case .loop:
-            Text("Loop").label(image: FairSymbol.repeat.image)
+            Text("Loop", bundle: .module, comment: "loop mode description").label(image: FairSymbol.repeat.image)
         case .autoReverse:
-            Text("Auto-Reverse").label(image: FairSymbol.arrow_up_circle)
+            Text("Auto-Reverse", bundle: .module, comment: "loop mode description").label(image: FairSymbol.arrow_up_circle)
         case .repeat(let count):
-            Text("Repeat \(count)").label(image: FairSymbol.arrow_up_circle)
+            Text("Repeat \(count)", bundle: .module, comment: "loop mode description").label(image: FairSymbol.arrow_up_circle)
         case .repeatBackwards(let count):
-            Text("Reversed \(count)").label(image: FairSymbol.arrow_up_circle)
+            Text("Reversed \(count)", bundle: .module, comment: "loop mode description").label(image: FairSymbol.arrow_up_circle)
         }
     }
 }
@@ -126,7 +125,6 @@ struct MotionScene : Scene {
         DocumentGroup(viewing: Document.self) { file in
             ContentView(document: file.document)
                 .focusedSceneValue(\.document, file.document)
-                .environmentObject(file.document.sceneStore)
         }
         .commands {
             CommandGroup(after: .newItem) {
@@ -166,9 +164,9 @@ struct MotionScene : Scene {
 /// https://developer.apple.com/forums/thread/682503
 struct LottieCommandMenu : Commands {
     var body : some Commands {
-        CommandMenu(Text("Lottie")) {
-            PlayPauseCommand()
-                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
+        CommandMenu(Text("Lottie", bundle: .module, comment: "command menu name")) {
+//            PlayPauseCommand()
+//                .keyboardShortcut(KeyboardShortcut(.space, modifiers: []))
 
             JumpCommand(amount: 1.0)
                 .keyboardShortcut(KeyboardShortcut(.rightArrow, modifiers: []))
@@ -190,29 +188,17 @@ struct LottieCommandMenu : Commands {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
-public extension AppContainer {
-    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        MotionScene()
-    }
-
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
-    }
-}
-
-/// The shared app environment
-@available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: SceneManager {
-    /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
-
-    @AppStorage("someToggle") public var someToggle = false
-
-    public init() {
-    }
-}
+///// The shared app environment
+//@available(macOS 12.0, iOS 15.0, *)
+//@MainActor public final class Store: SceneManager {
+//    /// The configuration metadata for the app from the `App.yml` file.
+//    public static let config: JSum = configuration(for: .module)
+//
+//    @AppStorage("someToggle") public var someToggle = false
+//
+//    public init() {
+//    }
+//}
 
 
 extension FocusedValues {
@@ -229,14 +215,17 @@ extension FocusedValues {
 
 struct PlayPauseCommand : View {
     @FocusedValue(\.document) var document
+    @ObservedObject var sceneStore: SceneStore
 
     var body: some View {
-        (document?.sceneStore == nil ? Text("Play/Pause") : document?.sceneStore.playing == false ? Text("Pause") : Text("Play"))
-            .label(image: document?.sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
+        (sceneStore.playing == false
+         ? Text("Pause", bundle: .module, comment: "play pause button text")
+         : Text("Play", bundle: .module, comment: "play pause button text"))
+            .label(image: sceneStore.playing == true ? FairSymbol.pause_fill.image : FairSymbol.play_fill.image)
             .button {
-                document?.sceneStore.playing.toggle()
+                sceneStore.playing.toggle()
             }
-            .disabled(document?.sceneStore == nil)
+            //.disabled(sceneStore == nil)
     }
 }
 
@@ -245,16 +234,18 @@ struct ZoomCommand : View {
     let amount: Double
 
     var body: some View {
-        ((amount > 0 ? Text("Zoom In: ") : Text("Zoom Out: ")) + Text(amount, format: .percent))
+        (amount > 0
+            ? Text("Zoom In: \(Text(amount, format: .percent))", bundle: .module, comment: "zoom command description")
+            : Text("Zoom Out: \(Text(amount, format: .percent))", bundle: .module, comment: "zoom command description"))
             .label(image: amount > 0 ? FairSymbol.plus_magnifyingglass.image : FairSymbol.minus_magnifyingglass.image)
             .button {
-                if let sceneStore = document?.sceneStore {
-                    withAnimation {
-                        sceneStore.viewScale = max(0.01, sceneStore.viewScale + amount)
-                    }
-                }
+//                if let sceneStore = document?.sceneStore {
+//                    withAnimation {
+//                        sceneStore.viewScale = max(0.01, sceneStore.viewScale + amount)
+//                    }
+//                }
             }
-            .disabled(document?.sceneStore == nil)
+            //.disabled(document?.sceneStore == nil)
     }
 }
 
@@ -263,35 +254,25 @@ struct JumpCommand : View {
     let amount: Double
 
     var body: some View {
-        ((amount > 0 ? Text("Jump Forward: ") : Text("Zoom Backward: ")) + Text(amount, format: .number))
+        ((amount > 0
+          ? Text("Jump Forward: \(Text(amount, format: .number))", bundle: .module, comment: "jump command description")
+          : Text("Zoom Backward: \(Text(amount, format: .number))", bundle: .module, comment: "jump command description")))
             .label(image: amount > 0 ? FairSymbol.forward_fill.image : FairSymbol.backward_fill.image)
             .button {
-                if let sceneStore = document?.sceneStore {
-                    sceneStore.jumpTime = amount
-                }
+//                if let sceneStore = document?.sceneStore {
+//                    sceneStore.jumpTime = amount
+//                }
             }
-            .disabled(document?.sceneStore == nil)
+            //.disabled(document?.sceneStore == nil)
     }
 }
 
 /// The shared scene environment
 @available(macOS 12.0, iOS 15.0, *)
 final class SceneStore: ObservableObject {
-    @Published var playing = false
+    @Published var playing = true
     @Published var loopMode = LottieLoopMode.loop
     @Published var animationSpeed = 1.0
     @Published var jumpTime: TimeInterval = 0.0
     @Published var viewScale: Double = 1.0
-}
-
-@available(macOS 12.0, iOS 15.0, *)
-public struct AppSettingsView : View {
-    @EnvironmentObject var store: Store
-
-    public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
-        }
-        .padding()
-    }
 }
