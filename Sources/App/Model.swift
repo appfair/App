@@ -42,11 +42,11 @@ extension Source : Identifiable {
     var id: URL { url }
 }
 
-struct Station : Pure {
+
+extension Station {
     // parsing as takes takes it from 500ms -> 12724ms
     // typealias DateString = Date
     // static let dateStringType = CSVType.date
-    typealias DateString = String
     static let dateStringType = CSVType.string
 
     @available(*, deprecated, message: "prefer ISO8601 fields")
@@ -54,51 +54,6 @@ struct Station : Pure {
     @available(*, deprecated, message: "prefer ISO8601 fields")
     static let oldDateStringType = CSVType.string
 
-    typealias URLString = String
-    typealias UUIDString = String
-
-    var changeuuid: UUIDString?
-    var stationuuid: UUIDString?
-    var name: String?
-    var url: URLString?
-    var url_resolved: URLString?
-    var homepage: URLString?
-    var favicon: URLString?
-    var tags: String?
-    var country: String?
-    var countrycode: String?
-    var iso_3166_2: String?
-    var state: String?
-    var language: String?
-    var languagecodes: String?
-    var votes: Int?
-    var lastchangetime: DateString?
-    var lastchangetime_iso8601: DateString?
-    var codec: String? // e.g., "MP3" or "AAC,H.264"
-    var bitrate: Double?
-    var hls: String?
-    var lastcheckok: Int?
-    //var lastchecktime: OldDateString?
-    var lastchecktime_iso8601: DateString?
-    //var lastcheckoktime: OldDateString?
-    var lastcheckoktime_iso8601: DateString?
-    //var lastlocalchecktime: OldDateString?
-    var lastlocalchecktime_iso8601: DateString?
-    //var clicktimestamp: OldDateString?
-    var clicktimestamp_iso8601: DateString?
-    var clickcount: Int?
-    var clicktrend: Int?
-    var ssl_error: String?
-    var geo_lat: Double?
-    var geo_long: Double?
-    var has_extended_info: Bool?
-}
-
-extension Station : Identifiable {
-    /// The identifier of the station
-    var id: UUID? {
-        stationuuid.flatMap(UUID.init(uuidString:))
-    }
 
     static let changeuuidColumn = ColumnID("changeuuid", UUIDString.self)
     static let stationuuidColumn = ColumnID("stationuuid", UUIDString.self)

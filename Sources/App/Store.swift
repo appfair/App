@@ -44,16 +44,25 @@ import FairApp
     public enum AppFacets : String, Facet, CaseIterable, View {
         /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
-        /// The main content of the app.
-        case stations
+        /// The initial facet, which typically shows a welcome / onboarding experience
+        case discover
+        /// The legacy tablar data view
+        @available(*, deprecated)
+        case legacy
         /// The setting for the app, which contains app-specific preferences as well as other standard settings
         case settings
+
+        public static var allCases: [Store.AppFacets] {
+            [.welcome, .discover, .legacy, .settings]
+        }
 
         public var facetInfo: FacetInfo {
             switch self {
             case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: "house", tint: nil)
-            case .stations:
+            case .discover:
+                return FacetInfo(title: Text("Discover", bundle: .module, comment: "discover facet title"), symbol: "waveform.and.magnifyingglass", tint: nil)
+            case .legacy:
                 return FacetInfo(title: Text("Stations", bundle: .module, comment: "stations facet title"), symbol: "music.note.house", tint: nil)
             case .settings:
                 return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: "gearshape", tint: nil)
@@ -63,7 +72,8 @@ import FairApp
         @ViewBuilder public var body: some View {
             switch self {
             case .welcome: WelcomeView()
-            case .stations: ContentView()
+            case .discover: DiscoverView()
+            case .legacy: TuneOutView()
             case .settings: SettingsView()
             }
         }

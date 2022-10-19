@@ -366,7 +366,7 @@ struct StationList<Frame: DataSlice> : View {
             StationView(station: station, itemTitle: $nowPlayingTitle)
                 .environmentObject(RadioTuner.shared)
 
-                //.focusedValue(\.selectedStation, Binding.constant(station)) // causes a hang!
+            //.focusedValue(\.selectedStation, Binding.constant(station)) // causes a hang!
         }) {
             Label(title: { stationLabelTitle(station) }) {
                 station.iconView(size: 50)
@@ -392,7 +392,9 @@ struct StationList<Frame: DataSlice> : View {
             .tint(.yellow)
         }
     }
+}
 
+extension View {
 
     func stationLabelTitle(_ station: Station) -> some View {
         VStack(alignment: .leading) {

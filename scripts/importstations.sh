@@ -7,9 +7,9 @@ FILE=stations
 #curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > Sources/App/Resources/stations.csv
 
 sqlite3 "Sources/${PACKAGE}/Resources/${FILE}.db" << EOF
-DROP TABLE IF EXISTS stations;
+DROP TABLE IF EXISTS station;
 
-CREATE TABLE IF NOT EXISTS "stations"(
+CREATE TABLE IF NOT EXISTS "station" (
     "changeuuid" TEXT,
     "stationuuid" TEXT,
     "serveruuid" TEXT,
@@ -45,30 +45,34 @@ CREATE TABLE IF NOT EXISTS "stations"(
     "ssl_error" INT,
     "geo_lat" TEXT,
     "geo_long" TEXT,
-    "has_extended_info" TEXT)
-    STRICT;
+    "has_extended_info" TEXT);
 
-.import --skip 1 --csv Sources/App/Resources/stations.csv stations
+    -- STRICT; -- needs more recent version of sqlite
 
-ALTER TABLE "stations" DROP COLUMN "country";
-ALTER TABLE "stations" DROP COLUMN "lastcheckok";
-ALTER TABLE "stations" DROP COLUMN "lastchecktime";
-ALTER TABLE "stations" DROP COLUMN "lastchecktime_iso8601";
-ALTER TABLE "stations" DROP COLUMN "lastcheckoktime";
-ALTER TABLE "stations" DROP COLUMN "lastcheckoktime_iso8601";
-ALTER TABLE "stations" DROP COLUMN "lastlocalchecktime";
-ALTER TABLE "stations" DROP COLUMN "lastlocalchecktime_iso8601";
-ALTER TABLE "stations" DROP COLUMN "clicktimestamp";
-ALTER TABLE "stations" DROP COLUMN "clicktimestamp_iso8601";
+.import --skip 1 --csv Sources/App/Resources/stations.csv station
 
-CREATE INDEX stations_name ON stations(name);
-CREATE INDEX stations_tags ON stations(tags);
-CREATE INDEX stations_countrycode ON stations(countrycode);
-CREATE INDEX stations_languagecodes ON stations(languagecodes);
+ALTER TABLE "station" DROP COLUMN "country";
+ALTER TABLE "station" DROP COLUMN "lastcheckok";
+ALTER TABLE "station" DROP COLUMN "lastchecktime";
+ALTER TABLE "station" DROP COLUMN "lastchecktime_iso8601";
+ALTER TABLE "station" DROP COLUMN "lastcheckoktime";
+ALTER TABLE "station" DROP COLUMN "lastcheckoktime_iso8601";
+ALTER TABLE "station" DROP COLUMN "lastlocalchecktime";
+ALTER TABLE "station" DROP COLUMN "lastlocalchecktime_iso8601";
+ALTER TABLE "station" DROP COLUMN "clicktimestamp";
+ALTER TABLE "station" DROP COLUMN "clicktimestamp_iso8601";
+
+CREATE INDEX station_name ON station(name);
+CREATE INDEX station_tags ON station(tags);
+CREATE INDEX station_countrycode ON station(countrycode);
+CREATE INDEX station_languagecodes ON station(languagecodes);
+CREATE INDEX station_votes ON station(votes);
+CREATE INDEX station_clickcount ON station(clickcount);
+CREATE INDEX station_clicktrend ON station(clicktrend);
 
 VACUUM;
 
-select count(*) from stations;
+select count(*) from station;
 EOF
 
 ls -lah "Sources/${PACKAGE}/Resources/${FILE}.db"
