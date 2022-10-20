@@ -6,6 +6,8 @@
 	<string>$(ICON_SYMBOL)</string>
 	<key>AppFairIconTint</key>
 	<string>$(ICON_TINT)</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
