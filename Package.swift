@@ -31,7 +31,6 @@ let package = Package(
             .product(name: "FairKit", package: "Fair"),
         ], resources: [
             .process("Resources"), // processed resources
-            .copy("../../App.yml"),
         ], plugins: [
             //.plugin(name: "FairBuild", package: "Fair"),
         ]),
