@@ -13,6 +13,10 @@ import FairApp
 
     @AppStorage("autoplayStation") public var autoplayStation = true
 
+    @AppStorage("downloadIcons") public var downloadIcons = true
+
+    @AppStorage("circularIcons") public var circularIcons = true
+
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("togglePreference") public var togglePreference = false
 

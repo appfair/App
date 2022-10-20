@@ -25,6 +25,16 @@ public struct PreferencesView : View {
                 Text("Auto-play stations when selected", bundle: .module, comment: "preferences toggle for auto-playing stations")
             }
             .help(Text("Whether to automatically start playing selected stations.", bundle: .module, comment: "help text for preferences toggle for auto-playing stations"))
+
+            Toggle(isOn: $store.downloadIcons) {
+                Text("Download station icons", bundle: .module, comment: "preferences toggle for downloading station icons")
+            }
+            .help(Text("Whether to download station icons automatically.", bundle: .module, comment: "help text for preferences toggle icon download"))
+
+            Toggle(isOn: $store.circularIcons) {
+                Text("Circular icons", bundle: .module, comment: "preferences toggle for circular icons")
+            }
+            .help(Text("Whether to apply a circular mask to the icons.", bundle: .module, comment: "help text for preferences toggle circular icons"))
         }
     }
 }

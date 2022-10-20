@@ -247,7 +247,7 @@ extension Station {
         self.url.flatMap(URL.init(string:))
     }
 
-    func iconView(size: CGFloat, blurFlag: CGFloat? = 1.5) -> some View {
+    @ViewBuilder func iconView(download: Bool, size: CGFloat, blurFlag: CGFloat? = 0.0) -> some View {
         let url = URL(string: self.favicon ?? "about:blank") ?? URL(string: "about:blank")!
         return AsyncImage(url: url, content: { image in
             image

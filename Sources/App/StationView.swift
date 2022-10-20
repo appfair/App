@@ -112,7 +112,7 @@ struct StationView: View {
             // the background buttons
             HStack {
                 station
-                    .iconView(size: 50, blurFlag: 0)
+                    .iconView(download: store.downloadIcons, size: 50, blurFlag: 0)
 
                 itemOrStatonTitle
                     .textSelection(.enabled)

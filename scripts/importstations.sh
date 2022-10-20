@@ -6,7 +6,8 @@ FILE=stations
 STATIONS=${TMPDIR}/stations.csv
 
 # see: https://api.radio-browser.info
-curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > ${STATIONS}
+# curl -fsSL https://nl1.api.radio-browser.info/csv/stations/search > ${STATIONS}
+curl -fsSL 'https://at1.api.radio-browser.info/csv/stations/search?limit=99999&hidebroken=false' > ${STATIONS}
 
 rm -vf "Sources/${PACKAGE}/Resources/${FILE}.db"
 

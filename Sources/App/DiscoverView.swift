@@ -12,6 +12,13 @@ import SQLEnclave
     }
 }
 
+extension Station {
+    /// The split names from the "language" field
+    var languageNames: [String] {
+        language?.split(separator: ",").map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) ?? []
+    }
+}
+
 struct DiscoverView : View {
     @State var scope: SearchScope = .name
     @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
@@ -34,44 +41,89 @@ struct DiscoverView : View {
     ]
 
     var allLanguageTokens: [SearchToken] {
-        [
-            SearchToken(tokenType: .language, text: Text("English")),
-        ]
+        stations
+            .flatMap(\.languageNames)
+            .countedSet()
+            .map { keyValue in
+                SearchToken(tokenType: .language, tag: keyValue.key, count: keyValue.value)
+            }
+            .sorting(by: \.count, ascending: false)
     }
 
     var allCountryTokens: [SearchToken] {
-        [
-            SearchToken(tokenType: .country, text: Text("USA")),
-        ]
+        stations
+            .map {
+                let code = $0.countrycode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                return code.isEmpty ? "UN" : code
+            }
+            .countedSet()
+            .map { keyValue in
+                SearchToken(tokenType: .country, tag: keyValue.key, count: keyValue.value)
+            }
+            .sorting(by: \.count, ascending: false)
     }
 
     var allTagTokens: [SearchToken] {
-        [
-            SearchToken(tokenType: .tag, text: Text("Pop")),
-        ]
+        stations
+            .flatMap(\.tagElements)
+            .countedSet()
+            .map { keyValue in
+                SearchToken(tokenType: .language, tag: keyValue.key, count: keyValue.value)
+            }
+            .sorting(by: \.count, ascending: false)
     }
 
 
     struct SearchToken : Identifiable {
         let id = UUID()
         let tokenType: SearchScope
-        let text: Text
+        let tag: String
+        let count: Int
 
+        var text: Text {
+            switch tokenType {
+            case .name:
+                return Text(tag)
+            case .tag:
+                return tagText(tag)
+            case .language:
+                return languageTag(tag)
+            case .country:
+                return countryTag(tag)
+            }
+        }
+
+        func tagText(_ tag: String) -> Text {
+            wip(Text(tag)) // TODO: extract tag info and localize
+        }
+
+        func languageTag(_ tag: String) -> Text {
+            wip(Text(tag)) // TODO: extract tag info and localize
+        }
+
+        func countryTag(_ tag: String) -> Text {
+            wip(Text(tag)) // TODO: extract tag info and localize
+        }
 
         #if os(iOS)
         @available(macOS 13.0, iOS 16.0, *)
         var label: some View {
-            ViewThatFits(in: .horizontal) {
+            @ViewBuilder func textLabel(withCounts: Bool) -> some View {
                 Label {
-                    self.text
+                    if withCounts {
+                        Text("\(self.text) (\(Text(self.count, format: .number)))", bundle: .module, comment: "label for station tag with the count appended at the end in parenthesis")
+                    } else {
+                        self.text
+                    }
                 } icon: {
-                    Image(.infinity)
+                    // TODO: make a summary badge of the tag/language/country
                 }
+            }
 
-                Label {
-                    wip(self.text) // TODO: abbreviated text options for shorted display
-                } icon: {
-                }
+            return ViewThatFits(in: .horizontal) {
+                // the first view will be shown in the tag preview list; the second one without the counts will show up in the token field
+                textLabel(withCounts: true).labelStyle(.titleAndIcon)
+                textLabel(withCounts: false).labelStyle(.titleAndIcon)
             }
         }
         #endif
@@ -162,15 +214,17 @@ struct DiscoverView : View {
         //.navigation(title: Text("Discover"), subtitle: Text("Stations"))
     }
 
-    func stationRowView(station: Station) -> some View {
+    @ViewBuilder func stationRowView(station: Station) -> some View {
+        let iconSize: Double = 50
         NavigationLink {
             StationView(station: station, itemTitle: $nowPlayingTitle)
                 .environmentObject(RadioTuner.shared)
         } label: {
             //Text(station.name ?? "")
             Label(title: { stationLabelTitle(station) }) {
-                station.iconView(size: 50)
-                    .frame(width: 50)
+                station.iconView(download: store.downloadIcons, size: iconSize)
+                    .frame(width: iconSize)
+                    .mask(RoundedRectangle(cornerSize: store.circularIcons ? .init(width: iconSize/2, height: iconSize/2) : .init(width: 0, height: 0), style: .circular))
             }
             .labelStyle(StationLabelStyle())
         }
