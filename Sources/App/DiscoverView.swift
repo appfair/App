@@ -37,6 +37,7 @@ struct DiscoverView : View {
         let text: Text
 
 
+        #if os(iOS)
         @available(macOS 13.0, iOS 16.0, *)
         var label: some View {
             ViewThatFits(in: .horizontal) {
@@ -52,13 +53,15 @@ struct DiscoverView : View {
                 }
             }
         }
+        #endif
     }
 
     var body: some View {
         NavigationView {
             if #available(macOS 13.0, iOS 16.0, *) {
+                #if os(iOS)
                 stationList
-                    .searchable(text: $searchText, tokens: $tokens, suggestedTokens: $suggestedTokens, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search", bundle: .module, comment: "station search prompt"), token: { token in
+                    .searchable(text: $searchText, tokens: $tokens, suggestedTokens: $suggestedTokens, placement: .toolbar, prompt: Text("Search", bundle: .module, comment: "station search prompt"), token: { token in
                         token.label
                 })
                 .searchScopes($scope) {
@@ -72,9 +75,13 @@ struct DiscoverView : View {
 //                        $0.type == newValue
 //                    }
                 }
+                #else
+                stationList
+                    .searchable(text: $searchText, placement: .automatic, prompt: Text("Search", bundle: .module, comment: "station search prompt"))
+                #endif
             } else {
                 stationList
-                    .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search", bundle: .module, comment: "station search prompt"))
+                    .searchable(text: $searchText, placement: .automatic, prompt: Text("Search", bundle: .module, comment: "station search prompt"))
             }
         }
     }
@@ -83,9 +90,13 @@ struct DiscoverView : View {
         List {
             ForEach(stations, content: stationRowView)
         }
-        .onChange(of: self.searchText, debounce: 0.075, priority: .low) { search in
-            let filtered = self.stationsByClicks
-
+        .onChange(of: self.searchText, debounce: 0.075, priority: .low) { searchText in
+            let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let stations = self.stationsByClicks
+            let matches = stations.filter { station in
+                searchString.isEmpty || (station.name ?? "").localizedCaseInsensitiveContains(searchString)
+            }
+            self.searchModel.filteredStations = matches
         }
         //.navigation(title: Text("Discover"), subtitle: Text("Stations"))
     }
