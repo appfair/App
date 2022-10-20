@@ -5,13 +5,17 @@ import SQLEnclave
     /// Updated when the search field changes
     @Published var filteredStations: [Station]?
 
+    @Published var allStations: [Station] = [] {
+        didSet {
+            dbg("### updating tag cache")
+        }
+    }
 }
 
 struct DiscoverView : View {
-    @State var scope: SearchScope? = .none
+    @State var scope: SearchScope = .name
     @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
     @StateObject private var searchModel = SearchModel()
-
 
     var stations: [Station] {
         searchModel.filteredStations ?? stationsByClicks
@@ -27,9 +31,26 @@ struct DiscoverView : View {
     @State var tokens: [SearchToken] = []
 
     @State var suggestedTokens: [SearchToken] = [
-//        SearchToken(tokenType: .tag, text: Text("Rock")),
-//        SearchToken(tokenType: .language, text: Text("English")),
     ]
+
+    var allLanguageTokens: [SearchToken] {
+        [
+            SearchToken(tokenType: .language, text: Text("English")),
+        ]
+    }
+
+    var allCountryTokens: [SearchToken] {
+        [
+            SearchToken(tokenType: .country, text: Text("USA")),
+        ]
+    }
+
+    var allTagTokens: [SearchToken] {
+        [
+            SearchToken(tokenType: .tag, text: Text("Pop")),
+        ]
+    }
+
 
     struct SearchToken : Identifiable {
         let id = UUID()
@@ -61,19 +82,33 @@ struct DiscoverView : View {
             if #available(macOS 13.0, iOS 16.0, *) {
                 #if os(iOS)
                 stationList
-                    .searchable(text: $searchText, tokens: $tokens, suggestedTokens: $suggestedTokens, placement: .toolbar, prompt: Text("Search", bundle: .module, comment: "station search prompt"), token: { token in
+                    .searchable(text: $searchText, tokens: $tokens, suggestedTokens: $suggestedTokens, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search", bundle: .module, comment: "station search prompt"), token: { token in
                         token.label
                 })
                 .searchScopes($scope) {
                     ForEach(SearchScope.allCases, id: \.self) { scope in
-                        scope.label
+                        if scope == .name {
+                            // for the defaut scope, just show the current search count
+                            Text(stations.count, format: .number)
+                                .tag(scope)
+                        } else {
+                            scope.label
+                                .tag(scope)
+                        }
                     }
                 }
                 .onChange(of: scope) { newValue in
-                    print("changed search scope:", newValue)
-//                    filterPerson = Person.person.filter {
-//                        $0.type == newValue
-//                    }
+                    dbg("changed search scope:", newValue)
+                    switch newValue {
+                    case .name:
+                        self.suggestedTokens = []
+                    case .tag:
+                        self.suggestedTokens = allTagTokens
+                    case .language:
+                        self.suggestedTokens = allLanguageTokens
+                    case .country:
+                        self.suggestedTokens = allCountryTokens
+                    }
                 }
                 #else
                 stationList
@@ -87,16 +122,42 @@ struct DiscoverView : View {
     }
 
     var stationList: some View {
+        stationListView
+//            .task(id: stationsByClicks) {
+//                dbg("updated stations: \(stationsByClicks.count)")
+//            }
+//        .toolbar(id: "toolbar") {
+//            ToolbarItem(id: "count", placement: .bottomBar, showsByDefault: true) {
+//                Text(stations.count, format: .number)
+////                    .button {
+////                        dbg("XXX")
+////                    }
+//            }
+//        }
+        //.toolbar(Visibility.automatic, for: .bottomBar)
+    }
+
+    var stationListView: some View {
         List {
             ForEach(stations, content: stationRowView)
         }
+        .listStyle(.inset)
+//        .toolbar {
+            //Text("C")
+            //Text(stations.count, format: .number)
+//        }
         .onChange(of: self.searchText, debounce: 0.075, priority: .low) { searchText in
             let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
             let stations = self.stationsByClicks
             let matches = stations.filter { station in
                 searchString.isEmpty || (station.name ?? "").localizedCaseInsensitiveContains(searchString)
             }
-            self.searchModel.filteredStations = matches
+            do {
+                try Task.checkCancellation()
+                self.searchModel.filteredStations = matches
+            } catch {
+                dbg("cancelled search")
+            }
         }
         //.navigation(title: Text("Discover"), subtitle: Text("Stations"))
     }
@@ -112,24 +173,29 @@ struct DiscoverView : View {
                     .frame(width: 50)
             }
             .labelStyle(StationLabelStyle())
-
         }
     }
 
-    struct CellView: View {
-        var scope: SearchScope
-        //    @Environment(\.isSearching) var isSearching
-        //    @Binding var filterPerson: [Person]
-
-        var body: some View {
-            scope.label
-            //            .onChange(of: isSearching) { newValue in
-            //                if !newValue {
-            //                    filterPerson = Person.person
-            //                }
-            //            }
-        }
-    }
+//    struct CellView: View {
+//        var scope: SearchScope
+//        //@Environment(\.isSearching) var isSearching
+//        //@Binding var filterPerson: [Person]
+//
+//        var body: some View {
+//            if scope == .name {
+//                // the "name" scope shows the current search count as the tab title
+//                Text(stations.count, format: .number)
+//            } else {
+//                scope.label
+//            }
+//
+//            //.onChange(of: isSearching) { newValue in
+//            //    if !newValue {
+//            //        filterPerson = Person.person
+//            //    }
+//            //}
+//        }
+//    }
 }
 
 extension View {
@@ -180,16 +246,17 @@ extension View {
 }
 
 enum SearchScope : Hashable, CaseIterable {
-    case language
+    case name
     case tag
+    case language
     case country
 }
 
 
 extension SearchScope {
-
     @ViewBuilder var label: some View {
         switch self {
+        case .name: Text("Name", bundle: .module, comment: "search scope label")
         case .tag: Text("Tag", bundle: .module, comment: "search scope label")
         case .language: Text("Language", bundle: .module, comment: "search scope label")
         case .country: Text("Country", bundle: .module, comment: "search scope label")

@@ -18,7 +18,7 @@ let package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
-        .package(url: "https://github.com/AudioKit/AudioKit", from: "5.5.2"),
+        //.package(url: "https://github.com/AudioKit/AudioKit", from: "5.5.2"),
         .package(url: "https://github.com/jectivex/JackPot", from: "0.1.1"),
         .package(url: "https://github.com/sqlenclave/SQLPod", from: "0.0.1"),
     ],
@@ -26,7 +26,7 @@ let package = Package(
         .target(name: "App", dependencies: [ 
             .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairKit", package: "Fair"), // optional enhancements
-            .product(name: "AudioKit", package: "AudioKit"),
+            //.product(name: "AudioKit", package: "AudioKit"),
             .product(name: "JackPot", package: "JackPot"),
             .product(name: "SQLPod", package: "SQLPod"),
         ], resources: [
