@@ -58,7 +58,7 @@ open class Store: SceneManager {
             case .weather:
                 return info(title: Text("Weather", bundle: .module, comment: "weather facet title"), symbol: .sun_and_horizon, tint: .yellow)
             case .forecast:
-                return info(title: Text("Forecast", bundle: .module, comment: "forecast facet title"), symbol: .calendar_day_timeline_right, tint: .purple)
+                return info(title: Text("Forecast", bundle: .module, comment: "forecast facet title"), symbol: .calendar_badge_clock, tint: .purple)
             case .settings:
                 return info(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: .brown)
             }
