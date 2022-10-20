@@ -55,12 +55,3 @@ extension RadioTunerBase : AVPlayerItemMetadataOutputPushDelegate {
         }
     }
 }
-
-/// Converts a country code like "US" into the Emoji symbol for the country
-func emojiFlag(countryCode: String) -> String {
-    let codes = countryCode.unicodeScalars.compactMap {
-        UnicodeScalar(127397 + $0.value)
-    }
-    return String(codes.map(Character.init))
-}
-

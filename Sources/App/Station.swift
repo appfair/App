@@ -233,7 +233,7 @@ extension Station {
 
 }
 
-private extension String {
+internal extension String {
     /// Returns a pseudo-random value from 0.0-1.0 based on the word's SHA hash
     var hueComponent: CGFloat {
         let i: UInt8 = self.utf8Data.sha256().last ?? 0
@@ -268,4 +268,16 @@ extension Station {
         })
         .frame(maxHeight: size)
     }
+
+    var countryFlagImage: Text? {
+        Text(emojiFlag(countryCode: countrycode ?? "UN"))
+    }
+}
+
+/// Converts a country code like "US" into the Emoji symbol for the country
+func emojiFlag(countryCode: String) -> String {
+    let codes = countryCode.unicodeScalars.compactMap {
+        UnicodeScalar(127397 + $0.value)
+    }
+    return String(codes.map(Character.init))
 }
