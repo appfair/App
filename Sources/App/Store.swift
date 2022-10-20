@@ -96,11 +96,11 @@ extension Store {
 
     func setDockMenu() {
         #if os(macOS)
-        let clockView = ClockView()
-        NSApp.dockTile.contentView = NSHostingView(rootView: clockView)
-        NSApp.dockTile.display()
-        NSApp.dockTile.badgeLabel = "ABC"
-        NSApp.dockTile.showsApplicationBadge = true
+//        let clockView = ClockView()
+//        NSApp.dockTile.contentView = NSHostingView(rootView: clockView)
+//        NSApp.dockTile.display()
+//        NSApp.dockTile.badgeLabel = "ABC"
+//        NSApp.dockTile.showsApplicationBadge = true
         #endif
     }
 

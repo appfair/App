@@ -8,7 +8,7 @@ import SQLEnclave
 }
 
 struct DiscoverView : View {
-    @State var scope: SearchScope = SearchScope.tag
+    @State var scope: SearchScope? = .none
     @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
     @StateObject private var searchModel = SearchModel()
 
