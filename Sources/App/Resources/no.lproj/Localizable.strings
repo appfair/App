@@ -38,14 +38,14 @@
 /* app intro card #4 content markdown */
 "about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
 
-/* all stations section title */
-"All Stations" = "All Stations";
-
 /* preferences toggle for auto-playing stations */
 "Auto-play stations when selected" = "Auto-play stations when selected";
 
 /* text field label */
 "Bitrate:" = "Bitrate:";
+
+/* preferences toggle for circular icons */
+"Circular icons" = "Circular icons";
 
 /* text field label */
 "Clicks:" = "Clicks:";
@@ -56,20 +56,20 @@
 /* collapse section title */
 "Collapse" = "Collapse";
 
-/* section header for countries outline sidebar */
-"Countries" = "Countries";
+/* search scope label */
+"Country" = "Country";
 
 /* text field label */
 "Country:" = "Country:";
 
-/* country category prefix */
-"Country: " = "Country: ";
+/* discover facet title */
+"Discover" = "Discover";
+
+/* preferences toggle for downloading station icons */
+"Download station icons" = "Download station icons";
 
 /* expand section title */
 "Expand" = "Expand";
-
-/* high-fidelity section title */
-"Hi–Fi" = "Hi–Fi";
 
 /* text field label */
 "Home Page:" = "Home Page:";
@@ -80,20 +80,23 @@
 /* kilobytes suffix */
 "k" = "k";
 
+/* search scope label */
+"Language" = "Language";
+
 /* text field label */
 "Language:" = "Language:";
 
-/* station list by language prefix */
+/* No comment provided by engineer. */
 "Language: " = "Language: ";
-
-/* languages sidebar title */
-"Languages" = "Languages";
 
 /* text field label */
 "Last Change:" = "Last Change:";
 
-/* next button text */
-"Next" = "Next";
+/* search scope label */
+"Listeners" = "Listeners";
+
+/* search scope label */
+"Name" = "Name";
 
 /* pause button title */
 "Pause" = "Pause";
@@ -101,38 +104,17 @@
 /* pause button tooltip */
 "Pause the current track" = "Pause the current track";
 
-/* pin swipe action label */
-"Pin" = "Pin";
-
-/* pinned section title */
-"Pinned" = "Pinned";
-
 /* play button title */
 "Play" = "Play";
 
 /* play button tooltip */
 "Play the current track" = "Play the current track";
 
-/* popular section title */
-"Popular" = "Popular";
-
 /* preferences title */
 "Preferences" = "Preferences";
 
-/* previous button text */
-"Previous" = "Previous";
-
-/* search box placeholder */
+/* station search prompt */
 "Search" = "Search";
-
-/* placeholder for empty station selection */
-"Select Station" = "Select Station";
-
-/* next button tooltip */
-"Select the next station" = "Select the next station";
-
-/* previous button tooltip */
-"Select the previous station" = "Select the previous station";
 
 /* settings facet title */
 "Settings" = "Settings";
@@ -140,25 +122,17 @@
 /* expand/collapse tooltip title */
 "Show or hide the station information" = "Show or hide the station information";
 
-/* shuffle button text */
-"Shuffle" = "Shuffle";
-
-/* shuffle button tooltip */
-"Shuffle the current selection" = "Shuffle the current selection";
-
 /* text field label */
 "State:" = "State:";
-
-/* placeholder for empty station list */
-"Station List" = "Station List";
 
 /* text field label */
 "Station Name:" = "Station Name:";
 
-/* section header for stations outline sidebar
-   stations
-   stations facet title */
+/* No comment provided by engineer. */
 "Stations" = "Stations";
+
+/* search scope label */
+"Tag" = "Tag";
 
 /* station tag name */
 "tag-60s" = "60s";
@@ -457,29 +431,19 @@
 /* station tag name */
 "tag-xp_5" = "XP_5";
 
-/* tag label prefix */
-"Tag: " = "Tag: ";
-
-/* section header for tags outline sidebar */
-"Tags" = "Tags";
-
 /* text field label */
 "Tags:" = "Tags:";
 
 /* No comment provided by engineer. */
 "Tags: " = "Tags: ";
 
+/* search scope label */
+"Trend" = "Trend";
+
 /* text field label */
 "Trend:" = "Trend:";
 
-/* trending section title */
-"Trending" = "Trending";
-
-/* video section title */
-"TV" = "TV";
-
-/* generic unknown label
-   unknown station name title */
+/* generic unknown label */
 "Unknown" = "Unknown";
 
 /* empty label text title */
@@ -494,6 +458,12 @@
 /* welcome facet title */
 "Welcome" = "Welcome";
 
+/* help text for preferences toggle circular icons */
+"Whether to apply a circular mask to the icons." = "Whether to apply a circular mask to the icons.";
+
 /* help text for preferences toggle for auto-playing stations */
 "Whether to automatically start playing selected stations." = "Whether to automatically start playing selected stations.";
+
+/* help text for preferences toggle icon download */
+"Whether to download station icons automatically." = "Whether to download station icons automatically.";
 

@@ -118,6 +118,7 @@ struct DiscoverView : View {
     var stationList: some View {
         stationListView
             // TODO: the toolbar should show up between the tab view and the ForEach in order to be displayed with all the tabs, but we currently have no way to do that
+        #if os(iOS)
             .toolbar(id: "toolbar") {
                 ToolbarItem(id: "count", placement: .bottomBar, showsByDefault: true) {
                     Text(stations.count, format: .number)
@@ -145,8 +146,8 @@ struct DiscoverView : View {
                     .help(Text("Pause the current track"))
                 }
             }
-
-//        .toolbar(Visibility.automatic, for: .bottomBar)
+//                .toolbar(Visibility.visible, for: .bottomBar)
+        #endif
     }
 
     var stationListView: some View {
@@ -154,10 +155,6 @@ struct DiscoverView : View {
             ForEach(stations, content: stationRowView)
         }
         .listStyle(.inset)
-        //        .toolbar {
-        //Text("C")
-        //Text(stations.count, format: .number)
-        //        }
         .onChange(of: self.searchText, debounce: 0.075, priority: .low) { searchText in
             let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
             let stations = self.stationsByClicks
@@ -424,7 +421,7 @@ struct SearchTokenView : View {
         //                Button {
         //                    print("XXX")
         //                } label: {
-        //                    Text("XXX")
+        //                    ("XXX")
         //                }
         //            }
     }

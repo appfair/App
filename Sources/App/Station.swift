@@ -68,6 +68,7 @@ extension Station : Codable, FetchableRecord, MutablePersistableRecord {
         static let favicon = Column(CodingKeys.favicon)
         static let languagecodes = Column(CodingKeys.languagecodes)
         static let votes = Column(CodingKeys.votes)
+        static let bitrate = Column(CodingKeys.bitrate)
     }
 }
 
@@ -87,13 +88,29 @@ struct StationsRequest: Queryable {
     // This method is not required by Queryable, but it makes it easier
     // to test StationRequest.
     func fetchValue(_ db: Database) throws -> [Station] {
+        let selection = Station.all()
+//        let selection = Station.select(Station.Columns.id,
+//                                       Station.Columns.name,
+//                                       Station.Columns.countrycode,
+//                                       Station.Columns.language,
+//                                       Station.Columns.homepage,
+//                                       Station.Columns.tags,
+//                                       Station.Columns.clickcount,
+//                                       Station.Columns.clicktrend,
+//                                       Station.Columns.url,
+//                                       Station.Columns.favicon,
+//                                       Station.Columns.languagecodes,
+//                                       Station.Columns.votes,
+//                                       Station.Columns.bitrate,
+//                                       Station.Columns.language)
+
         switch ordering {
         case .byClickCount:
-            return try Station.all().order(Station.Columns.clickcount.desc).fetchAll(db)
+            return try selection.order(Station.Columns.clickcount.desc).fetchAll(db)
         case .byClickTrend:
-            return try Station.all().order(Station.Columns.clicktrend.desc).fetchAll(db)
+            return try selection.order(Station.Columns.clicktrend.desc).fetchAll(db)
         case .byName:
-            return try Station.all().orderedByName().fetchAll(db)
+            return try selection.orderedByName().fetchAll(db)
         }
     }
 }

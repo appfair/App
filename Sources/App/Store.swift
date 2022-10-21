@@ -56,11 +56,11 @@ import FairApp
         public var facetInfo: FacetInfo {
             switch self {
             case .welcome:
-                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: .music_note_house, tint: nil)
+                return FacetInfo(title: .WelcomeText, symbol: .music_note_house, tint: nil)
             case .discover:
-                return FacetInfo(title: Text("Discover", bundle: .module, comment: "discover facet title"), symbol: .waveform, tint: nil)
+                return FacetInfo(title: .DiscoverText, symbol: .waveform, tint: nil)
             case .settings:
-                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: .gear, tint: nil)
+                return FacetInfo(title: .SettingsText, symbol: .gear, tint: nil)
             }
         }
 
