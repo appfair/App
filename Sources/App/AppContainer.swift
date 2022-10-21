@@ -2,68 +2,6 @@ import FairApp
 import Media
 import AVKit
 
-/// The main content view for the app.
-public struct ContentView: View {
-    public var body: some View {
-        PlayerView()
-            .environmentObject(MediaManager.shared)
-    }
-}
-
-public struct PlayerView: View {
-    static let mediaResource = Result {
-        try Bundle.mediaBundle.url(forResource: "Bundle/Sita_Sings_the_Blues.mp4.parts", withExtension: "")?.assemblePartsCache()
-    }
-
-    @EnvironmentObject var store: Store
-    @EnvironmentObject var manager: MediaManager
-
-    public var body: some View {
-        VideoPlayer(player: manager.player) {
-            //Text("MEDIA")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            switch Self.mediaResource {
-            case .success(let url):
-                manager.stream(url: url)
-            case .failure(let error):
-                dbg("error loading embedded media:", error)
-                store.errors.append(error)
-            }
-        }
-    }
-}
-
-/// The global app environment containing configuration metadata and shared defaults.
-///
-/// The shared instance of Store is available throughout the app with:
-/// ``@EnvironmentObject var store: Store``
-open class Store: SceneManager {
-    /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
-
-    /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
-    @AppStorage("someToggle") public var someToggle = false
-
-    @Published public var errors: [Error] = []
-    public required init() {
-    }
-}
-
-public extension AppContainer {
-    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-        WindowGroup {
-            ContentView().environmentObject(store)
-        }
-    }
-
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
-    }
-}
-
 extension URL {
     /// Attempts to create a cached file based on the contents of the given URL's folder ending with ".parts".
     /// This folder is expected to contain individual files which, when concatinated in alphabetical order, will re-create the specified file
@@ -154,18 +92,6 @@ extension URL {
 
             return paths
         }
-    }
-}
-
-
-public struct AppSettingsView : View {
-    @EnvironmentObject var store: Store
-
-    public var body: some View {
-        Toggle(isOn: $store.someToggle) {
-            Text("Toggle")
-        }
-        .padding()
     }
 }
 
