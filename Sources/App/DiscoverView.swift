@@ -32,7 +32,10 @@ struct DiscoverView : View {
     @State var nowPlayingTitle: String? = nil
 
     @State var searchText = ""
-    @State var tokens: [SearchToken] = []
+    @State var tokens: [SearchToken] = [
+        wip(SearchToken(tokenType: .language, tag: "french", count: 0)),
+        wip(SearchToken(tokenType: .tag, tag: "pop", count: 0)),
+    ]
 
     @State var suggestedTokens: [SearchToken] = [
     ]
@@ -155,20 +158,34 @@ struct DiscoverView : View {
             ForEach(stations, content: stationRowView)
         }
         .listStyle(.inset)
-        .onChange(of: self.searchText, debounce: 0.075, priority: .low) { searchText in
-            let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-            let stations = self.stationsByClicks
-            let matches = stations.filter { station in
-                searchString.isEmpty || (station.name ?? "").localizedCaseInsensitiveContains(searchString)
-            }
-            do {
-                try Task.checkCancellation()
-                self.searchModel.filteredStations = matches
-            } catch {
-                dbg("cancelled search")
-            }
-        }
+        .onChange(of: self.searchText, debounce: 0.075, priority: .low, perform: updateSearch)
         //.navigation(title: Text("Discover"), subtitle: Text("Stations"))
+    }
+
+    func updateSearch(searchText: String) async {
+        let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stations = self.stationsByClicks
+
+        let toktags = { t in tokens.filter({ $0.tokenType == t }).map(\.tag).set() }
+        let langs = toktags(.language)
+        let tags = toktags(.tag)
+        let countries = toktags(.country)
+
+        let matches = stations.filter { station in
+            (searchString.isEmpty || (station.name ?? "").localizedCaseInsensitiveContains(searchString))
+            && (langs.isEmpty || !langs.isDisjoint(with: station.languageNames))
+            && (tags.isEmpty || !tags.isDisjoint(with: station.tagElements))
+            && (countries.isEmpty || !countries.isDisjoint(with: station.countrycode.flatMap({ [$0] }) ?? []))
+        }
+
+
+        do {
+            try Task.checkCancellation()
+            self.searchModel.filteredStations = matches
+        } catch {
+            dbg("cancelled search")
+        }
+
     }
 
     @ViewBuilder func stationRowView(station: Station) -> some View {
