@@ -8,20 +8,17 @@ import SQLEnclave
     //@Published var allStations: [Station] = []
 }
 
-extension Station {
-    /// The split names from the "language" field
-    var languageNames: [String] {
-        language?.split(separator: ",").map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) ?? []
-    }
-}
-
 struct DiscoverView : View {
     @State var scope: SearchScope = .name
     @Query(StationsRequest(ordering: .byClickCount)) private var stationsByClicks: [Station]
     @StateObject private var searchModel = SearchModel()
 
-    var stations: [Station] {
-        searchModel.filteredStations ?? stationsByClicks
+    var allStations: [Station] {
+        stationsByClicks
+    }
+
+    var filteredStations: [Station] {
+        searchModel.filteredStations ?? allStations
     }
 
     @EnvironmentObject var store: Store
@@ -32,16 +29,18 @@ struct DiscoverView : View {
     @State var nowPlayingTitle: String? = nil
 
     @State var searchText = ""
+
+    #warning("TODO: save selection")
     @State var tokens: [SearchToken] = [
-        wip(SearchToken(tokenType: .language, tag: "french", count: 0)),
-        wip(SearchToken(tokenType: .tag, tag: "pop", count: 0)),
+        SearchToken(tokenType: .language, tag: "french", count: 0),
+        SearchToken(tokenType: .tag, tag: "jazz", count: 0),
     ]
 
     @State var suggestedTokens: [SearchToken] = [
     ]
 
     var allLanguageTokens: [SearchToken] {
-        stations
+        allStations
             .flatMap(\.languageNames)
             .countedSet()
             .map { keyValue in
@@ -51,7 +50,7 @@ struct DiscoverView : View {
     }
 
     var allCountryTokens: [SearchToken] {
-        stations
+        allStations
             .map {
                 let code = $0.countrycode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 return code.isEmpty ? "UN" : code
@@ -64,7 +63,7 @@ struct DiscoverView : View {
     }
 
     var allTagTokens: [SearchToken] {
-        stations
+        allStations
             .flatMap(\.tagElements)
             .countedSet()
             .map { keyValue in
@@ -86,7 +85,7 @@ struct DiscoverView : View {
                         ForEach(SearchScope.allCases, id: \.self) { scope in
                             if scope == .name {
                                 // for the defaut scope, just show the current search count
-                                Text(stations.count, format: .number)
+                                Text(filteredStations.count, format: .number)
                                     .tag(scope)
                             } else {
                                 scope.label
@@ -124,29 +123,29 @@ struct DiscoverView : View {
         #if os(iOS)
             .toolbar(id: "toolbar") {
                 ToolbarItem(id: "count", placement: .bottomBar, showsByDefault: true) {
-                    Text(stations.count, format: .number)
+                    Text(filteredStations.count, format: .number)
                 }
                 ToolbarItem(id: "play", placement: .bottomBar, showsByDefault: true) {
                     Button {
                         dbg("playing")
                         //tuner.player.play()
                     } label: {
-                        Text("Play").label(symbol: "play").symbolVariant(.fill)
+                        Text("Play", bundle: .module, comment: "button text").label(symbol: "play").symbolVariant(.fill)
                     }
                     .keyboardShortcut(.space, modifiers: [])
                     //.disabled(self.rate > 0)
-                    .help(Text("Play the current track"))
+                    .help(Text("Play the current track", bundle: .module, comment: "help text"))
                 }
                 ToolbarItem(id: "pause", placement: .bottomBar, showsByDefault: true) {
                     Button {
                         dbg("pausing")
                         //tuner.player.pause()
                     } label: {
-                        Text("Pause").label(symbol: "pause").symbolVariant(.fill)
+                        Text("Pause", bundle: .module, comment: "button text").label(symbol: "pause").symbolVariant(.fill)
                     }
                     .keyboardShortcut(.space, modifiers: [])
                     //.disabled(self.rate == 0)
-                    .help(Text("Pause the current track"))
+                    .help(Text("Pause the current track", bundle: .module, comment: "help text"))
                 }
             }
 //                .toolbar(Visibility.visible, for: .bottomBar)
@@ -155,7 +154,7 @@ struct DiscoverView : View {
 
     var stationListView: some View {
         List {
-            ForEach(stations, content: stationRowView)
+            ForEach(filteredStations, content: stationRowView)
         }
         .listStyle(.inset)
         .onChange(of: self.searchText, debounce: 0.075, priority: .low, perform: updateSearch)
@@ -260,12 +259,12 @@ struct DiscoverView : View {
 
 
             HStack {
-                //                if let lang = station.Language, !lang.isEmpty {
-                //                    (Text("Language: ") + Text(lang))
-                //                }
-                //                if let tags = station.Tags, !tags.isEmpty {
-                //                    (Text("Tags: ") + Text(tags))
-                //                }
+                // if let lang = station.Language, !lang.isEmpty {
+                //     (Text("Language: ") + Text(lang))
+                // }
+                // if let tags = station.Tags, !tags.isEmpty {
+                //     (Text("Tags: ") + Text(tags))
+                // }
 
                 if let countryName = coutryLabel(for: station) {
                     Text(countryName)

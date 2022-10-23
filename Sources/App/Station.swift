@@ -125,9 +125,17 @@ extension Station {
             }
     }
 
-    /// Returns the text and image for known tags
+    /// The split names from the "language" field
+    var languageNames: [String] {
+        language?.split(separator: ",").map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) ?? []
+    }
+
+    /// Returns the localized text and image for recognized tags.
     static func tagInfo(tagString: String) -> (key: String, title: String, image: Image, tint: Color)? {
         // check the top 100 tag list with:
+        // sqlite3 Sources/App/Resources/stations.db 'select tags from station' | tr '"' '\n' | grep ',' | tr ',' '\n' | tr '[A-Z]' '[a-z]' | grep '[a-z]' | sort | uniq -c | sort -nr | head -n 100
+        //
+        // or for CSV export:
         // cat Sources/App/Resources/stations.csv | tr '"' '\n' | grep ',' | tr ',' '\n' | tr '[A-Z]' '[a-z]' | grep '[a-z]' | sort | uniq -c | sort -nr | head -n 100
 
         let tint = Color(hue: tagString.hueComponent, saturation: 0.8, brightness: 0.8)
@@ -264,7 +272,7 @@ extension Station {
         self.url.flatMap(URL.init(string:))
     }
 
-    @ViewBuilder func iconView(download: Bool, size: CGFloat, blurFlag: CGFloat? = 0.0) -> some View {
+    func iconView(download: Bool, size: CGFloat, blurFlag: CGFloat? = 0.0) -> some View {
         let url = URL(string: self.favicon ?? "about:blank") ?? URL(string: "about:blank")!
         return AsyncImage(url: url, content: { image in
             image
