@@ -53,7 +53,7 @@ struct DiscoverView : View {
         allStations
             .map {
                 let code = $0.countrycode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                return code.isEmpty ? "UN" : code
+                return code.isEmpty ? wip("UN") : code
             }
             .countedSet()
             .map { keyValue in
@@ -80,6 +80,7 @@ struct DiscoverView : View {
                 stationList
                     .searchable(text: $searchText, tokens: $tokens, suggestedTokens: $suggestedTokens, placement: .navigationBarDrawer(displayMode: .always), prompt: nil, token: { token in
                         SearchTokenView(token: token)
+                            .foregroundColor(.primary)
                     })
                     .searchScopes($scope) {
                         ForEach(SearchScope.allCases, id: \.self) { scope in
@@ -354,6 +355,7 @@ struct SearchToken : Identifiable {
 @available(macOS 13.0, iOS 16.0, *)
 struct SearchTokenView : View {
     @Environment(\.locale) private var locale
+    @Environment(\.isSearching) private var isSearching
     let token: SearchToken
 
     var body: some View {
@@ -361,6 +363,9 @@ struct SearchTokenView : View {
     }
 
     var text: Text? {
+//        if isSearching {
+//            return Text(wip("SEARCHING"))
+//        }
         switch token.tokenType {
         case .name:
             return Text(token.tag)
@@ -415,7 +420,9 @@ struct SearchTokenView : View {
                 Label {
                     self.text
                 } icon: {
+                    // TODO: rather than forcing a fixed size, we would rather align the labels using an alignment guide, but since we don't control the container view where the stack's list is being rendered, we cannot set the guide on the parent
                     self.icon
+                        .frame(width: 25)
                         .foregroundStyle(self.tintColor ?? .accentColor)
                 }
 
@@ -447,6 +454,22 @@ struct SearchTokenView : View {
     }
     #endif
 }
+
+// https://developer.apple.com/documentation/swiftui/aligning-views-across-stacks
+//extension VerticalAlignment {
+//    /// A custom alignment for image titles.
+//    private struct ImageTitleAlignment: AlignmentID {
+//        static func defaultValue(in context: ViewDimensions) -> CGFloat {
+//            // Default to bottom alignment if no guides are set.
+//            context[VerticalAlignment.bottom]
+//        }
+//    }
+//
+//    /// A guide for aligning titles.
+//    static let imageTitleAlignmentGuide = VerticalAlignment(
+//        ImageTitleAlignment.self
+//    )
+//}
 
 
 /// A local mapping of radio-browser's language name to standard language codes (https://api.radio-browser.info)
