@@ -19,7 +19,23 @@ public struct WelcomeView : View {
             subtitle: NSLocalizedString("The weather never sleeps.\n*Neither do we*.", bundle: .module, comment: "card title"),
             body: NSLocalizedString("""
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
             """, bundle: .module, comment: "card title"),
             foreground: .init(.white),
