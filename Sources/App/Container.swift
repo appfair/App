@@ -4,7 +4,8 @@ import FairApp
 public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup { // or DocumentGroup
-            FacetHostingView(store: store).environmentObject(store)
+            FacetHostingView(store: store)
+                .environmentObject(store)
                 .environmentObject(SunBowPod.shared)
         }
         .commands {
@@ -23,7 +24,9 @@ public extension AppContainer {
 
     /// The app-wide settings view, which, by convention, is the final element of the app facets
     static func settingsView(store: Store) -> some SwiftUI.View {
-        Store.AppFacets.settings.environmentObject(store)
+        Store.AppFacets.settings
+            .facetView(for: store)
+            .environmentObject(store)
             .environmentObject(SunBowPod.shared)
     }
 }

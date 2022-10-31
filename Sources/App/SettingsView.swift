@@ -3,10 +3,10 @@ import FairApp
 /// The settings view for app, which includes the preferences along with standard settings.
 public struct SettingsView : View {
     typealias StoreSettings = Store.ConfigFacets.WithStandardSettings
-    @State var selectedSetting: StoreSettings?
+    @State var selectedSetting: StoreSettings<Store>?
 
     public var body: some View {
-        FacetBrowserView<Store, StoreSettings>(selection: $selectedSetting)
+        FacetBrowserView<Store, StoreSettings>(nested: true, selection: $selectedSetting)
         #if os(macOS)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(width: 600, height: 300)

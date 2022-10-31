@@ -12,7 +12,7 @@ open class Store: SceneManager {
     public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
+    public static let config: JSum = configuration(name: "App", for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("fahrenheit") public var fahrenheit = true
@@ -42,7 +42,7 @@ open class Store: SceneManager {
     }
 
     /// The facets for this app, which declares the logical sections of the user interface. The initial element must be a welcome/onboarding view, and the final element must be the settings element.
-    public enum AppFacets : String, Facet, CaseIterable, View {
+    public enum AppFacets : String, FacetView, CaseIterable {
         case welcome
         case places
         case weather
@@ -64,7 +64,7 @@ open class Store: SceneManager {
             }
         }
 
-        public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .welcome: WelcomeView()
             case .places: PlacesView()
@@ -97,7 +97,7 @@ open class Store: SceneManager {
 
 
     /// A ``Facets`` that describes the app's configuration settings.
-    public enum ConfigFacets : String, Facet, CaseIterable, View {
+    public enum ConfigFacets : String, FacetView, CaseIterable {
         case preferences
 
         public var facetInfo: FacetInfo {
@@ -107,7 +107,7 @@ open class Store: SceneManager {
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .preferences: PreferencesView()
             }
