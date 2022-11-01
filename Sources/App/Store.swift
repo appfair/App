@@ -21,7 +21,7 @@ open class Store: SceneManager {
     /// The high score that will be displayed.
     /// The high score that will be displayed.
     @AppStorage("highScore") public var highScore = 0
-
+    
     /// The current game ID
     @Published var gameID = UUID()
 
