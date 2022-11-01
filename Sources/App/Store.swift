@@ -10,10 +10,7 @@ open class Store: SceneManager {
     public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(name: "App", for: .module)
-
-    /// The funding metadata for the app from the `FUNDING.yml` file.
-    public static let funding: JSum = configuration(name: "FUNDING", for: .module)
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("togglePreference") public var togglePreference = false

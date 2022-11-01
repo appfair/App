@@ -2,7 +2,6 @@ import FairApp
 
 /// The settings view for app, which includes the preferences along with standard settings.
 public struct SettingsView : View {
-    //@Binding var selectedSetting: StoreSettings?
     @SceneStorage("selectedSetting") private var selectedSetting = OptionalStringStorage<Store.ConfigFacets>(value: nil)
     private let fixedSetting: Store.ConfigFacets?
 
