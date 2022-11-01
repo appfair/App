@@ -2,11 +2,16 @@ import FairApp
 
 /// The settings view for app, which includes the preferences along with standard settings.
 public struct SettingsView : View {
-    typealias StoreSettings = Store.ConfigFacets.WithStandardSettings
-    @State var selectedSetting: StoreSettings?
+    //@Binding var selectedSetting: StoreSettings?
+    @SceneStorage("selectedSetting") private var selectedSetting = OptionalStringStorage<Store.ConfigFacets>(value: nil)
+    private let fixedSetting: Store.ConfigFacets?
+
+    init(fixedSetting: Store.ConfigFacets? = nil) {
+        self.fixedSetting = fixedSetting
+    }
 
     public var body: some View {
-        FacetBrowserView<Store, StoreSettings>(selection: $selectedSetting)
+        FacetBrowserView<Store, Store.ConfigFacets>(nested: true, selection: fixedSetting != nil ? .constant(fixedSetting) : $selectedSetting.value)
         #if os(macOS)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(width: 600, height: 300)
@@ -34,5 +39,13 @@ public struct PreferencesView : View {
                 }
             }
         }
+    }
+}
+
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView(fixedSetting: Store.ConfigFacets.allCases.first)
+            .environmentObject(Store())
     }
 }

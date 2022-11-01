@@ -24,7 +24,16 @@ APP_CATEGORY = public.app-category.utilities
 // Specify which platforms to build and release
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+// SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator android
 SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
 
 // FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
 // ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+
+// TestFlight ID
+// TESTFLIGHT_APP_ID = 09123456789
+
+// App Store ID: https://apps.apple.com/sa/app/id0123456789
+// APPSTORE_APP_ID = 0123456789
+
+
