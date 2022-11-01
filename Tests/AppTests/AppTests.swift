@@ -19,14 +19,14 @@ import FairApp
 import SwiftUI
 
 open class AppTests: XCTestCase {
-    @MainActor open func testAppStore() throws {
-        let store = AppContainer.AppStore()
+    @MainActor open func testAppManager() throws {
+        let manager = AppContainer.AppManager()
         //XCTAssertEqual(store.someToggle, false)
 
-        let cfg = AppContainer.AppStore.config
+        let cfg = AppContainer.AppManager.config
         XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
 
-        let fnd: JSum = AppContainer.AppStore.configuration(name: "FUNDING", for: Store().bundle)
+        let fnd: JSum = try AppContainer.AppManager.configuration(name: "FUNDING", for: Store().bundle)
         XCTAssertNotNil(fnd["custom"], "blank funding custom template should exist")
         XCTAssertNil(fnd["EMPTY_KEY"])
 

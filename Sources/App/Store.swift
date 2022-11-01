@@ -9,11 +9,11 @@ open class Store: SceneManager {
     /// The module bundle for this store, used for looking up embedded resources
     public var bundle: Bundle { Bundle.module }
 
-    /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(name: "App", for: .module)
+    /// The configuration metadata for the app from the `App.yml` file
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     /// The funding metadata for the app from the `FUNDING.yml` file.
-    public static let funding: JSum = configuration(name: "FUNDING", for: .module)
+    public static let funding: JSum = try! configuration(name: "FUNDING", for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("currencyScore") public var currencyScore = false
@@ -21,7 +21,7 @@ open class Store: SceneManager {
     /// The high score that will be displayed.
     /// The high score that will be displayed.
     @AppStorage("highScore") public var highScore = 0
-    
+
     /// The current game ID
     @Published var gameID = UUID()
 
