@@ -9,6 +9,10 @@ on:
   push:
     branches: [ main ]
     tags: "[0-9]+.[0-9]+.[0-9]+"
+  # Adds in a schedule for Cloud Cuckoo to ensure that
+  # new versions of Fair and App continue to build correctly
+  schedule:
+    - cron:  '0 * * * *'
 
 jobs:
   call-workflow:
