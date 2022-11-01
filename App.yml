@@ -1,29 +1,27 @@
-# App store metadata
-app:
-  primary_category: "GAMES"
-  secondary_category: "GAMES"
-  privacy_url: "https://appfair.net/privacy"
-  subtitle: "A whimsical game of excitement and delight"
-  # promotional_text: "Be the first to download this app!"
-  # description: "A simple app fair app."
-  keywords: "cloud"
-  locales: # keys like "fr-FR" can contain localized description, name, etc.
-    fr-FR: 
-      name: "Cuckoo Cloud"
-      subtitle: "Un jeu fantaisiste d'excitation et de plaisir"
+# App metadata; see https://appfair.net/#App.yml
 
-onboarding:
-  primary_category: "GAMES"
-  secondary_category: "GAMES"
-  subtitle: "A whimsical game of excitement and delight"
-  promotional_text: "Be the first to download this app!"
-  # description: "A simple app fair app."
-  keywords: "cloud"
-  locales: # keys like "fr-FR" can contain localized description, name, etc.
-    fr-FR:
-      name: "Cuckoo Cloud"
-      subtitle: "Un jeu fantaisiste d'excitation et de plaisir"
+# Fastlane metadata keys:
+# https://docs.fastlane.tools/actions/deliver/#non-localized-metadata
+# Note: localized keys for app title, subtitle, description, etc.
+# should defined in localized resources instead of here:
+# Sources/App/Resources/*.lproj/Localizable.strings
+app:
+  primary_category: 'GAMES'
+  secondary_category: 'GAMES'
+
+markets:
+  testflight: '1639746748'    # the assigned TestFlight id
+  appstore: '1639746748'      # the assigned App Store id
+  #playstore: '123456543210'   # the assigned Play Store id
 
 # Pages / Jekyll configuration::
 remote_theme: appfair/fairapp-theme
+
+# the app icon is generated from a simple SVG path and a tint color
+icon:
+  # gradient tint color (symbolic name or "#RRGGBB")
+  # tint: 'red'
+  # SVG path to place in the center of the icon
+  # path: 'M0 200 v-200 h200 a100,100 90 0,1 0,200 a100,100 90 0,1 -200,0 z'
+
 

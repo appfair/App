@@ -17,8 +17,8 @@ struct WelcomeView : View {
             .autocycle() // expand each card after a delay
     }
 
-    /// Random card colors each time
-    private static var cardColors = ([.accentColor] + CodableColor.systemColors.shuffled()).makeIterator()
+    ///
+    private static var cardColors = ([.accentColor] + CodableColor.nominalColors).makeIterator()
 
     /// The card defintions for the welcome screen.
     ///
@@ -52,7 +52,7 @@ struct WelcomeView : View {
     private static func card(_ symbolName: String, color: CodableColor? = nil, title: String, subtitle: String, body: String) -> Card<String>? {
         func checkLocalized(_ value: String) -> String? {
             // only show cards that have a localization set in the Localized.strings file
-            if value.hasPrefix("about-card-") { return nil }
+            if value.hasPrefix("welcome-") { return nil }
             return value
         }
         guard let title = checkLocalized(title) else {
