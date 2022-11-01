@@ -10,7 +10,7 @@ PRODUCT_BUNDLE_IDENTIFIER = app.Cloud-Cuckoo
 MARKETING_VERSION = 0.9.335
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 807
+CURRENT_PROJECT_VERSION = 809
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.games
@@ -32,10 +32,4 @@ SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 // Dev team and unique id for on-device testing
 DEVELOPMENT_TEAM[config=Debug][sdk=iphoneos*] = 25KG25YA3R
 PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = org.appfair.app.Cloud-Cuckoo
-
-// TestFlight ID
-// TESTFLIGHT_APP_ID = 1639746748
-
-// App Store ID: https://apps.apple.com/sa/app/id0123456789
-APPSTORE_APP_ID = 1639746748
 
