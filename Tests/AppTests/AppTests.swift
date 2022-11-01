@@ -20,16 +20,12 @@ import SwiftUI
 
 open class AppTests: XCTestCase {
     @MainActor open func testAppManager() throws {
-        let manager = AppContainer.AppManager()
-        //XCTAssertEqual(store.someToggle, false)
+        let store = AppContainer.AppManager()
+        //XCTAssertEqual(store.togglePreference, false)
+        //XCTAssertEqual(store.numberPreference, 0.0)
 
         let cfg = AppContainer.AppManager.config
         XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
-
-        let fnd: JSum = try AppContainer.AppManager.configuration(name: "FUNDING", for: Store().bundle)
-        XCTAssertNotNil(fnd["custom"], "blank funding custom template should exist")
-        XCTAssertNil(fnd["EMPTY_KEY"])
-
     }
 
     /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.

@@ -9,11 +9,8 @@ open class Store: SceneManager {
     /// The module bundle for this store, used for looking up embedded resources
     public var bundle: Bundle { Bundle.module }
 
-    /// The configuration metadata for the app from the `App.yml` file
+    /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = try! configuration(name: "App", for: .module)
-
-    /// The funding metadata for the app from the `FUNDING.yml` file.
-    public static let funding: JSum = try! configuration(name: "FUNDING", for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("currencyScore") public var currencyScore = false
