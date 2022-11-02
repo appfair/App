@@ -13,7 +13,9 @@ public extension AppContainer {
     }
 
     static func settingsView(store: Store) -> some SwiftUI.View {
-        Store.AppFacets.settings.environmentObject(store)
+        Store.AppFacets.settings
+            .facetView(for: store)
+            .environmentObject(store)
     }
 }
 

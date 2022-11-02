@@ -14,14 +14,24 @@
  */
 import Swift
 import XCTest
-@testable import App
+import App
+import FairApp
+import SwiftUI
 
 open class AppTests: XCTestCase {
-    @MainActor open func testAppStore() throws {
-        let store = AppContainer.AppStore()
-        XCTAssertEqual(store.someToggle, false)
-        let cfg = AppContainer.AppStore.config
+    @MainActor open func testAppManager() throws {
+        let store = AppContainer.AppManager()
+        XCTAssertEqual(store.togglePreference, false)
+        XCTAssertEqual(store.numberPreference, 0.0)
+
+        let cfg = AppContainer.AppManager.config
         XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
     }
-}
 
+    /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
+    /// When run in test cases with the default parameters, the generated screenshots will be included
+    /// as metadata for the app submission.
+    @MainActor open func testScreenshots() throws {
+        _ = try Store().captureFacetScreens()
+    }
+}

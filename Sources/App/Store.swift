@@ -18,7 +18,7 @@ open class Store: SceneManager {
     public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("togglePreference") public var togglePreference = false
@@ -72,7 +72,7 @@ open class Store: SceneManager {
     }
 
     /// AppFacets describes the top-level app, expressed as tabs on a mobile device and outline items on desktops.
-    public enum AppFacets : String, Facet, CaseIterable, View {
+    public enum AppFacets : String, FacetView, CaseIterable {
         /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
         /// The main content of the app.
@@ -83,15 +83,15 @@ open class Store: SceneManager {
         public var facetInfo: FacetInfo {
             switch self {
             case .welcome:
-                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "welcome facet title"), symbol: "house", tint: nil)
+                return FacetInfo(title: Text("Welcome", bundle: .module, comment: "tab title for top-level “Welcome” facet"), symbol: "house", tint: nil)
             case .content:
-                return FacetInfo(title: Text("Content", bundle: .module, comment: "content facet title"), symbol: "puzzlepiece", tint: nil)
+                return FacetInfo(title: Text("Content", bundle: .module, comment: "tab title for top-level “Content” facet"), symbol: "puzzlepiece", tint: nil)
             case .settings:
-                return FacetInfo(title: Text("Settings", bundle: .module, comment: "settings facet title"), symbol: "gearshape", tint: nil)
+                return FacetInfo(title: Text("Settings", bundle: .module, comment: "tab title for top-level “Settings” facet"), symbol: "gearshape", tint: nil)
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .welcome: WelcomeView()
             case .content: ContentView()
@@ -101,7 +101,13 @@ open class Store: SceneManager {
     }
 
     /// A ``Facets`` that describes the app's configuration settings.
-    public enum ConfigFacets : String, Facet, CaseIterable, View {
+    ///
+    /// Adding `WithStandardSettings` to the type will add standard configuration facets like "Appearance", "Language", and "Support"
+    public typealias ConfigFacets = StoreSettings.WithStandardSettings<Store>
+
+    /// A ``Facets`` that describes the app's preferences sections.
+    public enum StoreSettings : String, FacetView, CaseIterable {
+        /// The main preferences for the app
         case preferences
 
         public var facetInfo: FacetInfo {
@@ -111,7 +117,7 @@ open class Store: SceneManager {
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .preferences: PreferencesView()
             }
