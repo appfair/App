@@ -10,7 +10,7 @@ app:
   secondary_category: 'PRODUCTIVITY'
 
 markets:
-  #testflight: '0123456789'    # the assigned TestFlight id
+  testflight: '6443335429'    # the assigned TestFlight id
   #appstore: '0123456789'      # the assigned App Store id
   #playstore: '123456543210'   # the assigned Play Store id
 
