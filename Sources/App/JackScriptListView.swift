@@ -1,6 +1,7 @@
 import FairApp
 import JackPot
 import FairKit
+import UniformTypeIdentifiers
 
 /// A list of sections of available files
 public struct JackScriptListView: View {
@@ -24,9 +25,22 @@ public struct JackScriptListView: View {
 /// A list of files available to the user
 public struct JackScriptFileListView: View {
     @EnvironmentObject var store: Store
+    /// The flag indicating whether a file is being requested
     @State var fileOpen = false
 
     public var body: some View {
+        bodySection
+            .toolbar {
+                ToolbarItem {
+                    openFileButton($fileOpen, onCompletion: openFile)
+                }
+            }
+            .task {
+                await store.loadFileStore()
+            }
+    }
+
+    var bodySection: some View {
         Section {
             ForEach(store.fileStore?.apps ?? [], id: \.downloadURL) { scriptItem in
                 NavigationLink(destination: {
@@ -43,18 +57,10 @@ public struct JackScriptFileListView: View {
         } header: {
             Text("File List", bundle: .module, comment: "header title for jackscript file list")
         }
-        .toolbar {
-            ToolbarItem {
-                openFileButton
-            }
-        }
-        .fileImporter(isPresented: $fileOpen, allowedContentTypes: [.item], onCompletion: openFile)
-        .task {
-            await store.loadFileStore()
-        }
     }
 
     func openFile(result: Result<URL, Error>) {
+        dbg("opening file:", result)
         switch result {
         case .success(let url):
             do {
@@ -73,15 +79,27 @@ public struct JackScriptFileListView: View {
         let catalog = AppCatalog(name: wip("File Store"), identifier: wip("World-Fair.local"), apps: [app])
         store.catalog = catalog
     }
+}
 
-    var openFileButton: some View {
+extension View {
+
+    /// Creates a button for opening a file
+    /// - Parameters:
+    ///   - state: a boolean flag for whether the open file presenter is currently active
+    ///   - allowedContentTypes: the permitted files to select, defaulting to ``UTType.fileURL``
+    ///   - onCompletion: the callback when a file is selected
+    /// - Returns: a ``Button`` attached to a ``fileImporter``
+    public func openFileButton(_ state: Binding<Bool>, type allowedContentTypes: [UTType] = [.fileURL], onCompletion: @escaping (Result<URL, Error>) -> Void) -> some View {
         Button {
             dbg("opening files")
-            fileOpen = true
+            state.wrappedValue = true
         } label: {
             Text("Open", bundle: .module, comment: "button title for opening a script")
                 .label(image: FairSymbol.plus)
-                .labelStyle(.iconOnly)
+        }
+        .fileImporter(isPresented: state, allowedContentTypes: allowedContentTypes) {
+            state.wrappedValue = false
+            onCompletion($0)
         }
     }
 }
