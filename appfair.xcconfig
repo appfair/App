@@ -10,12 +10,11 @@ PRODUCT_BUNDLE_IDENTIFIER = app.World-Fair
 MARKETING_VERSION = 0.0.4
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 156
+CURRENT_PROJECT_VERSION = 164
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.utilities
 
-<<<<<<< HEAD
 // The default tint color to apply to the generated icon, as a 6-character RGB hex string
 // ICON_TINT = FACC6A
 
