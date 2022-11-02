@@ -33,7 +33,7 @@ struct DiscoverView : View {
     #warning("TODO: save selection")
     @State var tokens: [SearchToken] = [
         SearchToken(tokenType: .language, tag: "french", count: 0),
-        SearchToken(tokenType: .tag, tag: "jazz", count: 0),
+        //SearchToken(tokenType: .tag, tag: "jazz", count: 0),
     ]
 
     @State var suggestedTokens: [SearchToken] = [

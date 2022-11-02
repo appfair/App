@@ -9,7 +9,7 @@ import FairApp
     /// The module bundle for this store, used for looking up embedded resources
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     @AppStorage("autoplayStation") public var autoplayStation = true
 
@@ -45,7 +45,7 @@ import FairApp
     }
 
     /// AppFacets describes the top-level app, expressed as tabs on a mobile device and outline items on desktops.
-    public enum AppFacets : String, Facet, CaseIterable, View {
+    public enum AppFacets : String, FacetView, CaseIterable {
         /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
         /// The initial facet, which typically shows a welcome / onboarding experience
@@ -64,7 +64,7 @@ import FairApp
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder @MainActor public func facetView(for store: Store) -> some View {
             switch self {
             case .welcome: WelcomeView()
             case .discover: DiscoverView()
@@ -74,7 +74,13 @@ import FairApp
     }
 
     /// A ``Facets`` that describes the app's configuration settings.
-    public enum ConfigFacets : String, Facet, CaseIterable, View {
+    ///
+    /// Adding `WithStandardSettings` to the type will add standard configuration facets like "Appearance", "Language", and "Support"
+    public typealias ConfigFacets = StoreSettings.WithStandardSettings<Store>
+
+    /// A ``Facets`` that describes the app's preferences sections.
+    public enum StoreSettings : String, FacetView, CaseIterable {
+        /// The main preferences for the app
         case preferences
 
         public var facetInfo: FacetInfo {
@@ -84,7 +90,7 @@ import FairApp
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder @MainActor public func facetView(for store: Store) -> some View {
             switch self {
             case .preferences: PreferencesView()
             }
