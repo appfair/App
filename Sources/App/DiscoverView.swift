@@ -30,9 +30,10 @@ struct DiscoverView : View {
 
     @State var searchText = ""
 
+
     #warning("TODO: save selection")
     @State var tokens: [SearchToken] = [
-        SearchToken(tokenType: .language, tag: "french", count: 0),
+        SearchToken(tokenType: .language, tag: Locale.currentLocaleTag, count: 0),
         //SearchToken(tokenType: .tag, tag: "jazz", count: 0),
     ]
 
@@ -166,7 +167,7 @@ struct DiscoverView : View {
         let searchString = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         let stations = self.stationsByClicks
 
-        let toktags = { t in tokens.filter({ $0.tokenType == t }).map(\.tag).set() }
+        let toktags = { t in tokens.filter({ $0.tokenType == t }).map(locale.resolveTag(token:)).set() }
         let langs = toktags(.language)
         let tags = toktags(.tag)
         let countries = toktags(.country)
@@ -352,6 +353,16 @@ struct SearchToken : Identifiable {
     let count: Int
 }
 
+extension Locale {
+    /// The symbolic tag that indicates the current locale should be used for the tag
+    static let currentLocaleTag: String = "CURRENT_LOCALE"
+
+    func resolveTag(token: SearchToken) -> String {
+        token.tag == Locale.currentLocaleTag ? localeCodesReversed[self.languageCode ?? self.identifier] ?? self.identifier: token.tag
+
+    }
+}
+
 @available(macOS 13.0, iOS 16.0, *)
 struct SearchTokenView : View {
     @Environment(\.locale) private var locale
@@ -362,19 +373,24 @@ struct SearchTokenView : View {
         label
     }
 
+    /// Returns the tag of the token, otherwise the current identifier
+    var tokenTag: String {
+        locale.resolveTag(token: token)
+    }
+
     var text: Text? {
 //        if isSearching {
 //            return Text(wip("SEARCHING"))
 //        }
         switch token.tokenType {
         case .name:
-            return Text(token.tag)
+            return Text(tokenTag)
         case .tag:
-            return tagText(token.tag)
+            return tagText(tokenTag)
         case .language:
-            return Text(locale.languageName(for: token.tag))
+            return Text(locale.languageName(for: tokenTag))
         case .country:
-            return locale.countryName(for: token.tag).flatMap(Text.init)
+            return locale.countryName(for: tokenTag).flatMap(Text.init)
         }
     }
 
@@ -383,11 +399,11 @@ struct SearchTokenView : View {
         case .name:
             EmptyView()
         case .tag:
-            Station.tagInfo(tagString: token.tag)?.image ?? Image(.music_note)
+            Station.tagInfo(tagString: tokenTag)?.image ?? Image(.music_note)
         case .language:
             EmptyView()
         case .country:
-            Text(emojiFlag(countryCode: token.tag))
+            Text(emojiFlag(countryCode: tokenTag))
         }
     }
 
@@ -396,7 +412,7 @@ struct SearchTokenView : View {
         case .name:
             return nil
         case .tag:
-            return Color(hue: token.tag.hueComponent, saturation: 0.8, brightness: 0.8)
+            return Color(hue: token.tag.hueComponent ?? wip(0.5), saturation: 0.8, brightness: 0.8)
         case .language:
             return nil
         case .country:
@@ -474,9 +490,11 @@ struct SearchTokenView : View {
 
 /// A local mapping of radio-browser's language name to standard language codes (https://api.radio-browser.info)
 /// Note that we only use two-letter locales to avoid contradictions with longer forms of the same language.
-private let localeCodes = Locale.availableIdentifiers.filter({ $0.count == 2 }).map { code in
+private let localeCodes: [String? : Locale] = Locale.availableIdentifiers.filter({ $0.count == 2 }).map { code in
     (Locale(identifier: "en_US").localizedString(forLanguageCode: code)?.lowercased(), Locale(identifier: code))
 }
     .dictionary(keyedBy: \.0)
     .mapValues(\.1)
 
+/// A map of locale codes (e.g., `nv`) to language name (e.g., `navajo`)
+private let localeCodesReversed: [String: String] = localeCodes.map({ key, value in (value, key) }).grouping(by: \.0.identifier).compactMapValues(\.first?.1)

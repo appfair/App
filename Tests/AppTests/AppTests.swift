@@ -18,8 +18,8 @@ import App
 import FairApp
 import SwiftUI
 
-open class AppTests: XCTestCase {
-    @MainActor open func testAppManager() throws {
+class AppTests: XCTestCase {
+    @MainActor func testAppManager() throws {
         let store = AppContainer.AppManager()
         //XCTAssertEqual(store.togglePreference, false)
         //XCTAssertEqual(store.numberPreference, 0.0)
@@ -32,7 +32,7 @@ open class AppTests: XCTestCase {
     /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
     /// When run in test cases with the default parameters, the generated screenshots will be included
     /// as metadata for the app submission.
-    @MainActor open func testScreenshots() throws {
-        _ = try Store().captureFacetScreens()
+    @MainActor func testScreenshots() throws {
+        try Store().captureFacetScreens()
     }
 }

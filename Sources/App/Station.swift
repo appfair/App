@@ -260,9 +260,9 @@ extension Station {
 
 internal extension String {
     /// Returns a pseudo-random value from 0.0-1.0 based on the word's SHA hash
-    var hueComponent: CGFloat {
+    var hueComponent: Double {
         let i: UInt8 = self.utf8Data.sha256().last ?? 0
-        return CGFloat(i) / CGFloat(UInt8.max)
+        return Double(i) / Double(UInt8.max)
     }
 }
 
