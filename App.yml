@@ -7,7 +7,15 @@
 # Sources/App/Resources/*.lproj/Localizable.strings
 app:
   primary_category: 'GAMES'
-  secondary_category: 'GAMES'
+  secondary_category: 'ENTERTAINMENT'
+  subtitle: "A game of whimsey!"
+  promotional_text: "The Great Cloud Cuckoo comes to the App Store!"
+  # description: "A simple app fair app."
+  keywords: "cloud,cuckoo,appfair,game,flappy,bird"
+  locales: # keys like "fr-FR" can contain localized description, name, etc.
+    fr-FR:
+      name: "Cuckoo Cloud"
+      subtitle: "Un jeu fantaisiste!"
 
 markets:
   testflight: '1639746748'    # the assigned TestFlight id
