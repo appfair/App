@@ -21,7 +21,7 @@ import SwiftUI
 open class AppTests: XCTestCase {
     @MainActor open func testAppManager() throws {
         let store = AppContainer.AppManager()
-        XCTAssertGreaterThan(0, store.populationMinimum)
+        XCTAssertLessThan(0, store.populationMinimum)
 
         let cfg = AppContainer.AppManager.config
         XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
