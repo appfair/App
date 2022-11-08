@@ -3,6 +3,8 @@ import FairKit
 public struct WelcomeView : View {
     @State var selection: UUID? = nil
 
+    private static var cardColors = ([.accentColor] + CodableColor.nominalColors).makeIterator()
+
     static let introItems: [Card<VectorAnimation>] = [
         Card(
             title: NSLocalizedString("Welcome to **Sun Bow**", bundle: .module, comment: "card title"),
@@ -20,23 +22,6 @@ public struct WelcomeView : View {
             body: NSLocalizedString("""
             We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
 
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
-
-            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
             """, bundle: .module, comment: "card title"),
             foreground: .init(.white),
             background: [.init(.blue)],

@@ -12,13 +12,13 @@ open class Store: SceneManager {
     public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(name: "App", for: .module)
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("fahrenheit") public var fahrenheit = true
 
     /// The minimum population before a city will show up
-    @AppStorage("populationMinimum") var populationMinimum = 666_666.0
+    @AppStorage("populationMinimum") public var populationMinimum = 666_666.0
 
     /// The current errors to display to the user
     @State var errors: [Error] = []
@@ -41,8 +41,9 @@ open class Store: SceneManager {
         }
     }
 
-    /// The facets for this app, which declares the logical sections of the user interface. The initial element must be a welcome/onboarding view, and the final element must be the settings element.
+    /// AppFacets describes the top-level app, expressed as tabs on a mobile device and outline items on desktops.
     public enum AppFacets : String, FacetView, CaseIterable {
+        /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
         case places
         case weather
@@ -97,7 +98,13 @@ open class Store: SceneManager {
 
 
     /// A ``Facets`` that describes the app's configuration settings.
-    public enum ConfigFacets : String, FacetView, CaseIterable {
+    ///
+    /// Adding `WithStandardSettings` to the type will add standard configuration facets like "Appearance", "Language", and "Support"
+    public typealias ConfigFacets = StoreSettings.WithStandardSettings<Store>
+
+    /// A ``Facets`` that describes the app's preferences sections.
+    public enum StoreSettings : String, FacetView, CaseIterable {
+        /// The main preferences for the app
         case preferences
 
         public var facetInfo: FacetInfo {

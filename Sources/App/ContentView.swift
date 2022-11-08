@@ -6,9 +6,17 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            Text("Welcome to \(Bundle.localizedAppName)!", bundle: .module, comment: "welcome title")
+            Text("Welcome to \(Locale.appName())!", bundle: .module, comment: "welcome title")
                 .font(.title)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(Store())
     }
 }
