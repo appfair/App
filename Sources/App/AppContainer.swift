@@ -16,7 +16,16 @@ final class Document: ReferenceFileDocument {
             UTType.json, // most lottie files are just ".json"
         ]
     }
-    static var writableContentTypes: [UTType] { [] }
+    static var writableContentTypes: [UTType] {
+        [
+            UTType.lottieJSON,
+            //UTType.json, // most lottie files are just ".json"
+        ]
+    }
+
+    init(animation: LottieAnimation) {
+        self.animation = animation
+    }
 
     required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
@@ -122,10 +131,14 @@ extension LottieLoopMode {
 @available(macOS 12.0, iOS 15.0, *)
 struct MotionScene : Scene {
     var body: some Scene {
-        DocumentGroup(viewing: Document.self) { file in
+        DocumentGroup(newDocument: createSampleDocument) { file in
             ContentView(document: file.document)
                 .focusedSceneValue(\.document, file.document)
         }
+//        DocumentGroup(viewing: Document.self) { file in
+//            ContentView(document: file.document)
+//                .focusedSceneValue(\.document, file.document)
+//        }
         .commands {
             CommandGroup(after: .newItem) {
                 examplesMenu()
@@ -134,12 +147,17 @@ struct MotionScene : Scene {
         }
     }
 
-    private static let exampleURLs = Bundle.module.urls(forResourcesWithExtension: "lottie.json", subdirectory: "Bundle")
+    private func createSampleDocument() -> Document {
+        let url = Store.exampleURLs!.shuffled().first!
+        let data = try! Data(contentsOf: url)
+        let animation = try! LottieAnimation(json: data)
+        return Document(animation: animation)
+    }
 
     /// For each example in the module's bundle, create a menu item that will open the file
     func examplesMenu() -> Menu<Text, ForEach<[URL], URL, Button<Text>>> {
         Menu {
-            ForEach((Self.exampleURLs ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
+            ForEach((Store.exampleURLs ?? []).sorting(by: \.lastPathComponent), id: \.self) { url in
                 Text(url.deletingPathExtension().lastPathComponent)
                     // .label(image: Image(uxImage: NSWorkspace.shared.icon(forFile: url.path))) // doesn't work; label images aren't rendered on macOS
                     .button {

@@ -25,6 +25,8 @@ public extension AppContainer {
 
     /// The app-wide settings view
     @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        Store.AppFacets.settings.environmentObject(store)
+        Store.AppFacets.settings
+            .facetView(for: store)
+            .environmentObject(store)
     }
 }

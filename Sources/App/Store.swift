@@ -10,7 +10,7 @@ open class Store: SceneManager {
     public var bundle: Bundle { Bundle.module }
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
+    public static let config: JSum = try! configuration(name: "App", for: .module)
 
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("togglePreference") public var togglePreference = false
@@ -18,11 +18,13 @@ open class Store: SceneManager {
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("numberPreference") public var numberPreference = 0.0
 
+    static let exampleURLs = Bundle.module.urls(forResourcesWithExtension: "lottie.json", subdirectory: "Bundle")
+
     public required init() {
     }
 
     /// AppFacets describes the top-level app, expressed as tabs on a mobile device and outline items on desktops.
-    public enum AppFacets : String, Facet, CaseIterable, View {
+    public enum AppFacets : String, FacetView, CaseIterable {
         /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
         /// The main content of the app.
@@ -41,7 +43,7 @@ open class Store: SceneManager {
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .welcome: WelcomeView()
             case .content: wip(EmptyView()) // ContentView()
@@ -51,7 +53,7 @@ open class Store: SceneManager {
     }
 
     /// A ``Facets`` that describes the app's configuration settings.
-    public enum ConfigFacets : String, Facet, CaseIterable, View {
+    public enum ConfigFacets : String, FacetView, CaseIterable {
         case preferences
 
         public var facetInfo: FacetInfo {
@@ -61,7 +63,7 @@ open class Store: SceneManager {
             }
         }
 
-        @ViewBuilder public var body: some View {
+        @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .preferences: PreferencesView()
             }

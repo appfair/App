@@ -18,7 +18,7 @@ struct WelcomeView : View {
     }
 
     /// Random card colors each time
-    private static var cardColors = ([.accentColor] + CodableColor.systemColors.shuffled()).makeIterator()
+    private static var cardColors = ([.accentColor] + CodableColor.nominalColors).makeIterator()
 
     /// The card defintions for the welcome screen.
     ///
