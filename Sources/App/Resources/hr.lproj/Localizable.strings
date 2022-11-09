@@ -2,6 +2,9 @@
 // Translators: edit this file to fork the repository and contribute your translated strings.
 // Visit https://appfair.net/#translation for more details.
 
+/* No comment provided by engineer. */
+"%@ (%@)" = "%1$@ (%2$@)";
+
 /* the comma-separated keywords (100 characters max), used both at runtime and on the storefront page */
 "_app-keywords" = "app,fair,free";
 
@@ -22,42 +25,130 @@ This summary will be used both in the app's Welcome screen, as well as in the de
 The description should be written with a general audience in mind, using plain language and common terms.
 It will be translated into multiple languages by App Fair translation volunteers.";
 
-/* togglePreference preference title */
-"Boolean Preference" = "Boolean Preference";
+/* altitude form fiel placeholder */
+"alt" = "alt";
 
-/* tab title for top-level “Content” facet */
-"Content" = "Content";
+/* altitude form field label */
+"Altitude:" = "Altitude:";
 
-/* numberPreference preference title */
-"Numeric Preference" = "Numeric Preference";
+/* card title */
+"Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database." = "Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database.";
+
+/* setting title for population filter */
+"City Population Filter" = "City Population Filter";
+
+/* section header for weather section */
+"Current Weather" = "Current Weather";
+
+/* edit button title */
+"Edit" = "Edit";
+
+/* script editor title */
+"Editor" = "Editor";
+
+/* error message */
+"Error loading: %@: %@" = "Error loading: %1$@: %2$@";
+
+/* error text
+   error tooltip prefix */
+"Error: %@" = "Error: %@";
+
+/* tab title for execution */
+"Execution" = "Execution";
+
+/* setting title for temperature units */
+"Fahrenheit Units" = "Fahrenheit Units";
+
+/* forecast facet title */
+"Forecast" = "Forecast";
+
+/* card title */
+"Global Database Updated" = "Global Database Updated";
+
+/* latitude form field placeholder */
+"lat" = "lat";
+
+/* latitude form field label */
+"Latitude:" = "Latitude:";
+
+/* loading */
+"Loading: %@…" = "Loading: %@…";
+
+/* loading placeholder text */
+"Loading…" = "Loading…";
+
+/* longitude form field placeholder */
+"lon" = "lon";
+
+/* longitude form field label */
+"Longitude:" = "Longitude:";
+
+/* card title */
+"New cities, updated locations." = "New cities, updated locations.";
+
+/* card title */
+"New Features" = "New Features";
+
+/* places facet title */
+"Places" = "Places";
+
+/* plug-in title */
+"Plug-In: Hot Take" = "Plug-In: Hot Take";
+
+/* plug-in title */
+"Plug-In: Pod UI" = "Plug-In: Pod UI";
 
 /* preferences title */
 "Preferences" = "Preferences";
 
-/* tab title for top-level “Settings” facet */
+/* reset the script to the default */
+"Reset" = "Reset";
+
+/* save button title */
+"Save" = "Save";
+
+/* settings facet title */
 "Settings" = "Settings";
 
-/* tab title for top-level “Welcome” facet */
+/* No comment provided by engineer. */
+"Show Header" = "Show Header";
+
+/* temperature form label */
+"Temp:" = "Temp:";
+
+/* card title */
+"The weather never sleeps.\n*Neither do we*." = "The weather never sleeps.\n*Neither do we*.";
+
+/* No comment provided by engineer. */
+"Thing: %@" = "Thing: %@";
+
+/* placeholder label for no address */
+"Unknown Location" = "Unknown Location";
+
+/* card title */
+"We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\n" = "We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.\n";
+
+/* weather facet title */
+"Weather" = "Weather";
+
+/* welcome facet title */
 "Welcome" = "Welcome";
 
 /* welcome title */
 "Welcome to %@!" = "Welcome to %@!";
 
-/* app intro card #2 banner markdown */
-"welcome-02-banner" = "Get Started";
+/* card title */
+"Welcome to **Sun Bow**" = "Welcome to **Sun Bow**";
 
-/* app intro card #2 caption markdown */
-"welcome-02-caption" = "Start developing your app.";
+/* card title */
+"Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered." = "Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered.";
 
-/* app intro card #2 content markdown */
-"welcome-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+/* wind form label */
+"Wind:" = "Wind:";
 
-/* app intro card #3 banner markdown */
-"welcome-03-banner" = "Internationalize";
+/* card title */
+"Your **forever weather buddy**!" = "Your **forever weather buddy**!";
 
-/* app intro card #3 caption markdown */
-"welcome-03-caption" = "Bring your app to the World";
-
-/* app intro card #3 content markdown */
-"welcome-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
+/* app name */
+"🌞 Sun Bow 🎁" = "🌞 Sun Bow 🎁";
 

@@ -1,24 +1,21 @@
-## App-Name: an App Fair app
+## Sun Bow: an App Fair app
 
-The _Description_ section of the `README.md` file contains the description
-of this app as it will appear in App Fair.
-
-It supports **basic** formatting, but not images, lists, or links.
+Sun Bow is an extensible weather app.
 
 ## Installation
 
 ### App Fair Installation
 
 Once the initial release has been created,
-App-Name can be downloaded and installed using
+Sun Bow can be downloaded and installed using
 [App Fair.app](https://www.appfair.app)
 by opening
-[appfair.app/fair?app=App-Name](https://appfair.app/fair?app=App-Name).
+[appfair.app/fair?app=Sun-Bow](https://appfair.app/fair?app=Sun-Bow).
 
 ## Support
 
 The landing page for this app is available at
-[https://App-Name.github.io/App/](https://App-Name.github.io/App/).
+[https://Sun-Bow.github.io/App/](https://Sun-Bow.github.io/App/).
 
 Community Support for this app is available on the
 [Discussion](../../discussions) forums.

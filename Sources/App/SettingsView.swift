@@ -2,15 +2,10 @@ import FairApp
 
 /// The settings view for app, which includes the preferences along with standard settings.
 public struct SettingsView : View {
-    @SceneStorage("selectedSetting") private var selectedSetting = OptionalStringStorage<Store.ConfigFacets>(value: nil)
-    private let fixedSetting: Store.ConfigFacets?
-
-    init(fixedSetting: Store.ConfigFacets? = nil) {
-        self.fixedSetting = fixedSetting
-    }
+    @State var selectedSetting: Store.ConfigFacets?
 
     public var body: some View {
-        FacetBrowserView<Store, Store.ConfigFacets>(nested: true, selection: fixedSetting != nil ? .constant(fixedSetting) : $selectedSetting.value)
+        FacetBrowserView<Store, Store.ConfigFacets>(nested: true, selection: $selectedSetting)
         #if os(macOS)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(width: 600, height: 300)
@@ -24,17 +19,20 @@ public struct PreferencesView : View {
 
     public var body: some View {
         Form {
-            Toggle(isOn: store.$togglePreference) {
-                Text("Boolean Preference", bundle: .module, comment: "togglePreference preference title")
+            Toggle(isOn: $store.fahrenheit) {
+                Text("Fahrenheit Units", bundle: .module, comment: "setting title for temperature units")
             }
             Section {
-                Slider(value: store.$numberPreference, in: 0...100, onEditingChanged: { _ in })
+                Slider(value: $store.populationMinimum, in: 0...10_000_000) {
+                    Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
+                }
+                .labelsHidden() // label in header; text left in for accessibility purposes
             } header: {
                 HStack {
-                    Text("Numeric Preference", bundle: .module, comment: "numberPreference preference title")
+                    Text("City Population Filter", bundle: .module, comment: "setting title for population filter")
                     Spacer()
-                    Text(round(store.numberPreference), format: .number)
-                        .font(.body.monospacedDigit())
+                    Text(Int64(store.populationMinimum), format: .number)
+                        .font(.caption.monospacedDigit())
                 }
             }
         }
@@ -44,7 +42,7 @@ public struct PreferencesView : View {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView(fixedSetting: Store.ConfigFacets.allCases.first)
+        SettingsView()
             .environmentObject(Store())
     }
 }

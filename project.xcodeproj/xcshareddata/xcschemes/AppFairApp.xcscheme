@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "49555414268931C1003F1B5B"
-               BuildableName = "App Name.app"
+               BuildableName = "Sun Bow.app"
                BlueprintName = "AppFairApp"
                ReferencedContainer = "container:project.xcodeproj">
             </BuildableReference>
@@ -55,7 +55,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "49555414268931C1003F1B5B"
-            BuildableName = "App Name.app"
+            BuildableName = "Sun Bow.app"
             BlueprintName = "AppFairApp"
             ReferencedContainer = "container:project.xcodeproj">
          </BuildableReference>
@@ -72,7 +72,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "49555414268931C1003F1B5B"
-            BuildableName = "App Name.app"
+            BuildableName = "Sun Bow.app"
             BlueprintName = "AppFairApp"
             ReferencedContainer = "container:project.xcodeproj">
          </BuildableReference>

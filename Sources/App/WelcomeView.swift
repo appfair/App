@@ -1,63 +1,72 @@
-import FairApp
+import FairKit
 
-/// A welcome view that cycles through a grid of introductory "cards" using a ``CardBoard``.
-///
-/// You should update the contents of the cards to describe the purpose and usage of your app.
-///
-/// The card markdown fields are defined in the `Localizable.strings` files for each supported language,
-/// and links are provided to these files from within the app to facilitate the contribution of translations.
-struct WelcomeView : View {
-    @EnvironmentObject var store: Store
-    @Environment(\.locale) var locale
-    @State var selectedCard: Card.ID?
+public struct WelcomeView : View {
+    @State var selection: UUID? = nil
 
-    var body: some View {
-        // a flexible board of welcome cards, providing the introduction and onboarding experience for the app
-        CardBoard(selection: $selectedCard, selectedMode: .monochrome, unselectedMode: .hierarchical, selectedVariants: .circle, unselectedVariants: .fill.circle, cards: Self.localizedCards)
-            .autocycle() // expand each card after a delay
-    }
-
-    ///
     private static var cardColors = ([.accentColor] + CodableColor.nominalColors).makeIterator()
 
-    /// The card defintions for the welcome screen.
-    ///
-    /// Each card contains a system symbol name as well a title, subtitle, and body markdown.
-    /// You are expected to add cards to describe the purpose and usage of your particular app.
-    ///
-    /// Internationalization is supported by updating the corresponding localization keys in the various
-    /// `Localizable.strings` files (e.g., `Sources/App/Resources/fr.lproj/Localizable.strings`).
-    /// Links are provided to the source repository for these files from within the app to facilitate the contribution of translations.
-    /// These translation files must be kept up to date with your source code, which can be done manually or using `genstrings`.
-    /// Alternatively, an app localization refresh can be done with `fairtool app localize` or the corresponding build plug-in.
-    static let localizedCards = [
-        card("checkmark", color: cardColors.next(),
-             title: Locale.appName(),
-             subtitle: Locale.appSubtitle(),
-             body: Locale.appSummary()),
-        card("hammer", color: cardColors.next(),
-             title: NSLocalizedString("welcome-02-banner", bundle: .module, value: "Get Started", comment: "app intro card #2 banner markdown"),
-             subtitle: NSLocalizedString("welcome-02-caption", bundle: .module, value: "Start developing your app.", comment: "app intro card #2 caption markdown"),
-             body: NSLocalizedString("welcome-02-content", bundle: .module, value: "My app is my best friend. It is my life. I must master it as I must master my life.", comment: "app intro card #2 content markdown")),
-        card("flag", color: cardColors.next(),
-             title: NSLocalizedString("welcome-03-banner", bundle: .module, value: "Internationalize", comment: "app intro card #3 banner markdown"),
-             subtitle: NSLocalizedString("welcome-03-caption", bundle: .module, value: "Bring your app to the World", comment: "app intro card #3 caption markdown"),
-             body: NSLocalizedString("welcome-03-content", bundle: .module, value: "App Fair apps are global, with support for multiple languages and locales.", comment: "app intro card #3 content markdown")),
+    static let introItems: [Card<VectorAnimation>] = [
+        Card(
+            title: NSLocalizedString("Welcome to **Sun Bow**", bundle: .module, comment: "card title"),
+            subtitle: NSLocalizedString("Your **forever weather buddy**!", bundle: .module, comment: "card title"),
+            body: NSLocalizedString("""
+            Welcome to **Sun Bow**. We hope you'll like it here! Rain or Shine, Sun Bow has got you covered.
+            """, bundle: .module, comment: "card title"),
+            foreground: .init(.white),
+            background: [.init(.accent)],
+            flair: try? .weatherDayBrokenClouds.get()
+        ),
+        Card(
+            title: NSLocalizedString("New Features", bundle: .module, comment: "card title"),
+            subtitle: NSLocalizedString("The weather never sleeps.\n*Neither do we*.", bundle: .module, comment: "card title"),
+            body: NSLocalizedString("""
+            We are constantly making updates and improvements to Sun Bow. This release packs over *twenty-eight* bug fixes and performance improvements.
+
+            """, bundle: .module, comment: "card title"),
+            foreground: .init(.white),
+            background: [.init(.blue)],
+            flair: try? .weatherNightScatteredClouds.get()
+        ),
+        Card(
+            title: NSLocalizedString("Global Database Updated", bundle: .module, comment: "card title"),
+            subtitle: NSLocalizedString("New cities, updated locations.", bundle: .module, comment: "card title"),
+            body: NSLocalizedString("""
+            Browse and search worldwide cities for up-to-the-minute weather data and forecasts. Over 25,000 locations added to the places database.
+            """, bundle: .module, comment: "card title"),
+            foreground: .init(.white),
+            background: [.init(.brown)],
+            flair: try? .weatherDaySnow.get()
+        ),
     ]
-    .compactMap({ $0 })
 
-    /// Loads the localized card string for the current locale.
-    private static func card(_ symbolName: String, color: CodableColor? = nil, title: String, subtitle: String, body: String) -> Card<String>? {
-        func checkLocalized(_ value: String) -> String? {
-            // only show cards that have a localization set in the Localized.strings file
-            if value.hasPrefix("welcome-") { return nil }
-            return value
+    public var body: some View {
+        CardBoard(selection: $selection, cards: Self.introItems) { (graphic: VectorAnimation?, selected: Bool) in
+            if let graphic = graphic {
+                VectorAnimationView(animation: graphic)
+            }
         }
-        guard let title = checkLocalized(title) else {
-            return nil
-        }
-
-        return Card(title: title, subtitle: checkLocalized(subtitle), body: checkLocalized(body), background: [color].compacted(), flair: symbolName)
     }
 }
 
+/// The animation resources included with this app
+extension VectorAnimation {
+    static let dayNight = Result { try VectorAnimation.load("32532-day-night.json", bundle: .module) }
+    static let weatherDayClearSky = Result { try VectorAnimation.load("35627-weather-day-clear-sky.json", bundle: .module) }
+    static let weatherDayFewClouds = Result { try VectorAnimation.load("35630-weather-day-few-clouds.json", bundle: .module) }
+    static let weatherDayScatteredClouds = Result { try VectorAnimation.load("35631-weather-day-scattered-clouds.json", bundle: .module) }
+    static let weatherDayBrokenClouds = Result { try VectorAnimation.load("35690-weather-day-broken-clouds.json", bundle: .module) }
+    static let weatherDayShowerRains = Result { try VectorAnimation.load("35707-weather-day-shower-rains.json", bundle: .module) }
+    static let weatherDayRain = Result { try VectorAnimation.load("35724-weather-day-rain.json", bundle: .module) }
+    static let weatherDayThunderstorm = Result { try VectorAnimation.load("35733-weather-day-thunderstorm.json", bundle: .module) }
+    static let weatherDaySnow = Result { try VectorAnimation.load("35743-weather-day-snow.json", bundle: .module) }
+    static let weatherDayMist = Result { try VectorAnimation.load("35749-weather-day-mist.json", bundle: .module) }
+    static let weatherNightMist = Result { try VectorAnimation.load("35750-weather-night-mist.json", bundle: .module) }
+    static let weatherNightSnow = Result { try VectorAnimation.load("35752-weather-night-snow.json", bundle: .module) }
+    static let weatherNightThunderstorm = Result { try VectorAnimation.load("35755-weather-night-thunderstorm.json", bundle: .module) }
+    static let weatherNightRain = Result { try VectorAnimation.load("35772-weather-night-rain.json", bundle: .module) }
+    static let weatherNightShowerRains = Result { try VectorAnimation.load("35774-weather-night-shower-rains.json", bundle: .module) }
+    static let weatherNightBrokenClouds = Result { try VectorAnimation.load("35775-weather-night-broken-clouds.json", bundle: .module) }
+    static let weatherNightScatteredClouds = Result { try VectorAnimation.load("35778-weather-night-scattered-clouds.json", bundle: .module) }
+    static let weatherNightFewClouds = Result { try VectorAnimation.load("35779-weather-night-few-clouds.json", bundle: .module) }
+    static let weatherNightClearSky = Result { try VectorAnimation.load("35781-weather-night-clear-sky.json", bundle: .module) }
+}

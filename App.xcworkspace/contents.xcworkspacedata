@@ -7,4 +7,28 @@
    <FileRef
       location = "group:">
    </FileRef>
+   <FileRef
+      location = "group:../Fair/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/tiqtiq/WeatherTiq/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/tiqtiq/LocationTiq/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JXKit/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/Jack/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JackPot/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/sqlenclave/SQLPod/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/sqlenclave/SQLEnclave/">
+   </FileRef>
 </Workspace>
