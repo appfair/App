@@ -5,8 +5,14 @@ public struct SettingsView : View {
     typealias StoreSettings = Store.ConfigFacets.WithStandardSettings
     @SceneStorage("selectedSetting") private var selectedSetting = OptionalStringStorage<Store.ConfigFacets>(value: nil)
 
+    private let fixedSetting: Store.ConfigFacets?
+
+    init(fixedSetting: Store.ConfigFacets? = nil) {
+        self.fixedSetting = fixedSetting
+    }
+
     public var body: some View {
-        FacetBrowserView<Store, Store.ConfigFacets>(nested: true, selection: $selectedSetting.value)
+        FacetBrowserView<Store, Store.ConfigFacets>(nested: true, selection: fixedSetting != nil ? .constant(fixedSetting) : $selectedSetting.value)
         #if os(macOS)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(width: 600, height: 300)

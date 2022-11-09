@@ -23,8 +23,7 @@ public extension AppContainer {
         MotionScene()
     }
 
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
+    static func settingsView(store: Store) -> some SwiftUI.View {
         Store.AppFacets.settings
             .facetView(for: store)
             .environmentObject(store)
