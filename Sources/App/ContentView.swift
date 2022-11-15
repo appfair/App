@@ -142,8 +142,8 @@ struct GameView: View {
 
 extension Text {
     init(score number: Double, locale: Locale?) {
-        if let code = locale?.currencyCode {
-            self = Text(Double(number), format: .currency(code: code))
+        if let locale = locale {
+            self = Text(Double(number), format: .currency(code: locale.currencyCode ?? "USD"))
         } else {
             self = Text(Int64(number), format: .number)
         }
