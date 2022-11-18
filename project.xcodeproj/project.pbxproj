@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		490B83CE288CB1580014F922 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 490B83D0288CB1580014F922 /* InfoPlist.strings */; };
-		491763402773E08000FBB28B /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* main.swift */; };
+		491763402773E08000FBB28B /* xcode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917633F2773E08000FBB28B /* xcode.swift */; };
 		491763412773E08500FBB28B /* App in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
@@ -42,8 +42,8 @@
 		490B83D9288CB1810014F922 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		490B83DA288CB1830014F922 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		490B83DB288CB1860014F922 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		4917633F2773E08000FBB28B /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		49555415268931C1003F1B5B /* Sun Bow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sun Bow.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4917633F2773E08000FBB28B /* xcode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = xcode.swift; sourceTree = "<group>"; };
+		49555415268931C1003F1B5B /* App Name.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Name.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498AD12E28F7A062001F2A30 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		498AD12F28F7A065001F2A30 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -166,7 +166,7 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
-				4917633F2773E08000FBB28B /* main.swift */,
+				4917633F2773E08000FBB28B /* xcode.swift */,
 				498E852827597DA100EE6F8C /* appfair.xcconfig */,
 				4955541C268931C4003F1B5B /* Assets.xcassets */,
 				49D7F0B5288B407100275541 /* Resources */,
@@ -310,7 +310,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				491763402773E08000FBB28B /* main.swift in Sources */,
+				491763402773E08000FBB28B /* xcode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
