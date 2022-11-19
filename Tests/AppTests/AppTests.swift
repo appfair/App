@@ -15,7 +15,7 @@
 import Swift
 import FairApp
 import XCTest
-@testable import App
+import App
 import FairApp
 import SwiftUI
 

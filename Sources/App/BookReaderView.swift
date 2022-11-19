@@ -613,14 +613,14 @@ extension FocusedValues {
     }
 }
 
-final class EPUBDocument: ReferenceFileDocument {
-    static let bundle = Bundle.module
+public class EPUBDocument: ReferenceFileDocument {
+    public static let bundle = Bundle.module
 
     /// This document can read epub (`org.idpf.epub-container`) files
-    static var readableContentTypes: [UTType] = [UTType.epub]
+    public static var readableContentTypes: [UTType] = [UTType.epub]
 
     /// Empty `writableContentTypes` because the content is not editable
-    static var writableContentTypes: [UTType] = []
+    public static var writableContentTypes: [UTType] = []
 
     let epub: EPUB
 
@@ -639,7 +639,7 @@ final class EPUBDocument: ReferenceFileDocument {
         set { self[doubleStore: "progress"] = newValue }
     }
 
-    required init(configuration: ReadConfiguration) throws {
+    public required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
@@ -728,11 +728,11 @@ final class EPUBDocument: ReferenceFileDocument {
         }
     }
 
-    func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
+    public func fileWrapper(snapshot: Void, configuration: WriteConfiguration) throws -> FileWrapper {
         throw AppError("Writing not yet supported")
     }
 
-    func snapshot(contentType: UTType) throws -> Void {
+    public func snapshot(contentType: UTType) throws -> Void {
         dbg("snapshot:", contentType)
     }
 

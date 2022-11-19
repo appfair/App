@@ -149,7 +149,7 @@ private let dateParser = ISO8601DateFormatter()
 
 extension OPDS {
     /// Parses the given OPDS data.
-    init(data: Data) throws {
+    public init(data: Data) throws {
         let node = try XMLNode.parse(data: data)
 
         guard let feed = node.children(named: "feed").first else {

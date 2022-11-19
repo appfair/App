@@ -34,7 +34,7 @@ public final class EPUB {
 
     /// Parses and indexes the epub file at the given URL
     /// - Parameter url: the URL of the epub zip file to load
-    convenience init(url: URL) throws {
+    public convenience init(url: URL) throws {
         guard let archive = ZipArchive(url: url, accessMode: .read, preferredEncoding: .utf8) else {
             throw EPUBError("Could not open epub zip")
         }
@@ -43,7 +43,7 @@ public final class EPUB {
 
     /// Parses and indexes the epub file at the given URL
     /// - Parameter data: the Zip data to load
-    convenience init(data: Data) throws {
+    public convenience init(data: Data) throws {
         guard let archive = ZipArchive(data: data, accessMode: .read, preferredEncoding: .utf8) else {
             throw EPUBError("Could not open epub zip")
         }
@@ -255,8 +255,8 @@ public struct OPF {
 }
 
 public struct NCX {
-    let title: String
-    let points: [NavPoint]
+    public let title: String
+    public let points: [NavPoint]
 
     public init(data: Data) throws {
         let node = try XMLNode.parse(data: data)
