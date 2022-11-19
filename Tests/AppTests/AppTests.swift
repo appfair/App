@@ -22,7 +22,7 @@ import SwiftUI
 open class AppTests: XCTestCase {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testParseSampleBook() throws {
-        guard let ebookURL = EPUBDocument.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
+        guard let ebookURL = EPUBDocument.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub") else {
             return XCTFail()
         }
 
