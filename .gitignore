@@ -1,5 +1,6 @@
 .*.swp
 fastlane/
+.fairtool/
 _site/
 Gemfile
 Gemfile.lock
@@ -7,7 +8,6 @@ Gemfile.lock
 .DS_Store
 .build
 xcuserdata/
-xcshareddata/
 build/
 staging/
 DerivedData/
@@ -31,5 +31,6 @@ Package.pins
 Package.resolved
 .swiftpm
 .build/
+
 
 

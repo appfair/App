@@ -1,0 +1,63 @@
+// Localized Ukrainian (українська) strings for this App Fair App.
+// Translators: edit this file to fork the repository and contribute your translated strings.
+// Visit https://appfair.net/#translation for more details.
+
+/* the comma-separated keywords (100 characters max), used both at runtime and on the storefront page */
+"_app-keywords" = "app,fair,free";
+
+/* the app name (30 characters max) which should be simple, memorable, and distinctive; used both in the welcome card and on storefront pages */
+"_app-name" = "App Name";
+
+/* The release notes for the latest version of the app; used both in the welcome card and on storefront pages */
+"_app-release-notes" = "This release contains feature enhancements, bug fixes, performance improvements, and much more!";
+
+/* the subtitle of the app (30 characters max) meant summarize your app in a concise phrase that explains the value of your app in greater detail that the name; used both in the welcome card and on storefront pages */
+"_app-subtitle" = "A free and open App Fair app";
+
+/* the long form summary of the app, used both at runtime and on the storefront page; used both in the welcome card and on storefront pages */
+"_app-summary" = "This is an App Fair app. This text describes in plain language what the application does.
+
+This summary will be used both in the app's Welcome screen, as well as in the description of the app on the storefront.
+
+The description should be written with a general audience in mind, using plain language and common terms.
+It will be translated into multiple languages by App Fair translation volunteers.";
+
+/* togglePreference preference title */
+"Boolean Preference" = "Boolean Preference";
+
+/* tab title for top-level “Content” facet */
+"Content" = "Content";
+
+/* numberPreference preference title */
+"Numeric Preference" = "Numeric Preference";
+
+/* preferences title */
+"Preferences" = "Preferences";
+
+/* tab title for top-level “Settings” facet */
+"Settings" = "Settings";
+
+/* tab title for top-level “Welcome” facet */
+"Welcome" = "Welcome";
+
+/* welcome title */
+"Welcome to %@!" = "Welcome to %@!";
+
+/* app intro card #2 banner markdown */
+"welcome-02-banner" = "Get Started";
+
+/* app intro card #2 caption markdown */
+"welcome-02-caption" = "Start developing your app.";
+
+/* app intro card #2 content markdown */
+"welcome-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+
+/* app intro card #3 banner markdown */
+"welcome-03-banner" = "Internationalize";
+
+/* app intro card #3 caption markdown */
+"welcome-03-caption" = "Bring your app to the World";
+
+/* app intro card #3 content markdown */
+"welcome-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
+

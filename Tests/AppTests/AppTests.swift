@@ -15,9 +15,12 @@
 import Swift
 import FairApp
 import XCTest
-@testable import App
+import App
+import FairApp
+import SwiftUI
 
 open class AppTests: XCTestCase {
+<<<<<<< HEAD
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testParseSampleBook() throws {
         guard let ebookURL = EPUBDocument.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
@@ -97,5 +100,12 @@ open class AppTests: XCTestCase {
         XCTAssertEqual("urn:uuid:6409a00b-7bf2-405e-826c-3fdff0fd0734", opds.entries.first?.id)
         XCTAssertEqual("Bob, Son of Bob", opds.entries.first?.title)
         XCTAssertEqual("en", opds.entries.first?.language)
+    }
+
+    /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
+    /// When run in test cases with the default parameters, the generated screenshots will be included
+    /// as metadata for the app submission.
+    @MainActor open func testScreenshots() throws {
+        _ = try Store().captureFacetScreens()
     }
 }
