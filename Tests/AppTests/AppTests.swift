@@ -15,12 +15,11 @@
 import Swift
 import FairApp
 import XCTest
-import App
+@testable import App
 import FairApp
 import SwiftUI
 
 open class AppTests: XCTestCase {
-<<<<<<< HEAD
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testParseSampleBook() throws {
         guard let ebookURL = EPUBDocument.bundle.url(forResource: "Alice_in_Wonderland", withExtension: "epub", subdirectory: "Bundle") else {
@@ -61,7 +60,7 @@ open class AppTests: XCTestCase {
 
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testNaigationOPDS() throws {
-        let opds = try OPDS(data: Bundle.module.loadBundleResource(named: "navigation-opds.xml"))
+        let opds = try OPDS(data: Bundle.module.loadResource(named: "navigation-opds.xml"))
 
         XCTAssertEqual("urn:uuid:2853dacf-ed79-42f5-8e8a-a7bb3d1ae6a2", opds.id)
         XCTAssertEqual("OPDS Catalog Root Example", opds.title)
@@ -83,7 +82,7 @@ open class AppTests: XCTestCase {
 
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testAcquisitonOPDS() throws {
-        let opds = try OPDS(data: Bundle.module.loadBundleResource(named: "acquisition-opds.xml"))
+        let opds = try OPDS(data: Bundle.module.loadResource(named: "acquisition-opds.xml"))
         XCTAssertEqual("urn:uuid:433a5d6a-0b8c-4933-af65-4ca4f02763eb", opds.id)
         XCTAssertEqual("Unpopular Publications", opds.title)
 
@@ -102,10 +101,10 @@ open class AppTests: XCTestCase {
         XCTAssertEqual("en", opds.entries.first?.language)
     }
 
-    /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
-    /// When run in test cases with the default parameters, the generated screenshots will be included
-    /// as metadata for the app submission.
-    @MainActor open func testScreenshots() throws {
-        _ = try Store().captureFacetScreens()
-    }
+//    /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
+//    /// When run in test cases with the default parameters, the generated screenshots will be included
+//    /// as metadata for the app submission.
+//    @MainActor open func testScreenshots() throws {
+//        _ = try Store().captureFacetScreens()
+//    }
 }

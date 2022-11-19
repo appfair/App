@@ -20,13 +20,35 @@ import WebKit
 /// The shared instance of Store is available throughout the app with:
 /// ``@EnvironmentObject var store: Store``
 open class Store: SceneManager {
+    public var bundle: Bundle = .module
+
+    public typealias AppFacets = EmptyFacetView<Store>
+    public typealias ConfigFacets = EmptyFacetView<Store>
+
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = configuration(for: .module)
+    public static let config: JSum = try! configuration(name: "App.yml", for: .module)
 
     @AppStorage("smoothScrolling") public var smoothScrolling = true
     @AppStorage("leadingTapAdvances") public var leadingTapAdvances = false
 
     public required init() {
+    }
+}
+
+public struct EmptyFacetView<FM: FacetManager> : FacetView {
+    public typealias FacetStore = FM
+    public typealias FacetViewType = Never
+
+    public var facetInfo: FacetInfo {
+        fatalError()
+    }
+
+    public func facetView(for store: FM) -> Never {
+        fatalError()
+    }
+
+    public static func facets<Manager>(for manager: Manager) -> [EmptyFacetView<FM>] where Manager : FairApp.FacetManager {
+        []
     }
 }
 
