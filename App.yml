@@ -15,7 +15,7 @@ app:
   locales: # keys like "fr-FR" can contain localized description, name, etc.
     fr-FR:
       name: "Cuckoo Cloud"
-      subtitle: "Un jeu fantaisiste!"
+      subtitle: "Un jeu amusant!"
 
 markets:
   testflight: '1639746748'    # the assigned TestFlight id
