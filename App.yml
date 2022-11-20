@@ -12,7 +12,7 @@ app:
   promotional_text: "The Great Cloud Cuckoo comes to the App Store!"
   # description: "A simple app fair app."
   keywords: "cloud,cuckoo,appfair,game,flappy,bird"
-  locales: # keys like "fr-FR" can contain localized description, name, etc.
+  localizations: # keys like "fr-FR" can contain localized description, name, etc.
     fr-FR:
       name: "Cuckoo Cloud"
       subtitle: "Un jeu amusant!"
