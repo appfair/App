@@ -21,7 +21,7 @@ import SwiftUI
 open class AppTests: XCTestCase {
     @MainActor open func testAppManager() throws {
         let store = AppContainer.AppManager()
-        //XCTAssertEqual(store.togglePreference, false)
+        XCTAssertEqual(store.currencyScore, false)
         //XCTAssertEqual(store.numberPreference, 0.0)
 
         let cfg = AppContainer.AppManager.config
@@ -33,5 +33,6 @@ open class AppTests: XCTestCase {
     /// as metadata for the app submission.
     @MainActor open func testScreenshots() throws {
         _ = try Store().captureFacetScreens()
+
     }
 }
