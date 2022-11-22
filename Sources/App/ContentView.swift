@@ -7,11 +7,10 @@ struct ContentView: View {
     public var body: some View {
         NavigationView {
             JackScriptListView()
-                .navigation(title: Text("SDUI", bundle: .module, comment: "header title for app"), subtitle: nil)
+                .navigation(title: Text("Scripts", bundle: .module, comment: "header title for app"), subtitle: nil)
         }
     }
 }
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

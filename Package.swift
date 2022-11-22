@@ -9,6 +9,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/JackPot", from: "0.0.1"),
+        .package(url: "https://github.com/jectivex/JXBridge", from: "0.0.1"),
         .package(url: "https://github.com/sqlenclave/SQLPod", from: "0.0.1"),
     ],
     targets: [
@@ -16,6 +17,7 @@ let package = Package(
             .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairKit", package: "Fair"),
             .product(name: "JackPot", package: "JackPot"),
+            .product(name: "JXBridge", package: "JXBridge"),
             .product(name: "SQLPod", package: "SQLPod"),
         ], resources: [
             .process("Resources"), // processed resources

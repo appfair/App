@@ -48,9 +48,11 @@ public struct JackScriptFileListView: View {
                 }, label: {
                     VStack(alignment: .leading) {
                         Text(scriptItem.localizedDescription ?? scriptItem.name)
-                        Text(scriptItem.downloadURL.deletingLastPathComponent().lastPathComponent)
-                            .truncationMode(.head)
-                            .font(.subheadline)
+                        if let downloadURL = scriptItem.downloadURL {
+                            Text(downloadURL.deletingLastPathComponent().lastPathComponent)
+                                .truncationMode(.head)
+                                .font(.subheadline)
+                        }
                     }
                 })
             }
@@ -117,9 +119,11 @@ public struct JackScriptCatalogListView: View {
                 }, label: {
                     VStack(alignment: .leading) {
                         Text(scriptItem.localizedDescription ?? scriptItem.name)
-                        Text(scriptItem.downloadURL.deletingLastPathComponent().lastPathComponent)
-                            .truncationMode(.head)
-                            .font(.subheadline)
+                        if let downloadURL = scriptItem.downloadURL {
+                            Text(downloadURL.deletingLastPathComponent().lastPathComponent)
+                                .truncationMode(.head)
+                                .font(.subheadline)
+                        }
                     }
                 })
             }
@@ -245,7 +249,9 @@ public struct JackScriptView: View {
 
     func loadScriptContents(reload: Bool = false) async {
         do {
-            var urlString = scriptItem.downloadURL.absoluteString
+            guard var urlString = scriptItem.downloadURL?.absoluteString else {
+                return dbg("missing url")
+            }
             urlString = urlString.replacingOccurrences(of: "https://github.com", with: "https://raw.githubusercontent.com")
             guard let url = URL(string: urlString) else {
                 return dbg("bad url")
