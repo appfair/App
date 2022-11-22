@@ -75,8 +75,10 @@ open class Store: SceneManager {
     public enum AppFacets : String, FacetView, CaseIterable {
         /// The initial facet, which typically shows a welcome / onboarding experience
         case welcome
-        /// The main content of the app.
-        case content
+        /// The script preview editor
+        case scriptEditor
+        /// The JackScripts editor
+        case jackScripts
         /// The setting for the app, which contains app-specific preferences as well as other standard settings
         case settings
 
@@ -84,8 +86,10 @@ open class Store: SceneManager {
             switch self {
             case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "tab title for top-level “Welcome” facet"), symbol: "house", tint: nil)
-            case .content:
-                return FacetInfo(title: Text("Content", bundle: .module, comment: "tab title for top-level “Content” facet"), symbol: "puzzlepiece", tint: nil)
+            case .scriptEditor:
+                return FacetInfo(title: Text("Script Editor", bundle: .module, comment: "tab title for top-level “Script Editor” facet"), symbol: "square.text.square", tint: nil)
+            case .jackScripts:
+                return FacetInfo(title: Text("UI Playground", bundle: .module, comment: "tab title for top-level “UI Playground” facet"), symbol: "puzzlepiece", tint: nil)
             case .settings:
                 return FacetInfo(title: Text("Settings", bundle: .module, comment: "tab title for top-level “Settings” facet"), symbol: "gearshape", tint: nil)
             }
@@ -94,7 +98,8 @@ open class Store: SceneManager {
         @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
             case .welcome: WelcomeView()
-            case .content: ContentView()
+            case .scriptEditor: ScriptEditorView()
+            case .jackScripts: JackScriptNavView()
             case .settings: SettingsView()
             }
         }

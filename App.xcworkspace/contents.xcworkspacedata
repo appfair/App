@@ -11,21 +11,15 @@
       location = "group:../Fair/">
    </FileRef>
    <FileRef
-      location = "group:../../github/jectivex/JXKit/">
-   </FileRef>
-   <FileRef
-      location = "group:../../github/jectivex/Jack/">
-   </FileRef>
-   <FileRef
-      location = "group:../../github/jectivex/JackPot/">
+      location = "group:../../github/jectivex/JXPod/">
    </FileRef>
    <FileRef
       location = "group:../../github/jectivex/JXBridge/">
    </FileRef>
    <FileRef
-      location = "group:../../github/sqlenclave/SQLPod/">
+      location = "group:../../github/jectivex/Jack/">
    </FileRef>
    <FileRef
-      location = "group:../../github/sqlenclave/SQLEnclave/">
+      location = "group:../../github/jectivex/JXKit/">
    </FileRef>
 </Workspace>

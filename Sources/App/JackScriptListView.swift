@@ -1,5 +1,5 @@
 import FairApp
-import JackPot
+import JXPod
 import FairKit
 import UniformTypeIdentifiers
 
