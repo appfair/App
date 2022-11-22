@@ -4,12 +4,16 @@ app:
   subtitle: "Playgrounds for the World"
   primary_category: "EDUCATION"
   secondary_category: "PRODUCTIVITY"
-  keywords: "javascript,sdui,playground,coding"
+  keywords: "playground,javascript,sdui,coding"
   description: |
     This app enables students and educators to use dynamic JavaScript to create compelling experiences with native frameworks and user interfaces.
   localizations:
     fr-FR:
       name: "Exposition internationale"
+      keywords: "sdui,javascript,coding"
+    de-DE:
+      name: "Exposition internationale"
+      keywords: "coding,javascript,sdui,playground"
 
 markets:
   testflight: "6443680952"    # the assigned TestFlight id
