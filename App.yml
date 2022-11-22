@@ -7,6 +7,9 @@ app:
   keywords: "javascript,sdui,playground,coding"
   description: |
     This app enables students and educators to use dynamic JavaScript to create compelling experiences with native frameworks and user interfaces.
+  localizations:
+    fr-FR:
+      name: "Exposition internationale"
 
 markets:
   testflight: "6443680952"    # the assigned TestFlight id
