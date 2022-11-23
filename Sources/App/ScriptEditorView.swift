@@ -1,20 +1,24 @@
 import FairApp
 import JXPod
 import JXKit
+import JXBridge
 
 /// A script editor / preview
 struct ScriptEditorView: View {
     @EnvironmentObject var store: Store
-    @AppStorage("scriptContents") var scriptContents = """
-    (async () => {
-        var timeThen = Date();
-        await time.sleep(1.0);
-        var timeNow = Date();
-        return { "then": timeThen, "now": timeNow };
-    })()
+    @AppStorage("scriptContents!!!!") var scriptContents = """
+    var timeThen = new Date().getTime();
+    await time.sleep(0.1);
+    _cb.callback("Tick");
+    await time.sleep(0.7);
+    _cb.callback("Tock");
+    await time.sleep(0.9);
+    var timeNow = new Date().getTime();
+    return { "then": timeThen, "now": timeNow };
     """
     @State var selection: Selection = .editor
-    @State var scriptResult: Result<JXValue, Error>?
+    @State var scriptResults: [Result<JXValue, Error>] = []
+    @State var running: Bool = false
 
     enum Selection : Hashable, Identifiable, CaseIterable {
         case editor
@@ -37,16 +41,12 @@ struct ScriptEditorView: View {
                 editorView()
                     .onAppear {
                         // clear the result each time we show
-                        self.scriptResult = nil
+                        self.scriptResults = []
                     }
             case .preview:
                 previewView()
                     .task(id: self.scriptContents) {
-                        do {
-                            self.scriptResult = .success(try await executeScript())
-                        } catch {
-                            self.scriptResult = .failure(error)
-                        }
+                        await performScript()
                     }
             }
         }
@@ -71,15 +71,13 @@ struct ScriptEditorView: View {
             .font(.body.monospaced())
     }
 
-    func scriptResultString() -> String {
-        switch scriptResult {
-        case .none:
-            return "running…"
+    func scriptResultString(for result: Result<JXValue, Error>) -> String {
+        switch result {
         case .failure(let error):
             return "Execution error: \(error)"
         case .success(let value):
             do {
-                return try value.toJSON(indent: 2)
+                return try value.toJSON(indent: 0)
             } catch {
                 return "Conversion error: \(error)"
             }
@@ -87,11 +85,47 @@ struct ScriptEditorView: View {
     }
 
     func previewView() -> some View {
-        TextEditor(text: .constant(scriptResultString()))
-            .background(Color.white)
-            .font(.body.monospaced())
-            .foregroundColor(scriptResult?.failureValue != nil ? .red : .gray)
-            .textSelection(.enabled)
+        List {
+            Section {
+                ForEach(enumerated: scriptResults) { index, result in
+                    Text(scriptResultString(for: result))
+                        .font(.body.monospaced())
+                        .foregroundColor(result.failureValue != nil ? .red : nil)
+                        .textSelection(.enabled)
+
+                }
+            } header: {
+                HStack {
+                    Text("Script Results", bundle: .module, comment: "list header string")
+                    Spacer()
+                    if running == true {
+                        ProgressView()
+                    } else if scriptResults.contains(where: { $0.failureValue != nil }) {
+                        Image("exclamationmark.octagon.fill")
+                    } else {
+                        Image("checkmark.square.fill")
+                            .foregroundColor(.green)
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .refreshable {
+            // re-execute the script
+            await performScript()
+        }
+    }
+
+    @MainActor func performScript() async {
+        self.running = true
+        defer { self.running = false }
+
+        self.scriptResults.removeAll()
+        do {
+            self.scriptResults.append(.success(try await executeScript()))
+        } catch {
+            self.scriptResults.append(.failure(error))
+        }
     }
 
     func executeScript() async throws -> JXValue {
@@ -100,8 +134,49 @@ struct ScriptEditorView: View {
 
         // register all the pods we will be using here…
         try jxc.registry.register(TimePod())
+        try jxc.registry.register(CallbackPod(callback: { value in
+            dbg("callback:", value)
+            self.scriptResults.append(.success(value))
+        }))
 
-        dbg("evaluating:", scriptContents)
-        return try await jxc.eval(scriptContents, priority: .high)
+        // wrap the script contents in an async block so await can be used fluently
+        let script = """
+        (async () => {
+        \(scriptContents)
+        })()
+        """
+
+        dbg("evaluating:", script)
+        return try await jxc.eval(script, priority: .high)
+    }
+}
+
+import JXBridge
+
+/// Simple callback interface for the sample script
+class CallbackPod: JXPod, JXModule, JXBridging {
+    let block: (JXValue) -> ()
+
+    init(callback block: @escaping (JXValue) -> ()) {
+        self.block = block
+    }
+
+    var metadata: JXPodMetaData {
+        JXPodMetaData(homePage: URL(string: "https://www.example.com")!)
+    }
+
+    let namespace: JXNamespace = "_cb"
+
+    func register(with registry: JXRegistry) throws {
+        try registry.registerBridge(for: self, namespace: namespace)
+    }
+
+    func initialize(in context: JXContext) throws {
+        try context.global.integrate(self)
+    }
+
+    @JXFunc var jxcallback = callback
+    func callback(value: JXValue) async throws {
+        self.block(value)
     }
 }
