@@ -87,7 +87,7 @@ open class Store: SceneManager {
             case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "tab title for top-level “Welcome” facet"), symbol: "house", tint: nil)
             case .scriptEditor:
-                return FacetInfo(title: Text("Script Editor", bundle: .module, comment: "tab title for top-level “Script Editor” facet"), symbol: "square.text.square", tint: nil)
+                return FacetInfo(title: Text("Script Editor", bundle: .module, comment: "tab title for top-level “Script Editor” facet"), symbol: "squareshape.dashed.squareshape", tint: nil)
             case .jackScripts:
                 return FacetInfo(title: Text("UI Playground", bundle: .module, comment: "tab title for top-level “UI Playground” facet"), symbol: "puzzlepiece", tint: nil)
             case .settings:

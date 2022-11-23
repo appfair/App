@@ -20,10 +20,10 @@ struct WelcomeView : View {
     private static var cardColors = ([.accentColor] + CodableColor.nominalColors).makeIterator()
 
     static let localizedCards = [
-        Card(title: "Welcome to World Fair", subtitle: "A playground for code", body: """
+        Card(title: "Welcome to World Fair", subtitle: "A Playground for Code", body: """
         World Fair enables you to experiment with JavaScript to create and manage a user interface.
         """, background: [cardColors.next()].compacted(), flair: "globe"),
-//        Card(title: "TITLE", subtitle: "SUBTITLE", body: "BODY", background: [cardColors.next()].compacted(), flair: "checkmark"),
+//        Card(title: "TITLE", subtitle: "SUBTITLE", body: "BODY", background: [cardColors.next()].compacted(), flair: "squareshape.dashed.squareshape"),
 //        Card(title: "TITLE", subtitle: "SUBTITLE", body: "BODY", background: [cardColors.next()].compacted(), flair: "checkmark"),
 //        Card(title: "TITLE", subtitle: "SUBTITLE", body: "BODY", background: [cardColors.next()].compacted(), flair: "checkmark"),
 //        Card(title: "TITLE", subtitle: "SUBTITLE", body: "BODY", background: [cardColors.next()].compacted(), flair: "checkmark"),
