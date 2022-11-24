@@ -67,7 +67,8 @@ struct ScriptEditorView: View {
     }
 
     func editorView() -> some View {
-        TextEditor(text: $scriptContents)
+        CodeEditor(language: .javaScript, text: $scriptContents)
+            .autocorrectionDisabled(true)
             .font(.body.monospaced())
     }
 

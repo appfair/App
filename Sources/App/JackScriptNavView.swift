@@ -88,7 +88,7 @@ public struct JackScriptFileListView: View {
     }
 
     func loadFile(url: URL) throws {
-        let data = try Data(contentsOf: url)
+//        let data = try Data(contentsOf: url)
         let app = AppCatalogItem(name: url.lastPathComponent, bundleIdentifier: url.lastPathComponent, downloadURL: url)
         let catalog = AppCatalog(name: wip("File Store"), identifier: wip("World-Fair.local"), apps: [app])
         store.catalog = catalog

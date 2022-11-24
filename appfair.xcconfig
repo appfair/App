@@ -10,7 +10,7 @@ PRODUCT_BUNDLE_IDENTIFIER = app.World-Fair
 MARKETING_VERSION = 0.0.5
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 189
+CURRENT_PROJECT_VERSION = 190
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.utilities
@@ -25,7 +25,8 @@ ICON_SYMBOL = M 380.500000 105.906250 C 380.100000 105.906250 379.812525 106.193
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 // SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator android
-SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+// SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 
 // On-device testing may need to override the bundle ID
 // PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
