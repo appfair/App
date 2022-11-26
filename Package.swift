@@ -1,7 +1,7 @@
 // swift-tools-version:5.7
 import PackageDescription
 
-let package = Package(
+var package = Package(
     name: "App", // do not rename
     defaultLocalization: "en",
     platforms: [ .macOS(.v12), .iOS(.v15) ],
@@ -11,7 +11,6 @@ let package = Package(
         .package(url: "https://github.com/jectivex/JXPod", from: "0.0.1"),
         .package(url: "https://github.com/simonbs/Runestone", from: "0.2.10"),
         .package(url: "https://github.com/simonbs/TreeSitterLanguages", from: "0.1.0"),
-
     ],
     targets: [
         .target(name: "App", dependencies: [
@@ -19,14 +18,14 @@ let package = Package(
             .product(name: "FairKit", package: "Fair"),
             .product(name: "JXPod", package: "JXPod"),
 
-            .product(name: "Runestone", package: "Runestone"),
-            .product(name: "TreeSitterJavaScriptRunestone", package: "TreeSitterLanguages"),
-            .product(name: "TreeSitterJavaScriptQueries", package: "TreeSitterLanguages"),
-            .product(name: "TreeSitterJavaScript", package: "TreeSitterLanguages"),
+            // Runestone is a syntax-highlighting text editor for iOS; the macOS version is subbed as a TextEditor
+            .product(name: "Runestone", package: "Runestone", condition: .when(platforms: [.iOS])),
+            .product(name: "TreeSitterJavaScriptRunestone", package: "TreeSitterLanguages", condition: .when(platforms: [.iOS])),
+            .product(name: "TreeSitterJavaScriptQueries", package: "TreeSitterLanguages", condition: .when(platforms: [.iOS])),
+            .product(name: "TreeSitterJavaScript", package: "TreeSitterLanguages", condition: .when(platforms: [.iOS])),
         ], resources: [
             .process("Resources"), // processed resources
         ], plugins: [
-            //.plugin(name: "FairBuild", package: "Fair"),
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
     ]

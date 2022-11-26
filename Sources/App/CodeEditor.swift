@@ -1,11 +1,23 @@
 import FairApp
 import SwiftUI
+
+#if !canImport(Runestone)
+typealias CodeEditor = TextEditor
+
+extension CodeEditor {
+    // No-op language constants
+    enum Language {
+        case javaScript
+    }
+
+    init(language: Language, text: Binding<String>) {
+        self.init(text: text)
+    }
+}
+
+#else
 import Runestone
 import TreeSitterJavaScriptRunestone
-
-#if !canImport(UIKit)
-typealias CodeEditor = TextEditor
-#else
 
 struct CodeEditor : View {
     let language: TreeSitterLanguage
