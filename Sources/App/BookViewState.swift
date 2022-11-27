@@ -420,7 +420,7 @@ final class BookReaderState : WebViewState {
                         do {
                             try await self.setPageScale(to: amount == nil ? Self.defaultScale : (self.pageScale * (amount ?? 1.0)))
                         } catch {
-                            self.reportError(error)
+                            await self.reportError(error)
                         }
                     }
                 }
@@ -457,7 +457,7 @@ final class BookReaderState : WebViewState {
                     dbg("jumping to targetPosition:", targetPosition)
                     let _ = try await self.position(targetPosition)
                 } catch {
-                    self.reportError(error)
+                    await self.reportError(error)
                 }
             }
             self.targetPosition = nil

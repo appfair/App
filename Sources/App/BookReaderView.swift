@@ -39,27 +39,8 @@ struct BookReaderView : View {
         }
         #elseif os(iOS)
         NavigationView {
-            if bookReaderState.showTOCSidebar {
-                TOCListView(document: document, section: $section, action: { section in
-                    dbg("selected:", section ?? nil)
-                    withAnimation {
-                        //bookReaderState.targetPosition = 0.0 // always jump to beginnings of sections
-                        self.section = section
-                        bookReaderState.showTOCSidebar = false
-                    }
-                })
-                .listStyle(.sidebar) // seems to not be the default on iOS
-                .transition(.slide)
-            }
-
-            bookView
-                .navigation(title: document.epub.opf.title.flatMap(Text.init) ?? Text("No Title", bundle: .module, comment: "navigation title for books with no title"), subtitle: navigationSubtitle)
-                .ignoresSafeArea(.container, edges: .all)
-                .edgesIgnoringSafeArea(.all)
-                .navigationViewStyle(.stack)
-                .navigationBarTitleDisplayMode(.large)
-                .navigationBarHidden(!showControls)
-                .statusBar(hidden: !showControls)
+            navigationContentView()
+                //.navigationBarBackButtonHidden()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -102,10 +83,35 @@ struct BookReaderView : View {
                         }
                     }
             }
+            .presentationDetentsMedium()
         }
         #endif
     }
 
+    @ViewBuilder func navigationContentView() -> some View {
+        if bookReaderState.showTOCSidebar {
+            TOCListView(document: document, section: $section, action: { section in
+                dbg("selected:", section ?? nil)
+                withAnimation {
+                    //bookReaderState.targetPosition = 0.0 // always jump to beginnings of sections
+                    self.section = section
+                    bookReaderState.showTOCSidebar = false
+                }
+            })
+            .listStyle(.sidebar) // seems to not be the default on iOS
+            .transition(.slide)
+        }
+
+        bookView
+            .navigation(title: document.epub.opf.title.flatMap(Text.init) ?? Text("No Title", bundle: .module, comment: "navigation title for books with no title"), subtitle: navigationSubtitle)
+//            .ignoresSafeArea(.container, edges: .all)
+//            .edgesIgnoringSafeArea(.all)
+//            .navigationViewStyle(.stack)
+            .navigationBarTitleDisplayMode(.large)
+            .navigationBarHidden(!showControls)
+            .statusBar(hidden: !showControls)
+
+    }
     var navigationSubtitle: Text? {
         guard let section = self.section,
            let section = section,
@@ -140,6 +146,16 @@ struct BookReaderView : View {
                     }
                 }
             }
+    }
+}
+
+extension View {
+    func presentationDetentsMedium() -> some View {
+        if #available(iOS 16.0, *) {
+            return presentationDetents([.medium])
+        } else {
+            return self
+        }
     }
 }
 
@@ -294,7 +310,7 @@ public struct EPUBView: View {
         if let webView = bookReaderState.webView {
             let visibleWidth = webView.bounds.width
             let totalWidth = bookReaderState.sectionWidth
-            if totalWidth > visibleWidth {
+            if visibleWidth > 0, totalWidth > visibleWidth {
                 let count = Int(totalWidth / visibleWidth)
                 if count > 0 {
                     return Array(-1..<count)
@@ -752,6 +768,7 @@ public struct AppSettingsView : View {
             }
             .toggleStyle(.switch)
         }
-        .padding()
+//        .formStyle(.grouped)
+//        .padding()
     }
 }
