@@ -1,6 +1,6 @@
 ## Cloud-Cuckoo: an App Fair app
 
-Chase on the Cuckoo around the screen!
+Chase the Cuckoo around the screen!
 
 This is a silly little game for the App Fair.
 
