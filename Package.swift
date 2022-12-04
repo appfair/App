@@ -14,6 +14,8 @@ var package = Package(
     ],
     targets: [
         .target(name: "App", dependencies: [
+            .target(name: "Sample1"),
+            .target(name: "Sample2"),
             .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairKit", package: "Fair"),
             .product(name: "JXPod", package: "JXPod"),
@@ -28,5 +30,7 @@ var package = Package(
         ], plugins: [
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
+        .target(name: "Sample1", resources: [.copy("App.js")]),
+        .target(name: "Sample2", resources: [.copy("App.js")]),
     ]
 )
