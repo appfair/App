@@ -21,6 +21,7 @@ let package = Package(
         //.package(url: "https://github.com/AudioKit/AudioKit", from: "5.5.2"),
         //.package(url: "https://github.com/jectivex/JackPot", from: "0.1.1"),
         //.package(url: "https://github.com/sqlenclave/SQLPod", from: "0.0.1"),
+        .package(url: "https://github.com/sqlenclave/SQLEnclave", from: "0.0.1"),
     ],
     targets: [
         .target(name: "App", dependencies: [ 
@@ -29,6 +30,7 @@ let package = Package(
             //.product(name: "AudioKit", package: "AudioKit"),
             //.product(name: "JackPot", package: "JackPot"),
             //.product(name: "SQLPod", package: "SQLPod"),
+            .product(name: "SQLEnclave", package: "SQLEnclave"),
         ], resources: [
             .process("Resources"), // processed resources
         ],
