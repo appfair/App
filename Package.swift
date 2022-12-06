@@ -8,19 +8,17 @@ var package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
-        .package(url: "https://github.com/jectivex/JXPod", from: "0.0.1"),
+        .package(url: "https://github.com/jectivex/JXPod", from: "0.1.0"),
         .package(url: "https://github.com/simonbs/Runestone", from: "0.2.10"),
         .package(url: "https://github.com/simonbs/TreeSitterLanguages", from: "0.1.0"),
     ],
     targets: [
         .target(name: "App", dependencies: [
-            .target(name: "Sample1"),
-            .target(name: "Sample2"),
             .product(name: "FairApp", package: "Fair"), // required
             .product(name: "FairKit", package: "Fair"),
             .product(name: "JXPod", package: "JXPod"),
 
-            // Runestone is a syntax-highlighting text editor for iOS; the macOS version is subbed as a TextEditor
+            // Runestone is a syntax-highlighting text editor for iOS; the macOS version is stubbed as a TextEditor
             .product(name: "Runestone", package: "Runestone", condition: .when(platforms: [.iOS])),
             .product(name: "TreeSitterJavaScriptRunestone", package: "TreeSitterLanguages", condition: .when(platforms: [.iOS])),
             .product(name: "TreeSitterJavaScriptQueries", package: "TreeSitterLanguages", condition: .when(platforms: [.iOS])),
@@ -30,7 +28,5 @@ var package = Package(
         ], plugins: [
         ]),
         .testTarget(name: "AppTests", dependencies: ["App"]),
-        .target(name: "Sample1", resources: [.copy("App.js")]),
-        .target(name: "Sample2", resources: [.copy("App.js")]),
     ]
 )

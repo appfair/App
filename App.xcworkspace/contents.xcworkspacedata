@@ -22,4 +22,10 @@
    <FileRef
       location = "group:../../github/jectivex/JXKit/">
    </FileRef>
+   <FileRef
+      location = "group:../FairPod1/">
+   </FileRef>
+   <FileRef
+      location = "group:../FairPod2/">
+   </FileRef>
 </Workspace>
