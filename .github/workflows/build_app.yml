@@ -1,5 +1,5 @@
-name: "Fork Apply"
-# Fork Apply runs in the forked repo with
+name: "Build App"
+# Build App runs in the forked repo with
 # any push to main or semver tag.
 # Tagged pushes will automatically create a release
 # with the built artifacts.

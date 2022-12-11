@@ -1,21 +1,36 @@
 # App metadata; see https://appfair.net/#App.yml
-
-# Fastlane metadata keys:
-# https://docs.fastlane.tools/actions/deliver/#non-localized-metadata
-# Note: localized keys for app title, subtitle, description, etc.
-# should defined in localized resources instead of here:
-# Sources/App/Resources/*.lproj/Localizable.strings
 app:
-  primary_category: 'UTILITIES'
-  secondary_category: 'PRODUCTIVITY'
+  #name: "App Name" # 30-char limit
+  #subtitle: "A brief summary of the App" # 30-char limit
+  #keywords: "appfair,free" # comma separated keywords ; 100-char limit
+  #description: "A complete description of the app" # 4000-char limit
+  #notes: "Some notes about this app for reviewers."
 
+  # primary_category and secondary_category can be any of: FOOD_AND_DRINK, BUSINESS, EDUCATION, SOCIAL_NETWORKING, BOOKS, SPORTS, FINANCE, REFERENCE, GRAPHICS_AND_DESIGN, DEVELOPER_TOOLS, HEALTH_AND_FITNESS, MUSIC, WEATHER, TRAVEL, ENTERTAINMENT, STICKERS, GAMES, LIFESTYLE, MEDICAL, MAGAZINES_AND_NEWSPAPERS, UTILITIES, SHOPPING, PRODUCTIVITY, NEWS, PHOTO_AND_VIDEO, NAVIGATION
+
+  primary_category: "UTILITIES" 
+  secondary_category: "PRODUCTIVITY"
+
+
+  # translations for the name, subtitle, description, and keywords
+  # Supported language keys are: # ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
+
+  localizations:
+    #fr-FR:
+    #  name: "App Name in French"
+    #  subtitle: "App Subtitle in French"
+    #  description: "App Description in French"
+
+# marketplace-issued indentifiers for the distribution channels for this app
 markets:
-  #testflight: '0123456789'    # the assigned TestFlight id
-  #appstore: '0123456789'      # the assigned App Store id
-  #playstore: '123456543210'   # the assigned Play Store id
+  #testflight: "0123456789"    # the assigned TestFlight id
+  #testflighturl: "https://…"  # the public TestFlight beta link
+  #appstore: "0123456789"      # the assigned App Store id
+  #appstoreurl: "https://…"    # the official App Store landing page
+  #playstore: "123456543210"   # the assigned Play Store id
 
-# Pages / Jekyll configuration::
-remote_theme: appfair/fairapp-theme
+# Pages / Jekyll configuration:
+remote_theme: "appfair/fairapp-theme"
 
 <<<<<<< HEAD
 plugins:
