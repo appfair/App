@@ -23,3 +23,4 @@ Subsequent releases must increment the version both in the
 
 For more information, see the documentation at
 [https://www.appfair.net](https://www.appfair.net).
+

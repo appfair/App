@@ -44,6 +44,10 @@ public extension AppContainer {
         AppSettingsView()
             .preferredColorScheme(fairManager.themeStyle.colorScheme)
             .environmentObject(fairManager)
+        // TODO: use facet settings
+        //Store.AppFacets.settings
+            //.facetView(for: store)
+            //.environmentObject(store)
     }
 
 }

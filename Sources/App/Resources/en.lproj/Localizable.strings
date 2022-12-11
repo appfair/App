@@ -1186,46 +1186,30 @@
 // Translators: edit this file to fork the repository and contribute your translated strings.
 // Visit https://appfair.net/#translation for more details.
 
-/* app intro card #1 banner markdown */
-"about-card-01-banner" = "Welcome";
+/* the comma-separated keywords (100 characters max), used both at runtime and on the storefront page */
+"_app-keywords" = "app,fair,free";
 
-/* app intro card #1 caption markdown */
-"about-card-01-caption" = "This is your app";
+/* the app name (30 characters max) which should be simple, memorable, and distinctive; used both in the welcome card and on storefront pages */
+"_app-name" = "App Name";
 
-/* app intro card #1 content markdown */
-"about-card-01-content" = "This is your brand new App Fair app. There are many like it, but this one is yours.\n\nAn App Fair app is a digital public good. It is free software that is built and distributed in a transparent manner and independently verified to not contain any privacy-invasive technologies or other anti-features.";
+/* The release notes for the latest version of the app; used both in the welcome card and on storefront pages */
+"_app-release-notes" = "This release contains feature enhancements, bug fixes, performance improvements, and much more!";
 
-/* app intro card #2 banner markdown */
-"about-card-02-banner" = "Get Started";
+/* the subtitle of the app (30 characters max) meant summarize your app in a concise phrase that explains the value of your app in greater detail that the name; used both in the welcome card and on storefront pages */
+"_app-subtitle" = "A free and open App Fair app";
 
-/* app intro card #2 caption markdown */
-"about-card-02-caption" = "Start developing your app.";
+/* the long form summary of the app, used both at runtime and on the storefront page; used both in the welcome card and on storefront pages */
+"_app-summary" = "This is an App Fair app. This text describes in plain language what the application does.
 
-/* app intro card #2 content markdown */
-"about-card-02-content" = "My app is my best friend. It is my life. I must master it as I must master my life.";
+This summary will be used both in the app's Welcome screen, as well as in the description of the app on the storefront.
 
-/* app intro card #3 banner markdown */
-"about-card-03-banner" = "Internationalize";
-
-/* app intro card #3 caption markdown */
-"about-card-03-caption" = "Bring your app to the World";
-
-/* app intro card #3 content markdown */
-"about-card-03-content" = "App Fair apps are global, with support for multiple languages and locales.";
-
-/* app intro card #4 banner markdown */
-"about-card-04-banner" = "Think Different";
-
-/* app intro card #4 caption markdown */
-"about-card-04-caption" = "Here’s to the Crazy Ones";
-
-/* app intro card #4 content markdown */
-"about-card-04-content" = "The misfits.\nThe rebels.\nThe troublemakers.\nThe round pegs in the square holes.\nThe ones who see things differently.\n\nThey’re not fond of rules.\nAnd they have no respect for the status quo.\nYou can praise them, disagree with them, quote them, disbelieve them, glorify or vilify them.\nAbout the only thing you can’t do is ignore them.\n\nBecause they change things.\nThey invent. They imagine. They heal.\nThey explore. They create. They inspire.\nThey push the human race forward.\n\nMaybe they have to be crazy.\nHow else can you stare at an empty canvas and see a work of art?\nOr sit in silence and hear a song that’s never been written?\nOr gaze at a red planet and see a laboratory on wheels?\nWe make tools for these kinds of people.\n\nWhile some see them as the crazy ones, we see genius.\nBecause the people who are crazy enough to think they can change the world, are the ones who do.";
+The description should be written with a general audience in mind, using plain language and common terms.
+It will be translated into multiple languages by App Fair translation volunteers.";
 
 /* togglePreference preference title */
 "Boolean Preference" = "Boolean Preference";
 
-/* content facet title */
+/* tab title for top-level “Content” facet */
 "Content" = "Content";
 
 /* numberPreference preference title */
@@ -1234,10 +1218,10 @@
 /* preferences title */
 "Preferences" = "Preferences";
 
-/* settings facet title */
+/* tab title for top-level “Settings” facet */
 "Settings" = "Settings";
 
-/* welcome facet title */
+/* tab title for top-level “Welcome” facet */
 "Welcome" = "Welcome";
 
 /* apps list section header text */
@@ -1375,4 +1359,3 @@
 /* app category info: overview text
    homebrew recent apps info: overview text */
 "XXX" = "XXX";
-

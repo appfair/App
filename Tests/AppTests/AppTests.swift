@@ -34,7 +34,7 @@ import XCTest
 @testable import App
 import FairCore
 import FairExpo
-
+//
 open class AppTests: XCTestCase {
 //    @MainActor open func testAppStore() throws {
 //        let store = AppContainer.AppStore()
@@ -49,6 +49,23 @@ open class AppTests: XCTestCase {
         let (casks, response) = try await homeBrewInv.homebrewAPI.fetchCasks()
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
         XCTAssertGreaterThan(casks.count, 1000)
+    }
+
+    @MainActor open func testAppManager() throws {
+        let store = AppContainer.AppManager()
+//        XCTAssertEqual(store.togglePreference, false)
+//        XCTAssertEqual(store.numberPreference, 0.0)
+
+//        let cfg = AppContainer.AppManager.config
+//        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
+    }
+
+    /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
+    /// When run in test cases with the default parameters, the generated screenshots will be included
+    /// as metadata for the app submission.
+    @MainActor open func testScreenshots() throws {
+        throw XCTSkip("TODO")
+//        _ = try Store().captureFacetScreens()
     }
 
 //    func testInstalledApps() throws {
