@@ -1,4 +1,4 @@
-name: "Integrate Release"
+name: "Replicate Release"
 # Integrate release runs in the base repo
 # when it receives a pull request
 #
