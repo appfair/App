@@ -43,7 +43,7 @@
 		490B83DA288CB1830014F922 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		490B83DB288CB1860014F922 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		4917633F2773E08000FBB28B /* xcode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = xcode.swift; sourceTree = "<group>"; };
-		49555415268931C1003F1B5B /* App Name.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Name.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* App Fair.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "App Fair.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498AD12E28F7A062001F2A30 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		498AD12F28F7A065001F2A30 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -326,7 +326,6 @@
 				490B83D3288CB1690014F922 /* it */,
 				490B83D4288CB16B0014F922 /* ja */,
 				490B83D5288CB16D0014F922 /* ko */,
-				490B83D6288CB16E0014F922 /* nb */,
 				490B83D7288CB17D0014F922 /* pt */,
 				490B83D8288CB17F0014F922 /* ru */,
 				490B83D9288CB1810014F922 /* es */,
@@ -393,7 +392,6 @@
 				498AD15828F7A0CB001F2A30 /* hu */,
 				498AD15928F7A0CC001F2A30 /* id */,
 				498AD15A28F7A0CE001F2A30 /* ms */,
-				498AD15B28F7A0CF001F2A30 /* nb */,
 				498AD15C28F7A0D0001F2A30 /* fa */,
 				498AD15D28F7A0D0001F2A30 /* pl */,
 				498AD15E28F7A0D1001F2A30 /* pt_PT */,
@@ -439,7 +437,6 @@
 				498AD17528F7A0F4001F2A30 /* hu */,
 				498AD17628F7A0F5001F2A30 /* id */,
 				498AD17728F7A0F6001F2A30 /* ms */,
-				498AD17828F7A0F6001F2A30 /* nb */,
 				498AD17928F7A0FE001F2A30 /* fa */,
 				498AD17A28F7A0FF001F2A30 /* pl */,
 				498AD17B28F7A101001F2A30 /* pt_PT */,

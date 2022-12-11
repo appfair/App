@@ -157,7 +157,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
     @Published private var appCategories: [AppCategoryType: [AppInfo]] = [:]
 
     /// The current catalog of casks
-    @Published private(set) var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
+    @Published private(set) public var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
 
     /// The date the catalog was most recently updated
     @Published private(set) public var catalogUpdated: Date? = nil
@@ -174,7 +174,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
     static let symbol = FairSymbol.shippingbox_fill
 
     /// The list of casks
-    var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
+    public var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
 
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
@@ -184,7 +184,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
 
     private var fsobserver: FileSystemObserver? = nil
 
-    init(source: AppSource, sourceURL: URL) {
+    public init(source: AppSource, sourceURL: URL) {
         self.source = source
         self.sourceURL = sourceURL
         watchCaskroomFolder()

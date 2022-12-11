@@ -31,7 +31,7 @@
  */
 import Swift
 import XCTest
-@testable import App
+import App
 import FairCore
 import FairExpo
 //
