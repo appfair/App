@@ -32,7 +32,6 @@ markets:
 # Pages / Jekyll configuration:
 remote_theme: "appfair/fairapp-theme"
 
-<<<<<<< HEAD
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
