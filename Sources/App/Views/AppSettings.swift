@@ -264,7 +264,7 @@ struct HomebrewSettingsView: View {
                                     .button {
                                         homebrewOperationInProgress = true
                                         await fairManager.trying {
-                                            try await homeBrewInv.installHomebrew(retainCasks: false)
+                                            try await homeBrewInv.installHomebrew(force: true, retainCasks: false)
                                             dbg("caskManager.installHomebrew success")
                                             self.homebrewInstalled = homeBrewInv.isHomebrewInstalled()
                                         }

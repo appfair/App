@@ -33,6 +33,15 @@ import FairKit
 import FairExpo
 import Combine
 
+extension Never : FacetView {
+    public typealias FacetStore = FairManager
+    public typealias FacetViewType = Never
+    @ViewBuilder public func facetView(for store: FacetStore) -> Never {
+        fatalError()
+    }
+
+}
+
 open class FairManager: SceneManager, AppInventoryController {
     @AppStorage("themeStyle") var themeStyle = ThemeStyle.system
 
@@ -91,6 +100,9 @@ open class FairManager: SceneManager, AppInventoryController {
     @Published public var errors: [AppError] = []
 
     //private var observers: [AnyCancellable] = []
+
+    public typealias AppFacets = Never
+    public typealias ConfigFacets = Never
 
     public required init() {
         self.resetAppSources(load: nil)

@@ -485,11 +485,11 @@ extension AppSourceInventory {
                 do {
                     if installPath.pathExtension == "app" {
                         if FileManager.default.isDirectory(url: installPath) == true {
-                            addApp(bundle: try AppBundle(folderAt: installPath))
+                            await addApp(bundle: try AppBundle(folderAt: installPath))
                         }
                     } else if installPath.pathExtension == "ipa" {
                         if FileManager.default.isDirectory(url: installPath) == false {
-                            addApp(bundle: try AppBundle(zipArchiveAt: installPath))
+                            await addApp(bundle: try AppBundle(zipArchiveAt: installPath))
                         }
                     } else {
                         dbg("skipping unrecognized path extension:", installPath)
@@ -593,8 +593,12 @@ extension AppSourceInventory {
             throw Errors.appAlreadyInstalled(installPath)
         }
 
+        guard let downloadURL = item.downloadURL else {
+            throw Errors.missingDownloadURL(item)
+        }
+
         try Task.checkCancellation()
-        let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: item.downloadURL, progress: parentProgress)
+        let (downloadedArtifact, downloadSha256) = try await downloadArtifact(url: downloadURL, progress: parentProgress)
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
@@ -628,7 +632,7 @@ extension AppSourceInventory {
 //            throw Errors.tooManyInstallFiles(item.downloadURL)
 //        }
 
-        let bundle = try AppBundle(folderAt: expandURL)
+        let bundle = try await AppBundle(folderAt: expandURL)
         let (expandedAppPath, infoURL) = try bundle.appInfoURLs()
         dbg("expandedAppPath:", expandedAppPath.path, "infoURL:", infoURL.path, "expandURL:", expandURL)
         try bundle.validatePaths()
@@ -703,8 +707,8 @@ extension AppSourceInventory {
         }
 
         #if os(macOS)
-        if self.relaunchUpdatedApps == true {
-            let bundleID = AppIdentifier(item.bundleIdentifier)
+        if self.relaunchUpdatedApps == true, let bundleIdentifier = item.bundleIdentifier {
+            let bundleID = AppIdentifier(bundleIdentifier)
             // the catalog app is special, since re-launching requires quitting the current app
             let isCatalogApp = bundleID.rawValue == Bundle.main.bundleID
 
@@ -824,6 +828,8 @@ extension AppSourceInventory {
         case tooManyInstallFiles(URL)
         /// When the zip archive is empty
         case noAppContents(URL)
+        /// When the app catalog item does not list a URL
+        case missingDownloadURL(AppCatalogItem)
     }
 }
 
@@ -870,10 +876,11 @@ extension FairHub {
         var catalog = try AppCatalog.parse(jsonData: data)
         dbg("parsed catalog apps at:", sourceURL, catalog.apps.count)
 
-        if let locale = locale {
-            // localize the catalog for the requested locale
-            catalog = try await catalog.localized(into: locale)
-        }
+        #warning("TODO: re-enable localization")
+//        if let locale = locale {
+//            // localize the catalog for the requested locale
+//            catalog = try await catalog.localized(into: locale)
+//        }
 
         if injectSourceURL == true && catalog.sourceURL == nil {
             catalog.sourceURL = sourceURL
@@ -900,12 +907,12 @@ extension AppSourceInventory {
     }
 
     public func appInstalled(_ item: AppInfo) -> String? {
-        installedInfo(for: AppIdentifier(item.app.bundleIdentifier))?.versionString
+        installedInfo(for: AppIdentifier(item.app.bundleIdentifier ?? wip("")))?.versionString
     }
 
     public func appUpdated(_ item: AppInfo) -> Bool {
         // (appPropertyList?.successValue?.appVersion ?? .max) < (info.releasedVersion ?? .min)
-        (installedVersion(for: AppIdentifier(item.app.bundleIdentifier)) ?? .max) < (item.app.releasedVersion ?? .min)
+        (installedVersion(for: AppIdentifier(item.app.bundleIdentifier ?? wip(""))) ?? .max) < (item.app.releasedVersion ?? .min)
     }
 
 }

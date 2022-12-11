@@ -161,9 +161,9 @@ struct AppsListView : View {
     }
 
     private func arrangedItems(source: AppSource, sourceSelection: SourceSelection?, searchText: String) -> [AppInfo] {
-        prf(msg: { items in "arranging: “\(source.rawValue)” items: \(items.count)" }) {
+        //prf(msg: { items in "arranging: “\(source.rawValue)” items: \(items.count)" }) {
             fairManager.arrangedItems(source: source, sourceSelection: sourceSelection, searchText: searchText)
-        }
+        //}
     }
 
     @ViewBuilder private func appListSection(section: AppsListView.AppListSection?, source: AppSource) -> some View {

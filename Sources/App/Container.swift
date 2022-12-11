@@ -2,6 +2,13 @@ import FairApp
 
 /// The entry point to creating a scene and settings.
 public extension AppContainer {
+//    /// The root scene for new windows
+//    @SceneBuilder static func rootScene(store: AppManager) -> Self.SceneBody
+//
+//    associatedtype SettingsBody : View
+//    /// The settings associated with this app
+//    @ViewBuilder static func settingsView(store: AppManager) -> Self.SettingsBody
+
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
             RootView()

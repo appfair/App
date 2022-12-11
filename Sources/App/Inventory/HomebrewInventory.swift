@@ -157,7 +157,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
     @Published private var appCategories: [AppCategoryType: [AppInfo]] = [:]
 
     /// The current catalog of casks
-    @Published private var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
+    @Published private(set) var casks: [CaskItem] = [] //{ didSet { updateAppInfo() } }
 
     /// The date the catalog was most recently updated
     @Published private(set) public var catalogUpdated: Date? = nil
@@ -174,7 +174,7 @@ public final class HomebrewInventory: ObservableObject, AppInventory {
     static let symbol = FairSymbol.shippingbox_fill
 
     /// The list of casks
-    private var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
+    var homebrewAPI: HomebrewAPI { HomebrewAPI(caskAPIEndpoint: caskAPIEndpoint) }
 
     /// The local brew archive if it is embedded in the app
     private let brewArchiveURLLocal = Bundle.module.url(forResource: "appfair-homebrew", withExtension: "zip", subdirectory: "Bundle")
@@ -275,6 +275,7 @@ extension HomebrewInventory : HomebrewManagement {
         }
 
         try fm.unzipItem(at: downloadedArtifact, to: brewHome, trimBasePath: true, overwrite: retainCasks == true)
+
         dbg("extracted brew package to:", brewHome)
 
         if removeArtifact {
@@ -479,7 +480,7 @@ extension HomebrewInventory : AppManagement {
     }
 
     public func installedPath(for item: AppInfo) async throws -> URL? {
-        let token = item.app.bundleIdentifier
+        let token = item.app.bundleIdentifier ?? wip("")
         let caskDir = URL(fileURLWithPath: token, relativeTo: self.localCaskroom)
         let versionDir = URL(fileURLWithPath: item.app.version ?? "", relativeTo: caskDir)
         if FileManager.default.isDirectory(url: versionDir) == true {
@@ -1348,7 +1349,7 @@ extension HomebrewInventory {
         var infos = Array<AppInfo>()
         infos.reserveCapacity(max(apps.count, caskMap.count))
         for app in apps {
-            let cask = caskMap[app.bundleIdentifier]
+            let cask = caskMap[app.bundleIdentifier ?? wip("")]
             if cask == nil {
                 // this can happen if the cask was removed from the Homebrew Casks catalog, but the appcasks.json has not yet been update to reflect the removal
                 dbg("missing cask:", app.bundleIdentifier)

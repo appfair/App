@@ -410,8 +410,11 @@ private struct CatalogItemHostView: View {
     private func fetchDownloadURLStats() async {
         do {
             //dbg("checking URL HEAD:", metadata.downloadURL.absoluteString)
+            guard let downloadURL = metadata.downloadURL else {
+                return dbg("no dowbloadURL for item")
+            }
 
-            let head = try await URLSession.shared.fetchHEAD(url: metadata.downloadURL, cachePolicy: .returnCacheDataElseLoad)
+            let head = try await URLSession.shared.fetchHEAD(url: downloadURL, cachePolicy: .returnCacheDataElseLoad)
 
             // in theory, we could also try to pre-flight out expected SHA-256 checksum by checking for a header like "Digest: sha-256=A48E9qOokqqrvats8nOJRJN3OWDUoyWxBf7kbu9DBPE=", but in practice no server ever seems to send it
             withAnimation {
@@ -423,7 +426,7 @@ private struct CatalogItemHostView: View {
         } catch {
             // errors are not unexpected when the user leaves this view:
             // NSURLErrorDomain Code=-999 "cancelled"
-            dbg("error checking URL size:", metadata.downloadURL.absoluteString, "error:", error)
+            dbg("error checking URL size:", metadata.downloadURL?.absoluteString, "error:", error)
         }
     }
 
@@ -1299,10 +1302,11 @@ private struct CatalogItemHostView: View {
         let developerName = info.app.developerName ?? ""
 
         if info.isCask {
+            let downloadURL = info.app.downloadURL?.absoluteString ?? ""
             return Text("""
                 This will use the Homebrew package manager to download and install the application “\(info.app.name)” from the developer “\(developerName)” at:
 
-                [\(info.app.downloadURL.absoluteString)](\(info.app.downloadURL.absoluteString))
+                [\(downloadURL)](\(downloadURL))
 
                 This app has not undergone any formal review, so you will be installing and running it at your own risk.
 
@@ -1727,11 +1731,13 @@ struct SecurityBox : View {
 
         let url: URL?
         if checkFileHash == false {
-            let sourceURL = self.info.cask?.url ?? self.info.app.downloadURL.absoluteString
-            let urlChecksum = sourceURL.utf8Data.sha256().hex()
+            if let sourceURL = self.info.cask?.url ?? self.info.app.downloadURL?.absoluteString {
+                let urlChecksum = sourceURL.utf8Data.sha256().hex()
 
-            url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
-
+                url = URL(string: urlChecksum, relativeTo: URL(string: "https://www.appfair.net/fairscan/urls/"))?.appendingPathExtension("json")
+            } else {
+                url = wip(nil)
+            }
         } else { // use the artifact URL hash
             guard let checksum = self.info.cask?.checksum ?? self.info.app.sha256 else {
                 dbg("no checksum for artifact")
@@ -1855,7 +1861,7 @@ struct AppInfoDetailBox : View, Equatable {
     let info: AppInfo
 
     var body: some View {
-        textBox(.success(AttributedString(info.app.prettyJSON)))
+        textBox(.success(AttributedString((try? info.app.prettyJSON) ?? "ERROR")))
             .font(Font.body.monospaced())
     }
 }
@@ -1959,7 +1965,7 @@ extension AppInfo {
 
     /// Returns `true` if this is an app whose path extension is `.ipa`
     var isGitHubHostedApp: Bool {
-        (try! githubDownloadRegex.get()).hasMatches(in: app.downloadURL.absoluteString) == true
+        (try! githubDownloadRegex.get()).hasMatches(in: app.downloadURL?.absoluteString ?? "") == true
     }
 
     /// Returns `true` if this is an app whose path extension is `.ipa`
@@ -1973,7 +1979,7 @@ extension AppCatalogItem {
     /// Returns `true` if this is an app whose path extension is `.ipa`
     var isMobileApp: Bool {
         // TODO: self.platforms.contains(.ios)
-        wipipa(self.downloadURL.pathExtension == "ipa")
+        wipipa(self.downloadURL?.pathExtension == "ipa")
     }
 
     /// The specified tint color, falling back on the default tint for the app name

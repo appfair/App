@@ -36,27 +36,27 @@ import FairCore
 import FairExpo
 
 open class AppTests: XCTestCase {
-    @MainActor open func testAppStore() throws {
-        let store = AppContainer.AppStore()
-        XCTAssertEqual(store.hubOrg, "appfair")
-        let cfg = Store.config
-        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
-    }
+//    @MainActor open func testAppStore() throws {
+//        let store = AppContainer.AppStore()
+//        XCTAssertEqual(store.hubOrg, "appfair")
+//        let cfg = Store.config
+//        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
+//    }
 
     func testCaskList() async throws {
-//        let homeBrewInv = HomebrewInventory.default
-//        XCTAssertEqual(homeBrewInv.casks.count, 0)
-//        let (casks, response) = try await homeBrewInv.fetchCasks()
-//        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
-//        XCTAssertGreaterThan(casks.count, 1000)
+        let homeBrewInv = HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL)
+        XCTAssertEqual(homeBrewInv.casks.count, 0)
+        let (casks, response) = try await homeBrewInv.homebrewAPI.fetchCasks()
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        XCTAssertGreaterThan(casks.count, 1000)
     }
 
-    func testInstalledApps() throws {
+//    func testInstalledApps() throws {
 //        let homeBrewInv = CaskManager()
 //        XCTAssertEqual(0, homeBrewInv.installed.count)
 //        try homeBrewInv.refreshInstalledApps()
 //        XCTAssertNotEqual(0, homeBrewInv.installed.count, "assuming homebrew is installed, there should have been more than one installation")
-    }
+//    }
 
 //    func testAppcastParsing() async throws {
 //        let inv = HomebrewInventory.default

@@ -120,7 +120,7 @@ public struct AppIdentifier: Hashable, RawRepresentable, Comparable {
 // typealias AppIdentifier = XOr<BundleIdentifier>.Or<CaskIdentifier>
 
 extension AppCatalogItem : Identifiable {
-    public var id: AppIdentifier { AppIdentifier(bundleIdentifier) }
+    public var id: AppIdentifier { AppIdentifier(bundleIdentifier ?? wip("")) }
 }
 
 
