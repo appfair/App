@@ -34,15 +34,16 @@ import XCTest
 import App
 import FairCore
 import FairExpo
-//
+
 open class AppTests: XCTestCase {
 //    @MainActor open func testAppStore() throws {
-//        let store = AppContainer.AppStore()
+//        let store = AppContainer.AppManager()
 //        XCTAssertEqual(store.hubOrg, "appfair")
-//        let cfg = Store.config
+//        let cfg = AppContainer.AppManager.config
 //        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
 //    }
 
+    #if os(macOS) // HomebrewInventory not available on iOS
     func testCaskList() async throws {
         let homeBrewInv = HomebrewInventory(source: .homebrew, sourceURL: appfairCaskAppsURL)
         XCTAssertEqual(homeBrewInv.casks.count, 0)
@@ -50,6 +51,7 @@ open class AppTests: XCTestCase {
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
         XCTAssertGreaterThan(casks.count, 1000)
     }
+    #endif
 
     @MainActor open func testAppManager() throws {
         let store = AppContainer.AppManager()
