@@ -1,10 +1,4 @@
 # App metadata; see https://appfair.net/#App.yml
-
-# Fastlane metadata keys:
-# https://docs.fastlane.tools/actions/deliver/#non-localized-metadata
-# Note: localized keys for app title, subtitle, description, etc.
-# should defined in localized resources instead of here:
-# Sources/App/Resources/*.lproj/Localizable.strings
 app:
   subtitle: "A buggy app for weather bugs"
   #subtitle: "Weather for all, for free"
@@ -15,8 +9,28 @@ app:
   # description: "A simple app fair app."
   # locales: # keys like "fr-FR" can contain localized description, name, etc.
 
+  # primary_category and secondary_category can be any of: FOOD_AND_DRINK, BUSINESS, EDUCATION, SOCIAL_NETWORKING, BOOKS, SPORTS, FINANCE, REFERENCE, GRAPHICS_AND_DESIGN, DEVELOPER_TOOLS, HEALTH_AND_FITNESS, MUSIC, WEATHER, TRAVEL, ENTERTAINMENT, STICKERS, GAMES, LIFESTYLE, MEDICAL, MAGAZINES_AND_NEWSPAPERS, UTILITIES, SHOPPING, PRODUCTIVITY, NEWS, PHOTO_AND_VIDEO, NAVIGATION
+
+  primary_category: "UTILITIES" 
+  secondary_category: "PRODUCTIVITY"
+
+
+  # translations for the name, subtitle, description, and keywords
+  # Supported language keys are: # ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
+
+  localizations:
+    #fr-FR:
+    #  name: "App Name in French"
+    #  subtitle: "App Subtitle in French"
+    #  description: "App Description in French"
+
+# marketplace-issued indentifiers for the distribution channels for this app
 markets:
   testflight: '1643341549'    # the assigned TestFlight id
+  testflighturl: "https://testflight.apple.com/join/0dqMR6uN"  # the public TestFlight beta link
+  #appstore: "0123456789"      # the assigned App Store id
+  #appstoreurl: "https://…"    # the official App Store landing page
+  #playstore: "123456543210"   # the assigned Play Store id
   #appstore: '0123456789'      # the assigned App Store id
   #playstore: '123456543210'   # the assigned Play Store id
 
@@ -37,11 +51,7 @@ data:
 # Pages / Jekyll configuration::
 remote_theme: appfair/fairapp-theme
 
-# the app icon is generated from a simple SVG path and a tint color
-icon:
-  # gradient tint color (symbolic name or "#RRGGBB")
-  tint: 'red'
-  # SVG path to place in the center of the icon
-  path: 'M0 200 v-200 h200 a100,100 90 0,1 0,200 a100,100 90 0,1 -200,0 z'
+# Pages / Jekyll configuration:
+remote_theme: "appfair/fairapp-theme"
 
 
