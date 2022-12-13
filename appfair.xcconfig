@@ -7,10 +7,10 @@ PRODUCT_NAME = App Fair
 PRODUCT_BUNDLE_IDENTIFIER = app.App-Fair
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.8.137
+MARKETING_VERSION = 0.8.138
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 962
+CURRENT_PROJECT_VERSION = 963
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.utilities
@@ -24,8 +24,8 @@ ICON_SYMBOL = M178.986,226.1068 L162.632,196.3952 C154.2,200.1716 144.881,202.31
 
 // Specify which platforms to build and release
 // SUPPORTED_PLATFORMS = macosx
-SUPPORTED_PLATFORMS = iphoneos iphonesimulator
-// SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+// SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
 
 // On-device testing may need to override the bundle ID
 // PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
