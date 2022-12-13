@@ -262,7 +262,7 @@ extension HomebrewInventory : HomebrewManagement {
             throw AppError(NSLocalizedString("Could not install from local artifact", comment: "error message"))
         } else {
             fromURL = self.brewArchiveURLRemote
-            let (downloaded, response) = try await URLSession.shared.download(request: URLRequest(url: fromURL), memoryBufferSize: 1024 * 64, consumer: nil, parentProgress: nil)
+            let (downloaded, response) = try await URLRequest(url: fromURL).download(consumer: nil, parentProgress: nil)
             dbg("received download response:", response)
             downloadedArtifact = downloaded
             removeArtifact = true

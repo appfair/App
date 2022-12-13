@@ -607,16 +607,6 @@ struct NavigationRootView : View {
                     DisplayModePicker(mode: $displayMode)
                 }
             }
-//            .task(priority: .background) {
-//                dbg(wip("Testing Task"))
-//                do {
-//                    for try await data in try FileHandle(forReadingFrom: URL(fileURLWithPath: "/dev/random")).readDataAsync() {
-//                        dbg("read data:", data)
-//                    }
-//                } catch {
-//                    dbg("error:", error)
-//                }
-//            }
             .task(priority: .medium) {
                 dbg("refreshing catalogs")
                 await fairManager.refresh(reloadFromSource: false)

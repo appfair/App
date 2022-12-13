@@ -848,7 +848,8 @@ extension AppInventory {
         parentProgress?.fileOperationKind = .downloading
 
         let hasher = SHA256Hasher()
-        let (downloadedArtifact, response) = try await URLSession.shared.download(request: request, memoryBufferSize: 1024 * 64, consumer: hasher, parentProgress: parentProgress)
+//        let (downloadedArtifact, response) = try await URLSession.shared.downloadOLD(request: request, consumer: hasher, parentProgress: parentProgress)
+        let (downloadedArtifact, response) = try await request.download(consumer: hasher, parentProgress: parentProgress)
         let downloadSha256 = await hasher.final()
 
         let t2 = CFAbsoluteTimeGetCurrent()
