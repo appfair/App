@@ -34,6 +34,7 @@ import FairExpo
 import Dispatch
 import Security
 import Foundation
+import OSLog
 
 private let showPreReleasesDefault = false
 private let relaunchUpdatedAppsDefault = true
@@ -184,7 +185,7 @@ public final class AppSourceInventory: ObservableObject, AppInventory, AppManage
                 do {
                     try await updateCatalogApp()
                 } catch {
-                    dbg("error updating catalog app:", error)
+                    dbg(3, "error updating catalog app:", error)
                 }
             }
 
@@ -602,7 +603,7 @@ extension AppSourceInventory {
         try Task.checkCancellation()
 
         // grab the hash of the download to compare against the fairseal
-        dbg("comparing fairseal expected:", item.sha256, "with actual:", downloadSha256)
+        dbg(2, "comparing fairseal expected:", item.sha256, "with actual:", downloadSha256)
         if let sha256 = item.sha256, sha256 != downloadSha256.hex() {
             throw AppError(NSLocalizedString("Invalid checksum", comment: "error message when a checksum fails"), failureReason: NSLocalizedString("The app's checksum was not valid. This may indicate a network failure to download correctly, but it could also indicate the app's contents have been tampered with since it was sealed. It is recommended you do not install this app, and that you inform the app's vendor of the incicident.", comment: "error message failure reason when a checksum fails"))
         }
@@ -626,7 +627,7 @@ extension AppSourceInventory {
         // try Process.removeQuarantine(appURL: expandURL) // xattr: [Errno 1] Operation not permitted: '/var/folders/app.App-Fair/CFNetworkDownload_XXX.tmp.expanded/Some App.app'
 
         let shallowFiles = try FileManager.default.contentsOfDirectory(at: expandURL, includingPropertiesForKeys: nil, options: [])
-        dbg("unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t2 - t1)
+        dbg(2, "unzipped:", downloadedArtifact.path, "to:", shallowFiles.map(\.lastPathComponent), "in:", t2 - t1)
 
 //        if shallowFiles.count != 1 {
 //            throw Errors.tooManyInstallFiles(item.downloadURL)
@@ -668,12 +669,12 @@ extension AppSourceInventory {
         try FileManager.default.createDirectory(at: installFolderURL, withIntermediateDirectories: true, attributes: nil)
 
         let destinationURL = installFolderURL.appendingPathComponent(expandedAppPath.lastPathComponent)
-        dbg("destinationURL:", destinationURL.path)
+        dbg(2, "destinationURL:", destinationURL.path)
 
         // if we permit updates and it is already installed, trash the previous version
         if update && FileManager.default.isDirectory(url: destinationURL) == true {
             // TODO: first rename based on the old version number
-            dbg("trashing:", destinationURL.path)
+            dbg(2, "trashing:", destinationURL.path)
             try await trash(destinationURL)
         }
 
@@ -685,12 +686,12 @@ extension AppSourceInventory {
                 try await trash(removingURLAt)
             } catch {
                 // tolerate errors, which may result from translocation issues
-                dbg("error removingURLAt:", removingURLAt.path)
+                dbg(2, "error removingURLAt:", removingURLAt.path)
             }
             try Task.checkCancellation()
         }
 
-        dbg("installing:", expandedAppPath.path, "into:", destinationURL.path)
+        dbg(2, "installing:", expandedAppPath.path, "into:", destinationURL.path)
         try await Self.withPermission(installFolderURL) { installFolderURL in
             // try FileManager.default.replaceItemAt(destinationURL, withItemAt: expandedAppPath)
             try FileManager.default.moveItem(at: expandedAppPath, to: destinationURL)
@@ -713,7 +714,7 @@ extension AppSourceInventory {
             let isCatalogApp = bundleID.rawValue == Bundle.main.bundleID
 
             func relaunch() {
-                dbg("re-launching app:", bundleID)
+                dbg(2, "re-launching app:", bundleID)
                 terminateAndRelaunch(bundleID: bundleID, force: false, overrideLaunchURL: isCatalogApp ? destinationURL : nil)
             }
 
@@ -848,7 +849,6 @@ extension AppInventory {
         parentProgress?.fileOperationKind = .downloading
 
         let hasher = SHA256Hasher()
-//        let (downloadedArtifact, response) = try await URLSession.shared.downloadOLD(request: request, consumer: hasher, parentProgress: parentProgress)
         let (downloadedArtifact, response) = try await request.download(consumer: hasher, parentProgress: parentProgress)
         let downloadSha256 = await hasher.final()
 
