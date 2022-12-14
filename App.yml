@@ -15,12 +15,6 @@ app:
       name: "Exposition internationale"
       keywords: "coding,javascript,sdui,playground"
 
-  # primary_category and secondary_category can be any of: FOOD_AND_DRINK, BUSINESS, EDUCATION, SOCIAL_NETWORKING, BOOKS, SPORTS, FINANCE, REFERENCE, GRAPHICS_AND_DESIGN, DEVELOPER_TOOLS, HEALTH_AND_FITNESS, MUSIC, WEATHER, TRAVEL, ENTERTAINMENT, STICKERS, GAMES, LIFESTYLE, MEDICAL, MAGAZINES_AND_NEWSPAPERS, UTILITIES, SHOPPING, PRODUCTIVITY, NEWS, PHOTO_AND_VIDEO, NAVIGATION
-
-  primary_category: "UTILITIES" 
-  secondary_category: "PRODUCTIVITY"
-
-
   # translations for the name, subtitle, description, and keywords
   # Supported language keys are: # ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
 

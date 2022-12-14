@@ -77,8 +77,8 @@ open class Store: SceneManager {
         case welcome
         /// The script preview editor
         case scriptEditor
-        /// The JackScripts editor
-        case jackScripts
+        /// The UI Playground
+        case playgroundUI
         /// The setting for the app, which contains app-specific preferences as well as other standard settings
         case settings
 
@@ -88,7 +88,7 @@ open class Store: SceneManager {
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "tab title for top-level “Welcome” facet"), symbol: "house", tint: nil)
             case .scriptEditor:
                 return FacetInfo(title: Text("Script Editor", bundle: .module, comment: "tab title for top-level “Script Editor” facet"), symbol: "squareshape.dashed.squareshape", tint: nil)
-            case .jackScripts:
+            case .playgroundUI:
                 return FacetInfo(title: Text("UI Playground", bundle: .module, comment: "tab title for top-level “UI Playground” facet"), symbol: "puzzlepiece", tint: nil)
             case .settings:
                 return FacetInfo(title: Text("Settings", bundle: .module, comment: "tab title for top-level “Settings” facet"), symbol: "gearshape", tint: nil)
@@ -97,10 +97,18 @@ open class Store: SceneManager {
 
         @ViewBuilder public func facetView(for store: Store) -> some View {
             switch self {
-            case .welcome: WelcomeView()
-            case .scriptEditor: ScriptEditorView()
-            case .jackScripts: JackScriptNavView()
-            case .settings: SettingsView()
+            case .welcome:
+                WelcomeView()
+            case .scriptEditor:
+                ScriptEditorView()
+            case .playgroundUI:
+                #if canImport(JXSwiftUI)
+                JXSwiftUINavView()
+                #else
+                JackScriptNavView()
+                #endif
+            case .settings:
+                SettingsView()
             }
         }
     }
