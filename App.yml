@@ -15,15 +15,6 @@ app:
       name: "Exposition internationale"
       keywords: "coding,javascript,sdui,playground"
 
-  # translations for the name, subtitle, description, and keywords
-  # Supported language keys are: # ar-SA, ca, cs, da, de-DE, el, en-AU, en-CA, en-GB, en-US, es-ES, es-MX, fi, fr-CA, fr-FR, he, hi, hr, hu, id, it, ja, ko, ms, nl-NL, no, pl, pt-BR, pt-PT, ro, ru, sk, sv, th, tr, uk, vi, zh-Hans, zh-Hant
-
-  localizations:
-    #fr-FR:
-    #  name: "App Name in French"
-    #  subtitle: "App Subtitle in French"
-    #  description: "App Description in French"
-
 # marketplace-issued indentifiers for the distribution channels for this app
 markets:
   testflight: "6443680952"    # the assigned TestFlight id

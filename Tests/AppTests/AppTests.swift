@@ -24,8 +24,8 @@ open class AppTests: XCTestCase {
         XCTAssertEqual(store.togglePreference, false)
         XCTAssertEqual(store.numberPreference, 0.0)
 
-        let cfg = AppContainer.AppManager.config
-        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
+//        let cfg = AppContainer.AppManager.config
+//        XCTAssertEqual("appfair/fairapp-theme", cfg["remote_theme"])
     }
 
     /// Creates screenshots for this app by iterating through all the facets, locales, and supported devices.
