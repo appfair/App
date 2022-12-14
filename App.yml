@@ -23,8 +23,8 @@ app:
 
 # marketplace-issued indentifiers for the distribution channels for this app
 markets:
-  #testflight: "0123456789"    # the assigned TestFlight id
-  #testflighturl: "https://…"  # the public TestFlight beta link
+  testflight: "1644895985"    # the assigned TestFlight id
+  testflighturl: "https://testflight.apple.com/join/UQtz2PPT"  # the public TestFlight beta link
   #appstore: "0123456789"      # the assigned App Store id
   #appstoreurl: "https://…"    # the official App Store landing page
   #playstore: "123456543210"   # the assigned Play Store id
