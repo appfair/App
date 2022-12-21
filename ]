@@ -21,9 +21,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run fairtool
-        run: swift run fairtool version
-
-      - name: Bump release
         run: |
-            swift run fairtool app configure # --bump patch --output json
+          swift run fairtool version
 
