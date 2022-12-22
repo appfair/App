@@ -20,6 +20,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+            token: ${{ env.GITHUB_TOKEN }}
 
       - name: Run fairtool
         run: swift run fairtool version
