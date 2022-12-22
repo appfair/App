@@ -1,4 +1,5 @@
 name: "Auto Release"
+
 # This command runs periodically and attempts to create and submit
 # a new version of the app to the App Store.
 on:
