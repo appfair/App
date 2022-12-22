@@ -6,14 +6,15 @@ on:
   #push:
   workflow_dispatch:
   schedule:
-    - cron: '0 0,12 * * *'
+    - cron: '0 * * * *'
+    #- cron: '0 0,12 * * *'
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      GITHUB_TOKEN: ${{ secrets.CI_ACCESS_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
 
     steps:
       - name: Get swift version
