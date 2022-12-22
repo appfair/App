@@ -2,9 +2,10 @@ name: "Auto Release"
 # This command runs periodically and attempts to create and submit
 # a new version of the app to the App Store.
 on:
+  #push:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0,12 * * *'
+  #schedule:
+    #- cron: '0 0,12 * * *'
 
 jobs:
   create-release:
@@ -25,5 +26,10 @@ jobs:
 
       - name: Bump release
         run: |
-            swift run fairtool app configure # --bump patch --output json
+            swift run fairtool app configure --bump patch | tee /tmp/fairv.json
+            TAGNAME=`cat /tmp/fairv.json | jq -re '.[0].version'`
+            git add appfair.xcconfig
+            git commit -m "Auto-release ${TAGNAME}"
+            git tag -s -a "${TAGNAME}" -m "Release ${TAGNAME}"
+            git push --follow-tags
 
