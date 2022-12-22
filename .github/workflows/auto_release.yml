@@ -41,6 +41,8 @@ jobs:
           git tag -a "${TAGNAME}" -m "Release ${TAGNAME}"
           git push --follow-tags
 
+          cat .git/config
+
           # Trigger the integration
-          gh pr create --title "${APPID} ${TAGNAME}" --body "Auto-release ${TAGNAME}"
+          gh pr create --repo appfair/App --title "${APPID} ${TAGNAME}" --body "Auto-release ${TAGNAME}"
 
