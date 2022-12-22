@@ -1,4 +1,4 @@
-name: "Auto Release"
+name: "Scheduled Automatic Release"
 
 # This command runs periodically and attempts to create and submit
 # a new version of the app to the App Store.
@@ -6,7 +6,7 @@ on:
   #push:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '30 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 * * *'
     #- cron: '0 0,12 * * *'
 
 jobs:
@@ -25,28 +25,32 @@ jobs:
         with:
             token: ${{ env.GITHUB_TOKEN }}
 
+      - name: Setup git
+        run: |
+          git config --global user.name 'appfairbot'
+          git config --global user.email 'appfairbot@appfair.net'
+
       - name: Run fairtool
         run: swift run fairtool version
 
       - name: Bump release
         run: |
+          # update the appfair.xcconfig with a new patch version
           swift run fairtool app configure -J --bump patch | tee /tmp/fairv.json
 
+          # extract build configuration variables from output
           APPNAME=`cat /tmp/fairv.json | jq -re '.productName'`
           APPID=`cat /tmp/fairv.json | jq -re '.bundleIdentifier'`
           TAGNAME=`cat /tmp/fairv.json | jq -re '.version'`
 
-          git config --global user.name 'fair-ground action'
-          git config --global user.email 'fair-ground@users.noreply.github.com'
-
-          # Trigger the release
+          # Push a semver tag to trigger a release of
+          # https://github.com/Silly-Little-App/App.git
           git add appfair.xcconfig
           git commit -m "Auto-release ${TAGNAME}"
           git tag -a "${TAGNAME}" -m "Release ${TAGNAME}"
           git push --follow-tags
 
-          cat .git/config
-
-          # Trigger the integration
+          # Create a pull request for https://github.com/appfair/App.git
+          # to trigger the integration and distribution
           gh pr create --repo appfair/App --title "${APPNAME} ${TAGNAME}" --body "Auto-release ${TAGNAME}"
 
