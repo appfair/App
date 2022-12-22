@@ -30,6 +30,6 @@ jobs:
             TAGNAME=`cat /tmp/fairv.json | jq -re '.[0].version'`
             git add appfair.xcconfig
             git commit -m "Auto-release ${TAGNAME}"
-            git tag -s -a "${TAGNAME}" -m "Release ${TAGNAME}"
+            git tag -a "${TAGNAME}" -m "Release ${TAGNAME}"
             git push --follow-tags
 
