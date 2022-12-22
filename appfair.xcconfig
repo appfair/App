@@ -7,7 +7,7 @@ PRODUCT_NAME = Silly Little App
 PRODUCT_BUNDLE_IDENTIFIER = app.Silly-Little-App
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.11
+MARKETING_VERSION = 0.0.12
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 152
@@ -19,7 +19,7 @@ APP_CATEGORY = public.app-category.utilities
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 // SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator android
-SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+SUPPORTED_PLATFORMS =  macosx iphoneos iphonesimulator
 
 // On-device testing may need to override the bundle ID
 // PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
