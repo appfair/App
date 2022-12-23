@@ -34,7 +34,10 @@ jobs:
       - name: Bump release
         run: |
           # update the appfair.xcconfig with a new patch version
-          swift run fairtool app configure -J --bump patch | tee /tmp/fairv.json
+          swift run fairtool app configure -J --bump patch > /tmp/fairv.json
+
+          # show configuration
+          cat /tmp/fairv.json | jq .
 
           # extract build configuration variables from output
           APPNAME=`cat /tmp/fairv.json | jq -re '.productName'`
