@@ -5,7 +5,7 @@ name: "Scheduled Automatic Release"
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0,12 * * *'
+    - cron: '0 0,8,16 * * *'
 
 jobs:
   create-release:
