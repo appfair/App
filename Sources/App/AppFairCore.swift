@@ -101,7 +101,7 @@ extension Plist {
 
     /// The semantic version for the `CFBundleShortVersionString` key.
     var appVersion: AppVersion? {
-        versionString.flatMap({ AppVersion.init(string: $0, prerelease: false) })
+        versionString.flatMap({ AppVersion.init(string: $0) })
     }
 }
 
