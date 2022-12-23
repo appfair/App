@@ -1,57 +1,53 @@
-name: "Scheduled Automatic Release"
-
-# This command runs periodically and attempts to create and submit
-# a new version of the app to the App Store.
-on:
+name: "Release App"
+# Release App creates a release of the app and issues a release PR.
+#
+# See: https://www.appfair.net
+on: 
+  #schedule:
+    #- cron: '0 0,8,16 * * *'
   workflow_dispatch:
-  schedule:
-    - cron: '0 0,8,16 * * *'
+    inputs:
+      bump_major:
+        type: boolean
+        description: 'Bump Version Major'
+        required: false
+        default: false
+      bump_minor:
+        type: boolean
+        description: 'Bump Version Minor'
+        required: false
+        default: false
+      bump_patch:
+        type: boolean
+        description: 'Bump Version Patch'
+        required: false
+        default: false
+      version:
+        type: string
+        description: 'Set App Version'
+        required: false
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
+  call-workflow:
+    uses: appfair/fairground/.github/workflows/release.yml@main
+    with:
+      version: ${{ github.event.inputs.version }}
+      bump_major: ${{ github.event.inputs.bump_major == 'true' }}
+      bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
+      bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
 
-    steps:
-      - name: Get swift version
-        run: swift --version 
-
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-            token: ${{ env.GITHUB_TOKEN }}
-
-      - name: Setup git
-        run: |
-          git config --global user.name 'appfairbot'
-          git config --global user.email 'appfairbot@appfair.net'
-
-      - name: Run fairtool
-        run: swift run fairtool version
-
-      - name: Bump release
-        run: |
-          # update the appfair.xcconfig with a new patch version
-          swift run fairtool app configure -J --bump patch > /tmp/fairv.json
-
-          # show configuration
-          cat /tmp/fairv.json | jq .
-
-          # extract build configuration variables from output
-          APPNAME=`cat /tmp/fairv.json | jq -re '.productName'`
-          APPID=`cat /tmp/fairv.json | jq -re '.bundleIdentifier'`
-          TAGNAME=`cat /tmp/fairv.json | jq -re '.version'`
-
-          # Push a semver tag to trigger a release of
-          # https://github.com/Silly-Little-App/App.git
-          git add appfair.xcconfig
-          git commit -m "Auto-release ${TAGNAME}"
-          git tag -a "${TAGNAME}" -m "Release ${TAGNAME}"
-          git push --follow-tags
-
-          # Create a pull request for https://github.com/appfair/App.git
-          # to trigger the integration and distribution
-          gh pr create --repo appfair/App --title "${APPNAME} ${TAGNAME}" --body "Auto-release ${TAGNAME}"
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  deployments: write
+  id-token: write
+  issues: write
+  discussions: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
 
