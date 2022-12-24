@@ -42,7 +42,8 @@ jobs:
       #token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
   monitor-workflow:
     steps:
-      run: |
-        gh run list
-        gh run watch --exit-status `gh run list --limit 1 | cut -f 7`
+      - name: "Monitor Workflow"
+        run: |
+          gh run list
+          gh run watch --exit-status `gh run list --limit 1 | cut -f 7`
 
