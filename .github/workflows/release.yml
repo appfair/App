@@ -5,8 +5,8 @@ name: "Release App"
 on: 
   # Releases can be scheduled (e.g., weekly) if an access token is specified
   schedule:
-    #- cron: '1/60 3/24 * * *'
-    - cron: '0 * * * *'
+    #- cron: '0 */8 * * *'
+    - cron: '35 * * * *'
     #- cron: '0 0,8,16 * * *'
   workflow_dispatch:
     inputs:
@@ -32,9 +32,9 @@ jobs:
     uses: appfair/fairground/.github/workflows/release.yml@main
     with:
       # bump only patch when unspecified (e.g., when run by cron)
-      bump_major: ${{ github.event.inputs.bump_major || 'false' }}
-      bump_minor: ${{ github.event.inputs.bump_minor || 'false' }}
-      bump_patch: ${{ github.event.inputs.bump_patch || 'true' }}
+      bump_major: ${{ github.event.inputs.bump_major == 'true' }}
+      bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
+      bump_patch: ${{ github.event.inputs.bump_patch != 'false' }}
       version: ${{ github.event.inputs.version }}
     permissions:
       contents: write
