@@ -10,20 +10,24 @@ on:
     inputs:
       bump_major:
         type: boolean
-        description: 'Bump Version Major'
+        description: 'Bump major version'
         default: false
       bump_minor:
         type: boolean
-        description: 'Bump Version Minor'
+        description: 'Bump minor version'
         default: false
       bump_patch:
         type: boolean
-        description: 'Bump Version Patch'
+        description: 'Bump patch version'
         default: true
       version:
         type: string
-        description: 'Specific App Version'
+        description: 'Set specific version'
         required: false
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   call-workflow:
@@ -33,19 +37,4 @@ jobs:
       bump_major: ${{ github.event.inputs.bump_major == 'true' }}
       bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
       bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
-
-permissions:
-  actions: write
-  checks: write
-  contents: write
-  deployments: write
-  id-token: write
-  issues: write
-  discussions: write
-  packages: write
-  pages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: write
-  statuses: write
 
