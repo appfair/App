@@ -3,28 +3,26 @@ name: "Release App"
 #
 # See: https://www.appfair.net
 on: 
+  # Releases can be scheduled (e.g., weekly) if an access token is specified
   #schedule:
-    #- cron: '0 0,8,16 * * *'
+  #  - cron: '0 0 0 * *'
   workflow_dispatch:
     inputs:
       bump_major:
         type: boolean
         description: 'Bump Version Major'
-        required: false
         default: false
       bump_minor:
         type: boolean
         description: 'Bump Version Minor'
-        required: false
         default: false
       bump_patch:
         type: boolean
         description: 'Bump Version Patch'
-        required: false
-        default: false
+        default: true
       version:
         type: string
-        description: 'Set App Version'
+        description: 'Specific App Version'
         required: false
 
 jobs:
