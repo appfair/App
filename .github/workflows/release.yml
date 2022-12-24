@@ -41,6 +41,6 @@ jobs:
       # Requires org settings
       # https://github.com/organizations/Silly-Little-App/settings/actions
       # to enable "Allow GitHub Actions to create and approve pull requests"
-      token: ${{ secrets.GITHUB_TOKEN }}
-      #token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
+      #token: ${{ secrets.GITHUB_TOKEN }}
+      token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
 
