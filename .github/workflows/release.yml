@@ -27,6 +27,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
 
 jobs:
@@ -38,6 +39,8 @@ jobs:
       bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
       bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
     secrets:
+      # Requires https://github.com/Silly-Little-App/App/settings/actions
+      # to enable "Allow GitHub Actions to create and approve pull requests"
       token: ${{ secrets.GITHUB_TOKEN }}
       #token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
 
