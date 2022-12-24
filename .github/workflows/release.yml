@@ -31,10 +31,11 @@ jobs:
   call-workflow:
     uses: appfair/fairground/.github/workflows/release.yml@main
     with:
+      # bump only patch when unspecified (e.g., when run by cron)
+      bump_major: ${{ github.event.inputs.bump_major || 'false' }}
+      bump_minor: ${{ github.event.inputs.bump_minor || 'false' }}
+      bump_patch: ${{ github.event.inputs.bump_patch || 'true' }}
       version: ${{ github.event.inputs.version }}
-      bump_major: ${{ github.event.inputs.bump_major == 'true' }}
-      bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
-      bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
     permissions:
       contents: write
       pull-requests: write
