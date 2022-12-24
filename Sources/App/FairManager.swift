@@ -101,8 +101,10 @@ open class FairManager: SceneManager, AppInventoryController {
 
     //private var observers: [AnyCancellable] = []
 
+    #if os(macOS)
     public typealias AppFacets = Never
     public typealias ConfigFacets = Never
+    #endif
 
     public required init() {
         self.resetAppSources(load: nil)

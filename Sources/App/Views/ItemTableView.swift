@@ -107,7 +107,7 @@ struct VersionLabel : Equatable, View {
     let version: AppVersion?
 
     var body: some View {
-        Text(verbatim: version?.versionStringExtended ?? "-")
+        Text(verbatim: version?.versionString ?? "-")
             .multilineTextAlignment(.trailing)
     }
 }

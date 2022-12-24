@@ -9,6 +9,25 @@ public extension AppContainer {
 //    /// The settings associated with this app
 //    @ViewBuilder static func settingsView(store: AppManager) -> Self.SettingsBody
 
+    #if os(iOS)
+    @SceneBuilder static func rootScene(store: FairManager) -> some SwiftUI.Scene {
+        WindowGroup { // or DocumentGroup
+            FacetHostingView(store: store).environmentObject(store)
+        }
+        .commands {
+            SidebarCommands()
+            FacetCommands(store: store)
+        }
+    }
+
+    static func settingsView(store: FairManager) -> some SwiftUI.View {
+        Store.AppFacets.settings
+            .facetView(for: store)
+            .environmentObject(store)
+    }
+    #endif
+
+    #if os(macOS)
     @SceneBuilder static func rootScene(store fairManager: FairManager) -> some SwiftUI.Scene {
         WindowGroup {
             RootView()
@@ -49,6 +68,6 @@ public extension AppContainer {
             //.facetView(for: store)
             //.environmentObject(store)
     }
-
+    #endif
 }
 
