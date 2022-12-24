@@ -40,10 +40,4 @@ jobs:
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
       #token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
-  monitor-workflow:
-    steps:
-      - name: "Monitor Workflow"
-        run: |
-          gh run list
-          gh run watch --exit-status `gh run list --limit 1 | cut -f 7`
 
