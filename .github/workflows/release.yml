@@ -37,5 +37,6 @@ jobs:
       bump_major: ${{ github.event.inputs.bump_major == 'true' }}
       bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
       bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
+    secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
