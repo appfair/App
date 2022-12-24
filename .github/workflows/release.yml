@@ -4,8 +4,8 @@ name: "Release App"
 # See: https://www.appfair.net
 on: 
   # Releases can be scheduled (e.g., weekly) if an access token is specified
-  #schedule:
-  #  - cron: '0 0 0 * *'
+  schedule:
+    - cron: '0 0,8,16 * * *'
   workflow_dispatch:
     inputs:
       bump_major:
@@ -37,4 +37,5 @@ jobs:
       bump_major: ${{ github.event.inputs.bump_major == 'true' }}
       bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
       bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
+      token: ${{ secrets.GITHUB_TOKEN }}
 
