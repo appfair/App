@@ -25,10 +25,6 @@ on:
         description: 'Set specific version'
         required: false
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   call-workflow:
     uses: appfair/fairground/.github/workflows/release.yml@main
@@ -37,10 +33,13 @@ jobs:
       bump_major: ${{ github.event.inputs.bump_major == 'true' }}
       bump_minor: ${{ github.event.inputs.bump_minor == 'true' }}
       bump_patch: ${{ github.event.inputs.bump_patch == 'true' }}
+    permissions:
+      contents: write
+      pull-requests: write
     secrets:
       # Requires org settings
       # https://github.com/organizations/Silly-Little-App/settings/actions
       # to enable "Allow GitHub Actions to create and approve pull requests"
-      #token: ${{ secrets.GITHUB_TOKEN }}
-      token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
+      token: ${{ secrets.GITHUB_TOKEN }}
+      #token: ${{ secrets.APP_FAIR_BOT_SLA_TOKEN }}
 
