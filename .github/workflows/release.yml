@@ -6,7 +6,7 @@ on:
   # Releases can be scheduled (e.g., weekly) if an access token is specified
   schedule:
     #- cron: '1/60 3/24 * * *'
-    - cron: '15/60 * * * *'
+    - cron: '0 * * * *'
     #- cron: '0 0,8,16 * * *'
   workflow_dispatch:
     inputs:
