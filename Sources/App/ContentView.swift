@@ -157,18 +157,18 @@ struct WelcomeView : View {
     static let localizedCards = [
         card("heart", color: cardColors.next(),
              title: NSLocalizedString("about-card-01-banner", bundle: .module, value: "Welcome", comment: "app intro card #1 banner markdown"),
-             subtitle: NSLocalizedString("about-card-01-caption", bundle: .module, value: "to Cloud Cuckoo Land", comment: "app intro card #1 caption markdown"),
-             body: NSLocalizedString("about-card-01-content", bundle: .module, value: "This is a whimsical game of excitement and delight. Tap the `Play` tab to begin!", comment: "app intro card #1 content markdown")),
+             subtitle: NSLocalizedString("about-card-01-caption", bundle: .module, value: "to the App Fair Project", comment: "app intro card #1 caption markdown"),
+             body: NSLocalizedString("about-card-01-content", bundle: .module, value: "The App Fair Project is a non-profit organization dedicated to creating digital public goods for a global audience.", comment: "app intro card #1 content markdown")),
 
         card("magnifyingglass", color: cardColors.next(),
-             title: NSLocalizedString("about-card-02-banner", bundle: .module, value: "Search", comment: "app intro card #2 banner markdown"),
-             subtitle: NSLocalizedString("about-card-02-caption", bundle: .module, value: "for the Lost Cuckoo", comment: "app intro card #2 caption markdown"),
-             body: NSLocalizedString("about-card-02-content", bundle: .module, value: "There is a cuckoo bird on the loose. You must find it and tap it. At first, it will be easy, but as your dots accrue, the difficulty of finding the cuckoo bird increases.", comment: "app intro card #2 content markdown")),
+             title: NSLocalizedString("about-card-02-banner", bundle: .module, value: wip("TODO"), comment: "app intro card #2 banner markdown"),
+             subtitle: NSLocalizedString("about-card-02-caption", bundle: .module, value: "Interesting Projects", comment: "app intro card #2 caption markdown"),
+             body: NSLocalizedString("about-card-02-content", bundle: .module, value: wip("TODO"), comment: "app intro card #2 content markdown")),
 
-        card("dollarsign.circle", color: cardColors.next(),
-             title: NSLocalizedString("about-card-03-banner", bundle: .module, value: "Raise the Stakes", comment: "app intro card #3 banner markdown"),
-             subtitle: NSLocalizedString("about-card-03-caption", bundle: .module, value: "Enable Currency Mode", comment: "app intro card #3 caption markdown"),
-             body: NSLocalizedString("about-card-03-content", bundle: .module, value: "Currency mode turns cuckoo-points into pretend money. Toggle this cosmetic preference in the Settings tab", comment: "app intro card #3 content markdown")),
+        card("app.gift", color: cardColors.next(),
+             title: NSLocalizedString("about-card-03-banner", bundle: .module, value: wip("TODO"), comment: "app intro card #3 banner markdown"),
+             subtitle: NSLocalizedString("about-card-03-caption", bundle: .module, value: "", comment: "app intro card #3 caption markdown"),
+             body: NSLocalizedString("about-card-03-content", bundle: .module, value: wip("TODO"), comment: "app intro card #3 content markdown")),
     ]
     .compactMap({ $0 })
 
