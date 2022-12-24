@@ -5,7 +5,7 @@ name: "Release App"
 on: 
   # Releases can be scheduled (e.g., weekly) if an access token is specified
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */6 * * *'
     #- cron: '0,15,30,45 * * * *'
     #- cron: '0 0,8,16 * * *'
   workflow_dispatch:
