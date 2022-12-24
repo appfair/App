@@ -33,8 +33,8 @@ import FairApp
 import SwiftUI
 
 extension AppCatalogItem {
-    var releasedVersion: AppVersion? {
-        version.flatMap({ AppVersion(string: $0) })
+    var releasedVersion: SemVer? {
+        version.flatMap({ SemVer(string: $0) })
     }
 
     /// A relative score summarizing how risky the app appears to be from a scale of 0–5

@@ -271,7 +271,7 @@ extension AppSourceInventory {
 
         // if the release version is greater than the installed version, download and install it automatically
         // let installedCatalogVersion = installedVersion(for: catalogApp.id) // we should use the currently-running version as the authoritative version for checking
-        let installedCatalogVersion = catalogAppBundle.bundleVersionString.flatMap { AppVersion(string: $0) }
+        let installedCatalogVersion = catalogAppBundle.bundleVersionString.flatMap { SemVer(string: $0) }
 
         dbg("checking catalog app update from installed version:", installedCatalogVersion?.versionString, "to:", catalogApp.app.releasedVersion?.versionString, "at:", catalogAppBundle.bundleURL.path)
 
