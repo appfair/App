@@ -9,7 +9,8 @@ var package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/JXPod", from: "0.2.0"),
-        .package(url: "https://github.com/jectivex/JXSwiftUI", from: "0.0.1"),
+        .package(url: "https://github.com/jectivex/JXSwiftUI", from: "0.1.3"),
+        .package(url: "https://github.com/jectivex/MiniApp", from: "0.0.3"),
         .package(url: "https://github.com/simonbs/Runestone", from: "0.2.10"),
         .package(url: "https://github.com/simonbs/TreeSitterLanguages", from: "0.1.0"),
     ],
@@ -19,6 +20,7 @@ var package = Package(
             .product(name: "FairKit", package: "Fair"),
             .product(name: "JXPod", package: "JXPod"),
             .product(name: "JXSwiftUI", package: "JXSwiftUI"),
+            .product(name: "MiniApp", package: "MiniApp"),
 
             // Runestone is a syntax-highlighting text editor for iOS; the macOS version is stubbed as a TextEditor
             .product(name: "Runestone", package: "Runestone", condition: .when(platforms: [.iOS])),

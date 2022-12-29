@@ -23,6 +23,9 @@
       location = "group:../../github/jectivex/JXKit/">
    </FileRef>
    <FileRef
+      location = "group:../../github/jectivex/MiniApp/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXSwiftUI/">
    </FileRef>
    <FileRef

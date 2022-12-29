@@ -17,6 +17,7 @@ import XCTest
 import App
 import FairApp
 import SwiftUI
+import MiniApp
 
 open class AppTests: XCTestCase {
     @MainActor open func testAppManager() throws {
@@ -33,5 +34,38 @@ open class AppTests: XCTestCase {
     /// as metadata for the app submission.
     @MainActor open func testScreenshots() throws {
         _ = try Store().captureFacetScreens()
+    }
+
+    func testMiniAppHost() throws {
+        let config = """
+        {
+          "dir": "ltr",
+          "lang": "en",
+          "app_id": "org.example.miniapp",
+          "name": "MiniApp test",
+          "pages": [
+              "pages/home/home"
+            ],
+            "version": {
+            "name": "1.0.0",
+            "code": 1
+          },
+          "icons": [
+            {
+              "label": "Red lightning",
+              "src": "common/icon48x48.png",
+              "sizes": "48x48"
+            }
+          ],
+          "platform_version":{
+            "min_code": 1,
+            "release_type": "Beta",
+            "target_code": 1
+          }
+        }
+        """
+
+        let manifest = try MiniAppManifest.decode(from: config.utf8Data)
+        XCTAssertEqual("MiniApp test", manifest.name)
     }
 }
