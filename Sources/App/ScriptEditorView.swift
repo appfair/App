@@ -111,7 +111,7 @@ struct ScriptEditorView: View {
             }
         }
         .listStyle(.plain)
-        .refreshable {
+        .refreshableIfSupported {
             // re-execute the script
             await performScript()
         }

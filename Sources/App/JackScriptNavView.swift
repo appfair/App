@@ -24,7 +24,7 @@ public struct JackScriptListView: View {
             JackScriptFileListView()
             JackScriptCatalogListView()
         }
-        .refreshable {
+        .refreshableIfSupported {
             await store.loadFileStore(reload: true)
             await store.loadCatalog(reload: true)
         }
@@ -203,7 +203,7 @@ public struct JackScriptView: View {
         .task {
             await loadScriptContents()
         }
-        .refreshable {
+        .refreshableIfSupported {
             await loadScriptContents(reload: true)
         }
     }
