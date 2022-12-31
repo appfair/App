@@ -9,7 +9,7 @@ var package = Package(
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/JXPod", from: "0.2.0"),
-        .package(url: "https://github.com/jectivex/JXSwiftUI", branch: "main"),
+        .package(url: "https://github.com/jectivex/JXSwiftUI", from: "0.1.3"),
         .package(url: "https://github.com/jectivex/JXBridge", from: "0.0.1"),
         .package(url: "https://github.com/jectivex/MiniApp", from: "0.0.3"),
         .package(url: "https://github.com/simonbs/Runestone", from: "0.2.10"),
