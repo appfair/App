@@ -10,7 +10,7 @@ PRODUCT_BUNDLE_IDENTIFIER = app.World-Fair
 MARKETING_VERSION = 0.1.1
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 209
+CURRENT_PROJECT_VERSION = 210
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.utilities
@@ -39,6 +39,6 @@ DEVELOPMENT_TEAM = P6355DLJ52
 SUPPORTS_MACCATALYST = YES
 SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES
 
-IPHONEOS_DEPLOYMENT_TARGET = 16.0
-MACOSX_DEPLOYMENT_TARGET = 13.0
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+MACOSX_DEPLOYMENT_TARGET = 12.0
 
