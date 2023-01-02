@@ -7,13 +7,13 @@ var package = Package(
     platforms: [ .macOS(.v13), .iOS(.v16) ],
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
-        .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
-        .package(url: "https://github.com/jectivex/JXPod", branch: "main"),
-        .package(url: "https://github.com/jectivex/JXSwiftUI", branch: "main"),
-        .package(url: "https://github.com/jectivex/JXBridge", branch: "main"),
-        .package(url: "https://github.com/jectivex/MiniApp", branch: "main"),
-        .package(url: "https://github.com/simonbs/Runestone", from: "0.2.10"),
-        .package(url: "https://github.com/simonbs/TreeSitterLanguages", from: "0.1.0"),
+        .package(url: "https://github.com/fair-ground/Fair.git", from: "0.6.0"), // must be first
+        .package(url: "https://github.com/jectivex/JXPod.git", from: "0.2.0"),
+        .package(url: "https://github.com/jectivex/JXSwiftUI.git", from: "0.1.7"),
+        .package(url: "https://github.com/jectivex/JXBridge.git", from: "0.1.12"),
+        .package(url: "https://github.com/jectivex/MiniApp.git", from: "0.0.1"),
+        .package(url: "https://github.com/simonbs/Runestone.git", from: "0.2.10"),
+        .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.0"),
     ],
     targets: [
         .target(name: "App", dependencies: [
