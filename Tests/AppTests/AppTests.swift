@@ -206,15 +206,6 @@ open class AppTests: XCTestCase {
                     var gravatar_id: String // "",
                     var url: String // "https://api.github.com/users/World-Fair",
                     var html_url: String // "https://github.com/World-Fair",
-                    var followers_url: String // "https://api.github.com/users/World-Fair/followers",
-                    var following_url: String // "https://api.github.com/users/World-Fair/following{/other_user}",
-                    var gists_url: String // "https://api.github.com/users/World-Fair/gists{/gist_id}",
-                    var starred_url: String // "https://api.github.com/users/World-Fair/starred{/owner}{/repo}",
-                    var subscriptions_url: String // "https://api.github.com/users/World-Fair/subscriptions",
-                    var organizations_url: String // "https://api.github.com/users/World-Fair/orgs",
-                    var repos_url: String // "https://api.github.com/users/World-Fair/repos",
-                    var events_url: String // "https://api.github.com/users/World-Fair/events{/privacy}",
-                    var received_events_url: String // "https://api.github.com/users/World-Fair/received_events",
                     var type: String // "Organization",
                     var site_admin: Bool // false
                 }
@@ -226,7 +217,7 @@ open class AppTests: XCTestCase {
 
     func testMiniApp(at url: String) async throws {
         let url = try XCTUnwrap(URL(string: "https://github.com/World-Fair/miniapp-sample/archive/refs/heads/main.zip"))
-        let (localURL, response) = try await URLSession.shared.downloadFile(for: URLRequest(url: url))
+        let (localURL, _) = try await URLSession.shared.downloadFile(for: URLRequest(url: url))
         let expandedURL = localURL.appendingPathExtension("expanded")
 
         try FileManager.default.unzipItem(at: localURL, to: expandedURL)

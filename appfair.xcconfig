@@ -26,7 +26,7 @@ ICON_SYMBOL = M 380.500000 105.906250 C 380.100000 105.906250 379.812525 106.193
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 // SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator android
 // SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
-SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 
 // On-device testing may need to override the bundle ID
 // PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
@@ -37,8 +37,8 @@ SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
 DEVELOPMENT_TEAM = P6355DLJ52
 
 SUPPORTS_MACCATALYST = YES
-SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES
+SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO
 
-IPHONEOS_DEPLOYMENT_TARGET = 15.0
-MACOSX_DEPLOYMENT_TARGET = 12.0
+IPHONEOS_DEPLOYMENT_TARGET = 16.0
+MACOSX_DEPLOYMENT_TARGET = 13.0
 

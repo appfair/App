@@ -18,6 +18,12 @@ extension CodeEditor {
 #else
 import Runestone
 import TreeSitterJavaScriptRunestone
+import TreeSitterJSONRunestone
+import TreeSitterHTMLRunestone
+import TreeSitterYAMLRunestone
+import TreeSitterSwiftRunestone
+import TreeSitterMarkdownRunestone
+import TreeSitterTypeScriptRunestone
 
 struct CodeEditor : View {
     let language: TreeSitterLanguage
@@ -27,8 +33,6 @@ struct CodeEditor : View {
         CodeView(language: language, text: $text, model: CodeEditorModel(editorFontSize: 12))
     }
 }
-
-//TextEditor(text: $scriptContents)
 
 private class CodeEditorModel : ObservableObject {
     @Published var editorFontSize: Double = 12

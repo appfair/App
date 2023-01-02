@@ -4,9 +4,9 @@ import JXKit
 import JXBridge
 
 /// A script editor / preview
-struct ScriptEditorView: View {
+struct LegacyScriptEditorView: View {
     @EnvironmentObject var store: Store
-    @AppStorage("scriptContents!!!!") var scriptContents = """
+    @AppStorage("scriptContents") var scriptContents = """
     var timeThen = new Date().getTime();
     await time.sleep(0.1);
     _cb.callback("Tick");

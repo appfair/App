@@ -35,6 +35,31 @@ open class Store: SceneManager {
     public required init() {
     }
 
+    /// Register that an error occurred with the app manager
+    @MainActor open func reportError(_ error: Error) {
+        dbg("error:", error)
+        errors.append(error as NSError)
+    }
+
+    /// Attempts to perform the given action and adds any errors to the error list if they fail.
+    @discardableResult func trying<T>(block: () throws -> (T)) -> T? {
+        do {
+            return try block()
+        } catch {
+            reportError(error)
+            return nil
+        }
+    }
+
+    /// Attempts to perform the given action and adds any errors to the error list if they fail.
+    open func trying(block: () async throws -> ()) async {
+        do {
+            try await block()
+        } catch {
+            await reportError(error)
+        }
+    }
+
     func loadFileStore(reload: Bool = false) async {
         dbg("loading file store")
 
@@ -100,7 +125,7 @@ open class Store: SceneManager {
             case .welcome:
                 WelcomeView()
             case .scriptEditor:
-                ScriptEditorView()
+                ScriptNavigatorView()
             case .playgroundUI:
                 #if canImport(JXSwiftUI)
                 JXSwiftUINavView()
