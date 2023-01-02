@@ -1,10 +1,10 @@
 // The configuration file for your App Fair App. See: https://www.appfair.net
 
 // PRODUCT_NAME is the app name, consisting of two words separated by a space
-PRODUCT_NAME = App Name
+PRODUCT_NAME = Magic Loupe
 
 // PRODUCT_BUNDLE_IDENTIFIER must be in the form: "app.App-Name"
-PRODUCT_BUNDLE_IDENTIFIER = app.App-Name
+PRODUCT_BUNDLE_IDENTIFIER = app.Magic-Loupe
 
 // The semantic version for the app matching the git tag for the release
 MARKETING_VERSION = 0.0.1
@@ -19,7 +19,7 @@ APP_CATEGORY = public.app-category.utilities
 // SUPPORTED_PLATFORMS = macosx
 // SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 // SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator android
-SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator
+SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 
 // On-device testing may need to override the bundle ID
 // PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
