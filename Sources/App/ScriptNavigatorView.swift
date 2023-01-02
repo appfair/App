@@ -3,15 +3,92 @@ import UniformTypeIdentifiers
 import JXPod
 import JXKit
 import JXBridge
+import JXSwiftUI
 import Runestone
+
+@MainActor class ProjectScriptManager : ObservableObject {
+    @Published var projectURL: URL?
+    @Published var fileNode: FileNode? = nil
+    let context = JXContext()
+
+    init() {
+    }
+
+    func load(projectURL url: URL?) throws {
+        self.fileNode = nil
+        if let url = projectURL {
+            dbg("opening:", url.path)
+            self.fileNode = FileNode(name: url.lastPathComponent, url: url, wrapper: try FileWrapper(url: url))
+        }
+    }
+
+    func setupContent(context: JXContext) throws -> JXValue {
+        try context.registry.register(ScriptManagerModule())
+        return try context.new("wf.MyView")
+    }
+
+    struct ScriptManagerModule: JXModule {
+        var namespace: JXNamespace = JXNamespace("wf")
+
+        func register(with registry: JXRegistry) throws {
+            try registry.register(JXSwiftUI())
+            try registry.registerModuleScript("""
+            jxswiftui.import();
+
+            class TextSliderView extends View {
+                constructor(text) {
+                    super();
+                    this.text = text;
+                    this.state.sliderValue = 0.5;
+                }
+
+                body() {
+                    return VStack([
+                        Text(this.text),
+                        Slider(this.state.$sliderValue),
+                        Text('Value: ' + this.state.sliderValue.toFixed(4))
+                    ])
+                    .padding()
+                }
+            }
+
+            exports.MyView = class extends View {
+                constructor() {
+                    super();
+                    this.state.sliderValue = 0.5
+                }
+
+                body() {
+                    let i = 0;
+                    return ScrollView(
+                        VStack([
+                            Group([
+                                Text('Master view:'),
+                                Slider(this.state.$sliderValue).padding(),
+                                new TextSliderView('Updating child view: ' + this.state.sliderValue.toFixed(4)),
+                            ]),
+                            Group([
+                                new TextSliderView('View ' + (i++)),
+                                new TextSliderView('View ' + (i++)),
+                            ]),
+                        ])
+                    )
+                }
+            }
+            """, namespace: namespace)
+        }
+    }
+
+}
 
 struct ScriptNavigatorView : View {
     @EnvironmentObject var store: Store
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
+    @StateObject var projectScriptManager = ProjectScriptManager()
 
     @State var sidebarVisible: NavigationSplitViewVisibility = .all
-    @State var fileNode: FileNode? = nil
 
-    @State var projectURL: URL? = nil
     @State var createProject: Bool = false
     @State var openProject: Bool = false
 
@@ -19,16 +96,16 @@ struct ScriptNavigatorView : View {
     @State var selectionContents = ""
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $sidebarVisible, sidebar: sidebarView, /* detail: detailSplitView */ content: codeEditorView, detail: detailView)
+        NavigationSplitView(columnVisibility: $sidebarVisible, sidebar: sidebarView, detail: detailSplitView /* content: codeEditorView, detail: detailView */)
             .navigationSplitViewStyle(.automatic)
             .fileImporter(isPresented: $openProject, allowedContentTypes: [.folder], onCompletion: openFolder)
             .fileExporter(isPresented: $createProject, document: Doc(), contentType: .folder, onCompletion: openFolder)
-            .onChange(of: projectURL, perform: openProjectURL)
+            .onChange(of: projectScriptManager.projectURL, perform: openProjectURL)
             .task(id: selection) {
                 await loadSelectionContents()
             }
             .onAppear {
-                openProjectURL(url: projectURL)
+                openProjectURL(url: projectScriptManager.projectURL)
             }
     }
 
@@ -46,23 +123,12 @@ struct ScriptNavigatorView : View {
         dbg(url?.path)
 
         store.trying {
-            self.fileNode = nil
-            if let url = projectURL {
-                dbg("opening:", url.path)
-                self.fileNode = FileNode(name: url.lastPathComponent, url: url, wrapper: try FileWrapper(url: url))
-            }
+            try projectScriptManager.load(projectURL: url)
         }
     }
 
-//    @ViewBuilder func detailSplitView() -> some View {
-//        HSplitView {
-//            codeEditorView()
-//            Spacer()
-//        }
-//    }
-
     @ViewBuilder func sidebarView() -> some View {
-        if let fileNode = fileNode {
+        if let fileNode = projectScriptManager.fileNode {
             List(selection: $selection) {
                 OutlineGroup(fileNode.fileChildren ?? [], id: \.url, children: \.fileChildren, content: outlineLabel)
             }
@@ -73,6 +139,7 @@ struct ScriptNavigatorView : View {
 
     func outlineLabel(node: FileNode) -> some View {
         NavigationLink(value: node.url) {
+            //TextField("", text: .constant(node.name))
             Text(node.name)
                 .label(image: node.wrapper.isDirectory ? FairSymbol.folder : info(for: node.url).icon)
                 .lineLimit(1)
@@ -102,7 +169,7 @@ struct ScriptNavigatorView : View {
 
     func openFolder(result: Result<URL, Error>) {
         store.trying {
-            self.projectURL = try result.get()
+            projectScriptManager.projectURL = try result.get()
         }
     }
 
@@ -134,22 +201,48 @@ struct ScriptNavigatorView : View {
                         .id(url)
                 } else {
                     Text(url.lastPathComponent)
+                        .frame(maxWidth: .infinity)
                         .font(.title2.monospaced())
                 }
             } else {
                 Text("No Selection", bundle: .module, comment: "placeholder text for content split when no item is selected")
                     .font(.title2)
+                    .frame(maxWidth: .infinity)
             }
         }
         //.frame(width: 800)
     }
 
-    @ViewBuilder func detailView() -> some View {
-        if let url = self.projectURL {
+//    @ViewBuilder func detailView() -> some View {
+//        if let url = self.projectURL {
+//
+//        } else {
+//            Text("No Project", bundle: .module, comment: "placeholder text for detail split when no projecy is selected")
+//                .font(.title2)
+//        }
+//    }
 
+
+    @ViewBuilder func detailSplitView() -> some View {
+        if horizontalSizeClass == .compact {
+            previewView()
         } else {
-            Text("No Project", bundle: .module, comment: "placeholder text for detail split when no projecy is selected")
+            HStack {
+                codeEditorView()
+                Divider()
+                previewView()
+            }
+        }
+    }
+
+    @ViewBuilder func previewView() -> some View {
+        if let url = projectScriptManager.projectURL {
+            ProjectPreviewView()
+                .environmentObject(projectScriptManager)
+        } else {
+            Text("Empty Preview", bundle: .module, comment: "placeholder text for preview when no item is selected")
                 .font(.title2)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -164,6 +257,21 @@ struct ScriptNavigatorView : View {
         }
     }
 }
+
+struct ProjectPreviewView : View {
+    @EnvironmentObject var store: Store
+    @EnvironmentObject var projectScriptManager: ProjectScriptManager
+
+    var body: some View {
+        JXView(context: projectScriptManager.context, errorHandler: scriptError, content: projectScriptManager.setupContent)
+    }
+
+    func scriptError(error: Error) {
+        dbg(error)
+        store.addError(error)
+    }
+}
+
 
 class FileNode {
     let name: String
