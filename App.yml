@@ -22,7 +22,7 @@ app:
 # marketplace-issued indentifiers for the distribution channels for this app
 markets:
   testflight: "1639746748"
-  #testflighturl: "https://testflight.apple.com/join/IrPLgy5Q"
+  testflighturl: "https://testflight.apple.com/join/IrPLgy5Q"
   appstore: "1639746748"      # the assigned App Store id
   #playstore: "123456543210"   # the assigned Play Store id
 

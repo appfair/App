@@ -7,10 +7,10 @@ PRODUCT_NAME = Cloud Cuckoo
 PRODUCT_BUNDLE_IDENTIFIER = app.Cloud-Cuckoo
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.9.339
+MARKETING_VERSION = 0.9.340
 
 // The monotonically increasing number specifying the internal app version
-CURRENT_PROJECT_VERSION = 875
+CURRENT_PROJECT_VERSION = 876
 
 // The category of the app should be one of: public.app-category.business, developer-tools, education, entertainment, finance, games, graphics-design, healthcare-fitness, lifestyle, medical, music, news, photography, productivity, reference, social-networking, sports, travel, utilities, video, weather
 APP_CATEGORY = public.app-category.games
@@ -32,4 +32,20 @@ SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos
 // Dev team and unique id for on-device testing
 DEVELOPMENT_TEAM[config=Debug][sdk=iphoneos*] = 25KG25YA3R
 PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = org.appfair.app.Cloud-Cuckoo
+
+// Catalyst settings for iOS apps on macOS
+// SUPPORTS_MACCATALYST = YES
+// SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO
+
+// On-device testing may need to override the bundle ID
+// PRODUCT_BUNDLE_IDENTIFIER[config=Debug][sdk=iphoneos*] = myorg.app.App-Name
+
+// FRAMEWORK_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)
+// ONLY_ACTIVE_ARCH[config=Debug][sdk=*][arch=*] = YES
+
+// Development team ID for on-device and catalyst testing
+// DEVELOPMENT_TEAM = 
+
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+MACOSX_DEPLOYMENT_TARGET = 12.0
 
