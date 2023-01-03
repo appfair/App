@@ -20,15 +20,18 @@ let package = Package(
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
         .package(url: "https://github.com/jectivex/JXPod", from: "0.2.0"),
         .package(url: "https://github.com/jectivex/JXSwiftUI", from: "0.1.7"),
-        .package(url: "https://github.com/jectivex/JXBridge", from: "0.1.12"),
+
+        // modules
+        .package(url: "https://github.com/Magic-Loupe/PetStore", from: "0.0.1"),
     ],
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
             //.product(name: "FairKit", package: "Fair"), // optional enhancements
             .product(name: "JXPod", package: "JXPod"),
-            .product(name: "JXBridge", package: "JXBridge"),
             .product(name: "JXSwiftUI", package: "JXSwiftUI"),
+
+            .product(name: "PetStore", package: "PetStore"),
         ], resources: [
             .process("Resources"), // processed resources
         ], plugins: [

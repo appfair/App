@@ -11,6 +11,9 @@
       location = "group:../Fair/">
    </FileRef>
    <FileRef
+      location = "group:../PetStore/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXPod/">
    </FileRef>
    <FileRef

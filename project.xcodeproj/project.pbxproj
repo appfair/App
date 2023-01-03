@@ -43,7 +43,7 @@
 		490B83DA288CB1830014F922 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		490B83DB288CB1860014F922 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		4917633F2773E08000FBB28B /* xcode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = xcode.swift; sourceTree = "<group>"; };
-		49555415268931C1003F1B5B /* Magic Loupe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Magic Loupe.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* .app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = .app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		498AD12E28F7A062001F2A30 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		498AD12F28F7A065001F2A30 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -177,7 +177,7 @@
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* Magic Loupe.app */,
+				49555415268931C1003F1B5B /* .app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -214,7 +214,7 @@
 				498DD183268CDB4600B79D43 /* App */,
 			);
 			productName = App;
-			productReference = 49555415268931C1003F1B5B /* Magic Loupe.app */;
+			productReference = 49555415268931C1003F1B5B /* .app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -519,7 +519,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.5;
+				SWIFT_VERSION = 5.7;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -582,7 +582,7 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.5;
+				SWIFT_VERSION = 5.7;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -603,7 +603,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -611,7 +610,7 @@
 				);
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.5;
+				SWIFT_VERSION = 5.7;
 			};
 			name = Debug;
 		};
@@ -630,14 +629,13 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/Frameworks",
 				);
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				SWIFT_VERSION = 5.5;
+				SWIFT_VERSION = 5.7;
 			};
 			name = Release;
 		};
