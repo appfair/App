@@ -35,7 +35,7 @@ open class Store: SceneManager {
             case .welcome:
                 return FacetInfo(title: Text("Welcome", bundle: .module, comment: "tab title for top-level “Welcome” facet"), symbol: "house", tint: nil)
             case .content:
-                return FacetInfo(title: Text("Content", bundle: .module, comment: "tab title for top-level “Content” facet"), symbol: "puzzlepiece", tint: nil)
+                return FacetInfo(title: Text("Showcase", bundle: .module, comment: "tab title for top-level “Showcase” facet"), symbol: "puzzlepiece", tint: nil)
             case .settings:
                 return FacetInfo(title: Text("Settings", bundle: .module, comment: "tab title for top-level “Settings” facet"), symbol: "gearshape", tint: nil)
             }
