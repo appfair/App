@@ -7,4 +7,19 @@
    <FileRef
       location = "group:">
    </FileRef>
+   <FileRef
+      location = "group:../Fair/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JXPod/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JXBridge/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JXKit/">
+   </FileRef>
+   <FileRef
+      location = "group:../../github/jectivex/JXSwiftUI/">
+   </FileRef>
 </Workspace>
