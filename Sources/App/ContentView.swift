@@ -1,6 +1,7 @@
 import FairApp
 import JXSwiftUI
 import JXKit
+import JXPod
 import PetStore
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
@@ -15,96 +16,75 @@ struct ContentView: View {
     }
 }
 
+@MainActor class PetStoreVersionManager : ObservableObject {
+    /// All the available tags and their dates for the pet store module
+    @Published var tags: [(tag: String, date: Date?)] = [(PetStoreVersion ?? "", nil)]
+
+    /// The currently-active version of the local module
+    @Published var currentVersion = PetStoreVersion.flatMap(SemVer.init(string:))
+
+    init() {
+    }
+
+    func refreshModules() async {
+        dbg("refreshing modules")
+        do {
+            self.tags = try await PetStoreModule.tags
+            dbg("available tags:", tags)
+        } catch {
+            dbg("error getting source")
+        }
+    }
+
+}
+
 struct PlaygroundListView: View {
+    @StateObject var versionManager = PetStoreVersionManager()
+
     var body: some View {
         List {
-            Section("Applications") {
-                NavigationLink {
-                    LazyView(view: { PetStoreView() })
-                } label: {
-                    Label {
-                        VStack(alignment: .leading) {
-                            Text("Pet Store", bundle: .module, comment: "list title for pet store app")
-                            Text("Version: \(PetStoreVersion)", bundle: .module, comment: "list comment title describing the current version")
-                                .font(.footnote)
-                        }
-                    } icon: {
-                        // Image(systemName: "building")
-                        EmptyView()
-                    }
-
+            Section("Versions") {
+                ForEach(versionManager.tags, id: \.tag) { tagDate in
+                    petStoreVersionLink(version: tagDate.tag, date: tagDate.date)
                 }
             }
         }
         .navigationTitle("Showcase")
         .refreshable {
-            await refreshModules()
+            await versionManager.refreshModules()
         }
         .task {
-            await refreshModules()
+            await versionManager.refreshModules()
         }
     }
 
-    func refreshModules() async {
-        dbg("refreshing modules")
-        // TODO: check the latest versions of all the available modules
-        do {
-            let updateURL = URL(string: "https://github.com/Magic-Loupe/PetStore/tags.atom")!
-            let (data, response) = try await URLSession.shared.fetch(request: URLRequest(url: updateURL))
-            dbg(response, data.count)
-            let parsed = try XMLNode.parse(data: data).jsum()
-            dbg(parsed)
-            let feed = try RSSFeed(jsum: parsed, options: .init(dateDecodingStrategy: .iso8601))
-            dbg("feed:", feed)
-        } catch {
-            dbg("error getting source")
+    func petStoreVersionLink(version: String, date: Date?) -> some View {
+        NavigationLink {
+            LazyView(view: { PetStoreView() })
+        } label: {
+            Label {
+                VStack(alignment: .leading) {
+                    Text("Pet Store", bundle: .module, comment: "list title for pet store app")
+                    Text("version \(version) (\(date ?? .now, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
+                        .font(.footnote)
+                }
+            } icon: {
+                if version == PetStoreVersion {
+                    Image(systemName: "checkmark.circle.fill")
+                } else if SemVer(string: version)?.minorCompatible(with: versionManager.currentVersion) != true {
+                    Image(systemName: "xmark.circle")
+                } else {
+                    Image(systemName: "circle")
+                }
+            }
         }
     }
 }
 
-/// A minimal RSS feed implementation of parsing GitHub tag feeds like https://github.com/Magic-Loupe/PetStore/tags.atom
-public struct RSSFeed : Decodable {
-    public var feed: Feed
-
-    public struct Feed : Decodable {
-        public var id: String // tag:github.com,2008:https://github.com/Magic-Loupe/PetStore/releases
-        public var title: String
-        public var updated: Date
-
-        /// The list of links, which when converted from XML might be translated as a single or multiple element
-        public typealias LinkList = XOr<Link>.Or<[Link]>
-        public var link: LinkList
-        
-        public struct Link : Decodable {
-            public var type: String // text/html
-            public var rel: String // alternate
-            public var href: String // https://github.com/Magic-Loupe/PetStore/releases
-        }
-
-        /// The list of entries, which when converted from XML might be translated as a single or multiple element
-        public typealias EntryList = XOr<Entry>.Or<[Entry]>
-        public var entry: EntryList
-
-        public struct Entry : Decodable {
-            public var id: String // tag:github.com,2008:Repository/584868941/0.0.2
-            public var title: String // 0.0.2
-            public var updated: Date // "2023-01-03T20:28:34Z"
-            public var link: LinkList // https://github.com/Magic-Loupe/PetStore/releases/tag/0.0.2
-            // content:
-            public var author: Author
-
-            public struct Author : Decodable {
-                public var name: String
-            }
-
-            public var thumbnail: Thumbnail
-
-            public struct Thumbnail : Decodable {
-                public var height: String // 30
-                public var width: String // 30
-                public var url: URL // https://avatars.githubusercontent.com/u/659086?s=60&v=4
-            }
-        }
+extension SemVer {
+    /// True when the major and minor versions are the same as the other version
+    func minorCompatible(with version: SemVer?) -> Bool {
+        self.major == version?.major && self.minor == version?.minor
     }
 }
 

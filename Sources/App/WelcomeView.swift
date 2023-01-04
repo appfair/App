@@ -31,18 +31,18 @@ struct WelcomeView : View {
     /// These translation files must be kept up to date with your source code, which can be done manually or using `genstrings`.
     /// Alternatively, an app localization refresh can be done with `fairtool app localize` or the corresponding build plug-in.
     static let localizedCards = [
-        card("checkmark", color: cardColors.next(),
-             title: Locale.appName(),
-             subtitle: Locale.appSubtitle(),
-             body: Locale.appSummary()),
+        card("loupe", color: cardColors.next(),
+             title: "Welcome",
+             subtitle: "to Magic Loupe!",
+             body: "This is a showcase of native app components written in JavaScript."),
         card("hammer", color: cardColors.next(),
-             title: NSLocalizedString("welcome-02-banner", bundle: .module, value: "Get Started", comment: "app intro card #2 banner markdown"),
-             subtitle: NSLocalizedString("welcome-02-caption", bundle: .module, value: "Start developing your app.", comment: "app intro card #2 caption markdown"),
-             body: NSLocalizedString("welcome-02-content", bundle: .module, value: "My app is my best friend. It is my life. I must master it as I must master my life.", comment: "app intro card #2 content markdown")),
-        card("flag", color: cardColors.next(),
-             title: NSLocalizedString("welcome-03-banner", bundle: .module, value: "Internationalize", comment: "app intro card #3 banner markdown"),
-             subtitle: NSLocalizedString("welcome-03-caption", bundle: .module, value: "Bring your app to the World", comment: "app intro card #3 caption markdown"),
-             body: NSLocalizedString("welcome-03-content", bundle: .module, value: "App Fair apps are global, with support for multiple languages and locales.", comment: "app intro card #3 content markdown")),
+             title: "Develop",
+             subtitle: "Live Reload and Hot Fixes",
+             body: "Server-driven user-interfaces meet native SwiftUI components."),
+        card("rosette", color: cardColors.next(),
+             title: "Deploy",
+             subtitle: "Dynamic Server-driver User Interfaces",
+             body: "Use you favorite git provider to host versions and control development workflows."),
     ]
     .compactMap({ $0 })
 
