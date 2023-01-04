@@ -17,11 +17,84 @@ struct ContentView: View {
     }
 }
 
+extension JXDynamicModule {
+    @MainActor @ViewBuilder static func entryLink<V: View>(name: String, version: String?, branches: [String], view: @escaping () -> V) -> some View {
+        if let source = try? hubSource {
+            NavigationLink {
+                ModuleVersionsListView(appName: name, branches: branches, versionManager: HubVersionManager(source: source, installedVersion: version.flatMap(SemVer.init(string:)))) {
+                    view() // the root view that will be shown
+                }
+            } label: {
+                HStack {
+                    Text(name)
+                    Spacer()
+                    Divider()
+                    Text(version ?? "")
+                        .font(.caption)
+                        .frame(alignment: .trailing)
+                }
+            }
+        }
+    }
+}
+
+extension Bundle {
+    /// Returns the parsed Package.resolved embedded in the app.
+    var packageResolved: ResolvedPackage {
+        get throws {
+            try ResolvedPackage(json: Bundle.module.loadResource(named: "Package.resolved"))
+        }
+    }
+
+    func findVersion(repository: URL?, in packages: [(url: String, version: String?)]) -> String? {
+        for (url, version) in packages {
+            if url == repository?.absoluteString
+                || url == repository?.deletingPathExtension().absoluteString {
+                // the package matches, so return the version, which might be a
+                dbg("package version found for", repository, version)
+                return version
+            }
+        }
+
+        dbg("no package version found for", repository)
+        return nil
+    }
+
+    /// Returns the version of the package from the "Package.resolved" that is bundled with this app.
+    func packageVersion(for repository: URL?) -> String? {
+        dbg(repository)
+        do {
+            let resolved = try packageResolved
+            switch resolved.rawValue {
+                // handle both versions of the resolved package format
+            case .p(let v1):
+                return findVersion(repository: repository, in: v1.object.pins.map({ ($0.repositoryURL, $0.state.version) }))
+            case .q(let v2):
+                return findVersion(repository: repository, in: v2.pins.map({ ($0.location, $0.state.version) }))
+            }
+        } catch {
+            dbg("error getting package version for", repository, error)
+            return nil
+        }
+
+    }
+}
+
 // TODO: move JXDynamicModule down to JXBride and move implementation into PetStore and AnimalFarm themselves
 extension PetStoreModule : JXDynamicModule {
+    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
+        entryLink(name: "Pet Store", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
+            PetStoreView()
+        }
+    }
 }
 
 extension AnimalFarmModule : JXDynamicModule {
+    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
+        entryLink(name: "Animal Farm", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
+            AnimalFarmView()
+        }
+    }
 }
 
 
@@ -43,7 +116,7 @@ extension AnimalFarmModule : JXDynamicModule {
         dbg("refreshing modules")
         do {
             self.refs = try await source.refs
-            dbg("available refs:", refs)
+            dbg("available refs:", refs.map(\.ref.name))
         } catch {
             dbg("error getting source:", error)
         }
@@ -51,26 +124,19 @@ extension AnimalFarmModule : JXDynamicModule {
 }
 
 struct PlaygroundListView: View {
+    @EnvironmentObject var store: Store
+
+    /// Returns the branches to display in the versions list, which will be contingent on development mode being enabled.
+    var branches: [String] {
+        store.developmentMode == true ? ["main", "develop", "staging"] : []
+    }
+
     var body: some View {
         List {
             Section("Applications") {
-                if let source = try? PetStoreModule.hubSource {
-                    NavigationLink("Pet Store") {
-                        ModuleVersionsListView(appName: "Pet Store", versionManager: HubVersionManager(source: source, installedVersion: PetStoreVersion.flatMap(SemVer.init(string:)))) {
-                            PetStoreView() // the root view that will be shown
-                        }
-                    }
-                }
-
-                if let source = try? AnimalFarmModule.hubSource {
-                    NavigationLink("Animal Farm") {
-                        ModuleVersionsListView(appName: "Animal Farm", versionManager: HubVersionManager(source: source, installedVersion: AnimalFarmVersion.flatMap(SemVer.init(string:)))) {
-                            AnimalFarmView() // the root view that will be shown
-                        }
-                    }
-                }
-
-                // TODO: add more applications here…
+                PetStoreModule.entryLink(branches: branches)
+                AnimalFarmModule.entryLink(branches: branches)
+                // add more applications here…
             }
         }
         .navigationTitle("Showcase")
@@ -80,14 +146,29 @@ struct PlaygroundListView: View {
 
 struct ModuleVersionsListView<V: View>: View {
     let appName: String
+    /// The branches that should be shown
+    let branches: [String]
+
     @StateObject var versionManager: HubVersionManager
     let viewBuilder: () -> V
 
     var body: some View {
         List {
-            Section("Versions") {
+            Section {
                 ForEach(versionManager.refs, id: \.ref.name) { refDate in
                     moduleVersionLink(version: refDate.ref, date: refDate.date)
+                }
+            } header: {
+                Text("Versions", bundle: .module, comment: "section header title for apps list view version section")
+            }
+
+            if !branches.isEmpty {
+                Section {
+                    ForEach(branches, id: \.self) { branch in
+                        moduleVersionLink(version: .branch(branch), date: nil)
+                    }
+                } header: {
+                    Text("Branches", bundle: .module, comment: "section header title for apps list view branches section")
                 }
             }
         }
@@ -104,32 +185,69 @@ struct ModuleVersionsListView<V: View>: View {
         let compatible = version.semver?.minorCompatible(with: versionManager.installedVersion ?? .min)
 
         return NavigationLink {
-            LazyView(view: { viewBuilder() })
+            ModuleRefView(ref: version) { viewBuilder() }
+                .navigation(title: Text(appName), subtitle: Text(version.name))
+                #if !os(macOS)
+                .navigationBarTitleDisplayMode(.inline) // for some reason, this prevents the top-level button from being responsive
+                #endif
         } label: {
             Label {
                 VStack(alignment: .leading) {
                     Text(appName)
-                    Text("\(version.name) (\(date ?? .now, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
-                        .font(.footnote)
+                    Group {
+                        if let date = date {
+                            Text("\(version.name) (\(date, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
+                        } else {
+                            Text(version.name)
+                        }
+                    }
+                    .font(.footnote.monospacedDigit())
                 }
             } icon: {
                 iconView()
             }
-            //            .disabled(compatible == false)
+            //.labelStyle(CentreAlignedLabelStyle())
             .frame(alignment: .center)
         }
+        .disabled(compatible == false)
 
         @ViewBuilder func iconView() -> some View {
             if version.name == versionManager.installedVersion?.versionString {
                 Image(systemName: "checkmark.circle.fill")
                     .tint(.green)
-            } else if compatible != true {
+            } else if compatible == false {
                 Image(systemName: "xmark.circle")
                     .tint(.red)
             } else {
                 Image(systemName: "circle")
                     .tint(.accentColor)
             }
+        }
+    }
+}
+
+struct ModuleRefView<Content: View> : View {
+    let ref: HubModuleSource.Ref
+    let content: () -> Content
+
+    var body: some View {
+        content()
+    }
+}
+
+/// Doesn't work
+struct CentreAlignedLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Label {
+            configuration.title
+                .alignmentGuide(.firstTextBaseline) {
+                    $0[VerticalAlignment.center]
+                }
+        } icon: {
+            configuration.icon
+                .alignmentGuide(.firstTextBaseline) {
+                    $0[VerticalAlignment.center]
+                }
         }
     }
 }
