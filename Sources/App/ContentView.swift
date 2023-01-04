@@ -71,19 +71,25 @@ public struct RSSFeed : Decodable {
         public var title: String
         public var updated: Date
 
-        public var link: [Link]
+        /// The list of links, which when converted from XML might be translated as a single or multiple element
+        public typealias LinkList = XOr<Link>.Or<[Link]>
+        public var link: LinkList
+        
         public struct Link : Decodable {
             public var type: String // text/html
             public var rel: String // alternate
             public var href: String // https://github.com/Magic-Loupe/PetStore/releases
         }
 
-        public var entry: [Entry]
+        /// The list of entries, which when converted from XML might be translated as a single or multiple element
+        public typealias EntryList = XOr<Entry>.Or<[Entry]>
+        public var entry: EntryList
+
         public struct Entry : Decodable {
             public var id: String // tag:github.com,2008:Repository/584868941/0.0.2
             public var title: String // 0.0.2
             public var updated: Date // "2023-01-03T20:28:34Z"
-            public var link: [Link] // https://github.com/Magic-Loupe/PetStore/releases/tag/0.0.2
+            public var link: LinkList // https://github.com/Magic-Loupe/PetStore/releases/tag/0.0.2
             // content:
             public var author: Author
 
