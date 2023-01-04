@@ -17,6 +17,9 @@
       location = "group:../AnimalFarm/">
    </FileRef>
    <FileRef
+      location = "group:../AboutMe/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXPod/">
    </FileRef>
    <FileRef

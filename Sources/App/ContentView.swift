@@ -2,8 +2,10 @@ import FairApp
 import JXSwiftUI
 import JXKit
 import JXPod
-import PetStore
+
+import AboutMe
 import AnimalFarm
+import PetStore
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 struct ContentView: View {
@@ -102,6 +104,14 @@ extension AnimalFarmModule : JXDynamicModule {
     }
 }
 
+extension AboutMeModule : JXDynamicModule {
+    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
+        entryLink(name: "About Me", symbol: "person", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
+            AboutMeView()
+        }
+    }
+}
+
 
 @MainActor class HubVersionManager : ObservableObject {
     /// All the available refs and their dates for the pet store module
@@ -141,6 +151,7 @@ struct PlaygroundListView: View {
             Section("Applications") {
                 PetStoreModule.entryLink(branches: branches)
                 AnimalFarmModule.entryLink(branches: branches)
+                AboutMeModule.entryLink(branches: branches)
                 // add more applications here…
             }
         }
