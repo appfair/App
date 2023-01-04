@@ -3,6 +3,7 @@ import JXSwiftUI
 import JXKit
 import JXPod
 import PetStore
+import AnimalFarm
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 struct ContentView: View {
@@ -16,40 +17,81 @@ struct ContentView: View {
     }
 }
 
-@MainActor class PetStoreVersionManager : ObservableObject {
-    /// All the available tags and their dates for the pet store module
-    @Published var tags: [(tag: String, date: Date?)] = [(PetStoreVersion ?? "", nil)]
+// TODO: move JXDynamicModule down to JXBride and move implementation into PetStore and AnimalFarm themselves
+extension PetStoreModule : JXDynamicModule {
+}
+
+extension AnimalFarmModule : JXDynamicModule {
+}
+
+
+@MainActor class HubVersionManager : ObservableObject {
+    /// All the available refs and their dates for the pet store module
+    @Published var refs: [HubModuleSource.RefInfo] = []
 
     /// The currently-active version of the local module
-    @Published var currentVersion = PetStoreVersion.flatMap(SemVer.init(string:))
+    let installedVersion: SemVer?
 
-    init() {
+    let source: HubModuleSource
+
+    init(source: HubModuleSource, installedVersion: SemVer?) {
+        self.source = source
+        self.installedVersion = installedVersion
     }
 
     func refreshModules() async {
         dbg("refreshing modules")
         do {
-            self.tags = try await PetStoreModule.tags
-            dbg("available tags:", tags)
+            self.refs = try await source.refs
+            dbg("available refs:", refs)
         } catch {
-            dbg("error getting source")
+            dbg("error getting source:", error)
         }
     }
-
 }
 
 struct PlaygroundListView: View {
-    @StateObject var versionManager = PetStoreVersionManager()
+    var body: some View {
+        List {
+            Section("Applications") {
+                if let source = try? PetStoreModule.hubSource {
+                    NavigationLink("Pet Store") {
+                        ModuleVersionsListView(appName: "Pet Store", versionManager: HubVersionManager(source: source, installedVersion: PetStoreVersion.flatMap(SemVer.init(string:)))) {
+                            PetStoreView() // the root view that will be shown
+                        }
+                    }
+                }
+
+                if let source = try? AnimalFarmModule.hubSource {
+                    NavigationLink("Animal Farm") {
+                        ModuleVersionsListView(appName: "Animal Farm", versionManager: HubVersionManager(source: source, installedVersion: AnimalFarmVersion.flatMap(SemVer.init(string:)))) {
+                            AnimalFarmView() // the root view that will be shown
+                        }
+                    }
+                }
+
+                // TODO: add more applications here…
+            }
+        }
+        .navigationTitle("Showcase")
+    }
+}
+
+
+struct ModuleVersionsListView<V: View>: View {
+    let appName: String
+    @StateObject var versionManager: HubVersionManager
+    let viewBuilder: () -> V
 
     var body: some View {
         List {
             Section("Versions") {
-                ForEach(versionManager.tags, id: \.tag) { tagDate in
-                    petStoreVersionLink(version: tagDate.tag, date: tagDate.date)
+                ForEach(versionManager.refs, id: \.ref.name) { refDate in
+                    moduleVersionLink(version: refDate.ref, date: refDate.date)
                 }
             }
         }
-        .navigationTitle("Showcase")
+        .navigationTitle(appName)
         .refreshable {
             await versionManager.refreshModules()
         }
@@ -58,24 +100,35 @@ struct PlaygroundListView: View {
         }
     }
 
-    func petStoreVersionLink(version: String, date: Date?) -> some View {
-        NavigationLink {
-            LazyView(view: { PetStoreView() })
+    func moduleVersionLink(version: HubModuleSource.Ref, date: Date?) -> some View {
+        let compatible = version.semver?.minorCompatible(with: versionManager.installedVersion ?? .min)
+
+        return NavigationLink {
+            LazyView(view: { viewBuilder() })
         } label: {
             Label {
                 VStack(alignment: .leading) {
-                    Text("Pet Store", bundle: .module, comment: "list title for pet store app")
-                    Text("version \(version) (\(date ?? .now, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
+                    Text(appName)
+                    Text("\(version.name) (\(date ?? .now, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
                         .font(.footnote)
                 }
             } icon: {
-                if version == PetStoreVersion {
-                    Image(systemName: "checkmark.circle.fill")
-                } else if SemVer(string: version)?.minorCompatible(with: versionManager.currentVersion) != true {
-                    Image(systemName: "xmark.circle")
-                } else {
-                    Image(systemName: "circle")
-                }
+                iconView()
+            }
+            //            .disabled(compatible == false)
+            .frame(alignment: .center)
+        }
+
+        @ViewBuilder func iconView() -> some View {
+            if version.name == versionManager.installedVersion?.versionString {
+                Image(systemName: "checkmark.circle.fill")
+                    .tint(.green)
+            } else if compatible != true {
+                Image(systemName: "xmark.circle")
+                    .tint(.red)
+            } else {
+                Image(systemName: "circle")
+                    .tint(.accentColor)
             }
         }
     }
@@ -83,8 +136,19 @@ struct PlaygroundListView: View {
 
 extension SemVer {
     /// True when the major and minor versions are the same as the other version
-    func minorCompatible(with version: SemVer?) -> Bool {
-        self.major == version?.major && self.minor == version?.minor
+    func minorCompatible(with version: SemVer) -> Bool {
+        compatible(with: version, to: .minor)
+    }
+
+    func compatible(with version: SemVer, to component: Component) -> Bool {
+        switch component {
+        case .major:
+            return self.major == version.major
+        case .minor:
+            return self.major == version.major && self.minor == version.minor
+        case .patch:
+            return self.major == version.major && self.minor == version.minor && self.patch == version.patch
+        }
     }
 }
 

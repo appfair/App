@@ -21,7 +21,7 @@ import SwiftUI
 open class AppTests: XCTestCase {
     @MainActor open func testAppManager() throws {
         let store = AppContainer.AppManager()
-        XCTAssertEqual(store.togglePreference, false)
+        XCTAssertEqual(store.developmentMode, false)
         XCTAssertEqual(store.numberPreference, 0.0)
 
         let cfg = AppContainer.AppManager.config

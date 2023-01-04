@@ -38,11 +38,11 @@ struct WelcomeView : View {
         card("hammer", color: cardColors.next(),
              title: "Develop",
              subtitle: "Live Reload and Hot Fixes",
-             body: "Server-driven user-interfaces meet native SwiftUI components."),
+             body: "Server-driven user-interfaces meet native SwiftUI components. JavaScript without the WebView overhead."),
         card("rosette", color: cardColors.next(),
              title: "Deploy",
-             subtitle: "Dynamic Server-driver User Interfaces",
-             body: "Use you favorite git provider to host versions and control development workflows."),
+             subtitle: "Dynamic Server-driven User Interfaces",
+             body: "Use you favorite git provider to host versions and control development workflows. Push development builds to beta users and control the development cycle with semantic version tagging."),
     ]
     .compactMap({ $0 })
 

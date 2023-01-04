@@ -24,14 +24,14 @@ public struct PreferencesView : View {
 
     public var body: some View {
         Form {
-            Toggle(isOn: store.$togglePreference) {
-                Text("Boolean Preference", bundle: .module, comment: "togglePreference preference title")
+            Toggle(isOn: store.$developmentMode) {
+                Text("Development Mode", bundle: .module, comment: "developmentMode preference title")
             }
             Section {
                 Slider(value: store.$numberPreference, in: 0...100, onEditingChanged: { _ in })
             } header: {
                 HStack {
-                    Text("Numeric Preference", bundle: .module, comment: "numberPreference preference title")
+                    Text("Auto-refresh Interval", bundle: .module, comment: "numberPreference preference title")
                     Spacer()
                     Text(round(store.numberPreference), format: .number)
                         .font(.body.monospacedDigit())
@@ -40,7 +40,6 @@ public struct PreferencesView : View {
         }
     }
 }
-
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
