@@ -18,7 +18,7 @@ struct ContentView: View {
 }
 
 extension JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink<V: View>(name: String, version: String?, branches: [String], view: @escaping () -> V) -> some View {
+    @MainActor @ViewBuilder static func entryLink<V: View>(name: String, symbol: String, version: String?, branches: [String], view: @escaping () -> V) -> some View {
         if let source = try? hubSource {
             NavigationLink {
                 ModuleVersionsListView(appName: name, branches: branches, versionManager: HubVersionManager(source: source, installedVersion: version.flatMap(SemVer.init(string:)))) {
@@ -26,11 +26,16 @@ extension JXDynamicModule {
                 }
             } label: {
                 HStack {
-                    Text(name)
+                    Label {
+                        Text(name)
+                    } icon: {
+                        Image(systemName: symbol)
+                            //.symbolVariant(.fill)
+                            .symbolRenderingMode(.hierarchical)
+                    }
                     Spacer()
-                    Divider()
                     Text(version ?? "")
-                        .font(.caption)
+                        .font(.caption.monospacedDigit())
                         .frame(alignment: .trailing)
                 }
             }
@@ -83,7 +88,7 @@ extension Bundle {
 // TODO: move JXDynamicModule down to JXBride and move implementation into PetStore and AnimalFarm themselves
 extension PetStoreModule : JXDynamicModule {
     @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "Pet Store", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
+        entryLink(name: "Pet Store", symbol: "hare", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
             PetStoreView()
         }
     }
@@ -91,7 +96,7 @@ extension PetStoreModule : JXDynamicModule {
 
 extension AnimalFarmModule : JXDynamicModule {
     @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "Animal Farm", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
+        entryLink(name: "Animal Farm", symbol: "pawprint", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) {
             AnimalFarmView()
         }
     }
