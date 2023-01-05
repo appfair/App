@@ -20,12 +20,12 @@ struct ContentView: View {
 
 extension JXDynamicModule {
     @MainActor @ViewBuilder static func entryLink<V: View>(name: String, symbol: String, version: String?, branches: [String], view: @escaping (JXContext) -> V) -> some View {
-        if let source = try? hubSource {
+        if let source = try? Self.hubSource {
             NavigationLink {
                 ModuleVersionsListView(appName: name, branches: branches) { ctx in
                     view(ctx) // the root view that will be shown
                 }
-                .environmentObject(HubVersionManager(source: source, installedVersion: version.flatMap(SemVer.init(string:))))
+                .environmentObject(HubVersionManager(source: source, relativePath: dump(Self.remoteURL?.relativePath), installedVersion: version.flatMap(SemVer.init(string:))))
             } label: {
                 HStack {
                     Label {
@@ -124,11 +124,15 @@ extension AboutMeModule : JXDynamicModule {
     /// The currently-active version of the local module
     let installedVersion: SemVer?
 
+    /// The relative path to the remove module for resolving references
+    let relativePath: String?
+
     let source: HubModuleSource
 
-    init(source: HubModuleSource, installedVersion: SemVer?) {
+    init(source: HubModuleSource, relativePath: String?, installedVersion: SemVer?) {
         self.source = source
         self.installedVersion = installedVersion
+        self.relativePath = relativePath
     }
 
     /// Returns the most recent available version that is compatible with this version
@@ -188,7 +192,7 @@ extension AboutMeModule : JXDynamicModule {
     }
 
     func localDynamicPath(for ref: HubModuleSource.Ref) -> URL? {
-        URL(string: wip("Sources/PetStore/jxmodule"), relativeTo: localRootPath(for: ref))
+        URL(string: self.relativePath ?? "", relativeTo: localRootPath(for: ref))
     }
 
     func scanFolder() {
@@ -421,7 +425,7 @@ struct ModuleRefView<Content: View> : View {
         if let ref = ref {
             return versionManager.localRootPath(for: ref)
         } else {
-            return wip(nil) // TODO: return the local path when there is no ref
+            return nil // TODO: return the local path when there is no ref?
         }
     }
 
