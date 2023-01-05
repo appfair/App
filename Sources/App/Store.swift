@@ -12,11 +12,16 @@ open class Store: SceneManager {
     /// The configuration metadata for the app from the `App.yml` file.
     public static let config: JSum = try! configuration(name: "App", for: .module)
 
-    /// App-wide preference using ``SwiftUI/AppStorage``.
+    /// Whether development-specific features should be enabled
     @AppStorage("developmentMode") public var developmentMode = false
+
+    /// Whether to enable strict script evaluation.
+    @AppStorage("strictMode") public var strictMode = false
 
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("numberPreference") public var numberPreference = 0.0
+
+    @Published var errors: [Error] = []
 
     public required init() {
     }
@@ -71,6 +76,32 @@ open class Store: SceneManager {
             switch self {
             case .preferences: PreferencesView()
             }
+        }
+    }
+
+    /// Register that an error occurred with the app manager
+    @MainActor open func reportError(_ error: Error) {
+        dbg("error:", error)
+        errors.append(error as NSError)
+    }
+
+    /// Attempts to perform the given action and adds any errors to the error list if they fail.
+    @discardableResult func trying<T>(block: () throws -> (T)) -> T? {
+        do {
+            return try block()
+        } catch {
+            reportError(error)
+            return nil
+        }
+    }
+
+    /// Attempts to perform the given action and adds any errors to the error list if they fail.
+    open func trying<T>(block: () async throws -> (T)) async -> T? {
+        do {
+            return try await block()
+        } catch {
+            reportError(error)
+            return nil
         }
     }
 }

@@ -27,6 +27,9 @@ public struct PreferencesView : View {
             Toggle(isOn: store.$developmentMode) {
                 Text("Development Mode", bundle: .module, comment: "developmentMode preference title")
             }
+            Toggle(isOn: store.$strictMode) {
+                Text("Strict Mode", bundle: .module, comment: "strictMode preference title")
+            }
             Section {
                 Slider(value: store.$numberPreference, in: 0...100, onEditingChanged: { _ in })
             } header: {
