@@ -9,7 +9,6 @@ import PetStore
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
 struct ContentView: View {
-    let context = JXContext()
     @EnvironmentObject var store: Store
 
     var body: some View {
