@@ -32,7 +32,7 @@ extension JXDynamicModule {
                         Text(name)
                     } icon: {
                         Image(systemName: symbol)
-                            //.symbolVariant(.fill)
+                        //.symbolVariant(.fill)
                             .symbolRenderingMode(.hierarchical)
                     }
                     Spacer()
@@ -264,7 +264,7 @@ struct ModuleVersionsListView<V: View>: View {
 
     var body: some View {
         List {
-            #if DEBUG
+#if DEBUG
             if store.developmentMode == true {
                 Section {
                     moduleVersionLink(ref: nil, date: nil)
@@ -272,21 +272,21 @@ struct ModuleVersionsListView<V: View>: View {
                     Text("Live", bundle: .module, comment: "section header title for apps list view live edit section")
                 }
             }
-            #endif
+#endif
 
             Section {
                 if let latestRef = versionManager.latestCompatableVersion {
                     moduleVersionLink(ref: .tag(latestRef.ref.name), date: latestRef.date, latest: true)
                 }
 
-                DisclosureGroup(isExpanded: $allVersionsExpanded) {
-                    if store.developmentMode == true {
+                if store.developmentMode == true {
+                    DisclosureGroup(isExpanded: $allVersionsExpanded) {
                         ForEach(versionManager.refs, id: \.ref.name) { refDate in
                             moduleVersionLink(ref: refDate.ref, date: refDate.date)
                         }
+                    } label: {
+                        Text("All Versions (\(versionManager.refs.count, format: .number))", bundle: .module, comment: "header title for disclosure group listing versions")
                     }
-                } label: {
-                    Text("All Versions (\(versionManager.refs.count, format: .number))", bundle: .module, comment: "header title for disclosure group listing versions")
                 }
 
             } header: {
@@ -355,9 +355,9 @@ struct ModuleVersionsListView<V: View>: View {
             ModuleRefView(ref: ref) { viewBuilder(createContext(for: ref)) }
                 .environmentObject(versionManager)
                 .navigation(title: Text(appName), subtitle: (ref?.name).flatMap(Text.init))
-                #if !os(macOS)
+#if !os(macOS)
                 .navigationBarTitleDisplayMode(.inline)
-                #endif
+#endif
         } label: {
             Label {
                 VStack(alignment: .leading) {
@@ -511,16 +511,6 @@ extension SemVer {
         }
     }
 }
-
-// Prevent loading the JS from all playground destinations at once
-private struct LazyView<V: View>: View {
-    let view: () -> V
-
-    var body: some View {
-        view()
-    }
-}
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
