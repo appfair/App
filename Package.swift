@@ -18,7 +18,7 @@ let package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
-        .package(url: "https://github.com/jectivex/JXHost", from: "0.0.0"),
+        .package(url: "https://github.com/jectivex/JXHost", from: "0.0.2"),
 
         // modules
         .package(url: "https://github.com/Magic-Loupe/PetStore", from: "0.0.1"),
