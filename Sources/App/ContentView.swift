@@ -25,7 +25,7 @@ extension JXDynamicModule {
                 ModuleVersionsListView(appName: name, branches: branches) { ctx in
                     view(ctx) // the root view that will be shown
                 }
-                .environmentObject(HubVersionManager(source: source, relativePath: dump(Self.remoteURL?.relativePath), installedVersion: version.flatMap(SemVer.init(string:))))
+                .environmentObject(HubVersionManager(source: source, relativePath: Self.remoteURL?.relativePath, installedVersion: version.flatMap(SemVer.init(string:))))
             } label: {
                 HStack {
                     Label {
@@ -113,13 +113,18 @@ extension AboutMeModule : JXDynamicModule {
     }
 }
 
+/// A `ModuleManager` backed by a `HubModuleSource`
+typealias HubVersionManager = ModuleManager // <HubModuleSource>
 
-@MainActor class HubVersionManager : ObservableObject {
+/// The manager for a local cache of individual refs of a certain repository
+@MainActor class ModuleManager : ObservableObject { // TODO: make generic with: <Source: JXDynamicModuleSource>
+    typealias Source = HubModuleSource // TODO: remove once generic
+
     /// All the available refs and their dates for the pet store module
-    @Published var refs: [HubModuleSource.RefInfo] = []
+    @Published var refs: [Source.RefInfo] = []
 
     /// All the local version folders
-    @Published var localVersions: [HubModuleSource.Ref: URL] = [:]
+    @Published var localVersions: [Source.Ref: URL] = [:]
 
     /// The currently-active version of the local module
     let installedVersion: SemVer?
@@ -127,16 +132,19 @@ extension AboutMeModule : JXDynamicModule {
     /// The relative path to the remove module for resolving references
     let relativePath: String?
 
-    let source: HubModuleSource
+    let source: Source
 
-    init(source: HubModuleSource, relativePath: String?, installedVersion: SemVer?) {
+    let fileManager: FileManager
+
+    init(source: Source, relativePath: String?, installedVersion: SemVer?, fileManager: FileManager = .default) {
         self.source = source
         self.installedVersion = installedVersion
         self.relativePath = relativePath
+        self.fileManager = fileManager
     }
 
     /// Returns the most recent available version that is compatible with this version
-    var latestCompatableVersion: HubModuleSource.RefInfo? {
+    var latestCompatableVersion: Source.RefInfo? {
         self.refs
             .filter { refInfo in
                 refInfo.ref.semver?.minorCompatible(with: self.installedVersion ?? .max) == true
@@ -156,7 +164,7 @@ extension AboutMeModule : JXDynamicModule {
     }
 
     var baseLocalPath: URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
         return base
             .appendingPathComponent("jxmodules", isDirectory: true)
             .appendingPathComponent(source.repository.host ?? "host", isDirectory: true)
@@ -166,20 +174,45 @@ extension AboutMeModule : JXDynamicModule {
     /// The local extraction path for the given ref.
     ///
     /// This will be something like: `~/Library/Developer/CoreSimulator/Devices/*/data/Containers/Data/Application/*/Library/Application%20Support/github.com/Magic-Loupe/PetStore.git/`
-    func localRootPath(for ref: HubModuleSource.Ref) -> URL {
+    func localRootPath(for ref: Source.Ref) -> URL {
         baseLocalPath
             .appendingPathComponent(ref.type, isDirectory: true)
             .appendingPathComponent(ref.name, isDirectory: true)
     }
 
+    @discardableResult func downloadArchive(for ref: Source.Ref, overwrite: Bool) async throws -> URL {
+        let localExpandURL = localRootPath(for: ref)
+        if fileManager.fileExists(atPath: localExpandURL.path) == true {
+            if overwrite {
+                dbg("removing:", localExpandURL.path)
+                try fileManager.removeItem(at: localExpandURL)
+            } else {
+                dbg("returning existing folder:", localExpandURL.path)
+                return localExpandURL
+            }
+        }
+
+        // regardless of whether we succeed, always re-scan the local versions
+        defer { scanFolder() }
+
+        let url = self.source.archiveURL(for: ref)
+        dbg("loading ref:", ref, url)
+        let (localURL, response) = try await URLSession.shared.downloadFile(for: URLRequest(url: url))
+        dbg("downloaded:", localURL, response.expectedContentLength)
+        let progress: Progress? = nil // TODO
+        try fileManager.unzipItem(at: localURL, to: localExpandURL, progress: progress, trimBasePath: true, overwrite: true)
+        dbg("extracted to:", localExpandURL)
+        return localExpandURL
+    }
+
     /// Remove the local cached folder for the given ref.
-    @discardableResult func removeLocalFolder(for ref: HubModuleSource.Ref) -> Bool {
+    @discardableResult func removeLocalFolder(for ref: Source.Ref) -> Bool {
         defer { scanFolder() } // re-scan after removing any items
         let path = localRootPath(for: ref)
 
         do {
             dbg("removing folder:", path.path)
-            try FileManager.default.removeItem(at: path)
+            try fileManager.removeItem(at: path)
             return true
         } catch {
             dbg("error removing folder at:", path, error)
@@ -187,17 +220,17 @@ extension AboutMeModule : JXDynamicModule {
         }
     }
 
-    func localRootPathExists(for ref: HubModuleSource.Ref) -> Bool {
+    func localRootPathExists(for ref: Source.Ref) -> Bool {
         localVersions[ref] != nil
     }
 
-    func localDynamicPath(for ref: HubModuleSource.Ref) -> URL? {
+    func localDynamicPath(for ref: Source.Ref) -> URL? {
         URL(string: self.relativePath ?? "", relativeTo: localRootPath(for: ref))
     }
 
     func scanFolder() {
         // remove existing cached folders
-        var versions: [HubModuleSource.Ref: URL] = [:]
+        var versions: [Source.Ref: URL] = [:]
         defer {
             if versions != self.localVersions {
                 // update the versions if anything has changed
@@ -207,19 +240,19 @@ extension AboutMeModule : JXDynamicModule {
 
         dbg(baseLocalPath)
         do {
-            let dir = { try FileManager.default.contentsOfDirectory(at: $0, includingPropertiesForKeys: [.isDirectoryKey], options: [.producesRelativePathURLs, .skipsHiddenFiles]) }
+            let dir = { try self.fileManager.contentsOfDirectory(at: $0, includingPropertiesForKeys: [.isDirectoryKey], options: [.producesRelativePathURLs, .skipsHiddenFiles]) }
 
-            let contents = try dir(baseLocalPath)
-            for base in contents {
-                dbg(base) // "branch" or "tag"
-                guard let kind = HubModuleSource.Ref.Kind(rawValue: base.lastPathComponent) else {
-                    dbg("skipping unrecognized folder kind:", base.path)
+            for base in try dir(baseLocalPath) {
+                // we expect the top-level folders to be named for the `Kind` of ref: "branch" or "tag"
+                guard let kind = Source.Ref.Kind(rawValue: base.lastPathComponent) else {
+                    dbg("skipping unrecognized folder name:", base.path)
                     continue
                 }
-                let subcontents = try dir(base)
-                for sub in subcontents {
-                    let ref = HubModuleSource.Ref(kind: kind, name: sub.lastPathComponent)
-                    dbg("creating ref:", ref, "to:", sub)
+                for sub in try dir(base) {
+                    // the sub-folder will be the ref name: e.g., for "tag": "1.1.2", "2.3.4" and for "branch": "main", "develop", etc.
+                    let name = sub.lastPathComponent
+                    let ref = Source.Ref(kind: kind, name: name)
+                    //dbg("creating ref:", ref, "to:", sub)
                     versions[ref] = sub
                 }
             }
@@ -252,6 +285,7 @@ struct PlaygroundListView: View {
 }
 
 
+/// A view that displays a sectioned list of navigation links to individual versions of a module.
 struct ModuleVersionsListView<V: View>: View {
     @EnvironmentObject var store: Store
     @State var allVersionsExpanded = false
@@ -322,17 +356,15 @@ struct ModuleVersionsListView<V: View>: View {
         let baseURL: URL
 
         func scriptURL(resource: String, relativeTo: URL?, root: URL) throws -> URL {
-            dbg(resource, "relativeTo:", relativeTo?.absoluteString, "root", root.absoluteString, "baseURL", baseURL.absoluteString)
             // we ignore the passed-in root and instead use our own base URL
             // let url = URL(fileURLWithPath: resource, relativeTo: self.baseURL) // relative doesn't seem to work
             let url = baseURL.appendingPathComponent(resource)
-            dbg(url.absoluteString)
+            dbg("resolved:", resource, "as:", url.path)
             return url
         }
 
         func loadScript(from url: URL) throws -> String? {
-            dbg(url.absoluteString)
-            dbg("LOAD FROM:", baseURL)
+            //dbg(url.absoluteString)
             return try String(contentsOf: url)
         }
     }
@@ -383,12 +415,27 @@ struct ModuleVersionsListView<V: View>: View {
             //.labelStyle(CentreAlignedLabelStyle())
             .frame(alignment: .center)
         }
-        .swipeActions(content: {
-            if let ref = ref, versionManager.localRootPathExists(for: ref) {
-                Button(role: .destructive) {
-                    versionManager.removeLocalFolder(for: ref)
-                } label: {
-                    Label("Remove", systemImage: "trash")
+        .swipeActions(edge: .leading, content: {
+            // show either a remove or download button, depending on whether the ref is currently downloaded
+            if let ref = ref {
+                if versionManager.localRootPathExists(for: ref) {
+                    Button() {
+                        versionManager.removeLocalFolder(for: ref)
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
+                    .tint(.red)
+                } else {
+                    Button() {
+                        Task {
+                            await store.trying {
+                                try await versionManager.downloadArchive(for: ref, overwrite: true)
+                            }
+                        }
+                    } label: {
+                        Label("Download", systemImage: "square.and.arrow.down.fill")
+                    }
+                    .tint(.yellow)
                 }
             }
         })
@@ -420,15 +467,6 @@ struct ModuleRefView<Content: View> : View {
     @State var loading: Bool = true
     @EnvironmentObject var store: Store
 
-    /// The local expansion path for the ref
-    var localPath: URL? {
-        if let ref = ref {
-            return versionManager.localRootPath(for: ref)
-        } else {
-            return nil // TODO: return the local path when there is no ref?
-        }
-    }
-
     var body: some View {
         if loading == true {
             ProgressView()
@@ -448,31 +486,8 @@ struct ModuleRefView<Content: View> : View {
             return nil
         }
 
-        defer {
-            versionManager.scanFolder()
-        }
-
         return await store.trying {
-            guard let localExpandURL = localPath else {
-                throw AppError("Unable to find local path for ref archive")
-            }
-            if FileManager.default.fileExists(atPath: localExpandURL.path) == true {
-                if overwrite {
-                    dbg("removing:", localExpandURL.path)
-                    try FileManager.default.removeItem(at: localExpandURL)
-                } else {
-                    dbg("returning existing folder:", localExpandURL.path)
-                    return localExpandURL
-                }
-            }
-            let url = versionManager.source.archiveURL(for: ref)
-            dbg("loading ref:", ref, url)
-            let (localURL, response) = try await URLSession.shared.downloadFile(for: URLRequest(url: url))
-            dbg("downloaded:", localURL, response.expectedContentLength)
-            let progress: Progress? = nil // TODO
-            try FileManager.default.unzipItem(at: localURL, to: localExpandURL, progress: progress, trimBasePath: true, overwrite: true)
-            dbg("extracted to:", localExpandURL)
-            return localExpandURL
+            try await versionManager.downloadArchive(for: ref, overwrite: overwrite)
         }
     }
 }
