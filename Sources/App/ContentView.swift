@@ -5,6 +5,7 @@ import JXPod
 
 import AboutMe
 import AnimalFarm
+import DatePlanner
 import PetStore
 
 /// The main content view for the app. This is the starting point for customizing you app's behavior.
@@ -108,7 +109,15 @@ extension AnimalFarmModule : JXDynamicModule {
 extension AboutMeModule : JXDynamicModule {
     @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
         entryLink(name: "About Me", symbol: "person", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
-            AboutMeView() // (context: ctx)
+            AboutMeView(context: ctx)
+        }
+    }
+}
+
+extension DatePlannerModule : JXDynamicModule {
+    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
+        entryLink(name: "Date Planner", symbol: "calendar", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
+            DatePlannerView(context: ctx)
         }
     }
 }
@@ -276,6 +285,7 @@ struct PlaygroundListView: View {
                 PetStoreModule.entryLink(branches: branches)
                 AnimalFarmModule.entryLink(branches: branches)
                 AboutMeModule.entryLink(branches: branches)
+                DatePlannerModule.entryLink(branches: branches)
                 // add more applications here…
             }
             .symbolVariant(.fill)

@@ -25,6 +25,7 @@ let package = Package(
         .package(url: "https://github.com/Magic-Loupe/PetStore", from: "0.0.1"),
         .package(url: "https://github.com/Magic-Loupe/AnimalFarm", from: "0.0.1"),
         .package(url: "https://github.com/Magic-Loupe/AboutMe", from: "0.0.1"),
+        .package(url: "https://github.com/Magic-Loupe/DatePlanner", from: "0.0.1"),
     ],
     targets: [
         .target(name: "App", dependencies: [
@@ -36,6 +37,7 @@ let package = Package(
             .product(name: "PetStore", package: "PetStore"),
             .product(name: "AnimalFarm", package: "AnimalFarm"),
             .product(name: "AboutMe", package: "AboutMe"),
+            .product(name: "DatePlanner", package: "DatePlanner"),
         ], resources: [
             .process("Resources"), // processed resources
         ], plugins: [

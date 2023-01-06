@@ -20,6 +20,9 @@
       location = "group:../AboutMe/">
    </FileRef>
    <FileRef
+      location = "group:../DatePlanner/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXPod/">
    </FileRef>
    <FileRef
