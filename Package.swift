@@ -18,8 +18,7 @@ let package = Package(
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
         .package(url: "https://github.com/fair-ground/Fair", from: "0.6.0"), // must be first
-        .package(url: "https://github.com/jectivex/JXPod", from: "0.3.0"),
-        .package(url: "https://github.com/jectivex/JXSwiftUI", from: "0.1.7"),
+        .package(url: "https://github.com/jectivex/JXHost", from: "0.0.0"),
 
         // modules
         .package(url: "https://github.com/Magic-Loupe/PetStore", from: "0.0.1"),
@@ -31,8 +30,7 @@ let package = Package(
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
             //.product(name: "FairKit", package: "Fair"), // optional enhancements
-            .product(name: "JXPod", package: "JXPod"),
-            .product(name: "JXSwiftUI", package: "JXSwiftUI"),
+            .product(name: "JXHost", package: "JXHost"),
 
             .product(name: "PetStore", package: "PetStore"),
             .product(name: "AnimalFarm", package: "AnimalFarm"),

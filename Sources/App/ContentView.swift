@@ -1,7 +1,5 @@
 import FairApp
-import JXSwiftUI
-import JXKit
-import JXPod
+import JXHost
 
 import AboutMe
 import AnimalFarm
@@ -20,51 +18,56 @@ struct ContentView: View {
 }
 
 extension JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink<V: View>(name: String, symbol: String, version: String?, branches: [String], view: @escaping (JXContext) -> V) -> some View {
-        if let source = try? Self.hubSource {
-            NavigationLink {
-                ModuleVersionsListView(appName: name, branches: branches) { ctx in
-                    view(ctx) // the root view that will be shown
+    @MainActor @ViewBuilder static func entryLink<V: View>(host: Bundle?, name: String, symbol: String, branches: [String], view: @escaping (JXContext) -> V) -> some View {
+        let version = host?.packageVersion(for: Self.remoteURL.baseURL)
+        let source = Self.hubSource
+        NavigationLink {
+            ModuleVersionsListView(appName: name, branches: branches) { ctx in
+                view(ctx) // the root view that will be shown
+            }
+            .environmentObject(source.versionManager(for: self, refName: version))
+        } label: {
+            HStack {
+                Label {
+                    Text(name)
+                } icon: {
+                    Image(systemName: symbol)
+                    //.symbolVariant(.fill)
+                        .symbolRenderingMode(.hierarchical)
                 }
-                .environmentObject(HubVersionManager(source: source, relativePath: Self.remoteURL?.relativePath, installedVersion: version.flatMap(SemVer.init(string:))))
-            } label: {
-                HStack {
-                    Label {
-                        Text(name)
-                    } icon: {
-                        Image(systemName: symbol)
-                        //.symbolVariant(.fill)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    Spacer()
-                    Text(version ?? "")
-                        .font(.caption.monospacedDigit())
-                        .frame(alignment: .trailing)
-                }
+                Spacer()
+                Text(version ?? "")
+                    .font(.caption.monospacedDigit())
+                    .frame(alignment: .trailing)
             }
         }
     }
 }
 
 extension Bundle {
-    /// Returns the parsed Package.resolved embedded in the app.
-    var packageResolved: ResolvedPackage {
-        get throws {
+    /// Returns the parsed `Package.resolved` embedded in this bundle.
+    ///
+    /// The file is the output of `swift package resolve`, and will contain information about the individual versions of the dependencies of the app.
+    ///
+    /// - Note: The `Package.resolved` must be manually included in the bundle's `Resources/` through a build rule.
+    static let packageResolved = {
+        Result {
             try ResolvedPackage(json: Bundle.module.loadResource(named: "Package.resolved"))
         }
-    }
+    }()
 
     func findVersion(repository: URL?, in packages: [(url: String, version: String?)]) -> String? {
         for (url, version) in packages {
+            // note that some repositories have the ".git" extension and some do not; compare them by trimming the extension
             if url == repository?.absoluteString
                 || url == repository?.deletingPathExtension().absoluteString {
                 // the package matches, so return the version, which might be a
-                dbg("package version found for", repository, version)
+                //dbg("package version found for", repository, version)
                 return version
             }
         }
 
-        dbg("no package version found for", repository)
+        //dbg("no package version found for", repository)
         return nil
     }
 
@@ -72,7 +75,7 @@ extension Bundle {
     func packageVersion(for repository: URL?) -> String? {
         dbg(repository)
         do {
-            let resolved = try packageResolved
+            let resolved = try Self.packageResolved.get()
             switch resolved.rawValue {
                 // handle both versions of the resolved package format
             case .p(let v1):
@@ -88,189 +91,6 @@ extension Bundle {
     }
 }
 
-// TODO: move JXDynamicModule down to JXBridge and move implementation into PetStore and AnimalFarm themselves
-
-extension PetStoreModule : JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "Pet Store", symbol: "hare", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
-            PetStoreView(context: ctx)
-        }
-    }
-}
-
-extension AnimalFarmModule : JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "Animal Farm", symbol: "pawprint", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
-            AnimalFarmView(context: ctx)
-        }
-    }
-}
-
-extension AboutMeModule : JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "About Me", symbol: "person", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
-            AboutMeView(context: ctx)
-        }
-    }
-}
-
-extension DatePlannerModule : JXDynamicModule {
-    @MainActor @ViewBuilder static func entryLink(branches: [String]) -> some View {
-        entryLink(name: "Date Planner", symbol: "calendar", version: Bundle.module.packageVersion(for: Self.remoteURL?.baseURL), branches: branches) { ctx in
-            DatePlannerView(context: ctx)
-        }
-    }
-}
-
-/// A `ModuleManager` backed by a `HubModuleSource`
-typealias HubVersionManager = ModuleManager // <HubModuleSource>
-
-/// The manager for a local cache of individual refs of a certain repository
-@MainActor class ModuleManager : ObservableObject { // TODO: make generic with: <Source: JXDynamicModuleSource>
-    typealias Source = HubModuleSource // TODO: remove once generic
-
-    /// All the available refs and their dates for the pet store module
-    @Published var refs: [Source.RefInfo] = []
-
-    /// All the local version folders
-    @Published var localVersions: [Source.Ref: URL] = [:]
-
-    /// The currently-active version of the local module
-    let installedVersion: SemVer?
-
-    /// The relative path to the remove module for resolving references
-    let relativePath: String?
-
-    let source: Source
-
-    let fileManager: FileManager
-
-    init(source: Source, relativePath: String?, installedVersion: SemVer?, fileManager: FileManager = .default) {
-        self.source = source
-        self.installedVersion = installedVersion
-        self.relativePath = relativePath
-        self.fileManager = fileManager
-    }
-
-    /// Returns the most recent available version that is compatible with this version
-    var latestCompatableVersion: Source.RefInfo? {
-        self.refs
-            .filter { refInfo in
-                refInfo.ref.semver?.minorCompatible(with: self.installedVersion ?? .max) == true
-            }
-            .sorting(by: \.ref.semver)
-            .last
-    }
-
-    func refreshModules() async {
-        dbg("refreshing modules")
-        do {
-            self.refs = try await source.refs
-            dbg("available refs:", refs.map(\.ref.name))
-        } catch {
-            dbg("error getting source:", error)
-        }
-    }
-
-    var baseLocalPath: URL {
-        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return base
-            .appendingPathComponent("jxmodules", isDirectory: true)
-            .appendingPathComponent(source.repository.host ?? "host", isDirectory: true)
-            .appendingPathComponent(source.repository.path, isDirectory: true)
-    }
-
-    /// The local extraction path for the given ref.
-    ///
-    /// This will be something like: `~/Library/Developer/CoreSimulator/Devices/*/data/Containers/Data/Application/*/Library/Application%20Support/github.com/Magic-Loupe/PetStore.git/`
-    func localRootPath(for ref: Source.Ref) -> URL {
-        baseLocalPath
-            .appendingPathComponent(ref.type, isDirectory: true)
-            .appendingPathComponent(ref.name, isDirectory: true)
-    }
-
-    @discardableResult func downloadArchive(for ref: Source.Ref, overwrite: Bool) async throws -> URL {
-        let localExpandURL = localRootPath(for: ref)
-        if fileManager.fileExists(atPath: localExpandURL.path) == true {
-            if overwrite {
-                dbg("removing:", localExpandURL.path)
-                try fileManager.removeItem(at: localExpandURL)
-            } else {
-                dbg("returning existing folder:", localExpandURL.path)
-                return localExpandURL
-            }
-        }
-
-        // regardless of whether we succeed, always re-scan the local versions
-        defer { scanFolder() }
-
-        let url = self.source.archiveURL(for: ref)
-        dbg("loading ref:", ref, url)
-        let (localURL, response) = try await URLSession.shared.downloadFile(for: URLRequest(url: url))
-        dbg("downloaded:", localURL, response.expectedContentLength)
-        let progress: Progress? = nil // TODO
-        try fileManager.unzipItem(at: localURL, to: localExpandURL, progress: progress, trimBasePath: true, overwrite: true)
-        dbg("extracted to:", localExpandURL)
-        return localExpandURL
-    }
-
-    /// Remove the local cached folder for the given ref.
-    @discardableResult func removeLocalFolder(for ref: Source.Ref) -> Bool {
-        defer { scanFolder() } // re-scan after removing any items
-        let path = localRootPath(for: ref)
-
-        do {
-            dbg("removing folder:", path.path)
-            try fileManager.removeItem(at: path)
-            return true
-        } catch {
-            dbg("error removing folder at:", path, error)
-            return false
-        }
-    }
-
-    func localRootPathExists(for ref: Source.Ref) -> Bool {
-        localVersions[ref] != nil
-    }
-
-    func localDynamicPath(for ref: Source.Ref) -> URL? {
-        URL(string: self.relativePath ?? "", relativeTo: localRootPath(for: ref))
-    }
-
-    func scanFolder() {
-        // remove existing cached folders
-        var versions: [Source.Ref: URL] = [:]
-        defer {
-            if versions != self.localVersions {
-                // update the versions if anything has changed
-                self.localVersions = versions
-            }
-        }
-
-        dbg(baseLocalPath)
-        do {
-            let dir = { try self.fileManager.contentsOfDirectory(at: $0, includingPropertiesForKeys: [.isDirectoryKey], options: [.producesRelativePathURLs, .skipsHiddenFiles]) }
-
-            for base in try dir(baseLocalPath) {
-                // we expect the top-level folders to be named for the `Kind` of ref: "branch" or "tag"
-                guard let kind = Source.Ref.Kind(rawValue: base.lastPathComponent) else {
-                    dbg("skipping unrecognized folder name:", base.path)
-                    continue
-                }
-                for sub in try dir(base) {
-                    // the sub-folder will be the ref name: e.g., for "tag": "1.1.2", "2.3.4" and for "branch": "main", "develop", etc.
-                    let name = sub.lastPathComponent
-                    let ref = Source.Ref(kind: kind, name: name)
-                    //dbg("creating ref:", ref, "to:", sub)
-                    versions[ref] = sub
-                }
-            }
-        } catch {
-            dbg("error:", error)
-        }
-    }
-}
-
 struct PlaygroundListView: View {
     @EnvironmentObject var store: Store
 
@@ -282,10 +102,18 @@ struct PlaygroundListView: View {
     var body: some View {
         List {
             Section("Sample Apps") {
-                PetStoreModule.entryLink(branches: branches)
-                AnimalFarmModule.entryLink(branches: branches)
-                AboutMeModule.entryLink(branches: branches)
-                DatePlannerModule.entryLink(branches: branches)
+                PetStoreModule.entryLink(host: .module, name: "Pet Store", symbol: "hare", branches: branches) { ctx in
+                    PetStoreView(context: ctx)
+                }
+                AnimalFarmModule.entryLink(host: .module, name: "Animal Farm", symbol: "pawprint", branches: branches) { ctx in
+                    AnimalFarmView(context: ctx)
+                }
+                AboutMeModule.entryLink(host: .module, name: "About Me", symbol: "person", branches: branches) { ctx in
+                    AboutMeView(context: ctx)
+                }
+                DatePlannerModule.entryLink(host: .module, name: "Date Planner", symbol: "calendar", branches: branches) { ctx in
+                    DatePlannerView(context: ctx)
+                }
                 // add more applications here…
             }
             .symbolVariant(.fill)
@@ -349,11 +177,11 @@ struct ModuleVersionsListView<V: View>: View {
         }
         .navigationTitle(appName)
         .refreshable {
-            versionManager.scanFolder()
+            versionManager.scanModuleFolder()
             await versionManager.refreshModules()
         }
         .task {
-            versionManager.scanFolder()
+            versionManager.scanModuleFolder()
             await versionManager.refreshModules()
         }
     }
@@ -530,24 +358,6 @@ struct CentreAlignedLabelStyle: LabelStyle {
                 .alignmentGuide(.firstTextBaseline) {
                     $0[VerticalAlignment.center]
                 }
-        }
-    }
-}
-
-extension SemVer {
-    /// True when the major and minor versions are the same as the other version
-    func minorCompatible(with version: SemVer) -> Bool {
-        compatible(with: version, to: .minor)
-    }
-
-    func compatible(with version: SemVer, to component: Component) -> Bool {
-        switch component {
-        case .major:
-            return self.major == version.major
-        case .minor:
-            return self.major == version.major && self.minor == version.minor
-        case .patch:
-            return self.major == version.major && self.minor == version.minor && self.patch == version.patch
         }
     }
 }

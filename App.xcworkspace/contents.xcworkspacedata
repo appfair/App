@@ -26,6 +26,9 @@
       location = "group:../../github/jectivex/JXPod/">
    </FileRef>
    <FileRef
+      location = "group:../../github/jectivex/JXHost/">
+   </FileRef>
+   <FileRef
       location = "group:../../github/jectivex/JXBridge/">
    </FileRef>
    <FileRef
