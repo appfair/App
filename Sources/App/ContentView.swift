@@ -393,21 +393,23 @@ struct ModuleVersionsListView<V: View>: View {
         } label: {
             Label {
                 VStack(alignment: .leading) {
-                    Text(appName)
+                    //Text(appName)
                     HStack {
                         // if latest == true {
                         //     Text("Latest", bundle: .module, comment: "prefix for string that is the most recent string")
                         // }
                         if let ref = ref {
                             Text(ref.name)
-                        }
-                        if let date = date {
-                            Text("(\(date, format: .relative(presentation: .named, unitsStyle: .abbreviated)))", bundle: .module, comment: "list comment title describing the current version")
                         } else {
-                            (ref?.name).flatMap(Text.init)
+                            Text(appName)
+                        }
+                        Spacer()
+                        if let date = date {
+                            Text("\(date, format: .relative(presentation: .named, unitsStyle: .abbreviated))", bundle: .module, comment: "list comment title describing the current version")
+                                .font(.caption.monospacedDigit())
                         }
                     }
-                    .font(.footnote.monospacedDigit())
+                    //.font(.footnote.monospacedDigit())
                 }
             } icon: {
                 iconView()
