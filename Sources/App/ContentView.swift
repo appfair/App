@@ -392,40 +392,8 @@ struct ModuleVersionsListView<V: View>: View {
 
     func moduleVersionLink(ref: HubModuleSource.Ref?, date: Date?, latest: Bool = false) -> some View {
         let compatible = ref?.semver?.minorCompatible(with: versionManager.installedVersion ?? .max)
-
-        return NavigationLink {
-            ModuleRefView(ref: ref) { viewBuilder(createContext(for: ref)) }
-                .environmentObject(versionManager)
-                .navigation(title: Text(appName), subtitle: (ref?.name).flatMap(Text.init))
-#if !os(macOS)
-                .navigationBarTitleDisplayMode(.inline)
-#endif
-        } label: {
-            Label {
-                VStack(alignment: .leading) {
-                    //Text(appName)
-                    HStack {
-                        // if latest == true {
-                        //     Text("Latest", bundle: .module, comment: "prefix for string that is the most recent string")
-                        // }
-                        if let ref = ref {
-                            Text(ref.name)
-                        } else {
-                            Text(appName)
-                        }
-                        Spacer()
-                        if let date = date {
-                            Text("\(date, format: .relative(presentation: .named, unitsStyle: .abbreviated))", bundle: .module, comment: "list comment title describing the current version")
-                                .font(.caption.monospacedDigit())
-                        }
-                    }
-                    //.font(.footnote.monospacedDigit())
-                }
-            } icon: {
-                iconView()
-            }
-            //.labelStyle(CentreAlignedLabelStyle())
-            .frame(alignment: .center)
+        return ModuleRefPresenterView(appName: appName, ref: ref, date: date, versionManager: versionManager, compatible: compatible) {
+            viewBuilder(createContext(for: ref))
         }
         .swipeActions(edge: .leading, content: {
             // show either a remove or download button, depending on whether the ref is currently downloaded
@@ -452,22 +420,67 @@ struct ModuleVersionsListView<V: View>: View {
             }
         })
         .disabled(compatible == false)
+    }
+}
 
-        func iconView() -> Image {
-            if let version = ref {
-                if version.name == versionManager.installedVersion?.versionString {
-                    return Image(systemName: "circle.inset.filled")
-                } else if compatible == false {
-                    return Image(systemName: "xmark.circle") // unavailable
-                } else if versionManager.localRootPathExists(for: version) {
-                    return Image(systemName: "circle.dashed.inset.filled")
-                } else {
-                    return Image(systemName: "circle.dashed")
+struct ModuleRefPresenterView<V: View>: View {
+    let appName: String
+    let ref: HubModuleSource.Ref?
+    let date: Date?
+    let versionManager: HubVersionManager
+    let compatible: Bool?
+    let viewBuilder: () -> V
+    
+    @State var isPresented = false
+
+    var body: some View {
+        Button(action: { isPresented = true }) {
+            Label {
+                VStack(alignment: .leading) {
+                    //Text(appName)
+                    HStack {
+                        // if latest == true {
+                        //     Text("Latest", bundle: .module, comment: "prefix for string that is the most recent string")
+                        // }
+                        if let ref = ref {
+                            Text(ref.name)
+                        } else {
+                            Text(appName)
+                        }
+                        Spacer()
+                        if let date = date {
+                            Text("\(date, format: .relative(presentation: .named, unitsStyle: .abbreviated))", bundle: .module, comment: "list comment title describing the current version")
+                                .font(.caption.monospacedDigit())
+                        }
+                    }
+                    //.font(.footnote.monospacedDigit())
                 }
-            } else {
-                // no version: using local file system
-                return Image(systemName: "arrow.clockwise.circle.fill")
+            } icon: {
+                iconView()
             }
+            //.labelStyle(CentreAlignedLabelStyle())
+            .frame(alignment: .center)
+        }
+        .sheet(isPresented: $isPresented) {
+            ModuleRefView(ref: ref) { viewBuilder() }
+                .environmentObject(versionManager)
+        }
+    }
+
+    @MainActor func iconView() -> Image {
+        if let version = ref {
+            if version.name == versionManager.installedVersion?.versionString {
+                return Image(systemName: "circle.inset.filled")
+            } else if compatible == false {
+                return Image(systemName: "xmark.circle") // unavailable
+            } else if versionManager.localRootPathExists(for: version) {
+                return Image(systemName: "circle.dashed.inset.filled")
+            } else {
+                return Image(systemName: "circle.dashed")
+            }
+        } else {
+            // no version: using local file system
+            return Image(systemName: "arrow.clockwise.circle.fill")
         }
     }
 }

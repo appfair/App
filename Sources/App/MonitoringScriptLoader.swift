@@ -1,8 +1,7 @@
+#if !os(Linux) && !os(Android) && !os(Windows)
 import Foundation
 import JXKit
 import FairCore
-
-#if !os(Linux) && !os(Android) && !os(Windows)
 
 /// Script loader that attempts to locate source files for loaded JavaScript and monitor those files for changes.
 public class MonitoringScriptLoader: JXScriptLoader {
@@ -295,7 +294,4 @@ private class SourceFileLocator {
         }
     }
 }
-
 #endif // !os(Linux) && !os(Android) && !os(Windows)
-
-
