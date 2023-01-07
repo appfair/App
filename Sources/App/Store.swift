@@ -21,7 +21,7 @@ open class Store: SceneManager {
     /// App-wide preference using ``SwiftUI/AppStorage``.
     @AppStorage("numberPreference") public var numberPreference = 0.0
 
-    @Published var errors: [Error] = []
+    @Published var errors: [NSError] = []
 
     public required init() {
     }
