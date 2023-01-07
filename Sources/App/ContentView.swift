@@ -22,10 +22,9 @@ extension JXDynamicModule {
         let version = host?.packageVersion(for: Self.remoteURL.baseURL)
         let source = Self.hubSource
         NavigationLink {
-            ModuleVersionsListView(appName: name, branches: branches, developmentMode: store.developmentMode, strictMode: store.strictMode, errorHandler: { store.reportError($0) }) { ctx in
+            ModuleVersionsListView(versionManager: source.versionManager(for: self, refName: version), appName: name, branches: branches, developmentMode: store.developmentMode, strictMode: store.strictMode, errorHandler: { store.reportError($0) }) { ctx in
                 view(ctx) // the root view that will be shown
             }
-            .environmentObject(source.versionManager(for: self, refName: version))
         } label: {
             HStack {
                 Label {
