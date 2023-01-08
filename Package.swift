@@ -30,7 +30,7 @@ let package = Package(
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair"), // required
             //.product(name: "FairKit", package: "Fair"), // optional enhancements
-            .product(name: "JXHost", package: "JXHost"),
+            .product(name: "JXHostUI", package: "JXHost"),
 
             .product(name: "PetStore", package: "PetStore"),
             .product(name: "AnimalFarm", package: "AnimalFarm"),

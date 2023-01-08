@@ -1,5 +1,5 @@
 import FairApp
-import JXHost
+import JXHostUI
 
 import AboutMe
 import AnimalFarm
@@ -20,6 +20,7 @@ struct ContentView: View {
 
 struct PlaygroundListView: View {
     @EnvironmentObject var store: Store
+    static let resolved = Bundle.module.resolvedPackages()
 
     /// Returns the branches to display in the versions list, which will be contingent on development mode being enabled.
     var branches: [String] {
