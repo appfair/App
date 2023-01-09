@@ -17,18 +17,17 @@ struct ContentView: View {
     }
 }
 
+extension Store {
+    /// The host environment for the current bundle, which is expected to contain the `Package.resolved` for the package's dependencies.
+    static let host = try! JXHostBundle(bundle: .module)
+}
 
 struct PlaygroundListView: View {
     @EnvironmentObject var store: Store
-    static let resolved = Bundle.module.resolvedPackages()
 
     /// Returns the branches to display in the versions list, which will be contingent on development mode being enabled.
     var branches: [String] {
         store.developmentMode == true ? ["main"] : []
-    }
-
-    func entryLink<M: JXDynamicModule, V: View>(from: M.Type, name: String, symbol: String, view: @escaping (JXContext) -> V) -> some View {
-        M.entryLink(host: .module, name: name, symbol: symbol, branches: branches, developmentMode: store.developmentMode, strictMode: store.strictMode, errorHandler: { store.reportError($0) }, view: view)
     }
 
     var body: some View {
@@ -51,6 +50,11 @@ struct PlaygroundListView: View {
             .symbolVariant(.fill)
         }
         .navigationTitle(Text("Showcase", bundle: .module, comment: "navigation title for view"))
+    }
+
+
+    @ViewBuilder func entryLink<M: JXDynamicModule, V: View>(from: M.Type, name: String, symbol: String, view: @escaping (JXContext) -> V) -> some View {
+        M.moduleNavigationLink(host: Store.host, name: name, symbol: symbol, branches: branches, developmentMode: store.developmentMode, strictMode: store.strictMode, errorHandler: { store.reportError($0) }, view: view)
     }
 }
 
