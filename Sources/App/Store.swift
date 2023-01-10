@@ -7,10 +7,10 @@ import FairApp
 /// ``@EnvironmentObject var store: Store``
 open class Store: SceneManager {
     /// The module bundle for this store, used for looking up embedded resources
-    public var bundle: Bundle { Bundle.module }
+    public static let bundle = Bundle.module
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = try! configuration(name: "App", for: .module)
+    public static let config: JSum = try! configuration(name: "App")
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("currencyScore") public var currencyScore = false
