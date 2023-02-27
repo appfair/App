@@ -10,7 +10,7 @@ open class Store: SceneManager {
     public static let bundle = Bundle.module
 
     /// The configuration metadata for the app from the `App.yml` file.
-    public static let config: JSum = try! configuration(name: "App")
+    public static let config: JSON = try! configuration(name: "App")
 
     /// Mutable persistent global state for the app using ``SwiftUI/AppStorage``.
     @AppStorage("currencyScore") public var currencyScore = false
