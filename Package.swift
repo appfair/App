@@ -17,7 +17,7 @@ let package = Package(
     platforms: [ .macOS(.v12), .iOS(.v15) ],
     products: [ .library(name: "App", type: .dynamic, targets: ["App"]) ],
     dependencies: [
-        .package(url: "https://github.com/fair-ground/Fair", from: "0.9.0"), // must be first
+        .package(url: "https://github.com/fair-ground/Fair", from: "0.9.3"), // must be first
     ],
     targets: [
         .target(name: "App", dependencies: [
