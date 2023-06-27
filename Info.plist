@@ -20,6 +20,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>GIF image</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -32,6 +34,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>HTML document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -44,6 +48,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>XHTML document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -56,6 +62,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>JavaScript script</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -68,6 +76,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>JPEG image</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -80,6 +90,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>MHTML document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -92,6 +104,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>HTML5 Audio (Ogg)</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -104,6 +118,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>HTML5 Video (Ogg)</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -116,6 +132,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>PNG image</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -128,6 +146,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>SVG document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -140,6 +160,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Plain text document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -152,6 +174,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>HTML5 Video (WebM)</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -164,6 +188,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>WebP image</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -174,6 +200,8 @@
 		<dict>
 			<key>CFBundleTypeName</key>
 			<string>Chromium Extension</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -186,6 +214,8 @@
 			<string>document.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>PDF Document</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
