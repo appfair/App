@@ -7,7 +7,7 @@ PRODUCT_NAME = Silly Little App
 PRODUCT_BUNDLE_IDENTIFIER = app.Silly-Little-App
 
 // The semantic version for the app matching the git tag for the release
-MARKETING_VERSION = 0.0.1001
+MARKETING_VERSION = 0.0.1002
 
 // The monotonically increasing number specifying the internal app version
 CURRENT_PROJECT_VERSION = 1051
